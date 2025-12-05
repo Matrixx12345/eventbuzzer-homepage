@@ -218,7 +218,7 @@ const Listings = () => {
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isToday(selectedDate)
-                ? "bg-stone-700 text-white"
+                ? "bg-amber-700 text-white"
                 : "bg-stone-200 text-stone-600 hover:bg-stone-300"
             )}
           >
@@ -232,7 +232,7 @@ const Listings = () => {
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isTomorrow(selectedDate)
-                ? "bg-stone-700 text-white"
+                ? "bg-amber-700 text-white"
                 : "bg-stone-200 text-stone-600 hover:bg-stone-300"
             )}
           >
@@ -255,7 +255,7 @@ const Listings = () => {
                 className={cn(
                   "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                   isActive
-                    ? "bg-stone-700 text-white"
+                    ? "bg-amber-700 text-white"
                     : "bg-stone-200 text-stone-600 hover:bg-stone-300"
                 )}
               >
@@ -282,7 +282,7 @@ const Listings = () => {
               className={cn(
                 "py-2.5 text-xs font-bold transition-all rounded-lg",
                 selectedPrice === price.id
-                  ? "bg-stone-700 text-white"
+                  ? "bg-amber-700 text-white"
                   : "text-stone-600 hover:bg-stone-300"
               )}
             >
@@ -358,7 +358,7 @@ const Listings = () => {
               className={cn(
                 "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
                 selectedSubcategories.includes(sub)
-                  ? "bg-stone-700 text-white"
+                  ? "bg-amber-700 text-white"
                   : "bg-stone-200 text-stone-600 hover:bg-stone-300"
               )}
             >
