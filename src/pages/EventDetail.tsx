@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight } from "lucide-react";
+import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight, Navigation } from "lucide-react";
 import { useState } from "react";
 import {
   Carousel,
@@ -262,6 +262,12 @@ const partnerProducts = [
   { image: eventVenue, name: "VIP Chauffeur Service", price: "CHF 189", partner: "Blacklane", size: "wide" as const },
   { image: partnerTeddy, name: "Premium Teddy Bear", price: "CHF 35", partner: "Manor", size: "standard" as const },
   { image: rainySpa, name: "Late Night Spa Access", price: "CHF 79", partner: "Hürlimann", size: "tall" as const },
+  { image: weekendWine, name: "Scented Candle Set", price: "CHF 45", partner: "Westwing", size: "standard" as const },
+  { image: swissGeneva, name: "Premium Earphones", price: "CHF 129", partner: "Digitec", size: "standard" as const },
+  { image: weekendArt, name: "Cashmere Red Gloves", price: "CHF 89", partner: "Globus", size: "tall" as const },
+  { image: swissLucerne, name: "Luxury Silk Scarf", price: "CHF 159", partner: "Jelmoli", size: "wide" as const },
+  { image: rainyChocolate, name: "Artisan Coffee Set", price: "CHF 55", partner: "Sprüngli", size: "standard" as const },
+  { image: weekendOpera, name: "Crystal Wine Glasses", price: "CHF 75", partner: "Manor", size: "standard" as const },
 ];
 
 // Similar Event Card - Clean White Design
@@ -343,6 +349,7 @@ const MasonryProductCard = ({ image, name, price, partner, size }: {
 const EventDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   // Get event data or use default
   const event = slug && eventsData[slug] ? eventsData[slug] : {
@@ -372,12 +379,7 @@ const EventDetail = () => {
         </div>
 
         {/* Right - Content Panel */}
-        <div className="bg-white flex flex-col justify-center px-6 py-10 lg:px-12 xl:px-16">
-          {/* Premium Label */}
-          <p className="text-neutral-900 text-xs uppercase tracking-[0.2em] font-medium mb-6">
-            Premium Event
-          </p>
-
+        <div className="bg-white flex flex-col justify-center px-6 py-10 lg:px-12 xl:px-16 lg:max-h-[80vh] overflow-hidden">
           {/* Title */}
           <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6">
             {event.title}
@@ -395,7 +397,11 @@ const EventDetail = () => {
             </div>
             <div className="flex items-center gap-3 text-neutral-600">
               <MapPin size={18} className="text-neutral-400" />
-              <span className="text-base">{event.venue} • {event.distance}</span>
+              <span className="text-base">{event.venue}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Navigation size={18} className="text-emerald-600" />
+              <span className="text-base font-medium text-emerald-600">{event.distance}</span>
             </div>
           </div>
 
@@ -412,15 +418,25 @@ const EventDetail = () => {
             </button>
           </div>
 
-          {/* Description */}
-          <div className="border-t border-neutral-100 pt-6">
+          {/* Description - Limited height with "mehr lesen" */}
+          <div className="border-t border-neutral-100 pt-6 flex-1 overflow-hidden">
             <h2 className="font-serif text-neutral-900 text-lg font-semibold mb-3">About This Event</h2>
-            <p className="text-neutral-600 leading-relaxed">
-              {event.description}
-            </p>
-            <p className="text-neutral-600 leading-relaxed mt-3">
-              Join us for an extraordinary experience that combines world-class entertainment with Swiss precision and elegance.
-            </p>
+            <div className={`text-neutral-600 leading-relaxed ${!showFullDescription ? 'line-clamp-4' : ''}`}>
+              <p>{event.description}</p>
+              {showFullDescription && (
+                <p className="mt-3">
+                  Join us for an extraordinary experience that combines world-class entertainment with Swiss precision and elegance.
+                </p>
+              )}
+            </div>
+            {!showFullDescription && (
+              <button 
+                onClick={() => setShowFullDescription(true)}
+                className="text-neutral-900 text-sm underline mt-2 hover:text-neutral-600 transition-colors"
+              >
+                mehr lesen
+              </button>
+            )}
           </div>
         </div>
       </section>
