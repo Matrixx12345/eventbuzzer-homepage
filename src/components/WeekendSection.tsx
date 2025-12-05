@@ -1,6 +1,6 @@
 import { Heart } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 import weekendJazz from "@/assets/weekend-jazz.jpg";
 import weekendOrchestra from "@/assets/weekend-orchestra.jpg";
@@ -10,6 +10,7 @@ import weekendComedy from "@/assets/weekend-comedy.jpg";
 import weekendOpera from "@/assets/weekend-opera.jpg";
 
 interface WeekendCardProps {
+  id: string;
   image: string;
   title: string;
   description?: string;
@@ -19,8 +20,9 @@ interface WeekendCardProps {
   slug?: string;
 }
 
-const WeekendCard = ({ image, title, description, venue, location, isLarge = false, slug = "jazz-quartet" }: WeekendCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+const WeekendCard = ({ id, image, title, description, venue, location, isLarge = false, slug = "jazz-quartet" }: WeekendCardProps) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isCurrentlyFavorite = isFavorite(id);
 
   return (
     <Link to={`/event/${slug}`} className="block h-full">
@@ -39,14 +41,14 @@ const WeekendCard = ({ image, title, description, venue, location, isLarge = fal
         <button
           onClick={(e) => {
             e.preventDefault();
-            setIsFavorite(!isFavorite);
+            toggleFavorite({ id, slug, image, title, venue, location });
           }}
           className="absolute top-4 right-4 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors z-10"
-          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
             size={20}
-            className={isFavorite ? "fill-favorite text-favorite" : "text-card-foreground"}
+            className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-card-foreground"}
           />
         </button>
 
@@ -81,6 +83,7 @@ const WeekendCard = ({ image, title, description, venue, location, isLarge = fal
 const weekendEvents = {
   row1: {
     large: {
+      id: "weekend-jazz",
       image: weekendJazz,
       title: "The Finezdara & Jazz Quartet Club",
       description: "Loremsum dolor sit amet, consectetur adipiscing elit. Besiamast oanoce jazz muartet, tempor anipre coinididunt. Ut wed ad minim venium, eniirt ut aliquip ex ea commode soapet.",
@@ -90,6 +93,7 @@ const weekendEvents = {
     },
     small: [
       {
+        id: "weekend-orchestra",
         image: weekendOrchestra,
         title: "Kulturbetrieh Royal",
         venue: "Leonard House",
@@ -97,6 +101,7 @@ const weekendEvents = {
         slug: "kulturbetrieb-royal",
       },
       {
+        id: "weekend-art",
         image: weekendArt,
         title: "Art Eshibit Bimore",
         venue: "Tonhalla Orchestra",
@@ -107,6 +112,7 @@ const weekendEvents = {
   },
   row2: [
     {
+      id: "weekend-wine",
       image: weekendWine,
       title: "Freenstannee Wine & Fine Dining Event",
       description: "Temui all fus alrine co lenonnass horning os tron de chiaro vuilt nnlodor tierremasng enon peomalis nneg alrmpis, audituss nni e vtiise su ovd muse more.",
@@ -115,6 +121,7 @@ const weekendEvents = {
       slug: "wine-dining",
     },
     {
+      id: "weekend-comedy",
       image: weekendComedy,
       title: "Local Comedy Club Night",
       venue: "Leonard House",
@@ -125,6 +132,7 @@ const weekendEvents = {
   row3: {
     small: [
       {
+        id: "weekend-symphony",
         image: weekendOrchestra,
         title: "Symphony Night Gala",
         venue: "Tonhalla Orchestra",
@@ -132,6 +140,7 @@ const weekendEvents = {
         slug: "kulturbetrieb-royal",
       },
       {
+        id: "weekend-modern-art",
         image: weekendArt,
         title: "Modern Art Exhibition",
         venue: "Art Gallery",
@@ -140,6 +149,7 @@ const weekendEvents = {
       },
     ],
     large: {
+      id: "weekend-opera",
       image: weekendOpera,
       title: "Festival: Initial Musics for Opera",
       description: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sio are du mon-in ior nuis teagor uueneen enmopsivdilder onio lui lequata veurpewne natt aliumosd evoluation.",
