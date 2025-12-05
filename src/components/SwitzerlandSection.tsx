@@ -12,103 +12,194 @@ const swissEvents = [
   {
     id: 1,
     title: "The Geneva Watch & Art Fair",
-    description: "Experience the world's finest timepieces and contemporary art at Lake Geneva's most prestigious annual event featuring renowned watchmakers and international artists.",
+    description: "Experience the world's finest timepieces and contemporary art at Lake Geneva's most prestigious annual event.",
     image: swissGeneva,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "left",
   },
   {
     id: 2,
     title: "Lucerne Classical Summer",
-    description: "Immerse yourself in world-class orchestral performances set against the stunning backdrop of Chapel Bridge and the Swiss Alps.",
+    description: "Immerse yourself in world-class orchestral performances set against the stunning backdrop of Chapel Bridge.",
     image: swissLucerne,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "right",
   },
   {
     id: 3,
     title: "Bern Federal Plaza Market",
-    description: "Discover artisanal treasures and local delicacies at the historic Federal Plaza, surrounded by Switzerland's magnificent Parliament Building.",
+    description: "Discover artisanal treasures and local delicacies at the historic Federal Plaza.",
     image: swissBern,
+    gridClass: "md:col-span-1 md:row-span-2",
+    imagePosition: "top",
+    isTall: true,
   },
   {
     id: 4,
     title: "Zermatt Matterhorn Hiking Week",
-    description: "Embark on guided alpine adventures through breathtaking trails with panoramic views of the iconic Matterhorn peak.",
+    description: "Embark on guided alpine adventures with panoramic views of the iconic Matterhorn peak.",
     image: swissZermatt,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "left",
   },
   {
     id: 5,
-    title: "Zurich Film Festival Specials",
-    description: "Celebrate international cinema in Zurich's charming Old Town with exclusive screenings, director Q&As, and red carpet premieres.",
-    image: swissZurich,
+    title: "Zermatt Matterhorn Hiking Week",
+    description: "Experience the ultimate alpine adventure through breathtaking Swiss mountain trails.",
+    image: swissZermatt,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "left",
   },
   {
     id: 6,
-    title: "Interlaken Adventure Days",
-    description: "Soar above the Swiss Alps with paragliding, bungee jumping, and outdoor activities in one of Europe's most thrilling adventure destinations.",
-    image: swissInterlaken,
+    title: "Zurich Film Festival Specials",
+    description: "Celebrate international cinema in Zurich's charming Old Town with exclusive screenings.",
+    image: swissZurich,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "top",
   },
   {
     id: 7,
+    title: "Interlaken Adventure Days",
+    description: "Soar above the Swiss Alps with paragliding and outdoor activities in Europe's adventure capital.",
+    image: swissInterlaken,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "top",
+  },
+  {
+    id: 8,
     title: "Basel Autumn Fair",
-    description: "Experience Switzerland's largest and oldest fair along the Rhine River, featuring traditional crafts, carnival rides, and seasonal festivities.",
+    description: "Experience Switzerland's largest fair along the Rhine River with traditional crafts and festivities.",
     image: swissBasel,
+    gridClass: "col-span-1 row-span-1",
+    imagePosition: "top",
   },
 ];
 
+interface BentoCardProps {
+  title: string;
+  description: string;
+  image: string;
+  imagePosition: string;
+  isTall?: boolean;
+}
+
+const BentoCard = ({ title, description, image, imagePosition, isTall }: BentoCardProps) => {
+  if (imagePosition === "left") {
+    return (
+      <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
+        <div className="relative">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex flex-col justify-center p-6 text-center">
+          <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+            Premium Event
+          </span>
+          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+            {description}
+          </p>
+          <div>
+            <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
+              View Details
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (imagePosition === "right") {
+    return (
+      <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
+        <div className="flex flex-col justify-center p-6 text-center">
+          <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+            Premium Event
+          </span>
+          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+            {description}
+          </p>
+          <div>
+            <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
+              View Details
+            </Button>
+          </div>
+        </div>
+        <div className="relative">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
+        </div>
+      </div>
+    );
+  }
+
+  // Top image position (default for tall and bottom row cards)
+  return (
+    <div className={`bg-card rounded-3xl overflow-hidden flex flex-col h-full ${isTall ? 'min-h-[580px]' : 'min-h-[280px]'}`}>
+      <div className={`relative ${isTall ? 'flex-1' : 'h-40'}`}>
+        <img src={image} alt={title} className="w-full h-full object-cover" />
+      </div>
+      <div className="flex flex-col justify-center p-6 text-center flex-shrink-0">
+        <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+          Premium Event
+        </span>
+        <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+        <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+          {description}
+        </p>
+        <div>
+          <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
+            View Details
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SwitzerlandSection = () => {
   return (
-    <section className="bg-white py-24 px-4 md:px-8">
+    <section className="bg-background py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <h2 className="font-serif text-4xl md:text-5xl text-neutral-900 text-left mb-16">
+        <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16">
           This Month in Switzerland
         </h2>
 
-        {/* Cards Stack */}
-        <div className="flex flex-col gap-16">
-          {swissEvents.map((event, index) => {
-            const isOdd = index % 2 === 0; // 0, 2, 4, 6 = Image LEFT
-            
-            return (
-              <div
-                key={event.id}
-                className={`bg-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 min-h-[400px]`}
-              >
-                {/* Image */}
-                <div
-                  className={`relative h-64 md:h-auto ${
-                    isOdd ? "md:order-1" : "md:order-2"
-                  }`}
-                >
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Row 1: Two horizontal cards */}
+          <div className="md:col-span-2">
+            <BentoCard {...swissEvents[0]} />
+          </div>
+          <div className="md:col-span-1 md:row-span-2">
+            <BentoCard {...swissEvents[2]} />
+          </div>
+          <div className="md:col-span-2">
+            <BentoCard {...swissEvents[1]} />
+          </div>
 
-                {/* Content */}
-                <div
-                  className={`flex flex-col justify-center p-8 md:p-12 ${
-                    isOdd ? "md:order-2" : "md:order-1"
-                  }`}
-                >
-                  <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-4">
-                    Premium Event
-                  </span>
-                  <h3 className="font-serif text-2xl md:text-3xl text-white mb-4">
-                    {event.title}
-                  </h3>
-                  <p className="text-gray-400 font-sans text-sm md:text-base leading-relaxed mb-8">
-                    {event.description}
-                  </p>
-                  <div>
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-sans text-sm px-6">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {/* Row 2: Tall card + two stacked */}
+          <div className="md:col-span-1 md:row-span-2">
+            <BentoCard {...swissEvents[2]} image={swissBern} title="Bern Federal Plaza Market" description="Discover artisanal treasures and local delicacies at the historic Federal Plaza." imagePosition="top" isTall />
+          </div>
+          <div className="md:col-span-1">
+            <BentoCard {...swissEvents[3]} />
+          </div>
+          <div className="md:col-span-1">
+            <BentoCard {...swissEvents[4]} />
+          </div>
+
+          {/* Row 3: Three bottom cards */}
+          <div className="md:col-span-1">
+            <BentoCard {...swissEvents[5]} />
+          </div>
+          <div className="md:col-span-1">
+            <BentoCard {...swissEvents[6]} />
+          </div>
+          <div className="md:col-span-1">
+            <BentoCard {...swissEvents[7]} />
+          </div>
         </div>
       </div>
     </section>
