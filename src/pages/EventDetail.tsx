@@ -1,7 +1,14 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Clock, ArrowLeft, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { Heart, MapPin, Calendar, Clock, ArrowLeft, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 // Import all event images
 import weekendJazz from "@/assets/weekend-jazz.jpg";
@@ -17,6 +24,18 @@ import swissZermatt from "@/assets/swiss-zermatt.jpg";
 import swissZurich from "@/assets/swiss-zurich.jpg";
 import swissInterlaken from "@/assets/swiss-interlaken.jpg";
 import swissBasel from "@/assets/swiss-basel.jpg";
+import swissTrain from "@/assets/swiss-train.jpg";
+import eventAbbey from "@/assets/event-abbey.jpg";
+import eventConcert from "@/assets/event-concert.jpg";
+import eventSymphony from "@/assets/event-symphony.jpg";
+import eventVenue from "@/assets/event-venue.jpg";
+
+// Rainy day images
+import rainyKunsthaus from "@/assets/rainy-kunsthaus.jpg";
+import rainySpa from "@/assets/rainy-spa.jpg";
+import rainyCinema from "@/assets/rainy-cinema.jpg";
+import rainyChocolate from "@/assets/rainy-chocolate.jpg";
+import rainyFifa from "@/assets/rainy-fifa.jpg";
 
 // Partner products
 import partnerChampagne from "@/assets/partner-champagne.jpg";
@@ -40,8 +59,8 @@ const eventsData: Record<string, {
     venue: "Leonard House",
     location: "Baden • CH",
     date: "December 15, 2025",
-    time: "20:00 - 23:00",
-    description: "Experience an unforgettable evening of smooth jazz in the intimate setting of Leonard House. The Finezdara Jazz Quartet brings together world-class musicians for a night of improvisation and musical excellence."
+    time: "20:00",
+    description: "Experience an unforgettable evening of smooth jazz in the intimate setting of Leonard House. The Finezdara Jazz Quartet brings together world-class musicians for a night of improvisation and musical excellence. The Käfigturm was the city's second western gateway. The tower was built between 1256 and 1344, served as a prison between 1641 and 1643 and retained that function until 1897. The clock was installed in 1691."
   },
   "kulturbetrieb-royal": {
     image: weekendOrchestra,
@@ -49,8 +68,8 @@ const eventsData: Record<string, {
     venue: "Leonard House",
     location: "Baden • CH",
     date: "December 18, 2025",
-    time: "19:30 - 22:00",
-    description: "A royal evening of classical performances featuring the finest orchestral arrangements in Switzerland's most prestigious venue."
+    time: "19:30",
+    description: "A royal evening of classical performances featuring the finest orchestral arrangements in Switzerland's most prestigious venue. Experience the grandeur of classical music in an intimate setting."
   },
   "art-exhibit": {
     image: weekendArt,
@@ -58,7 +77,7 @@ const eventsData: Record<string, {
     venue: "Tonhalla Orchestra",
     location: "Zürich • CH",
     date: "December 20, 2025",
-    time: "10:00 - 18:00",
+    time: "10:00",
     description: "Discover contemporary masterpieces and timeless classics in this curated exhibition showcasing the best of Swiss and international art."
   },
   "wine-dining": {
@@ -67,7 +86,7 @@ const eventsData: Record<string, {
     venue: "Leonard House",
     location: "Baden • CH",
     date: "December 22, 2025",
-    time: "18:30 - 23:00",
+    time: "18:30",
     description: "An exquisite pairing of fine wines and gourmet cuisine, guided by Switzerland's most renowned sommeliers and chefs."
   },
   "comedy-club": {
@@ -76,7 +95,7 @@ const eventsData: Record<string, {
     venue: "Leonard House",
     location: "Baden • CH",
     date: "December 23, 2025",
-    time: "21:00 - 00:00",
+    time: "21:00",
     description: "Laugh the night away with Switzerland's funniest comedians in an intimate club setting."
   },
   "opera-festival": {
@@ -85,7 +104,7 @@ const eventsData: Record<string, {
     venue: "Opera House",
     location: "Zürich • CH",
     date: "December 28, 2025",
-    time: "19:00 - 22:30",
+    time: "19:00",
     description: "A grand operatic experience featuring world-renowned performers in Zürich's iconic Opera House."
   },
   "geneva-watch-fair": {
@@ -94,7 +113,7 @@ const eventsData: Record<string, {
     venue: "Palexpo Geneva",
     location: "Geneva • CH",
     date: "January 10, 2026",
-    time: "09:00 - 18:00",
+    time: "09:00",
     description: "The world's most prestigious watch and art fair, showcasing horological masterpieces alongside contemporary art."
   },
   "lucerne-classical": {
@@ -103,7 +122,7 @@ const eventsData: Record<string, {
     venue: "KKL Luzern",
     location: "Lucerne • CH",
     date: "January 15, 2026",
-    time: "19:30 - 22:00",
+    time: "19:30",
     description: "World-class orchestras and soloists perform in the acoustically perfect KKL concert hall."
   },
   "bern-market": {
@@ -112,7 +131,7 @@ const eventsData: Record<string, {
     venue: "Bundesplatz",
     location: "Bern • CH",
     date: "January 20, 2026",
-    time: "08:00 - 17:00",
+    time: "08:00",
     description: "Experience the vibrant atmosphere of Bern's famous market at the historic Federal Plaza."
   },
   "zermatt-hiking": {
@@ -130,7 +149,7 @@ const eventsData: Record<string, {
     venue: "Corso Cinema",
     location: "Zürich • CH",
     date: "February 1, 2026",
-    time: "14:00 - 23:00",
+    time: "14:00",
     description: "Special screenings and premieres at Switzerland's most celebrated film festival."
   },
   "interlaken-adventure": {
@@ -139,7 +158,7 @@ const eventsData: Record<string, {
     venue: "Interlaken Ost",
     location: "Interlaken • CH",
     date: "February 10, 2026",
-    time: "08:00 - 18:00",
+    time: "08:00",
     description: "Paragliding, hiking, and extreme sports in the stunning Swiss Alps."
   },
   "basel-fair": {
@@ -148,85 +167,126 @@ const eventsData: Record<string, {
     venue: "Messeplatz",
     location: "Basel • CH",
     date: "February 15, 2026",
-    time: "11:00 - 22:00",
+    time: "11:00",
     description: "Switzerland's largest autumn fair with rides, food, and entertainment for all ages."
+  },
+  "grand-train-tour": {
+    image: swissTrain,
+    title: "The Grand Train Tour Winter Edition",
+    venue: "Swiss Rail",
+    location: "Switzerland",
+    date: "March 1, 2026",
+    time: "08:00",
+    description: "Experience the breathtaking panoramic Glacier Express journey through snow-covered Swiss Alps."
+  },
+  "kunsthaus-zurich": {
+    image: rainyKunsthaus,
+    title: "Kunsthaus Zürich",
+    venue: "Kunsthaus Zürich",
+    location: "Zürich • CH",
+    date: "Open Daily",
+    time: "10:00 - 18:00",
+    description: "Discover world-class art collections spanning from medieval times to contemporary masterpieces in one of Switzerland's most prestigious galleries."
+  },
+  "hurlimann-spa": {
+    image: rainySpa,
+    title: "Hürlimann Spa",
+    venue: "Thermalbad & Spa",
+    location: "Zürich • CH",
+    date: "Open Daily",
+    time: "09:00 - 22:00",
+    description: "Relax in the historic thermal baths housed in a beautifully restored 19th-century brewery, featuring rooftop pools with panoramic city views."
+  },
+  "kosmos-cinema": {
+    image: rainyCinema,
+    title: "Kosmos Cinema",
+    venue: "Kosmos Kulturhaus",
+    location: "Zürich • CH",
+    date: "Various Screenings",
+    time: "Check Schedule",
+    description: "Experience cinema in style with luxurious velvet seating and carefully curated film selections in this iconic Zurich cultural venue."
+  },
+  "lindt-chocolate": {
+    image: rainyChocolate,
+    title: "Lindt Home of Chocolate",
+    venue: "Lindt Museum",
+    location: "Kilchberg • CH",
+    date: "Open Daily",
+    time: "10:00 - 18:00",
+    description: "Experience the world's largest chocolate fountain and explore interactive exhibits showcasing the art of Swiss chocolate making."
+  },
+  "fifa-museum": {
+    image: rainyFifa,
+    title: "FIFA Museum",
+    venue: "FIFA World Museum",
+    location: "Zürich • CH",
+    date: "Open Daily",
+    time: "10:00 - 18:00",
+    description: "Immerse yourself in the history of football with interactive exhibits, memorabilia, and the iconic World Cup trophy."
   }
 };
 
-// Similar events for the grid
+// Similar events for carousel
 const similarEvents = [
-  { slug: "kulturbetrieb-royal", image: weekendOrchestra, title: "Kulturbetrieh Royal", venue: "Leonard House", location: "Baden • CH" },
-  { slug: "art-exhibit", image: weekendArt, title: "Art Exhibit Bimore", venue: "Tonhalla Orchestra", location: "Zürich • CH" },
-  { slug: "wine-dining", image: weekendWine, title: "Wine & Fine Dining", venue: "Leonard House", location: "Baden • CH" },
-  { slug: "opera-festival", image: weekendOpera, title: "Opera Festival", venue: "Opera House", location: "Zürich • CH" },
+  { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20, 2025" },
+  { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22, 2025" },
+  { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25, 2025" },
+  { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28, 2025" },
+  { slug: "jazz-quartet", image: weekendJazz, title: "Jazz Quartet Night", venue: "Leonard House", location: "Baden • CH", date: "Jan 5, 2026" },
+  { slug: "comedy-club", image: weekendComedy, title: "Comedy Night", venue: "Leonard House", location: "Baden • CH", date: "Jan 10, 2026" },
 ];
 
-// Partner products
+// Partner products - compact grid items
 const partnerProducts = [
-  {
-    image: partnerChampagne,
-    name: "Moët & Chandon Impérial",
-    price: "CHF 65.00",
-    partner: "Galaxus",
-    description: "Classic champagne for celebratory moments"
-  },
-  {
-    image: partnerRoses,
-    name: "12 Red Roses Bouquet",
-    price: "CHF 89.00",
-    partner: "Fleurop",
-    description: "Hand-tied luxury rose arrangement"
-  },
-  {
-    image: partnerTeddy,
-    name: "Premium Teddy Bear",
-    price: "CHF 45.00",
-    partner: "Manor",
-    description: "Soft plush gift companion"
-  },
-  {
-    image: partnerChocolate,
-    name: "Lindt Pralinés Selection",
-    price: "CHF 55.00",
-    partner: "Lindt",
-    description: "Assorted Swiss chocolate pralines"
-  }
+  { image: partnerRoses, name: "Red Roses Bouquet (12 pcs)", price: "39 €", partner: "Lokalem Partner" },
+  { image: partnerChocolate, name: "Heart-Shaped Velvet Box of Chocolates", price: "29 €", partner: "Lokalem Partner" },
+  { image: partnerChampagne, name: "Moët & Chandon Brut Impérial", price: "49 €", partner: "Galaxus" },
+  { image: partnerTeddy, name: "Soft Teddy Bear (50 cm)", price: "35 €", partner: "Manor" },
+  { image: partnerChocolate, name: "Elegant Scented Candle Set", price: "24 €", partner: "Manor" },
+  { image: partnerRoses, name: "Heart-Shaped Winter Gloves (Couple Set)", price: "27 €", partner: "Galaxus" },
 ];
 
-const SimilarEventCard = ({ slug, image, title, venue, location }: {
+const SimilarEventCard = ({ slug, image, title, venue, location, date }: {
   slug: string;
   image: string;
   title: string;
   venue: string;
   location: string;
+  date: string;
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
 
   return (
     <Link to={`/event/${slug}`} className="block group">
-      <article className="relative h-[320px] bg-card rounded-2xl overflow-hidden">
-        <div className="absolute inset-0">
+      <article className="bg-card rounded-xl overflow-hidden">
+        {/* 16:9 Landscape Image */}
+        <div className="relative aspect-video overflow-hidden">
           <img
             src={image}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-card/95 via-card/40 to-transparent" />
+          {/* POPULAR Badge */}
+          <div className="absolute top-3 left-3">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-semibold">
+              🔥 POPULAR
+            </span>
+          </div>
+          {/* Favorite Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setIsFavorite(!isFavorite);
+            }}
+            className="absolute top-3 right-3 p-2"
+          >
+            <Heart size={20} className={isFavorite ? "fill-favorite text-favorite" : "text-white"} />
+          </button>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            setIsFavorite(!isFavorite);
-          }}
-          className="absolute top-4 right-4 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors z-10"
-        >
-          <Heart size={18} className={isFavorite ? "fill-favorite text-favorite" : "text-card-foreground"} />
-        </button>
-
-        <div className="relative h-full flex flex-col justify-end p-5">
-          <span className="text-primary text-xs font-semibold tracking-wider mb-2">PREMIUM EVENT</span>
-          <h3 className="font-serif text-card-foreground text-lg font-semibold leading-tight mb-2">{title}</h3>
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="font-sans text-card-foreground text-base font-semibold leading-tight mb-1">{title}</h3>
           <p className="text-muted-foreground text-sm">{venue}</p>
           <p className="text-muted-foreground text-sm">{location}</p>
         </div>
@@ -235,44 +295,29 @@ const SimilarEventCard = ({ slug, image, title, venue, location }: {
   );
 };
 
-const PartnerProductCard = ({ image, name, price, partner, description }: {
+const ProductCard = ({ image, name, price, partner }: {
   image: string;
   name: string;
   price: string;
   partner: string;
-  description: string;
 }) => {
   return (
-    <article className="group relative bg-gradient-to-b from-neutral-800 to-neutral-900 rounded-3xl overflow-hidden flex flex-col h-[480px] hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500">
-      {/* Partner Badge */}
-      <div className="absolute top-4 left-4 z-10">
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-primary/40 bg-card/60 backdrop-blur-sm">
-          <span className="text-primary text-[10px] font-semibold tracking-widest">PARTNER</span>
-          <span className="text-card-foreground text-[10px] font-medium">{partner}</span>
-        </span>
-      </div>
-
-      {/* Product Image */}
-      <div className="relative h-[65%] overflow-hidden">
+    <article className="bg-card rounded-xl overflow-hidden p-4 flex flex-col sm:flex-row items-center gap-4">
+      {/* Square Product Image */}
+      <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-white">
         <img
           src={image}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-transparent to-transparent" />
       </div>
 
       {/* Content */}
-      <div className="flex flex-col flex-1 p-6 justify-between">
-        <div>
-          <h3 className="font-serif text-card-foreground text-xl font-semibold mb-1">{name}</h3>
-          <p className="text-muted-foreground text-sm mb-2">{description}</p>
-          <p className="text-primary font-semibold text-lg">{price}</p>
-        </div>
-
-        <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3 rounded-xl transition-colors mt-4 group/btn">
-          <span>Shop at Partner</span>
-          <ExternalLink size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+      <div className="flex-1 text-center sm:text-left">
+        <h3 className="text-card-foreground text-sm font-semibold mb-1">{name}</h3>
+        <p className="text-primary font-semibold mb-3">{price}</p>
+        <button className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/40 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
+          Bei {partner} kaufen
         </button>
       </div>
     </article>
@@ -295,102 +340,139 @@ const EventDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-card">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative h-[70vh] min-h-[500px] bg-card overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={event.image}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-card/20" />
-        </div>
+      {/* Hero Image - Full Width, No Overlay Text */}
+      <section className="relative h-[50vh] min-h-[350px] overflow-hidden">
+        <img
+          src={event.image}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+      </section>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-end pb-12">
-          <Link
-            to="/"
-            className="absolute top-8 left-4 sm:left-6 lg:left-8 flex items-center gap-2 text-card-foreground/70 hover:text-card-foreground transition-colors"
+      {/* Info Bar + Content Section */}
+      <section className="bg-card">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Title and Get Tickets Row */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between py-8 gap-6">
+            <div className="flex-1">
+              <h1 className="font-serif text-card-foreground text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                {event.title}
+              </h1>
+              
+              {/* Event Meta */}
+              <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} />
+                  <span>{event.date}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={16} />
+                  <span>{event.time}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} />
+                  <span>{event.venue}</span>
+                </div>
+                <span>{event.location}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 rounded-lg transition-colors">
+                Get Tickets
+              </button>
+              <button
+                onClick={() => setIsFavorite(!isFavorite)}
+                className="p-3 rounded-lg border border-border/40 hover:bg-card/80 transition-colors"
+              >
+                <Heart size={20} className={isFavorite ? "fill-favorite text-favorite" : "text-card-foreground"} />
+              </button>
+            </div>
+          </div>
+
+          {/* Two Column: About + Map */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-16">
+            {/* Left - About (66%) */}
+            <div className="lg:col-span-2">
+              <h2 className="font-semibold text-card-foreground text-lg mb-4">About This Event</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {event.description}
+              </p>
+              <button className="text-primary hover:underline mt-2 text-sm font-medium">
+                Mehr lesen
+              </button>
+            </div>
+
+            {/* Right - Map (33%) */}
+            <div className="lg:col-span-1">
+              <div className="rounded-xl overflow-hidden border border-border/20">
+                {/* Placeholder Map */}
+                <div className="aspect-[4/3] bg-neutral-800 relative">
+                  <img
+                    src="https://maps.googleapis.com/maps/api/staticmap?center=New+York,NY&zoom=11&size=400x300&maptype=roadmap&key=placeholder"
+                    alt="Map"
+                    className="w-full h-full object-cover opacity-60"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23374151" width="400" height="300"/><text x="200" y="150" fill="%239CA3AF" text-anchor="middle" font-family="sans-serif" font-size="16">Map</text></svg>';
+                    }}
+                  />
+                  {/* Map Controls Overlay */}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <span className="bg-white text-neutral-800 text-xs px-2 py-1 rounded font-medium">Map</span>
+                    <span className="bg-white/80 text-neutral-600 text-xs px-2 py-1 rounded">Satellite</span>
+                  </div>
+                </div>
+                <div className="p-3 bg-card">
+                  <p className="text-muted-foreground text-sm">
+                    📍 Distance: 76.0 km away from you (is only shown when you allow location access)
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Similar Events Carousel */}
+      <section className="py-16 bg-card border-t border-border/10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="font-serif text-card-foreground text-2xl sm:text-3xl mb-8">Ähnliche Events</h2>
+          
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
           >
-            <ArrowLeft size={20} />
-            <span className="font-medium">Back to Events</span>
-          </Link>
-
-          <span className="text-primary text-sm font-semibold tracking-widest mb-4">PREMIUM EVENT</span>
-          <h1 className="font-serif text-card-foreground text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 max-w-3xl">
-            {event.title}
-          </h1>
-
-          <div className="flex flex-wrap gap-6 mb-8 text-card-foreground/80">
-            <div className="flex items-center gap-2">
-              <MapPin size={18} className="text-primary" />
-              <span>{event.venue}, {event.location}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar size={18} className="text-primary" />
-              <span>{event.date}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock size={18} className="text-primary" />
-              <span>{event.time}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-            <button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 rounded-lg transition-colors">
-              Book Now
-            </button>
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className="flex items-center gap-2 bg-card/30 backdrop-blur-sm hover:bg-card/50 text-card-foreground px-6 py-3 rounded-lg transition-colors border border-card-foreground/20"
-            >
-              <Heart size={20} className={isFavorite ? "fill-favorite text-favorite" : ""} />
-              <span>{isFavorite ? "Saved" : "Save Event"}</span>
-            </button>
-          </div>
+            <CarouselContent className="-ml-4">
+              {similarEvents.map((evt, index) => (
+                <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
+                  <SimilarEventCard {...evt} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:flex -left-4 bg-card border-border/40 text-card-foreground hover:bg-card/80" />
+            <CarouselNext className="hidden sm:flex -right-4 bg-card border-border/40 text-card-foreground hover:bg-card/80" />
+          </Carousel>
         </div>
       </section>
 
-      {/* Event Description */}
-      <section className="py-16 bg-background">
+      {/* Unvergessliche Augenblicke - Dense Grid */}
+      <section className="py-16 bg-card border-t border-border/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <h2 className="font-serif text-foreground text-2xl sm:text-3xl mb-6">About This Event</h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">{event.description}</p>
-          </div>
-        </div>
-      </section>
+          <h2 className="font-serif text-card-foreground text-2xl sm:text-3xl mb-8">
+            Unvergessliche Augenblicke schaffen
+          </h2>
 
-      {/* Similar Events Section */}
-      <section className="py-16 bg-card">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-card-foreground text-3xl sm:text-4xl mb-10">Ähnliche Events</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {similarEvents.map((evt, index) => (
-              <SimilarEventCard key={index} {...evt} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Partner Carousel Section */}
-      <section className="py-20 bg-gradient-to-b from-neutral-950 to-neutral-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-primary text-sm font-semibold tracking-widest mb-3 block">CONCIERGE SERVICE</span>
-            <h2 className="font-serif text-card-foreground text-3xl sm:text-4xl lg:text-5xl mb-4">
-              Unvergessliche Augenblicke
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Elevate your experience with curated gifts from our trusted partners
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 3-Column Grid on Desktop (2 rows of 3) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {partnerProducts.map((product, index) => (
-              <PartnerProductCard key={index} {...product} />
+              <ProductCard key={index} {...product} />
             ))}
           </div>
         </div>

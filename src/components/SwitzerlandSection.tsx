@@ -92,7 +92,7 @@ const swissEvents = [
     gridClass: "md:col-span-2 row-span-1",
     imagePosition: "left",
     isWide: true,
-    slug: "geneva-watch-fair",
+    slug: "grand-train-tour",
   },
 ];
 
