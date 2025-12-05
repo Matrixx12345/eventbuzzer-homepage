@@ -186,42 +186,40 @@ const Listings = () => {
   const currentSubcategories = subcategories[selectedCategory] || subcategories.all;
 
   const FilterContent = () => (
-    <div className="space-y-5">
-      {/* Reset button - minimal, top right */}
+    <div className="space-y-6">
+      {/* Reset button */}
       {hasActiveFilters && (
-        <div className="flex items-center justify-end -mt-1 -mb-2">
-          <button
-            onClick={clearFilters}
-            className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors font-medium"
-          >
-            Zurücksetzen
-          </button>
-        </div>
+        <button
+          onClick={clearFilters}
+          className="w-full py-2.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-all"
+        >
+          ✕ Filter zurücksetzen
+        </button>
       )}
 
       {/* Datum (Date) */}
-      <div className="space-y-2.5">
-        <h3 className="text-[10px] font-semibold text-neutral-400/80 uppercase tracking-widest">Datum</h3>
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-3.5 py-3 bg-white/60 hover:bg-white/80 rounded-xl text-neutral-600 transition-all flex items-center justify-center gap-2 group border border-neutral-200/50 shadow-sm"
+          className="w-full px-4 py-3.5 bg-neutral-900 hover:bg-neutral-800 rounded-xl text-white transition-all flex items-center justify-center gap-2.5 font-medium shadow-lg shadow-neutral-900/25"
         >
-          <CalendarIcon size={14} className="text-neutral-400 group-hover:text-neutral-600 transition-colors" />
-          <span className="text-[13px] font-medium">
-            {selectedDate ? format(selectedDate, "d. MMM yyyy", { locale: de }) : "Kalender"}
+          <CalendarIcon size={18} />
+          <span className="text-sm">
+            {selectedDate ? format(selectedDate, "d. MMMM yyyy", { locale: de }) : "Datum wählen"}
           </span>
         </button>
-        <div className="flex gap-1.5">
+        <div className="flex gap-2">
           <button
             onClick={() => {
               const today = new Date();
               setSelectedDate(isToday(selectedDate || new Date(0)) ? undefined : today);
             }}
             className={cn(
-              "flex-1 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all border",
+              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isToday(selectedDate)
-                ? "bg-neutral-900 text-white border-neutral-900 shadow-md"
-                : "bg-white/60 text-neutral-600 border-neutral-200/50 hover:bg-white/80"
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
             )}
           >
             Heute
@@ -232,10 +230,10 @@ const Listings = () => {
               setSelectedDate(isTomorrow(selectedDate || new Date(0)) ? undefined : tomorrow);
             }}
             className={cn(
-              "flex-1 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all border",
+              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isTomorrow(selectedDate)
-                ? "bg-neutral-900 text-white border-neutral-900 shadow-md"
-                : "bg-white/60 text-neutral-600 border-neutral-200/50 hover:bg-white/80"
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
             )}
           >
             Morgen
@@ -244,9 +242,9 @@ const Listings = () => {
       </div>
 
       {/* Schnellfilter (Quick Filters) */}
-      <div className="space-y-2.5">
-        <h3 className="text-[10px] font-semibold text-neutral-400/80 uppercase tracking-widest">Schnellfilter</h3>
-        <div className="grid grid-cols-3 gap-1.5">
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Stimmung</h3>
+        <div className="grid grid-cols-3 gap-2">
           {quickFilters.map((filter) => {
             const Icon = filter.icon;
             const isActive = selectedQuickFilters.includes(filter.id);
@@ -255,21 +253,18 @@ const Listings = () => {
                 key={filter.id}
                 onClick={() => toggleQuickFilter(filter.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all group border",
+                  "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                   isActive
-                    ? "bg-neutral-900 text-white border-neutral-900 shadow-md"
-                    : "bg-white/60 text-neutral-500 border-neutral-200/50 hover:bg-white/80 hover:text-neutral-700"
+                    ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/25"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900"
                 )}
               >
                 <Icon 
-                  size={18} 
-                  strokeWidth={1.5} 
-                  className={cn(
-                    "mb-1 transition-transform group-hover:scale-110",
-                    isActive ? "text-white" : "text-neutral-400 group-hover:text-neutral-600"
-                  )} 
+                  size={22} 
+                  strokeWidth={1.8} 
+                  className="mb-1.5"
                 />
-                <span className="text-[9px] font-medium leading-tight text-center">{filter.label}</span>
+                <span className="text-[10px] font-bold leading-tight text-center">{filter.label}</span>
               </button>
             );
           })}
@@ -277,18 +272,18 @@ const Listings = () => {
       </div>
 
       {/* Preis (Price) */}
-      <div className="space-y-2.5">
-        <h3 className="text-[10px] font-semibold text-neutral-400/80 uppercase tracking-widest">Preis</h3>
-        <div className="flex p-0.5 bg-neutral-100/80 rounded-lg border border-neutral-200/30">
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Budget</h3>
+        <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-neutral-100 rounded-xl">
           {priceFilters.map((price) => (
             <button
               key={price.id}
               onClick={() => setSelectedPrice(price.id)}
               className={cn(
-                "flex-1 px-2 py-2 text-[11px] font-medium transition-all rounded-md",
+                "py-2.5 text-xs font-bold transition-all rounded-lg",
                 selectedPrice === price.id
-                  ? "bg-white text-neutral-900 shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-700"
+                  ? "bg-white text-neutral-900 shadow-md"
+                  : "text-neutral-500 hover:text-neutral-900"
               )}
             >
               {price.label}
@@ -298,17 +293,17 @@ const Listings = () => {
       </div>
 
       {/* Stadt und Radius */}
-      <div className="space-y-2.5">
-        <h3 className="text-[10px] font-semibold text-neutral-400/80 uppercase tracking-widest">Ort</h3>
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Wo?</h3>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
-            placeholder="Stadt..."
+            placeholder="Stadt eingeben..."
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-9 pr-3 py-2.5 bg-white/60 rounded-xl text-[13px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-neutral-300 transition-all border border-neutral-200/50"
+            className="w-full pl-12 pr-4 py-3.5 bg-neutral-100 rounded-xl text-sm text-neutral-900 font-medium placeholder:text-neutral-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all"
           />
           <datalist id="cities">
             {cities.map((city) => (
@@ -316,7 +311,7 @@ const Listings = () => {
             ))}
           </datalist>
         </div>
-        <div className="pt-1 px-0.5">
+        <div className="pt-2 px-1">
           <Slider
             value={radius}
             onValueChange={setRadius}
@@ -324,26 +319,26 @@ const Listings = () => {
             step={5}
             className="w-full"
           />
-          <div className="flex justify-between items-center mt-2">
-            <span className="text-[10px] text-neutral-400">Umkreis</span>
-            <span className="text-[12px] font-semibold text-neutral-900 tabular-nums">{radius[0]} km</span>
+          <div className="flex justify-between items-center mt-3">
+            <span className="text-xs text-neutral-500 font-medium">Umkreis</span>
+            <span className="text-sm font-bold text-neutral-900 tabular-nums bg-neutral-100 px-3 py-1 rounded-lg">{radius[0]} km</span>
           </div>
         </div>
       </div>
 
       {/* Kategorie */}
-      <div className="space-y-2.5">
-        <h3 className="text-[10px] font-semibold text-neutral-400/80 uppercase tracking-widest">Kategorie</h3>
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Kategorie</h3>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full rounded-xl border border-neutral-200/50 bg-white/60 py-2.5 text-[13px] text-neutral-600 focus:ring-1 focus:ring-neutral-300 hover:bg-white/80 transition-colors">
-            <SelectValue placeholder="Kategorie" />
+          <SelectTrigger className="w-full rounded-xl border-2 border-neutral-200 bg-white py-3.5 text-sm font-medium text-neutral-700 focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 hover:border-neutral-300 transition-all">
+            <SelectValue placeholder="Alle Kategorien" />
           </SelectTrigger>
-          <SelectContent className="bg-white/95 backdrop-blur-xl border border-neutral-200/50 shadow-xl shadow-neutral-900/10 rounded-xl overflow-hidden">
+          <SelectContent className="bg-white border-2 border-neutral-200 shadow-2xl rounded-xl overflow-hidden">
             {categories.map((cat) => (
               <SelectItem 
                 key={cat.value} 
                 value={cat.value} 
-                className="cursor-pointer py-2.5 text-[13px] focus:bg-neutral-50"
+                className="cursor-pointer py-3 text-sm font-medium focus:bg-neutral-100"
               >
                 {cat.label}
               </SelectItem>
@@ -353,18 +348,18 @@ const Listings = () => {
       </div>
 
       {/* Subkategorie */}
-      <div className="space-y-2.5">
-        <h3 className="text-[10px] font-semibold text-neutral-400/80 uppercase tracking-widest">Subkategorie</h3>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Art</h3>
+        <div className="flex flex-wrap gap-2">
           {currentSubcategories.map((sub) => (
             <button
               key={sub}
               onClick={() => toggleSubcategory(sub)}
               className={cn(
-                "px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all border",
+                "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
                 selectedSubcategories.includes(sub)
-                  ? "bg-neutral-900 text-white border-neutral-900 shadow-md"
-                  : "bg-white/60 text-neutral-600 border-neutral-200/50 hover:bg-white/80"
+                  ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/25"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900"
               )}
             >
               {sub}
@@ -394,8 +389,8 @@ const Listings = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-24 bg-gradient-to-b from-white/80 to-white/60 backdrop-blur-2xl rounded-2xl p-5 shadow-xl shadow-neutral-900/[0.08] border border-white/70 ring-1 ring-neutral-200/20 max-h-[calc(100vh-120px)] overflow-y-auto">
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-24 bg-white rounded-2xl p-6 shadow-2xl shadow-neutral-900/10 border border-neutral-100 max-h-[calc(100vh-120px)] overflow-y-auto">
               <FilterContent />
             </div>
           </aside>
