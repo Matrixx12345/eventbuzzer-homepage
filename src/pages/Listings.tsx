@@ -4,7 +4,7 @@ import {
   SlidersHorizontal, 
   X, 
   MapPin, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Cake, 
   CloudRain, 
   UtensilsCrossed,
@@ -15,7 +15,7 @@ import {
   Waves,
   Mountain,
   Search,
-  Sparkles
+  CalendarDays
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -29,6 +29,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format, addDays, isToday, isTomorrow } from "date-fns";
+import { de } from "date-fns/locale";
 
 import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
@@ -100,15 +109,28 @@ const subcategories: Record<string, string[]> = {
 const Listings = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   
   // Filter states
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
   const [selectedPrice, setSelectedPrice] = useState("all");
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    setShowCalendar(false);
+  };
+
+  const getDateLabel = () => {
+    if (!selectedDate) return null;
+    if (isToday(selectedDate)) return "Heute";
+    if (isTomorrow(selectedDate)) return "Morgen";
+    return format(selectedDate, "d. MMM", { locale: de });
+  };
 
   const toggleQuickFilter = (filterId: string) => {
     setSelectedQuickFilters((prev) =>
@@ -143,7 +165,7 @@ const Listings = () => {
   });
 
   const clearFilters = () => {
-    setSelectedDate(null);
+    setSelectedDate(undefined);
     setSelectedQuickFilters([]);
     setSelectedPrice("all");
     setSelectedCity("");
@@ -153,7 +175,7 @@ const Listings = () => {
   };
 
   const hasActiveFilters = 
-    selectedDate !== null ||
+    selectedDate !== undefined ||
     selectedQuickFilters.length > 0 ||
     selectedPrice !== "all" ||
     selectedCity !== "" ||
@@ -165,37 +187,39 @@ const Listings = () => {
 
   const FilterContent = () => (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neutral-900 to-neutral-700 flex items-center justify-center">
-            <Sparkles size={14} className="text-white" />
-          </div>
-          <span className="font-semibold text-neutral-900 tracking-tight">Filter</span>
-        </div>
-        {hasActiveFilters && (
+      {/* Header - Just reset button when filters active */}
+      {hasActiveFilters && (
+        <div className="flex items-center justify-end">
           <button
             onClick={clearFilters}
             className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
           >
             Zurücksetzen
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Datum (Date) */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Datum</h3>
-        <button className="w-full px-4 py-3.5 bg-neutral-50 hover:bg-neutral-100 rounded-2xl text-neutral-600 transition-all flex items-center justify-center gap-2 group">
-          <Calendar size={16} className="text-neutral-400 group-hover:text-neutral-600 transition-colors" />
-          <span className="text-sm font-medium">Kalender öffnen</span>
+        <button 
+          onClick={() => setShowCalendar(true)}
+          className="w-full px-4 py-3.5 bg-neutral-50 hover:bg-neutral-100 rounded-2xl text-neutral-600 transition-all flex items-center justify-center gap-2 group"
+        >
+          <CalendarIcon size={16} className="text-neutral-400 group-hover:text-neutral-600 transition-colors" />
+          <span className="text-sm font-medium">
+            {selectedDate ? format(selectedDate, "d. MMMM yyyy", { locale: de }) : "Kalender öffnen"}
+          </span>
         </button>
         <div className="flex gap-2">
           <button
-            onClick={() => setSelectedDate(selectedDate === "heute" ? null : "heute")}
+            onClick={() => {
+              const today = new Date();
+              setSelectedDate(isToday(selectedDate || new Date(0)) ? undefined : today);
+            }}
             className={cn(
               "flex-1 px-4 py-3 rounded-2xl text-sm font-medium transition-all",
-              selectedDate === "heute"
+              selectedDate && isToday(selectedDate)
                 ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/20"
                 : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100"
             )}
@@ -203,10 +227,13 @@ const Listings = () => {
             Heute
           </button>
           <button
-            onClick={() => setSelectedDate(selectedDate === "morgen" ? null : "morgen")}
+            onClick={() => {
+              const tomorrow = addDays(new Date(), 1);
+              setSelectedDate(isTomorrow(selectedDate || new Date(0)) ? undefined : tomorrow);
+            }}
             className={cn(
               "flex-1 px-4 py-3 rounded-2xl text-sm font-medium transition-all",
-              selectedDate === "morgen"
+              selectedDate && isTomorrow(selectedDate)
                 ? "bg-neutral-900 text-white shadow-lg shadow-neutral-900/20"
                 : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100"
             )}
@@ -214,7 +241,10 @@ const Listings = () => {
             Morgen
           </button>
         </div>
-        <button className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
+        <button 
+          onClick={() => setShowCalendar(true)}
+          className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+        >
           + Mehr Zeitspannen
         </button>
       </div>
@@ -371,7 +401,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-white rounded-3xl p-6 shadow-sm shadow-neutral-900/5 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="sticky top-24 bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-neutral-900/5 border border-white/50 max-h-[calc(100vh-120px)] overflow-y-auto">
               <FilterContent />
             </div>
           </aside>
@@ -402,7 +432,7 @@ const Listings = () => {
                   to={`/event/${event.slug}`}
                   className="block group"
                 >
-                  <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-xl hover:shadow-neutral-900/10 transition-all duration-300">
+                  <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out">
                     <div className="relative overflow-hidden">
                       <img
                         src={event.image}
@@ -484,9 +514,9 @@ const Listings = () => {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neutral-900 to-neutral-700 flex items-center justify-center">
-                  <Sparkles size={14} className="text-white" />
+                  <SlidersHorizontal size={14} className="text-white" />
                 </div>
-                <span className="font-semibold text-neutral-900 tracking-tight">Filter</span>
+                <span className="font-semibold text-neutral-900 tracking-tight">Filter anpassen</span>
               </div>
               <button
                 onClick={() => setShowMobileFilters(false)}
@@ -517,6 +547,41 @@ const Listings = () => {
           </div>
         </div>
       )}
+
+      {/* Calendar Dialog */}
+      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+        <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-xl border-0 shadow-2xl rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-neutral-900">Datum auswählen</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              className="pointer-events-auto rounded-2xl"
+              locale={de}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setSelectedDate(undefined);
+                setShowCalendar(false);
+              }}
+              className="flex-1 py-3 bg-neutral-100 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-200 transition-colors"
+            >
+              Zurücksetzen
+            </button>
+            <button
+              onClick={() => setShowCalendar(false)}
+              className="flex-1 py-3 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors"
+            >
+              Bestätigen
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
