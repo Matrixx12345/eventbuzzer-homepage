@@ -8,7 +8,8 @@ import eventSymphony from "@/assets/event-symphony.jpg";
 
 const events = [
   {
-    id: 1,
+    id: "einsiedeln-abbey",
+    slug: "einsiedeln-abbey",
     image: eventAbbey,
     title: "Photo Spot Einsiedeln Abbey",
     venue: "Leonard House",
@@ -16,7 +17,8 @@ const events = [
     isPopular: true,
   },
   {
-    id: 2,
+    id: "nordportal",
+    slug: "nordportal",
     image: eventVenue,
     title: "Nordportal",
     venue: "Leonard House",
@@ -24,7 +26,8 @@ const events = [
     isPopular: true,
   },
   {
-    id: 3,
+    id: "kulturbetrieb-royal",
+    slug: "kulturbetrieb-royal",
     image: eventConcert,
     title: "Kulturbetrieb Royal",
     venue: "Leonard House",
@@ -32,7 +35,8 @@ const events = [
     isPopular: true,
   },
   {
-    id: 4,
+    id: "zurich-tonhalle",
+    slug: "zurich-tonhalle",
     image: eventSymphony,
     title: "Zurich Tonhalle",
     venue: "Tonhalle Orchestra",

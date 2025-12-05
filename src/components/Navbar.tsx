@@ -6,7 +6,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Favorites", href: "#" },
+    { label: "Favorites", href: "/favorites" },
     { label: "Reminders", href: "#" },
     { label: "Settings", href: "#" },
   ];
