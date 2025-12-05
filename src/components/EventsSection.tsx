@@ -77,15 +77,15 @@ const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }:
         <div className="relative h-48 md:h-full">
           <img src={image} alt={title} className="w-full h-full object-cover" />
         </div>
-        <div className="flex flex-col justify-center p-6 text-center">
+        <div className="flex flex-col h-full p-6 text-center">
           <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
             Premium Event
           </span>
-          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+          <h3 className="font-serif text-xl text-foreground mb-3">{title}</h3>
+          <p className="text-muted-foreground font-sans text-sm leading-relaxed mb-4">
             {description}
           </p>
-          <div>
+          <div className="mt-auto">
             <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
               View Details
             </Button>
@@ -101,15 +101,15 @@ const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }:
         <div className="relative">
           <img src={image} alt={title} className="w-full h-full object-cover" />
         </div>
-        <div className="flex flex-col justify-center p-6 text-center">
+        <div className="flex flex-col h-full p-6 text-center">
           <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
             Premium Event
           </span>
-          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+          <h3 className="font-serif text-xl text-foreground mb-3">{title}</h3>
+          <p className="text-muted-foreground font-sans text-sm leading-relaxed mb-4">
             {description}
           </p>
-          <div>
+          <div className="mt-auto">
             <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
               View Details
             </Button>
@@ -122,15 +122,15 @@ const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }:
   if (imagePosition === "right") {
     return (
       <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
-        <div className="flex flex-col justify-center p-6 text-center">
+        <div className="flex flex-col h-full p-6 text-center">
           <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
             Premium Event
           </span>
-          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+          <h3 className="font-serif text-xl text-foreground mb-3">{title}</h3>
+          <p className="text-muted-foreground font-sans text-sm leading-relaxed mb-4">
             {description}
           </p>
-          <div>
+          <div className="mt-auto">
             <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
               View Details
             </Button>
@@ -149,15 +149,15 @@ const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }:
       <div className={`relative ${isTall ? 'flex-1' : 'h-40'}`}>
         <img src={image} alt={title} className="w-full h-full object-cover" />
       </div>
-      <div className="flex flex-col justify-center p-6 text-center flex-shrink-0">
+      <div className="flex flex-col h-full p-6 text-center flex-shrink-0">
         <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
           Premium Event
         </span>
-        <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-        <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+        <h3 className="font-serif text-xl text-foreground mb-3">{title}</h3>
+        <p className="text-muted-foreground font-sans text-sm leading-relaxed mb-4">
           {description}
         </p>
-        <div>
+        <div className="mt-auto">
           <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
             View Details
           </Button>
@@ -171,8 +171,8 @@ const EventsSection = () => {
   return (
     <section className="bg-background py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16">
+        {/* Header - Left Aligned */}
+        <h2 className="font-serif text-4xl md:text-5xl text-foreground text-left mb-16">
           Happening Today
         </h2>
 
