@@ -3,6 +3,7 @@ import HeroSection from "@/components/HeroSection";
 import EventsSection from "@/components/EventsSection";
 import WeekendSection from "@/components/WeekendSection";
 import SwitzerlandSection from "@/components/SwitzerlandSection";
+import RainyDaySection from "@/components/RainyDaySection";
 
 const Index = () => {
   return (
@@ -13,6 +14,7 @@ const Index = () => {
         <EventsSection />
         <WeekendSection />
         <SwitzerlandSection />
+        <RainyDaySection />
       </main>
     </div>
   );

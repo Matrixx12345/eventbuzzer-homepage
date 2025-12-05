@@ -7,6 +7,7 @@ import swissZermatt from "@/assets/swiss-zermatt.jpg";
 import swissZurich from "@/assets/swiss-zurich.jpg";
 import swissInterlaken from "@/assets/swiss-interlaken.jpg";
 import swissBasel from "@/assets/swiss-basel.jpg";
+import swissTrain from "@/assets/swiss-train.jpg";
 
 const swissEvents = [
   {
@@ -74,6 +75,15 @@ const swissEvents = [
     gridClass: "col-span-1 row-span-1",
     imagePosition: "top",
   },
+  {
+    id: 9,
+    title: "The Grand Train Tour Winter Edition",
+    description: "Embark on an unforgettable journey aboard the iconic Glacier Express through snow-covered Alpine landscapes.",
+    image: swissTrain,
+    gridClass: "md:col-span-2 row-span-1",
+    imagePosition: "left",
+    isWide: true,
+  },
 ];
 
 interface BentoCardProps {
@@ -82,9 +92,35 @@ interface BentoCardProps {
   image: string;
   imagePosition: string;
   isTall?: boolean;
+  isWide?: boolean;
 }
 
-const BentoCard = ({ title, description, image, imagePosition, isTall }: BentoCardProps) => {
+const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }: BentoCardProps) => {
+  // Wide card layout (for spanning 2 columns)
+  if (isWide) {
+    return (
+      <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 h-full min-h-[280px]">
+        <div className="relative h-48 md:h-full">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex flex-col justify-center p-6 text-center">
+          <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+            Premium Event
+          </span>
+          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+            {description}
+          </p>
+          <div>
+            <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
+              View Details
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (imagePosition === "left") {
     return (
       <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
@@ -199,6 +235,11 @@ const SwitzerlandSection = () => {
           </div>
           <div className="md:col-span-1">
             <BentoCard {...swissEvents[7]} />
+          </div>
+
+          {/* Row 4: Wide feature card */}
+          <div className="md:col-span-2">
+            <BentoCard {...swissEvents[8]} />
           </div>
         </div>
       </div>
