@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight, Navigation } from "lucide-react";
 import { useState } from "react";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import {
   Carousel,
   CarouselContent,
@@ -348,7 +349,8 @@ const MasonryProductCard = ({ image, name, price, partner, size }: {
 
 const EventDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const eventId = slug || "unknown";
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   // Get event data or use default
@@ -411,10 +413,18 @@ const EventDetail = () => {
               Get Tickets
             </button>
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={() => toggleFavorite({ 
+                id: eventId, 
+                slug: slug || "", 
+                image: event.image, 
+                title: event.title, 
+                venue: event.venue, 
+                location: event.location,
+                date: event.date
+              })}
               className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
             >
-              <Heart size={20} className={isFavorite ? "fill-red-500 text-red-500" : "text-neutral-400"} />
+              <Heart size={20} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
             </button>
           </div>
 

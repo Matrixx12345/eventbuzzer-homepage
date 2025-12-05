@@ -14,23 +14,18 @@ const Favorites = () => {
 
     switch (activeFilter) {
       case "upcoming":
-        // Sort by event date (assuming date format allows string comparison)
         result.sort((a, b) => {
           if (!a.date || !b.date) return 0;
           return a.date.localeCompare(b.date);
         });
         break;
       case "recently-added":
-        // Sort by when added (most recent first)
         result.sort((a, b) => b.addedAt - a.addedAt);
         break;
       case "this-weekend":
-        // Filter for this weekend (simplified - shows all for demo)
-        // In production, would check actual dates
         break;
       case "all":
       default:
-        // Keep original order
         break;
     }
 
@@ -41,13 +36,13 @@ const Favorites = () => {
     <div className="min-h-screen bg-stone-50">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="bg-white py-16 border-b border-neutral-100">
+      {/* Compact Header */}
+      <section className="bg-white pt-8 pb-2">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-4">
+          <h1 className="font-serif text-3xl md:text-4xl font-bold text-neutral-900 mb-1">
             Your Favorites
           </h1>
-          <p className="text-neutral-600 text-lg max-w-2xl mx-auto">
+          <p className="text-neutral-600 text-sm">
             {favorites.length === 0 
               ? "Start exploring and save events you love" 
               : `${favorites.length} saved ${favorites.length === 1 ? 'event' : 'events'} waiting for you`
@@ -62,8 +57,8 @@ const Favorites = () => {
         onFilterChange={setActiveFilter} 
       />
 
-      {/* Favorites Grid */}
-      <section className="py-12">
+      {/* Masonry Grid */}
+      <section className="py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {filteredFavorites.length === 0 ? (
             <div className="text-center py-20">
@@ -90,18 +85,18 @@ const Favorites = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
               {filteredFavorites.map((event) => (
                 <article 
                   key={event.id}
-                  className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 relative"
+                  className="break-inside-avoid bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300"
                 >
                   <Link to={`/event/${event.slug}`}>
-                    <div className="relative aspect-[4/3] overflow-hidden">
+                    <div className="relative overflow-hidden">
                       <img
                         src={event.image}
                         alt={event.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
                       />
                       
                       {/* Favorite Button */}
@@ -111,11 +106,11 @@ const Favorites = () => {
                           e.stopPropagation();
                           toggleFavorite(event);
                         }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-colors"
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
                         aria-label="Remove from favorites"
                       >
                         <Heart
-                          size={20}
+                          size={18}
                           className="fill-red-500 text-red-500"
                         />
                       </button>
@@ -124,14 +119,14 @@ const Favorites = () => {
 
                   <div className="p-4">
                     <Link to={`/event/${event.slug}`}>
-                      <h3 className="text-lg font-semibold text-neutral-900 line-clamp-1 hover:text-neutral-600 transition-colors">
+                      <h3 className="text-base font-semibold text-neutral-900 line-clamp-2 hover:text-neutral-600 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
-                    <p className="text-sm text-neutral-600 mt-1">{event.venue}</p>
-                    <p className="text-sm text-neutral-500">{event.location}</p>
+                    <p className="text-sm text-neutral-500 mt-1">{event.venue}</p>
+                    <p className="text-sm text-neutral-400">{event.location}</p>
                     {event.date && (
-                      <p className="text-sm font-medium text-neutral-900 mt-2">{event.date}</p>
+                      <p className="text-sm font-medium text-neutral-700 mt-2">{event.date}</p>
                     )}
                   </div>
                 </article>

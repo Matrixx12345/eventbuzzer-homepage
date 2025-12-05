@@ -1,6 +1,6 @@
 import { Heart } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 import rainyKunsthaus from "@/assets/rainy-kunsthaus.jpg";
 import rainySpa from "@/assets/rainy-spa.jpg";
@@ -9,6 +9,7 @@ import rainyChocolate from "@/assets/rainy-chocolate.jpg";
 import rainyFifa from "@/assets/rainy-fifa.jpg";
 
 interface RainyCardProps {
+  id: string;
   image: string;
   title: string;
   description?: string;
@@ -18,8 +19,9 @@ interface RainyCardProps {
   slug: string;
 }
 
-const RainyCard = ({ image, title, description, venue, location, isLarge = false, slug }: RainyCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+const RainyCard = ({ id, image, title, description, venue, location, isLarge = false, slug }: RainyCardProps) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isCurrentlyFavorite = isFavorite(id);
 
   return (
     <Link to={`/event/${slug}`} className="block h-full">
@@ -38,14 +40,14 @@ const RainyCard = ({ image, title, description, venue, location, isLarge = false
         <button
           onClick={(e) => {
             e.preventDefault();
-            setIsFavorite(!isFavorite);
+            toggleFavorite({ id, slug, image, title, venue, location });
           }}
           className="absolute top-4 right-4 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors z-10"
-          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
             size={20}
-            className={isFavorite ? "fill-favorite text-favorite" : "text-card-foreground"}
+            className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-card-foreground"}
           />
         </button>
 
@@ -80,6 +82,7 @@ const RainyCard = ({ image, title, description, venue, location, isLarge = false
 const rainyEvents = {
   row1: {
     large: {
+      id: "rainy-kunsthaus",
       image: rainyKunsthaus,
       title: "Kunsthaus Zürich",
       description: "Discover world-class art collections spanning from medieval times to contemporary masterpieces in one of Switzerland's most prestigious galleries.",
@@ -89,6 +92,7 @@ const rainyEvents = {
     },
     small: [
       {
+        id: "rainy-spa",
         image: rainySpa,
         title: "Hürlimann Spa",
         venue: "Thermalbad & Spa",
@@ -96,6 +100,7 @@ const rainyEvents = {
         slug: "hurlimann-spa",
       },
       {
+        id: "rainy-cinema",
         image: rainyCinema,
         title: "Kosmos Cinema",
         venue: "Kosmos Kulturhaus",
@@ -106,6 +111,7 @@ const rainyEvents = {
   },
   row2: [
     {
+      id: "rainy-chocolate",
       image: rainyChocolate,
       title: "Lindt Home of Chocolate",
       description: "Experience the world's largest chocolate fountain and explore interactive exhibits showcasing the art of Swiss chocolate making.",
@@ -114,6 +120,7 @@ const rainyEvents = {
       slug: "lindt-chocolate",
     },
     {
+      id: "rainy-fifa",
       image: rainyFifa,
       title: "FIFA Museum",
       description: "Immerse yourself in the history of football with interactive exhibits, memorabilia, and the iconic World Cup trophy.",
