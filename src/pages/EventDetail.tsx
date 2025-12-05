@@ -254,14 +254,14 @@ const similarEvents = [
   { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28" },
 ];
 
-// Partner products
+// Partner products with masonry layout info
 const partnerProducts = [
-  { image: partnerChampagne, name: "Moët & Chandon", price: "CHF 49", partner: "Galaxus" },
-  { image: partnerRoses, name: "12 Red Roses", price: "CHF 39", partner: "Fleurop" },
-  { image: partnerTeddy, name: "Teddy Bear", price: "CHF 35", partner: "Manor" },
-  { image: partnerChocolate, name: "Lindt Pralinés", price: "CHF 29", partner: "Lindt" },
-  { image: partnerRoses, name: "Rose Bouquet", price: "CHF 45", partner: "Fleurop" },
-  { image: partnerChampagne, name: "Dom Pérignon", price: "CHF 189", partner: "Galaxus" },
+  { image: partnerRoses, name: "12 Red Roses Bouquet", price: "CHF 39", partner: "Fleurop", size: "tall" as const },
+  { image: partnerChampagne, name: "Moët & Chandon Impérial", price: "CHF 49", partner: "Galaxus", size: "standard" as const },
+  { image: partnerChocolate, name: "Lindt Pralinés Selection", price: "CHF 29", partner: "Lindt", size: "standard" as const },
+  { image: eventVenue, name: "VIP Chauffeur Service", price: "CHF 189", partner: "Blacklane", size: "wide" as const },
+  { image: partnerTeddy, name: "Premium Teddy Bear", price: "CHF 35", partner: "Manor", size: "standard" as const },
+  { image: rainySpa, name: "Late Night Spa Access", price: "CHF 79", partner: "Hürlimann", size: "tall" as const },
 ];
 
 // Similar Event Card - Clean White Design
@@ -299,32 +299,40 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date }: {
   );
 };
 
-// Compact Product Card - Framed White Design
-const ProductCard = ({ image, name, price, partner }: {
+// Masonry Product Card - Pinterest Style
+const MasonryProductCard = ({ image, name, price, partner, size }: {
   image: string;
   name: string;
   price: string;
   partner: string;
+  size: "standard" | "tall" | "wide";
 }) => {
+  const sizeClasses = {
+    standard: "",
+    tall: "row-span-2",
+    wide: "col-span-2",
+  };
+
   return (
-    <article className="bg-white rounded-lg overflow-hidden border border-neutral-200 hover:border-neutral-300 transition-colors group cursor-pointer">
-      {/* Square Image */}
-      <div className="aspect-square overflow-hidden">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-      </div>
+    <article className={`relative rounded-2xl overflow-hidden group cursor-pointer ${sizeClasses[size]}`}>
+      {/* Full-bleed Image */}
+      <img
+        src={image}
+        alt={name}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 min-h-[200px]"
+      />
       
-      {/* Content */}
-      <div className="p-3">
-        <p className="text-neutral-400 text-[10px] uppercase tracking-wider mb-1">via {partner}</p>
-        <h3 className="text-neutral-900 text-sm font-medium leading-tight mb-1 truncate">{name}</h3>
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      
+      {/* Content Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <p className="text-white/70 text-[10px] uppercase tracking-wider mb-1">via {partner}</p>
+        <h3 className="text-white font-serif text-lg font-semibold leading-tight mb-1">{name}</h3>
         <div className="flex items-center justify-between">
-          <span className="text-neutral-900 font-semibold text-sm">{price}</span>
-          <button className="text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-0.5 text-xs font-medium">
-            <Plus size={14} /> Add
+          <span className="text-white font-semibold">{price}</span>
+          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1">
+            <Plus size={12} /> Add
           </button>
         </div>
       </div>
@@ -447,18 +455,18 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* PARTNER PRODUCTS - 6-Column Compact Grid */}
-      <section className="bg-white py-16 border-t border-neutral-100">
+      {/* PARTNER PRODUCTS - Pinterest Masonry Grid */}
+      <section className="bg-stone-50 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold mb-2">Unvergessliche Augenblicke</h2>
             <p className="text-neutral-500">Curated additions to enhance your experience</p>
           </div>
 
-          {/* 6-Column Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {/* Masonry Grid - 3 columns with varied spans */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[180px] md:auto-rows-[200px]">
             {partnerProducts.map((product, index) => (
-              <ProductCard key={index} {...product} />
+              <MasonryProductCard key={index} {...product} />
             ))}
           </div>
         </div>
