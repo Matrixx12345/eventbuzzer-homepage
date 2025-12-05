@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 import swissGeneva from "@/assets/swiss-geneva.jpg";
 import swissLucerne from "@/assets/swiss-lucerne.jpg";
@@ -17,6 +18,7 @@ const swissEvents = [
     image: swissGeneva,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "left",
+    slug: "geneva-watch-fair",
   },
   {
     id: 2,
@@ -25,6 +27,7 @@ const swissEvents = [
     image: swissLucerne,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "right",
+    slug: "lucerne-classical",
   },
   {
     id: 3,
@@ -34,6 +37,7 @@ const swissEvents = [
     gridClass: "md:col-span-1 md:row-span-2",
     imagePosition: "top",
     isTall: true,
+    slug: "bern-market",
   },
   {
     id: 4,
@@ -42,6 +46,7 @@ const swissEvents = [
     image: swissZermatt,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "left",
+    slug: "zermatt-hiking",
   },
   {
     id: 5,
@@ -50,6 +55,7 @@ const swissEvents = [
     image: swissZermatt,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "left",
+    slug: "zermatt-hiking",
   },
   {
     id: 6,
@@ -58,6 +64,7 @@ const swissEvents = [
     image: swissZurich,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "top",
+    slug: "zurich-film",
   },
   {
     id: 7,
@@ -66,6 +73,7 @@ const swissEvents = [
     image: swissInterlaken,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "top",
+    slug: "interlaken-adventure",
   },
   {
     id: 8,
@@ -74,6 +82,7 @@ const swissEvents = [
     image: swissBasel,
     gridClass: "col-span-1 row-span-1",
     imagePosition: "top",
+    slug: "basel-fair",
   },
   {
     id: 9,
@@ -83,6 +92,7 @@ const swissEvents = [
     gridClass: "md:col-span-2 row-span-1",
     imagePosition: "left",
     isWide: true,
+    slug: "geneva-watch-fair",
   },
 ];
 
@@ -93,62 +103,97 @@ interface BentoCardProps {
   imagePosition: string;
   isTall?: boolean;
   isWide?: boolean;
+  slug?: string;
 }
 
-const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }: BentoCardProps) => {
+const BentoCard = ({ title, description, image, imagePosition, isTall, isWide, slug = "geneva-watch-fair" }: BentoCardProps) => {
   // Wide card layout (for spanning 2 columns)
   if (isWide) {
     return (
-      <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 h-full min-h-[280px]">
-        <div className="relative h-48 md:h-full">
-          <img src={image} alt={title} className="w-full h-full object-cover" />
-        </div>
-        <div className="flex flex-col justify-center p-6 text-center">
-          <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
-            Premium Event
-          </span>
-          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
-            {description}
-          </p>
-          <div>
-            <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
-              View Details
-            </Button>
+      <Link to={`/event/${slug}`} className="block h-full group">
+        <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 h-full min-h-[280px]">
+          <div className="relative h-48 md:h-full overflow-hidden">
+            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          </div>
+          <div className="flex flex-col justify-center p-6 text-center">
+            <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+              Premium Event
+            </span>
+            <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+            <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+              {description}
+            </p>
+            <div>
+              <span className="inline-block border border-card-foreground/30 text-card-foreground hover:bg-card-foreground/10 font-sans text-xs px-4 py-2 rounded-md transition-colors">
+                View Details
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
     );
   }
 
   if (imagePosition === "left") {
     return (
-      <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
-        <div className="relative">
-          <img src={image} alt={title} className="w-full h-full object-cover" />
-        </div>
-        <div className="flex flex-col justify-center p-6 text-center">
-          <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
-            Premium Event
-          </span>
-          <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-          <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
-            {description}
-          </p>
-          <div>
-            <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
-              View Details
-            </Button>
+      <Link to={`/event/${slug}`} className="block h-full group">
+        <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
+          <div className="relative overflow-hidden">
+            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          </div>
+          <div className="flex flex-col justify-center p-6 text-center">
+            <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+              Premium Event
+            </span>
+            <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+            <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+              {description}
+            </p>
+            <div>
+              <span className="inline-block border border-card-foreground/30 text-card-foreground hover:bg-card-foreground/10 font-sans text-xs px-4 py-2 rounded-md transition-colors">
+                View Details
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
     );
   }
 
   if (imagePosition === "right") {
     return (
-      <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
-        <div className="flex flex-col justify-center p-6 text-center">
+      <Link to={`/event/${slug}`} className="block h-full group">
+        <div className="bg-card rounded-3xl overflow-hidden grid grid-cols-2 h-full min-h-[280px]">
+          <div className="flex flex-col justify-center p-6 text-center">
+            <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
+              Premium Event
+            </span>
+            <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
+            <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
+              {description}
+            </p>
+            <div>
+              <span className="inline-block border border-card-foreground/30 text-card-foreground hover:bg-card-foreground/10 font-sans text-xs px-4 py-2 rounded-md transition-colors">
+                View Details
+              </span>
+            </div>
+          </div>
+          <div className="relative overflow-hidden">
+            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  // Top image position (default for tall and bottom row cards)
+  return (
+    <Link to={`/event/${slug}`} className="block h-full group">
+      <div className={`bg-card rounded-3xl overflow-hidden flex flex-col h-full ${isTall ? 'min-h-[580px]' : 'min-h-[280px]'}`}>
+        <div className={`relative overflow-hidden ${isTall ? 'flex-1' : 'h-40'}`}>
+          <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        </div>
+        <div className="flex flex-col justify-center p-6 text-center flex-shrink-0">
           <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
             Premium Event
           </span>
@@ -157,39 +202,13 @@ const BentoCard = ({ title, description, image, imagePosition, isTall, isWide }:
             {description}
           </p>
           <div>
-            <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
+            <span className="inline-block border border-card-foreground/30 text-card-foreground hover:bg-card-foreground/10 font-sans text-xs px-4 py-2 rounded-md transition-colors">
               View Details
-            </Button>
+            </span>
           </div>
         </div>
-        <div className="relative">
-          <img src={image} alt={title} className="w-full h-full object-cover" />
-        </div>
       </div>
-    );
-  }
-
-  // Top image position (default for tall and bottom row cards)
-  return (
-    <div className={`bg-card rounded-3xl overflow-hidden flex flex-col h-full ${isTall ? 'min-h-[580px]' : 'min-h-[280px]'}`}>
-      <div className={`relative ${isTall ? 'flex-1' : 'h-40'}`}>
-        <img src={image} alt={title} className="w-full h-full object-cover" />
-      </div>
-      <div className="flex flex-col justify-center p-6 text-center flex-shrink-0">
-        <span className="text-primary text-xs font-sans tracking-[0.2em] uppercase mb-3">
-          Premium Event
-        </span>
-        <h3 className="font-serif text-xl text-white mb-3">{title}</h3>
-        <p className="text-gray-400 font-sans text-sm leading-relaxed mb-4">
-          {description}
-        </p>
-        <div>
-          <Button variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 font-sans text-xs px-4">
-            View Details
-          </Button>
-        </div>
-      </div>
-    </div>
+    </Link>
   );
 };
 
