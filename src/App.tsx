@@ -7,6 +7,7 @@ import { FavoritesProvider } from "./contexts/FavoritesContext";
 import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
 import Favorites from "./pages/Favorites";
+import Listings from "./pages/Listings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/event/:slug" element={<EventDetail />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/listings" element={<Listings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
