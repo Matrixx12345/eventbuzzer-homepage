@@ -202,7 +202,7 @@ const Listings = () => {
         <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-4 py-3.5 bg-white hover:bg-white/90 rounded-xl text-violet-900 transition-all flex items-center justify-center gap-2.5 font-semibold shadow-lg shadow-black/10"
+          className="w-full px-4 py-3.5 bg-white hover:bg-neutral-100 rounded-xl text-neutral-900 transition-all flex items-center justify-center gap-2.5 font-semibold shadow-lg shadow-black/10"
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
@@ -255,7 +255,7 @@ const Listings = () => {
                 className={cn(
                   "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                   isActive
-                    ? "bg-white text-violet-900 shadow-lg shadow-black/10"
+                    ? "bg-white text-neutral-900 shadow-lg shadow-black/10"
                     : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
                 )}
               >
@@ -282,7 +282,7 @@ const Listings = () => {
               className={cn(
                 "py-2.5 text-xs font-bold transition-all rounded-lg",
                 selectedPrice === price.id
-                  ? "bg-white text-violet-900 shadow-md"
+                  ? "bg-white text-neutral-900 shadow-md"
                   : "text-white/70 hover:text-white hover:bg-white/10"
               )}
             >
@@ -333,12 +333,12 @@ const Listings = () => {
           <SelectTrigger className="w-full rounded-xl border-0 bg-white/10 backdrop-blur-sm py-3.5 text-sm font-medium text-white focus:ring-2 focus:ring-white/50 hover:bg-white/20 transition-all">
             <SelectValue placeholder="Alle Kategorien" />
           </SelectTrigger>
-          <SelectContent className="bg-white border-0 shadow-2xl shadow-violet-900/20 rounded-xl overflow-hidden z-50">
+          <SelectContent className="bg-white border-0 shadow-2xl shadow-neutral-900/20 rounded-xl overflow-hidden z-50">
             {categories.map((cat) => (
               <SelectItem 
                 key={cat.value} 
                 value={cat.value} 
-                className="cursor-pointer py-3 text-sm font-medium focus:bg-violet-50 text-neutral-700"
+                className="cursor-pointer py-3 text-sm font-medium focus:bg-neutral-100 text-neutral-700"
               >
                 {cat.label}
               </SelectItem>
@@ -358,7 +358,7 @@ const Listings = () => {
               className={cn(
                 "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
                 selectedSubcategories.includes(sub)
-                  ? "bg-white text-violet-900 shadow-lg shadow-black/10"
+                  ? "bg-white text-neutral-900 shadow-lg shadow-black/10"
                   : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
               )}
             >
@@ -390,7 +390,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 rounded-2xl p-6 shadow-2xl shadow-violet-900/30 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="sticky top-24 bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-950 rounded-2xl p-6 shadow-2xl shadow-neutral-900/40 max-h-[calc(100vh-120px)] overflow-y-auto">
               <FilterContent />
             </div>
           </aside>
