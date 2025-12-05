@@ -38,7 +38,7 @@ const Favorites = () => {
       <Navbar />
       
       {/* Hero Header with Image */}
-      <section className="relative h-48 md:h-56 overflow-hidden">
+      <section className="relative h-40 md:h-48 overflow-hidden">
         <img 
           src={heroImage} 
           alt="Favorites" 
@@ -104,7 +104,7 @@ const Favorites = () => {
                         src={event.image}
                         alt={event.title}
                         className={`w-full object-cover hover:scale-105 transition-transform duration-500 ${
-                          index === 0 ? 'aspect-[3/4]' : 'h-auto'
+                          index === 0 ? 'aspect-[5/6]' : 'h-auto'
                         }`}
                       />
                       
