@@ -19,6 +19,13 @@ const HeroSection = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20" />
       </div>
+
+      {/* Centered Subtitle */}
+      <div className="bg-background py-8 text-center">
+        <p className="text-lg md:text-xl font-sans text-muted-foreground tracking-wide">
+          Discover what's buzzing:
+        </p>
+      </div>
     </section>
   );
 };
