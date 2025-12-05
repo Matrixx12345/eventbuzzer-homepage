@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Clock, ArrowLeft, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useState, useRef } from "react";
+import { Heart, MapPin, Calendar, Clock, ExternalLink } from "lucide-react";
+import { useState } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -228,24 +228,23 @@ const eventsData: Record<string, {
 
 // Similar events for carousel
 const similarEvents = [
-  { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20, 2025" },
-  { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22, 2025" },
-  { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25, 2025" },
-  { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28, 2025" },
-  { slug: "jazz-quartet", image: weekendJazz, title: "Jazz Quartet Night", venue: "Leonard House", location: "Baden • CH", date: "Jan 5, 2026" },
-  { slug: "comedy-club", image: weekendComedy, title: "Comedy Night", venue: "Leonard House", location: "Baden • CH", date: "Jan 10, 2026" },
+  { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20" },
+  { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22" },
+  { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25" },
+  { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28" },
 ];
 
-// Partner products - compact grid items
+// Partner products - masonry grid items
 const partnerProducts = [
-  { image: partnerRoses, name: "Red Roses Bouquet (12 pcs)", price: "39 €", partner: "Lokalem Partner" },
-  { image: partnerChocolate, name: "Heart-Shaped Velvet Box of Chocolates", price: "29 €", partner: "Lokalem Partner" },
-  { image: partnerChampagne, name: "Moët & Chandon Brut Impérial", price: "49 €", partner: "Galaxus" },
-  { image: partnerTeddy, name: "Soft Teddy Bear (50 cm)", price: "35 €", partner: "Manor" },
-  { image: partnerChocolate, name: "Elegant Scented Candle Set", price: "24 €", partner: "Manor" },
-  { image: partnerRoses, name: "Heart-Shaped Winter Gloves (Couple Set)", price: "27 €", partner: "Galaxus" },
+  { image: partnerChampagne, name: "Moët & Chandon", price: "CHF 49", partner: "Galaxus", isTall: true },
+  { image: partnerRoses, name: "12 Red Roses", price: "CHF 39", partner: "Fleurop", isTall: false },
+  { image: partnerTeddy, name: "Teddy Bear", price: "CHF 35", partner: "Manor", isTall: false },
+  { image: partnerChocolate, name: "Lindt Pralinés", price: "CHF 29", partner: "Lindt", isTall: true },
+  { image: partnerRoses, name: "Rose Bouquet", price: "CHF 45", partner: "Fleurop", isTall: false },
+  { image: partnerChampagne, name: "Dom Pérignon", price: "CHF 189", partner: "Galaxus", isTall: false },
 ];
 
+// Similar Event Card - Zig-Zag Style from Landing Page
 const SimilarEventCard = ({ slug, image, title, venue, location, date }: {
   slug: string;
   image: string;
@@ -257,68 +256,74 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date }: {
   const [isFavorite, setIsFavorite] = useState(false);
 
   return (
-    <Link to={`/event/${slug}`} className="block group">
-      <article className="bg-card rounded-xl overflow-hidden">
-        {/* 16:9 Landscape Image */}
-        <div className="relative aspect-video overflow-hidden">
+    <Link to={`/event/${slug}`} className="block group h-full">
+      <article className="bg-neutral-900 rounded-2xl overflow-hidden h-full flex flex-col">
+        {/* Image - 50% */}
+        <div className="relative h-40 overflow-hidden">
           <img
             src={image}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          {/* POPULAR Badge */}
           <div className="absolute top-3 left-3">
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-semibold">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-600 text-white text-xs font-semibold">
               🔥 POPULAR
             </span>
           </div>
-          {/* Favorite Button */}
           <button
             onClick={(e) => {
               e.preventDefault();
               setIsFavorite(!isFavorite);
             }}
-            className="absolute top-3 right-3 p-2"
+            className="absolute top-3 right-3 p-1.5"
           >
-            <Heart size={20} className={isFavorite ? "fill-favorite text-favorite" : "text-white"} />
+            <Heart size={16} className={isFavorite ? "fill-red-500 text-red-500" : "text-white"} />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4">
-          <h3 className="font-sans text-card-foreground text-base font-semibold leading-tight mb-1">{title}</h3>
-          <p className="text-muted-foreground text-sm">{venue}</p>
-          <p className="text-muted-foreground text-sm">{location}</p>
+        {/* Content - 50% */}
+        <div className="p-4 flex flex-col flex-1">
+          <span className="text-amber-500 text-xs font-semibold tracking-wider mb-2">PREMIUM EVENT</span>
+          <h3 className="font-serif text-white text-base font-semibold leading-tight mb-1">{title}</h3>
+          <p className="text-neutral-400 text-sm mb-1">{venue}</p>
+          <p className="text-neutral-500 text-xs mb-3">{location} • {date}</p>
+          <button className="mt-auto bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm">
+            View Details
+          </button>
         </div>
       </article>
     </Link>
   );
 };
 
-const ProductCard = ({ image, name, price, partner }: {
+// Masonry Product Card
+const ProductCard = ({ image, name, price, partner, isTall }: {
   image: string;
   name: string;
   price: string;
   partner: string;
+  isTall: boolean;
 }) => {
   return (
-    <article className="bg-card rounded-xl overflow-hidden p-4 flex flex-col sm:flex-row items-center gap-4">
-      {/* Square Product Image */}
-      <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-white">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover"
-        />
-      </div>
-
+    <article className={`relative rounded-2xl overflow-hidden group cursor-pointer ${isTall ? 'row-span-2' : ''}`}>
+      <img
+        src={image}
+        alt={name}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+      />
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      
       {/* Content */}
-      <div className="flex-1 text-center sm:text-left">
-        <h3 className="text-card-foreground text-sm font-semibold mb-1">{name}</h3>
-        <p className="text-primary font-semibold mb-3">{price}</p>
-        <button className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/40 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
-          Bei {partner} kaufen
-        </button>
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <p className="text-white/60 text-xs mb-1">via {partner}</p>
+        <h3 className="font-serif text-white text-lg font-semibold mb-1">{name}</h3>
+        <div className="flex items-center justify-between">
+          <span className="text-amber-400 font-semibold">{price}</span>
+          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors flex items-center gap-1">
+            Shop <ExternalLink size={12} />
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -340,96 +345,105 @@ const EventDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-card">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Image - Full Width, No Overlay Text */}
-      <section className="relative h-[50vh] min-h-[350px] overflow-hidden">
+      {/* HERO SECTION - Cinematic Dark Mode */}
+      <section className="relative h-[60vh] min-h-[400px] overflow-hidden">
         <img
           src={event.image}
           alt={event.title}
           className="w-full h-full object-cover"
         />
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
       </section>
 
-      {/* Info Bar + Content Section */}
-      <section className="bg-card">
+      {/* FLOATING WHITE CARD - Magazine Style */}
+      <section className="relative z-10 -mt-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Title and Get Tickets Row */}
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between py-8 gap-6">
-            <div className="flex-1">
-              <h1 className="font-serif text-card-foreground text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-                {event.title}
-              </h1>
-              
-              {/* Event Meta */}
-              <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} />
-                  <span>{event.date}</span>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 max-w-4xl mx-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              {/* Left - Event Info */}
+              <div className="flex-1">
+                <h1 className="font-serif text-neutral-900 text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
+                  {event.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-neutral-600">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-amber-600" />
+                    <span className="text-sm">{event.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-amber-600" />
+                    <span className="text-sm">{event.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin size={16} className="text-amber-600" />
+                    <span className="text-sm">{event.venue}, {event.location}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={16} />
-                  <span>{event.time}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} />
-                  <span>{event.venue}</span>
-                </div>
-                <span>{event.location}</span>
+              </div>
+
+              {/* Right - Actions */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors shadow-lg shadow-amber-600/30">
+                  Get Tickets
+                </button>
+                <button
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  className="p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                >
+                  <Heart size={20} className={isFavorite ? "fill-red-500 text-red-500" : "text-neutral-600"} />
+                </button>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 rounded-lg transition-colors">
-                Get Tickets
-              </button>
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className="p-3 rounded-lg border border-border/40 hover:bg-card/80 transition-colors"
-              >
-                <Heart size={20} className={isFavorite ? "fill-favorite text-favorite" : "text-card-foreground"} />
-              </button>
-            </div>
           </div>
+        </div>
+      </section>
 
-          {/* Two Column: About + Map */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-16">
+      {/* CONTENT & MAP SECTION - Clean White */}
+      <section className="bg-white py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
             {/* Left - About (66%) */}
             <div className="lg:col-span-2">
-              <h2 className="font-semibold text-card-foreground text-lg mb-4">About This Event</h2>
-              <p className="text-muted-foreground leading-relaxed">
+              <h2 className="font-serif text-neutral-900 text-2xl font-bold mb-6">About This Event</h2>
+              <p className="text-neutral-600 leading-relaxed text-lg">
                 {event.description}
               </p>
-              <button className="text-primary hover:underline mt-2 text-sm font-medium">
-                Mehr lesen
+              <p className="text-neutral-600 leading-relaxed text-lg mt-4">
+                Join us for an extraordinary experience that combines world-class entertainment with Swiss precision and elegance. Whether you're a seasoned enthusiast or discovering this for the first time, this event promises to create lasting memories.
+              </p>
+              <button className="text-amber-600 hover:text-amber-700 mt-4 text-sm font-semibold flex items-center gap-1">
+                Read more about the venue →
               </button>
             </div>
 
             {/* Right - Map (33%) */}
             <div className="lg:col-span-1">
-              <div className="rounded-xl overflow-hidden border border-border/20">
-                {/* Placeholder Map */}
-                <div className="aspect-[4/3] bg-neutral-800 relative">
+              <div className="rounded-xl overflow-hidden border border-neutral-200 shadow-sm">
+                <div className="aspect-square bg-neutral-100 relative">
                   <img
-                    src="https://maps.googleapis.com/maps/api/staticmap?center=New+York,NY&zoom=11&size=400x300&maptype=roadmap&key=placeholder"
+                    src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/8.5417,47.3769,12,0/400x400?access_token=placeholder`}
                     alt="Map"
-                    className="w-full h-full object-cover opacity-60"
+                    className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23374151" width="400" height="300"/><text x="200" y="150" fill="%239CA3AF" text-anchor="middle" font-family="sans-serif" font-size="16">Map</text></svg>';
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect fill="%23f5f5f5" width="400" height="400"/><text x="200" y="200" fill="%23999" text-anchor="middle" font-family="sans-serif" font-size="14">Map</text></svg>';
                     }}
                   />
-                  {/* Map Controls Overlay */}
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    <span className="bg-white text-neutral-800 text-xs px-2 py-1 rounded font-medium">Map</span>
-                    <span className="bg-white/80 text-neutral-600 text-xs px-2 py-1 rounded">Satellite</span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-amber-600 text-white p-2 rounded-full shadow-lg">
+                      <MapPin size={20} />
+                    </div>
                   </div>
                 </div>
-                <div className="p-3 bg-card">
-                  <p className="text-muted-foreground text-sm">
-                    📍 Distance: 76.0 km away from you (is only shown when you allow location access)
-                  </p>
+                <div className="p-4 bg-white">
+                  <p className="text-neutral-900 font-semibold text-sm">{event.venue}</p>
+                  <p className="text-neutral-500 text-sm">{event.location}</p>
+                  <button className="text-amber-600 hover:text-amber-700 text-sm font-medium mt-2">
+                    Get Directions →
+                  </button>
                 </div>
               </div>
             </div>
@@ -437,11 +451,16 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* Similar Events Carousel */}
-      <section className="py-16 bg-card border-t border-border/10">
+      {/* SIMILAR EVENTS - Dark Mode Carousel */}
+      <section className="bg-neutral-950 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-card-foreground text-2xl sm:text-3xl mb-8">Ähnliche Events</h2>
-          
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-serif text-white text-2xl sm:text-3xl font-bold">Ähnliche Events</h2>
+            <Link to="/" className="text-amber-500 hover:text-amber-400 text-sm font-medium">
+              View All →
+            </Link>
+          </div>
+
           <Carousel
             opts={{
               align: "start",
@@ -456,21 +475,22 @@ const EventDetail = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="hidden sm:flex -left-4 bg-card border-border/40 text-card-foreground hover:bg-card/80" />
-            <CarouselNext className="hidden sm:flex -right-4 bg-card border-border/40 text-card-foreground hover:bg-card/80" />
+            <CarouselPrevious className="hidden sm:flex -left-4 bg-white/10 border-white/20 text-white hover:bg-white/20" />
+            <CarouselNext className="hidden sm:flex -right-4 bg-white/10 border-white/20 text-white hover:bg-white/20" />
           </Carousel>
         </div>
       </section>
 
-      {/* Unvergessliche Augenblicke - Dense Grid */}
-      <section className="py-16 bg-card border-t border-border/10">
+      {/* PARTNER PRODUCTS - Light Masonry Grid */}
+      <section className="bg-stone-50 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-card-foreground text-2xl sm:text-3xl mb-8">
-            Unvergessliche Augenblicke schaffen
-          </h2>
+          <div className="text-center mb-10">
+            <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold mb-2">Unvergessliche Augenblicke</h2>
+            <p className="text-neutral-500">Curated additions to make your evening unforgettable</p>
+          </div>
 
-          {/* 3-Column Grid on Desktop (2 rows of 3) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Masonry Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[200px]">
             {partnerProducts.map((product, index) => (
               <ProductCard key={index} {...product} />
             ))}
@@ -478,14 +498,8 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 bg-card border-t border-border/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-muted-foreground text-sm">
-            © 2025 EventBuzzer. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      {/* Footer Spacer */}
+      <div className="h-16 bg-stone-50" />
     </div>
   );
 };
