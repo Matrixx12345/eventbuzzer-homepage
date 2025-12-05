@@ -394,23 +394,20 @@ const Listings = () => {
               </button>
             </div>
 
-            {/* Masonry Grid */}
-            <div className="columns-1 sm:columns-2 xl:columns-3 gap-5 space-y-5">
-              {filteredEvents.map((event, index) => (
+            {/* Uniform Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {filteredEvents.map((event) => (
                 <Link
                   key={event.id}
                   to={`/event/${event.slug}`}
-                  className="block break-inside-avoid group"
+                  className="block group"
                 >
                   <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-xl hover:shadow-neutral-900/10 transition-all duration-300">
                     <div className="relative overflow-hidden">
                       <img
                         src={event.image}
                         alt={event.title}
-                        className={cn(
-                          "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                          index === 0 ? "aspect-[5/6]" : index % 3 === 1 ? "aspect-[4/3]" : "aspect-square"
-                        )}
+                        className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
                       {/* Category Badge */}
