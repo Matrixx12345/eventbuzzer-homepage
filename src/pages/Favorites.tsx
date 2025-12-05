@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FavoritesFilterBar, { FilterOption } from "@/components/FavoritesFilterBar";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import heroImage from "@/assets/hero-mountains.jpg";
 
 const Favorites = () => {
   const { favorites, toggleFavorite } = useFavorites();
@@ -36,13 +37,19 @@ const Favorites = () => {
     <div className="min-h-screen bg-stone-50">
       <Navbar />
       
-      {/* Compact Header */}
-      <section className="bg-white pt-8 pb-2">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-neutral-900 mb-1">
+      {/* Hero Header with Image */}
+      <section className="relative h-48 md:h-56 overflow-hidden">
+        <img 
+          src={heroImage} 
+          alt="Favorites" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+          <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-2">
             Your Favorites
           </h1>
-          <p className="text-neutral-600 text-sm">
+          <p className="text-white/80 text-sm md:text-base">
             {favorites.length === 0 
               ? "Start exploring and save events you love" 
               : `${favorites.length} saved ${favorites.length === 1 ? 'event' : 'events'} waiting for you`
@@ -86,7 +93,7 @@ const Favorites = () => {
             </div>
           ) : (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
-              {filteredFavorites.map((event) => (
+              {filteredFavorites.map((event, index) => (
                 <article 
                   key={event.id}
                   className="break-inside-avoid bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300"
@@ -96,7 +103,9 @@ const Favorites = () => {
                       <img
                         src={event.image}
                         alt={event.title}
-                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
+                        className={`w-full object-cover hover:scale-105 transition-transform duration-500 ${
+                          index === 0 ? 'aspect-[3/4]' : 'h-auto'
+                        }`}
                       />
                       
                       {/* Favorite Button */}
