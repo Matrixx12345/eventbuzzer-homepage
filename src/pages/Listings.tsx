@@ -199,10 +199,10 @@ const Listings = () => {
 
       {/* Datum (Date) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Wann?</h3>
+        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 rounded-xl text-white transition-all flex items-center justify-center gap-2.5 font-semibold shadow-lg shadow-blue-500/30"
+          className="w-full px-4 py-3.5 bg-white hover:bg-neutral-100 rounded-xl text-neutral-900 transition-all flex items-center justify-center gap-2.5 font-semibold shadow-lg shadow-black/10"
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
@@ -218,8 +218,8 @@ const Listings = () => {
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isToday(selectedDate)
-                ? "bg-cyan-400 text-slate-900 shadow-lg shadow-cyan-400/30"
-                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                ? "bg-emerald-400 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                : "bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm"
             )}
           >
             Heute
@@ -232,8 +232,8 @@ const Listings = () => {
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isTomorrow(selectedDate)
-                ? "bg-cyan-400 text-slate-900 shadow-lg shadow-cyan-400/30"
-                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                ? "bg-emerald-400 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                : "bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm"
             )}
           >
             Morgen
@@ -243,7 +243,7 @@ const Listings = () => {
 
       {/* Schnellfilter (Quick Filters) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Stimmung</h3>
+        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Stimmung</h3>
         <div className="grid grid-cols-3 gap-2">
           {quickFilters.map((filter) => {
             const Icon = filter.icon;
@@ -255,8 +255,8 @@ const Listings = () => {
                 className={cn(
                   "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                   isActive
-                    ? "bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-blue-500/25"
-                    : "bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white backdrop-blur-sm"
+                    ? "bg-white text-neutral-900 shadow-lg shadow-black/10"
+                    : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
                 )}
               >
                 <Icon 
@@ -273,8 +273,8 @@ const Listings = () => {
 
       {/* Preis (Price) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Budget</h3>
-        <div className="grid grid-cols-4 gap-1 p-1 bg-slate-700/50 backdrop-blur-sm rounded-xl">
+        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Budget</h3>
+        <div className="grid grid-cols-4 gap-1 p-1 bg-white/10 backdrop-blur-sm rounded-xl">
           {priceFilters.map((price) => (
             <button
               key={price.id}
@@ -282,8 +282,8 @@ const Listings = () => {
               className={cn(
                 "py-2.5 text-xs font-bold transition-all rounded-lg",
                 selectedPrice === price.id
-                  ? "bg-white text-slate-900 shadow-md"
-                  : "text-slate-400 hover:text-white hover:bg-white/10"
+                  ? "bg-white text-neutral-900 shadow-md"
+                  : "text-white/70 hover:text-white hover:bg-white/10"
               )}
             >
               {price.label}
@@ -294,16 +294,16 @@ const Listings = () => {
 
       {/* Stadt und Radius */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Wo?</h3>
+        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Wo?</h3>
         <div className="relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
           <input
             type="text"
             placeholder="Stadt eingeben..."
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-12 pr-4 py-3.5 bg-slate-700/50 backdrop-blur-sm rounded-xl text-sm text-white font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:bg-slate-700 transition-all"
+            className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-sm rounded-xl text-sm text-white font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/20 transition-all"
           />
           <datalist id="cities">
             {cities.map((city) => (
@@ -319,18 +319,18 @@ const Listings = () => {
             step={5}
             className="w-full"
           />
-        <div className="flex justify-between items-center mt-3">
-            <span className="text-xs text-slate-500 font-medium">Umkreis</span>
-            <span className="text-sm font-bold text-white tabular-nums bg-slate-700/50 px-3 py-1 rounded-lg">{radius[0]} km</span>
+          <div className="flex justify-between items-center mt-3">
+            <span className="text-xs text-white/50 font-medium">Umkreis</span>
+            <span className="text-sm font-bold text-white tabular-nums bg-white/15 px-3 py-1 rounded-lg">{radius[0]} km</span>
           </div>
         </div>
       </div>
 
       {/* Kategorie */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Kategorie</h3>
+        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Kategorie</h3>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full rounded-xl border-0 bg-slate-700/50 backdrop-blur-sm py-3.5 text-sm font-medium text-white focus:ring-2 focus:ring-cyan-400/50 hover:bg-slate-700 transition-all">
+          <SelectTrigger className="w-full rounded-xl border-0 bg-white/10 backdrop-blur-sm py-3.5 text-sm font-medium text-white focus:ring-2 focus:ring-white/50 hover:bg-white/20 transition-all">
             <SelectValue placeholder="Alle Kategorien" />
           </SelectTrigger>
           <SelectContent className="bg-white border-0 shadow-2xl shadow-neutral-900/20 rounded-xl overflow-hidden z-50">
@@ -349,7 +349,7 @@ const Listings = () => {
 
       {/* Subkategorie */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Art</h3>
+        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Art</h3>
         <div className="flex flex-wrap gap-2">
           {currentSubcategories.map((sub) => (
             <button
@@ -358,8 +358,8 @@ const Listings = () => {
               className={cn(
                 "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
                 selectedSubcategories.includes(sub)
-                  ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-lg shadow-blue-500/25"
-                  : "bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white backdrop-blur-sm"
+                  ? "bg-white text-neutral-900 shadow-lg shadow-black/10"
+                  : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
               )}
             >
               {sub}
@@ -390,7 +390,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 rounded-2xl p-6 shadow-2xl shadow-slate-900/50 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="sticky top-24 bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-950 rounded-2xl p-6 shadow-2xl shadow-neutral-900/40 max-h-[calc(100vh-120px)] overflow-y-auto">
               <FilterContent />
             </div>
           </aside>
