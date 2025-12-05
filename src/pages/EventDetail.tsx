@@ -379,7 +379,7 @@ const EventDetail = () => {
         </div>
 
         {/* Right - Content Panel */}
-        <div className="bg-white flex flex-col justify-center px-6 py-10 lg:px-12 xl:px-16 lg:max-h-[80vh] overflow-hidden">
+        <div className="bg-white flex flex-col justify-between px-6 py-10 lg:px-12 xl:px-16 lg:h-[80vh]">
           {/* Title */}
           <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6">
             {event.title}
@@ -400,8 +400,8 @@ const EventDetail = () => {
               <span className="text-base">{event.venue}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Navigation size={18} className="text-emerald-600" />
-              <span className="text-base font-medium text-emerald-600">{event.distance}</span>
+              <Navigation size={18} className="text-neutral-900" />
+              <span className="text-base font-medium text-neutral-900">{event.distance}</span>
             </div>
           </div>
 
@@ -418,10 +418,10 @@ const EventDetail = () => {
             </button>
           </div>
 
-          {/* Description - Limited height with "mehr lesen" */}
-          <div className="border-t border-neutral-100 pt-6 flex-1 overflow-hidden">
+          {/* Description - Fills remaining space with "mehr lesen" at bottom */}
+          <div className="border-t border-neutral-100 pt-6 flex-1 flex flex-col min-h-0">
             <h2 className="font-serif text-neutral-900 text-lg font-semibold mb-3">About This Event</h2>
-            <div className={`text-neutral-600 leading-relaxed ${!showFullDescription ? 'line-clamp-4' : ''}`}>
+            <div className={`text-neutral-600 leading-relaxed flex-1 overflow-hidden ${!showFullDescription ? 'line-clamp-6' : 'overflow-y-auto'}`}>
               <p>{event.description}</p>
               {showFullDescription && (
                 <p className="mt-3">
@@ -432,7 +432,7 @@ const EventDetail = () => {
             {!showFullDescription && (
               <button 
                 onClick={() => setShowFullDescription(true)}
-                className="text-neutral-900 text-sm underline mt-2 hover:text-neutral-600 transition-colors"
+                className="text-neutral-900 text-sm underline mt-4 hover:text-neutral-600 transition-colors self-start"
               >
                 mehr lesen
               </button>
