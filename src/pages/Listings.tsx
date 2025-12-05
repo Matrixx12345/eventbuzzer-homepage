@@ -390,7 +390,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-950 rounded-2xl p-6 shadow-2xl shadow-neutral-900/40 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="sticky top-24 bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 rounded-2xl p-6 shadow-2xl shadow-amber-900/40 max-h-[calc(100vh-120px)] overflow-y-auto">
               <FilterContent />
             </div>
           </aside>
