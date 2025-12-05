@@ -1,16 +1,20 @@
 import { Heart, Flame } from "lucide-react";
-import { useState } from "react";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 interface EventCardProps {
+  id: string;
+  slug: string;
   image: string;
   title: string;
   venue: string;
   location: string;
+  date?: string;
   isPopular?: boolean;
 }
 
-const EventCard = ({ image, title, venue, location, isPopular = false }: EventCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = false }: EventCardProps) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isCurrentlyFavorite = isFavorite(id);
 
   return (
     <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -32,13 +36,17 @@ const EventCard = ({ image, title, venue, location, isPopular = false }: EventCa
 
         {/* Favorite Button */}
         <button
-          onClick={() => setIsFavorite(!isFavorite)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite({ id, slug, title, venue, location, image, date });
+          }}
           className="absolute top-3 right-3 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors"
-          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
             size={20}
-            className={isFavorite ? "fill-favorite text-favorite" : "text-card-foreground"}
+            className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-card-foreground"}
           />
         </button>
       </div>
