@@ -191,7 +191,7 @@ const Listings = () => {
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
-          className="w-full py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+          className="w-full py-2.5 text-sm font-medium text-amber-700/70 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all"
         >
           ✕ Filter zurücksetzen
         </button>
@@ -199,10 +199,10 @@ const Listings = () => {
 
       {/* Datum (Date) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Wann?</h3>
+        <h3 className="text-xs font-bold text-amber-800/60 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-4 py-3.5 bg-white hover:bg-neutral-100 rounded-xl text-neutral-900 transition-all flex items-center justify-center gap-2.5 font-semibold shadow-lg shadow-black/10"
+          className="w-full px-4 py-3.5 bg-amber-900 hover:bg-amber-800 rounded-xl text-white transition-all flex items-center justify-center gap-2.5 font-semibold shadow-lg shadow-amber-900/25"
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
@@ -218,8 +218,8 @@ const Listings = () => {
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isToday(selectedDate)
-                ? "bg-emerald-400 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                : "bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm"
+                ? "bg-amber-900 text-white shadow-lg shadow-amber-900/30"
+                : "bg-white/80 text-amber-900 hover:bg-white backdrop-blur-sm border border-amber-200/50"
             )}
           >
             Heute
@@ -232,8 +232,8 @@ const Listings = () => {
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               selectedDate && isTomorrow(selectedDate)
-                ? "bg-emerald-400 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                : "bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm"
+                ? "bg-amber-900 text-white shadow-lg shadow-amber-900/30"
+                : "bg-white/80 text-amber-900 hover:bg-white backdrop-blur-sm border border-amber-200/50"
             )}
           >
             Morgen
@@ -243,7 +243,7 @@ const Listings = () => {
 
       {/* Schnellfilter (Quick Filters) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Stimmung</h3>
+        <h3 className="text-xs font-bold text-amber-800/60 uppercase tracking-wide">Stimmung</h3>
         <div className="grid grid-cols-3 gap-2">
           {quickFilters.map((filter) => {
             const Icon = filter.icon;
@@ -255,8 +255,8 @@ const Listings = () => {
                 className={cn(
                   "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                   isActive
-                    ? "bg-white text-neutral-900 shadow-lg shadow-black/10"
-                    : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
+                    ? "bg-amber-900 text-white shadow-lg shadow-amber-900/25"
+                    : "bg-white/80 text-amber-800 hover:bg-white hover:text-amber-900 backdrop-blur-sm border border-amber-200/50"
                 )}
               >
                 <Icon 
@@ -273,8 +273,8 @@ const Listings = () => {
 
       {/* Preis (Price) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Budget</h3>
-        <div className="grid grid-cols-4 gap-1 p-1 bg-white/10 backdrop-blur-sm rounded-xl">
+        <h3 className="text-xs font-bold text-amber-800/60 uppercase tracking-wide">Budget</h3>
+        <div className="grid grid-cols-4 gap-1 p-1 bg-white/60 backdrop-blur-sm rounded-xl border border-amber-200/50">
           {priceFilters.map((price) => (
             <button
               key={price.id}
@@ -282,8 +282,8 @@ const Listings = () => {
               className={cn(
                 "py-2.5 text-xs font-bold transition-all rounded-lg",
                 selectedPrice === price.id
-                  ? "bg-white text-neutral-900 shadow-md"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                  ? "bg-amber-900 text-white shadow-md"
+                  : "text-amber-800/70 hover:text-amber-900 hover:bg-amber-100/50"
               )}
             >
               {price.label}
@@ -294,16 +294,16 @@ const Listings = () => {
 
       {/* Stadt und Radius */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Wo?</h3>
+        <h3 className="text-xs font-bold text-amber-800/60 uppercase tracking-wide">Wo?</h3>
         <div className="relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-700/40" />
           <input
             type="text"
             placeholder="Stadt eingeben..."
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-sm rounded-xl text-sm text-white font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/20 transition-all"
+            className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm rounded-xl text-sm text-amber-900 font-medium placeholder:text-amber-700/40 focus:outline-none focus:ring-2 focus:ring-amber-900/50 focus:bg-white transition-all border border-amber-200/50"
           />
           <datalist id="cities">
             {cities.map((city) => (
@@ -319,18 +319,18 @@ const Listings = () => {
             step={5}
             className="w-full"
           />
-          <div className="flex justify-between items-center mt-3">
-            <span className="text-xs text-white/50 font-medium">Umkreis</span>
-            <span className="text-sm font-bold text-white tabular-nums bg-white/15 px-3 py-1 rounded-lg">{radius[0]} km</span>
+        <div className="flex justify-between items-center mt-3">
+            <span className="text-xs text-amber-800/50 font-medium">Umkreis</span>
+            <span className="text-sm font-bold text-amber-900 tabular-nums bg-white/80 px-3 py-1 rounded-lg border border-amber-200/50">{radius[0]} km</span>
           </div>
         </div>
       </div>
 
       {/* Kategorie */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Kategorie</h3>
+        <h3 className="text-xs font-bold text-amber-800/60 uppercase tracking-wide">Kategorie</h3>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full rounded-xl border-0 bg-white/10 backdrop-blur-sm py-3.5 text-sm font-medium text-white focus:ring-2 focus:ring-white/50 hover:bg-white/20 transition-all">
+          <SelectTrigger className="w-full rounded-xl border border-amber-200/50 bg-white/80 backdrop-blur-sm py-3.5 text-sm font-medium text-amber-900 focus:ring-2 focus:ring-amber-900/50 hover:bg-white transition-all">
             <SelectValue placeholder="Alle Kategorien" />
           </SelectTrigger>
           <SelectContent className="bg-white border-0 shadow-2xl shadow-neutral-900/20 rounded-xl overflow-hidden z-50">
@@ -349,7 +349,7 @@ const Listings = () => {
 
       {/* Subkategorie */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-white/60 uppercase tracking-wide">Art</h3>
+        <h3 className="text-xs font-bold text-amber-800/60 uppercase tracking-wide">Art</h3>
         <div className="flex flex-wrap gap-2">
           {currentSubcategories.map((sub) => (
             <button
@@ -358,8 +358,8 @@ const Listings = () => {
               className={cn(
                 "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
                 selectedSubcategories.includes(sub)
-                  ? "bg-white text-neutral-900 shadow-lg shadow-black/10"
-                  : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
+                  ? "bg-amber-900 text-white shadow-lg shadow-amber-900/25"
+                  : "bg-white/80 text-amber-800 hover:bg-white hover:text-amber-900 backdrop-blur-sm border border-amber-200/50"
               )}
             >
               {sub}
@@ -390,7 +390,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 rounded-2xl p-6 shadow-2xl shadow-amber-900/40 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="sticky top-24 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 shadow-2xl shadow-amber-200/50 border border-amber-100 max-h-[calc(100vh-120px)] overflow-y-auto">
               <FilterContent />
             </div>
           </aside>
