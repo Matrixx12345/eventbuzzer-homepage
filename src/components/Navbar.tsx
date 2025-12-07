@@ -8,6 +8,7 @@ const Navbar = () => {
 
   const navLinks = [
     { label: "Discover", href: "/listings" },
+    { label: "Supabase Test", href: "/supabase-test" },
     { label: "Favorites", href: "/favorites" },
     { label: "Reminders", href: "#" },
     { label: "Settings", href: "#" },

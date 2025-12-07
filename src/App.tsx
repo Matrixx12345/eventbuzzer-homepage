@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
 import Favorites from "./pages/Favorites";
 import Listings from "./pages/Listings";
+import SupabaseTest from "./pages/SupabaseTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/event/:slug" element={<EventDetail />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/listings" element={<Listings />} />
+            <Route path="/supabase-test" element={<SupabaseTest />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
