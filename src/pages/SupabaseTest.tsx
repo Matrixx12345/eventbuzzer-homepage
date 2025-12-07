@@ -1,34 +1,40 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
-import { Heart, Flame, Loader2, ImageOff } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-interface Taxonomy {
-  name: string;
-}
-
 interface Event {
-  id: string;
-  slug?: string;
+  id: number;
   title: string;
   venue_name?: string;
   location?: string;
+  address_city?: string;
+  address_street?: string;
+  address_zip?: string;
   image_url?: string | null;
   start_date?: string;
-  is_popular?: boolean;
-  taxonomy?: Taxonomy | null;
+  end_date?: string;
+  price_from?: number;
+  ticket_link?: string;
+  description?: string;
+  category_main_id?: number;
 }
 
-interface ExternalEventCardProps {
-  event: Event;
-}
+// Placeholder images for events without images
+const placeholderImages = [
+  "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=800&q=80",
+  "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80",
+  "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800&q=80",
+  "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&q=80",
+  "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
+];
 
-const ExternalEventCard = ({ event }: ExternalEventCardProps) => {
+const ExternalEventCard = ({ event }: { event: Event }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const isCurrentlyFavorite = isFavorite(event.id);
+  const isCurrentlyFavorite = isFavorite(String(event.id));
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -40,40 +46,30 @@ const ExternalEventCard = ({ event }: ExternalEventCardProps) => {
     }
   };
 
+  // Get a consistent placeholder image based on event id
+  const getPlaceholder = (id: number) => placeholderImages[id % placeholderImages.length];
+  const imageToShow = event.image_url || getPlaceholder(event.id);
+
   return (
     <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-        {event.image_url ? (
-          <img
-            src={event.image_url}
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-        ) : null}
-        {/* Placeholder for missing/broken images */}
-        <div className={`absolute inset-0 flex items-center justify-center bg-muted ${event.image_url ? 'hidden' : ''}`}>
-          <ImageOff className="w-12 h-12 text-muted-foreground/50" />
-        </div>
+        <img
+          src={imageToShow}
+          alt={event.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.currentTarget.src = getPlaceholder(event.id);
+          }}
+        />
         
-        {/* Category Badge */}
-        {event.taxonomy?.name && (
+        {/* Price Badge */}
+        {event.price_from && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-primary/90 backdrop-blur-sm text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full">
-            <span>{event.taxonomy.name}</span>
+            <span>ab CHF {event.price_from}</span>
           </div>
         )}
 
-        {/* Popular Badge */}
-        {event.is_popular && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-primary/90 backdrop-blur-sm text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full">
-            <Flame size={14} />
-            <span>POPULAR</span>
-          </div>
-        )}
 
         {/* Favorite Button */}
         <button
@@ -81,12 +77,12 @@ const ExternalEventCard = ({ event }: ExternalEventCardProps) => {
             e.preventDefault();
             e.stopPropagation();
             toggleFavorite({
-              id: event.id,
-              slug: event.slug || event.id,
+              id: String(event.id),
+              slug: String(event.id),
               title: event.title,
               venue: event.venue_name || "",
-              location: event.location || "",
-              image: event.image_url || "",
+              location: event.location || event.address_city || "",
+              image: imageToShow,
               date: event.start_date,
             });
           }}
@@ -106,11 +102,16 @@ const ExternalEventCard = ({ event }: ExternalEventCardProps) => {
           {event.title}
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          {event.venue_name || event.location || "Ort nicht angegeben"}
+          {event.venue_name || event.location || event.address_city || "Ort nicht angegeben"}
         </p>
         {event.start_date && (
           <p className="text-sm text-muted-foreground mt-1">
             {formatDate(event.start_date)}
+          </p>
+        )}
+        {event.description && (
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+            {event.description}
           </p>
         )}
       </div>

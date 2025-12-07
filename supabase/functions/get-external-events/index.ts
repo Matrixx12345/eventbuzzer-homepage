@@ -30,11 +30,12 @@ serve(async (req) => {
     // Create client for external Supabase
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // First, fetch all columns to see what's available
+    // Fetch all events
     const { data, error } = await externalSupabase
       .from("events")
       .select("*")
-      .limit(5);
+      .order("start_date", { ascending: true })
+      .limit(10);
 
     if (error) {
       console.error("Supabase query error:", JSON.stringify(error));
