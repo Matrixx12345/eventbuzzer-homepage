@@ -30,12 +30,12 @@ serve(async (req) => {
     // Create client for external Supabase
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // Fetch all events
+    // Fetch events - prioritize those with AI-generated descriptions
     const { data, error } = await externalSupabase
       .from("events")
       .select("*")
-      .order("start_date", { ascending: true })
-      .limit(10);
+      .order("id", { ascending: false })
+      .limit(50);
 
     if (error) {
       console.error("Supabase query error:", JSON.stringify(error));

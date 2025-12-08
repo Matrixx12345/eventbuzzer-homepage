@@ -10,6 +10,7 @@ interface ExternalEvent {
   title: string;
   description?: string;
   short_description?: string;
+  long_description?: string;
   location?: string;
   venue_name?: string;
   address_city?: string;
