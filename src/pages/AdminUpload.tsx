@@ -27,7 +27,7 @@ const AdminUpload = () => {
           Bildkatalog Upload
         </h1>
         <p className="text-muted-foreground mb-8">
-          Lädt alle 28 Event-Bilder in den Supabase Storage, organisiert nach Kategorien.
+          Lädt alle 33 Event-Bilder in den Supabase Storage, organisiert nach Kategorien.
         </p>
 
         <div className="bg-card border border-border rounded-xl p-6 mb-6">
@@ -44,6 +44,7 @@ const AdminUpload = () => {
             <div>• nature (4 Bilder)</div>
             <div>• general (1 Bild)</div>
             <div>• partner (4 Bilder)</div>
+            <div>• festival (5 Bilder) ✨ NEU</div>
           </div>
         </div>
 

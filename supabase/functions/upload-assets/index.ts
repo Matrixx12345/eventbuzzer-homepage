@@ -54,6 +54,13 @@ const imageAssets = [
   
   // General/venue images
   { category: "general", filename: "venue.jpg", sourceUrl: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=800&q=80" },
+  
+  // Festival images (new)
+  { category: "festival", filename: "crowd.jpg", sourceUrl: "UPLOAD_FROM_CLIENT" },
+  { category: "festival", filename: "singer.jpg", sourceUrl: "UPLOAD_FROM_CLIENT" },
+  { category: "festival", filename: "stage.jpg", sourceUrl: "UPLOAD_FROM_CLIENT" },
+  { category: "festival", filename: "friends.jpg", sourceUrl: "UPLOAD_FROM_CLIENT" },
+  { category: "festival", filename: "choir.jpg", sourceUrl: "UPLOAD_FROM_CLIENT" },
 ];
 
 serve(async (req) => {
