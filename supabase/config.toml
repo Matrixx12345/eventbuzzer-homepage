@@ -1,1 +1,10 @@
 project_id = "phlhbbjeqabjhkkyennz"
+
+[functions.get-external-events]
+verify_jwt = false
+
+[functions.get-ticketmaster-events]
+verify_jwt = false
+
+[functions.generate-event-summaries]
+verify_jwt = false
