@@ -15,8 +15,9 @@ serve(async (req) => {
   try {
     const externalUrl = Deno.env.get('Supabase_URL');
     const externalKey = Deno.env.get('Supabase_ANON_KEY');
+    const serviceRoleKey = Deno.env.get('Supabase_SERVICE_ROLE_KEY');
 
-    if (!externalUrl || !externalKey) {
+    if (!externalUrl || !externalKey || !serviceRoleKey) {
       console.error("External Supabase credentials not configured");
       return new Response(
         JSON.stringify({ error: "External Supabase credentials not configured" }),
@@ -59,8 +60,8 @@ serve(async (req) => {
       );
     }
 
-    // Create external Supabase client
-    const externalSupabase = createClient(externalUrl, externalKey);
+    // Create external Supabase client with SERVICE ROLE KEY to bypass RLS
+    const externalSupabase = createClient(externalUrl, serviceRoleKey);
 
     console.log("Step 2: Mapping and inserting events into database...");
 
