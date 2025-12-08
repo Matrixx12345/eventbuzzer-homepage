@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
-import { Heart, Loader2, Sparkles, CheckCircle } from "lucide-react";
+import { Heart, Loader2, Sparkles, CheckCircle, RefreshCw } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { Button } from "@/components/ui/button";
 
@@ -130,6 +130,7 @@ const SupabaseTest = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchEvents = async () => {
@@ -160,6 +161,37 @@ const SupabaseTest = () => {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  const handleSyncTicketmaster = async () => {
+    setSyncing(true);
+    setSuccessMessage(null);
+    setError(null);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "sync-ticketmaster-events"
+      );
+
+      if (fnError) {
+        throw fnError;
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      console.log("Sync result:", data);
+      setSuccessMessage(data.message || `${data.synced} Events synchronisiert`);
+      
+      // Refresh events to show synced data
+      await fetchEvents();
+    } catch (err) {
+      console.error("Error syncing events:", err);
+      setError(err instanceof Error ? err.message : "Failed to sync events");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleGenerateSummaries = async () => {
     setGenerating(true);
@@ -197,22 +229,37 @@ const SupabaseTest = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
           <h1 className="text-4xl font-serif text-foreground">
             Supabase Events
           </h1>
-          <Button
-            onClick={handleGenerateSummaries}
-            disabled={generating || loading}
-            className="flex items-center gap-2"
-          >
-            {generating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            AI-Beschreibungen generieren (Test)
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleSyncTicketmaster}
+              disabled={syncing || loading}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {syncing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Events von Ticketmaster laden
+            </Button>
+            <Button
+              onClick={handleGenerateSummaries}
+              disabled={generating || loading || events.length === 0}
+              className="flex items-center gap-2"
+            >
+              {generating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              AI-Beschreibungen generieren
+            </Button>
+          </div>
         </div>
         <p className="text-muted-foreground mb-8">
           Events aus deiner externen Supabase-Datenbank
