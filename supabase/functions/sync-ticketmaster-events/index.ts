@@ -98,11 +98,12 @@ serve(async (req) => {
     const syncedCount = insertedData?.length || eventsToInsert.length;
     console.log(`Successfully synced ${syncedCount} events to database`);
 
-    // Step 3: Generate AI descriptions using Lovable AI
+    // Step 3: Generate AI descriptions using OpenAI (via generate-ai-descriptions edge function)
     console.log("Step 3: Generating AI descriptions for new events...");
     
-    // Get the Lovable Cloud function URL from environment
+    // Get the Lovable Cloud function URL and anon key from environment
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://phlhbbjeqabjhkkyennz.supabase.co';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
     const aiDescriptionUrl = `${supabaseUrl}/functions/v1/generate-ai-descriptions`;
     
     let descriptionsGenerated = 0;
@@ -110,6 +111,8 @@ serve(async (req) => {
 
     // Only process the newly inserted events
     const eventsToDescribe = insertedData || [];
+    
+    console.log(`Processing ${eventsToDescribe.length} events for AI descriptions...`);
     
     for (const event of eventsToDescribe) {
       try {
@@ -119,6 +122,7 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseAnonKey}`,
           },
           body: JSON.stringify({
             title: event.title || "",

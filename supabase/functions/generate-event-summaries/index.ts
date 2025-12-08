@@ -15,17 +15,14 @@ serve(async (req) => {
   try {
     // Use the external Supabase credentials from secrets
     const externalUrl = Deno.env.get("Supabase_URL");
-    const externalKey = Deno.env.get("Supabase_ANON_KEY");
     const serviceRoleKey = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
 
     console.log("External URL configured:", !!externalUrl);
-    console.log("External Key configured:", !!externalKey);
     console.log("Service Role Key configured:", !!serviceRoleKey);
 
-    if (!externalUrl || !externalKey || !serviceRoleKey) {
+    if (!externalUrl || !serviceRoleKey) {
       const missing = [];
       if (!externalUrl) missing.push("Supabase_URL");
-      if (!externalKey) missing.push("Supabase_ANON_KEY");
       if (!serviceRoleKey) missing.push("Supabase_SERVICE_ROLE_KEY");
       throw new Error(`Missing secrets: ${missing.join(", ")}`);
     }
@@ -33,11 +30,13 @@ serve(async (req) => {
     // Create client for external Supabase with SERVICE ROLE KEY to bypass RLS for updates
     const externalSupabase = createClient(externalUrl, serviceRoleKey);
 
-    // Fetch all events that need summaries
+    // Fetch events that need AI descriptions (where short_description is null or empty)
     const { data: events, error: fetchError } = await externalSupabase
       .from("events")
-      .select("id, title, description, location, address_city, start_date, short_description")
-      .order("start_date", { ascending: true });
+      .select("id, title, description, venue_name, address_city, start_date, short_description")
+      .or("short_description.is.null,short_description.eq.")
+      .order("id", { ascending: false })
+      .limit(100);
 
     if (fetchError) {
       console.error("Supabase query error:", JSON.stringify(fetchError));
@@ -45,15 +44,18 @@ serve(async (req) => {
     }
 
     if (!events || events.length === 0) {
-      return new Response(JSON.stringify({ message: "No events found", updated: 0 }), {
+      return new Response(JSON.stringify({ message: "Alle Events haben bereits Beschreibungen", updated: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    console.log(`Found ${events.length} events to process`);
+    console.log(`Found ${events.length} events needing AI descriptions`);
 
-    const summarizeUrl = "https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/summarize-events";
+    // Use our own generate-ai-descriptions edge function (which uses OpenAI)
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://phlhbbjeqabjhkkyennz.supabase.co";
+    const aiDescriptionUrl = `${supabaseUrl}/functions/v1/generate-ai-descriptions`;
+    
     let updatedCount = 0;
     const errors: string[] = [];
 
@@ -62,45 +64,57 @@ serve(async (req) => {
       try {
         console.log(`Processing event: ${event.id} - ${event.title}`);
 
-        // Call the summarize-events function with authorization
-        const summaryResponse = await fetch(summarizeUrl, {
+        // Call our generate-ai-descriptions function
+        const aiResponse = await fetch(aiDescriptionUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${externalKey}`,
-            "apikey": externalKey,
           },
           body: JSON.stringify({
             title: event.title || "",
-            description: event.description || "",
-            venue: event.location || "",
+            venue: event.venue_name || "",
             city: event.address_city || "",
             start_date: event.start_date || "",
+            original_description: event.description || "",
           }),
         });
 
-        if (!summaryResponse.ok) {
-          const errorText = await summaryResponse.text();
-          console.error(`Summarize API error for event ${event.id}:`, errorText);
-          errors.push(`Event ${event.id}: API error ${summaryResponse.status}`);
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error(`AI API error for event ${event.id}:`, errorText);
+          errors.push(`Event ${event.id}: AI error ${aiResponse.status}`);
           continue;
         }
 
-        const summaryData = await summaryResponse.json();
-        const summary = summaryData.summary;
-
-        if (!summary) {
-          console.error(`No summary returned for event ${event.id}`);
-          errors.push(`Event ${event.id}: No summary in response`);
+        const aiData = await aiResponse.json();
+        
+        if (aiData.error) {
+          console.error(`AI error for event ${event.id}:`, aiData.error);
+          errors.push(`Event ${event.id}: ${aiData.error}`);
           continue;
         }
 
-        console.log(`Got summary for ${event.id}: ${summary.substring(0, 50)}...`);
+        if (!aiData.short_description) {
+          console.error(`No short_description returned for event ${event.id}`);
+          errors.push(`Event ${event.id}: No short_description in response`);
+          continue;
+        }
 
-        // Update the event with the new short_description
+        console.log(`Got descriptions for ${event.id}: "${aiData.short_description.substring(0, 50)}..."`);
+
+        // Update the event with both descriptions
+        const updateData: Record<string, string> = {
+          short_description: aiData.short_description,
+        };
+        
+        // Also update long description if returned
+        if (aiData.long_description) {
+          updateData.description = aiData.long_description;
+        }
+
         const { error: updateError } = await externalSupabase
           .from("events")
-          .update({ short_description: summary })
+          .update(updateData)
           .eq("id", event.id);
 
         if (updateError) {
@@ -120,8 +134,9 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      message: `Processed ${events.length} events`,
+      message: `${updatedCount} von ${events.length} Events mit AI-Beschreibungen aktualisiert`,
       updated: updatedCount,
+      total: events.length,
       errors: errors.length > 0 ? errors : undefined
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
