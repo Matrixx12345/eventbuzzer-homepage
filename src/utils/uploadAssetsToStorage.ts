@@ -30,6 +30,13 @@ import weekendOpera from "@/assets/weekend-opera.jpg";
 import weekendOrchestra from "@/assets/weekend-orchestra.jpg";
 import weekendWine from "@/assets/weekend-wine.jpg";
 
+// Festival images (new)
+import festivalCrowd from "@/assets/festival-crowd.jpg";
+import festivalSinger from "@/assets/festival-singer.jpg";
+import festivalStage from "@/assets/festival-stage.jpg";
+import festivalFriends from "@/assets/festival-friends.jpg";
+import festivalChoir from "@/assets/festival-choir.jpg";
+
 interface ImageMapping {
   url: string;
   category: string;
@@ -86,6 +93,13 @@ const imageMap: ImageMapping[] = [
   { url: partnerChocolate, category: "partner", filename: "chocolate-01.jpg" },
   { url: partnerRoses, category: "partner", filename: "roses-01.jpg" },
   { url: partnerTeddy, category: "partner", filename: "teddy-01.jpg" },
+  
+  // Festival (new)
+  { url: festivalCrowd, category: "festival", filename: "crowd-01.jpg" },
+  { url: festivalSinger, category: "festival", filename: "singer-01.jpg" },
+  { url: festivalStage, category: "festival", filename: "stage-01.jpg" },
+  { url: festivalFriends, category: "festival", filename: "friends-01.jpg" },
+  { url: festivalChoir, category: "festival", filename: "choir-01.jpg" },
 ];
 
 async function urlToBlob(url: string): Promise<Blob> {
