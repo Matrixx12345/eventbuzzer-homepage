@@ -98,85 +98,88 @@ serve(async (req) => {
     const syncedCount = insertedData?.length || eventsToInsert.length;
     console.log(`Successfully synced ${syncedCount} events to database`);
 
-    // Step 3: Automatically generate AI summaries for the newly inserted events
-    console.log("Step 3: Generating AI summaries for new events...");
+    // Step 3: Generate AI descriptions using Lovable AI
+    console.log("Step 3: Generating AI descriptions for new events...");
     
-    const summarizeUrl = "https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/summarize-events";
-    let summariesGenerated = 0;
-    const summaryErrors: string[] = [];
+    // Get the Lovable Cloud function URL from environment
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://phlhbbjeqabjhkkyennz.supabase.co';
+    const aiDescriptionUrl = `${supabaseUrl}/functions/v1/generate-ai-descriptions`;
+    
+    let descriptionsGenerated = 0;
+    const descriptionErrors: string[] = [];
 
     // Only process the newly inserted events
-    const eventsToSummarize = insertedData || [];
+    const eventsToDescribe = insertedData || [];
     
-    for (const event of eventsToSummarize) {
+    for (const event of eventsToDescribe) {
       try {
-        console.log(`Generating summary for: ${event.id} - ${event.title}`);
+        console.log(`Generating AI descriptions for: ${event.id} - ${event.title}`);
 
-        const summaryResponse = await fetch(summarizeUrl, {
+        const aiResponse = await fetch(aiDescriptionUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${externalKey}`,
-            "apikey": externalKey,
           },
           body: JSON.stringify({
             title: event.title || "",
-            description: event.description || "",
             venue: event.venue_name || "",
             city: event.address_city || "",
             start_date: event.start_date || "",
+            original_description: event.description || "",
           }),
         });
 
-        if (!summaryResponse.ok) {
-          const errorText = await summaryResponse.text();
-          console.error(`Summarize API error for event ${event.id}:`, errorText);
-          summaryErrors.push(`Event ${event.id}: API error ${summaryResponse.status}`);
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error(`AI description error for event ${event.id}:`, errorText);
+          descriptionErrors.push(`Event ${event.id}: AI error ${aiResponse.status}`);
           continue;
         }
 
-        const summaryData = await summaryResponse.json();
-        const summary = summaryData.summary;
-
-        if (!summary) {
-          console.error(`No summary returned for event ${event.id}`);
-          summaryErrors.push(`Event ${event.id}: No summary in response`);
+        const aiData = await aiResponse.json();
+        
+        if (!aiData.long_description || !aiData.short_description) {
+          console.error(`Incomplete AI response for event ${event.id}`);
+          descriptionErrors.push(`Event ${event.id}: Incomplete AI response`);
           continue;
         }
 
-        console.log(`Got summary for ${event.id}: ${summary.substring(0, 50)}...`);
+        console.log(`Got descriptions for ${event.id}: short="${aiData.short_description.substring(0, 40)}..."`);
 
-        // Update the event with the new short_description
+        // Update the event with both descriptions
         const { error: updateError } = await externalSupabase
           .from("events")
-          .update({ short_description: summary })
+          .update({ 
+            description: aiData.long_description,
+            short_description: aiData.short_description 
+          })
           .eq("id", event.id);
 
         if (updateError) {
           console.error(`Update error for event ${event.id}:`, updateError);
-          summaryErrors.push(`Event ${event.id}: Update failed - ${updateError.message}`);
+          descriptionErrors.push(`Event ${event.id}: Update failed - ${updateError.message}`);
           continue;
         }
 
-        summariesGenerated++;
-        console.log(`Successfully generated summary for event ${event.id}`);
+        descriptionsGenerated++;
+        console.log(`Successfully generated descriptions for event ${event.id}`);
 
       } catch (eventError) {
         const msg = eventError instanceof Error ? eventError.message : String(eventError);
-        console.error(`Error generating summary for event ${event.id}:`, msg);
-        summaryErrors.push(`Event ${event.id}: ${msg}`);
+        console.error(`Error generating descriptions for event ${event.id}:`, msg);
+        descriptionErrors.push(`Event ${event.id}: ${msg}`);
       }
     }
 
-    console.log(`Successfully generated ${summariesGenerated} AI summaries`);
+    console.log(`Successfully generated ${descriptionsGenerated} AI descriptions`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `${syncedCount} Events synchronisiert, ${summariesGenerated} AI-Beschreibungen generiert`,
+        message: `${syncedCount} Events synchronisiert, ${descriptionsGenerated} AI-Beschreibungen generiert`,
         synced: syncedCount,
-        summaries: summariesGenerated,
-        summaryErrors: summaryErrors.length > 0 ? summaryErrors : undefined,
+        descriptions: descriptionsGenerated,
+        descriptionErrors: descriptionErrors.length > 0 ? descriptionErrors : undefined,
         events: insertedData || eventsToInsert
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
