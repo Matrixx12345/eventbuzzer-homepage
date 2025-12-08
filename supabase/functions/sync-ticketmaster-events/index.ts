@@ -65,8 +65,8 @@ serve(async (req) => {
     console.log("Step 2: Mapping and inserting events into database...");
 
     // Map Ticketmaster events to our events table schema
+    // Note: We don't include 'id' - let the database auto-generate it
     const eventsToInsert = ticketmasterEvents.map((event: any) => ({
-      id: event.id || crypto.randomUUID(),
       title: event.name || event.title || "Unnamed Event",
       description: event.description || event.info || null,
       venue_name: event.venue || event._embedded?.venues?.[0]?.name || null,
@@ -80,13 +80,10 @@ serve(async (req) => {
 
     console.log(`Prepared ${eventsToInsert.length} events for insertion`);
 
-    // Upsert events (insert or update on conflict)
+    // Insert events (simple insert, no upsert since we're not tracking external IDs)
     const { data: insertedData, error: insertError } = await externalSupabase
       .from('events')
-      .upsert(eventsToInsert, { 
-        onConflict: 'id',
-        ignoreDuplicates: false 
-      })
+      .insert(eventsToInsert)
       .select();
 
     if (insertError) {
