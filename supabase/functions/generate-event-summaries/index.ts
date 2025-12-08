@@ -16,19 +16,22 @@ serve(async (req) => {
     // Use the external Supabase credentials from secrets
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
+    const serviceRoleKey = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
 
     console.log("External URL configured:", !!externalUrl);
     console.log("External Key configured:", !!externalKey);
+    console.log("Service Role Key configured:", !!serviceRoleKey);
 
-    if (!externalUrl || !externalKey) {
+    if (!externalUrl || !externalKey || !serviceRoleKey) {
       const missing = [];
       if (!externalUrl) missing.push("Supabase_URL");
       if (!externalKey) missing.push("Supabase_ANON_KEY");
+      if (!serviceRoleKey) missing.push("Supabase_SERVICE_ROLE_KEY");
       throw new Error(`Missing secrets: ${missing.join(", ")}`);
     }
 
-    // Create client for external Supabase
-    const externalSupabase = createClient(externalUrl, externalKey);
+    // Create client for external Supabase with SERVICE ROLE KEY to bypass RLS for updates
+    const externalSupabase = createClient(externalUrl, serviceRoleKey);
 
     // Fetch all events that need summaries
     const { data: events, error: fetchError } = await externalSupabase
@@ -59,11 +62,13 @@ serve(async (req) => {
       try {
         console.log(`Processing event: ${event.id} - ${event.title}`);
 
-        // Call the summarize-events function
+        // Call the summarize-events function with authorization
         const summaryResponse = await fetch(summarizeUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${externalKey}`,
+            "apikey": externalKey,
           },
           body: JSON.stringify({
             title: event.title || "",
