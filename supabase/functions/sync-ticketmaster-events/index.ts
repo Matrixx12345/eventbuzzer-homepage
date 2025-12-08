@@ -98,11 +98,85 @@ serve(async (req) => {
     const syncedCount = insertedData?.length || eventsToInsert.length;
     console.log(`Successfully synced ${syncedCount} events to database`);
 
+    // Step 3: Automatically generate AI summaries for the newly inserted events
+    console.log("Step 3: Generating AI summaries for new events...");
+    
+    const summarizeUrl = "https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/summarize-events";
+    let summariesGenerated = 0;
+    const summaryErrors: string[] = [];
+
+    // Only process the newly inserted events
+    const eventsToSummarize = insertedData || [];
+    
+    for (const event of eventsToSummarize) {
+      try {
+        console.log(`Generating summary for: ${event.id} - ${event.title}`);
+
+        const summaryResponse = await fetch(summarizeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${externalKey}`,
+            "apikey": externalKey,
+          },
+          body: JSON.stringify({
+            title: event.title || "",
+            description: event.description || "",
+            venue: event.venue_name || "",
+            city: event.address_city || "",
+            start_date: event.start_date || "",
+          }),
+        });
+
+        if (!summaryResponse.ok) {
+          const errorText = await summaryResponse.text();
+          console.error(`Summarize API error for event ${event.id}:`, errorText);
+          summaryErrors.push(`Event ${event.id}: API error ${summaryResponse.status}`);
+          continue;
+        }
+
+        const summaryData = await summaryResponse.json();
+        const summary = summaryData.summary;
+
+        if (!summary) {
+          console.error(`No summary returned for event ${event.id}`);
+          summaryErrors.push(`Event ${event.id}: No summary in response`);
+          continue;
+        }
+
+        console.log(`Got summary for ${event.id}: ${summary.substring(0, 50)}...`);
+
+        // Update the event with the new short_description
+        const { error: updateError } = await externalSupabase
+          .from("events")
+          .update({ short_description: summary })
+          .eq("id", event.id);
+
+        if (updateError) {
+          console.error(`Update error for event ${event.id}:`, updateError);
+          summaryErrors.push(`Event ${event.id}: Update failed - ${updateError.message}`);
+          continue;
+        }
+
+        summariesGenerated++;
+        console.log(`Successfully generated summary for event ${event.id}`);
+
+      } catch (eventError) {
+        const msg = eventError instanceof Error ? eventError.message : String(eventError);
+        console.error(`Error generating summary for event ${event.id}:`, msg);
+        summaryErrors.push(`Event ${event.id}: ${msg}`);
+      }
+    }
+
+    console.log(`Successfully generated ${summariesGenerated} AI summaries`);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `${syncedCount} Events von Ticketmaster synchronisiert`,
+        message: `${syncedCount} Events synchronisiert, ${summariesGenerated} AI-Beschreibungen generiert`,
         synced: syncedCount,
+        summaries: summariesGenerated,
+        summaryErrors: summaryErrors.length > 0 ? summaryErrors : undefined,
         events: insertedData || eventsToInsert
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
