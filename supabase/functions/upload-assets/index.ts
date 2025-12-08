@@ -38,7 +38,7 @@ const imageAssets = [
   { category: "city", filename: "bern.jpg", sourceUrl: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=800&q=80" },
   { category: "city", filename: "geneva.jpg", sourceUrl: "https://images.unsplash.com/photo-1573108037329-37aa135a142e?w=800&q=80" },
   { category: "city", filename: "lucerne.jpg", sourceUrl: "https://images.unsplash.com/photo-1527668752968-14dc70a27c95?w=800&q=80" },
-  { category: "city", filename: "basel.jpg", sourceUrl: "https://images.unsplash.com/photo-1551881192-002e01c8f318?w=800&q=80" },
+  { category: "city", filename: "basel.jpg", sourceUrl: "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&q=80" },
   
   // Nature images
   { category: "nature", filename: "zermatt.jpg", sourceUrl: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80" },
@@ -47,7 +47,7 @@ const imageAssets = [
   { category: "nature", filename: "mountains.jpg", sourceUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" },
   
   // Partner images
-  { category: "partner", filename: "roses.jpg", sourceUrl: "https://images.unsplash.com/photo-1518882605630-8eb436bf6e6e?w=800&q=80" },
+  { category: "partner", filename: "roses.jpg", sourceUrl: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&q=80" },
   { category: "partner", filename: "chocolate.jpg", sourceUrl: "https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=800&q=80" },
   { category: "partner", filename: "champagne.jpg", sourceUrl: "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=800&q=80" },
   { category: "partner", filename: "teddy.jpg", sourceUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80" },
