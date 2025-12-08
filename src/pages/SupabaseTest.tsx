@@ -3,24 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Heart, Loader2 } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
 
-interface Event {
-  id: number;
-  title: string;
-  venue_name?: string;
-  location?: string;
-  address_city?: string;
-  address_street?: string;
-  address_zip?: string;
-  image_url?: string | null;
-  start_date?: string;
-  end_date?: string;
-  price_from?: number;
-  ticket_link?: string;
-  description?: string;
-  category_main_id?: number;
+interface TicketmasterEvent {
+  id: string;
+  name: string;
+  venue?: string;
+  city?: string;
+  date?: string;
+  image?: string;
 }
 
 // Placeholder images for events without images
@@ -32,23 +22,17 @@ const placeholderImages = [
   "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
 ];
 
-const ExternalEventCard = ({ event }: { event: Event }) => {
+const TicketmasterEventCard = ({ event, index }: { event: TicketmasterEvent; index: number }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const isCurrentlyFavorite = isFavorite(String(event.id));
+  const isCurrentlyFavorite = isFavorite(event.id);
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return null;
-    try {
-      const date = new Date(dateString);
-      return format(date, "dd.MM.yyyy, HH:mm 'Uhr'", { locale: de });
-    } catch {
-      return dateString;
-    }
-  };
+  // Get a consistent placeholder image based on index
+  const getPlaceholder = (idx: number) => placeholderImages[idx % placeholderImages.length];
+  const imageToShow = event.image || getPlaceholder(index);
 
-  // Get a consistent placeholder image based on event id
-  const getPlaceholder = (id: number) => placeholderImages[id % placeholderImages.length];
-  const imageToShow = event.image_url || getPlaceholder(event.id);
+  // Build location string
+  const locationParts = [event.venue, event.city].filter(Boolean);
+  const locationString = locationParts.join(", ") || "Ort nicht angegeben";
 
   return (
     <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -56,20 +40,12 @@ const ExternalEventCard = ({ event }: { event: Event }) => {
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img
           src={imageToShow}
-          alt={event.title}
+          alt={event.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
-            e.currentTarget.src = getPlaceholder(event.id);
+            e.currentTarget.src = getPlaceholder(index);
           }}
         />
-        
-        {/* Price Badge */}
-        {event.price_from && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-primary/90 backdrop-blur-sm text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full">
-            <span>ab CHF {event.price_from}</span>
-          </div>
-        )}
-
 
         {/* Favorite Button */}
         <button
@@ -77,13 +53,13 @@ const ExternalEventCard = ({ event }: { event: Event }) => {
             e.preventDefault();
             e.stopPropagation();
             toggleFavorite({
-              id: String(event.id),
-              slug: String(event.id),
-              title: event.title,
-              venue: event.venue_name || "",
-              location: event.location || event.address_city || "",
+              id: event.id,
+              slug: event.id,
+              title: event.name,
+              venue: event.venue || "",
+              location: locationString,
               image: imageToShow,
-              date: event.start_date,
+              date: event.date,
             });
           }}
           className="absolute top-3 right-3 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors"
@@ -99,19 +75,14 @@ const ExternalEventCard = ({ event }: { event: Event }) => {
       {/* Content */}
       <div className="p-4">
         <h3 className="text-lg font-semibold text-card-foreground line-clamp-1">
-          {event.title}
+          {event.name}
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          {event.venue_name || event.location || event.address_city || "Ort nicht angegeben"}
+          {locationString}
         </p>
-        {event.start_date && (
+        {event.date && (
           <p className="text-sm text-muted-foreground mt-1">
-            {formatDate(event.start_date)}
-          </p>
-        )}
-        {event.description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {event.description}
+            {event.date}
           </p>
         )}
       </div>
@@ -120,16 +91,16 @@ const ExternalEventCard = ({ event }: { event: Event }) => {
 };
 
 const SupabaseTest = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<TicketmasterEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Call the edge function that connects to external Supabase
+        // Call the edge function that fetches Ticketmaster events
         const { data, error: fnError } = await supabase.functions.invoke(
-          "get-external-events"
+          "get-ticketmaster-events"
         );
 
         if (fnError) {
@@ -142,7 +113,7 @@ const SupabaseTest = () => {
 
         setEvents(data?.events || []);
       } catch (err) {
-        console.error("Error fetching events:", err);
+        console.error("Error fetching Ticketmaster events:", err);
         setError(err instanceof Error ? err.message : "Failed to load events");
       } finally {
         setLoading(false);
@@ -158,10 +129,10 @@ const SupabaseTest = () => {
       
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-serif text-foreground mb-2">
-          Supabase Test Page
+          Ticketmaster Events
         </h1>
         <p className="text-muted-foreground mb-8">
-          Events aus deiner externen Supabase-Datenbank
+          Live-Events von Ticketmaster
         </p>
 
         {/* Connection Status */}
@@ -188,14 +159,14 @@ const SupabaseTest = () => {
           </div>
         ) : events.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <ExternalEventCard key={event.id} event={event} />
+            {events.map((event, index) => (
+              <TicketmasterEventCard key={event.id} event={event} index={index} />
             ))}
           </div>
         ) : (
           !error && (
             <div className="text-center py-12 text-muted-foreground">
-              <p>Keine Events in der Datenbank gefunden.</p>
+              <p>Keine Events gefunden.</p>
             </div>
           )
         )}
