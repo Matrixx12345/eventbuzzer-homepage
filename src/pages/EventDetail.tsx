@@ -383,11 +383,15 @@ const EventDetail = () => {
       const fetchEvent = async () => {
         setLoading(true);
         try {
-          const { data, error } = await supabase.functions.invoke("get-external-events");
+          const { data, error } = await supabase.functions.invoke("get-external-events", {
+            body: { limit: 500 }
+          });
           if (error) throw error;
           
-          // Find event by id (can be string or number)
-          const found = data?.events?.find((e: DynamicEvent) => String(e.id) === slug);
+          // Find event by external_id OR id (supports both linking methods)
+          const found = data?.events?.find((e: DynamicEvent & { external_id?: string }) => 
+            e.external_id === slug || String(e.id) === slug
+          );
           if (found) {
             setDynamicEvent(found);
           }
@@ -448,8 +452,10 @@ const EventDetail = () => {
     event = eventsData[slug!];
   } else if (dynamicEvent) {
     const addressParts = [dynamicEvent.address_street, dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean);
+    // Use real image if available, otherwise fallback to placeholder
+    const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';
     event = {
-      image: dynamicEvent.image_url || weekendJazz,
+      image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
       title: dynamicEvent.title,
       venue: dynamicEvent.venue_name || dynamicEvent.location || "Veranstaltungsort",
       location: dynamicEvent.address_city || "Schweiz",
@@ -497,6 +503,10 @@ const EventDetail = () => {
             src={event.image}
             alt={event.title}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = weekendJazz;
+            }}
           />
         </div>
 
