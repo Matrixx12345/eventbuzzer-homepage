@@ -13,7 +13,9 @@ interface ExternalEvent {
   long_description?: string;
   location?: string;
   venue_name?: string;
+  address_street?: string;
   address_city?: string;
+  address_zip?: string;
   start_date?: string;
   image_url?: string;
   price_from?: number;
@@ -36,9 +38,10 @@ const ExternalEventCard = ({ event, index }: { event: ExternalEvent; index: numb
   const getPlaceholder = (idx: number) => placeholderImages[idx % placeholderImages.length];
   const imageToShow = event.image_url || getPlaceholder(index);
 
-  // Build location string
-  const locationParts = [event.venue_name || event.location, event.address_city].filter(Boolean);
-  const locationString = locationParts.join(", ") || "Ort nicht angegeben";
+  // Build location string with street address
+  const venuePart = event.venue_name || event.location || "";
+  const addressPart = [event.address_street, event.address_zip, event.address_city].filter(Boolean).join(" ");
+  const locationString = [venuePart, addressPart].filter(Boolean).join(" · ") || "Ort nicht angegeben";
 
   // Format date
   const formatDate = (dateStr?: string) => {
