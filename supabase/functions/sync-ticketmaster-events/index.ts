@@ -211,19 +211,30 @@ serve(async (req) => {
     const syncedCount = insertedData?.length || eventsToInsert.length;
     console.log(`Successfully synced ${syncedCount} events to database`);
 
-    // Step 4: Generate AI descriptions using OpenAI
-    console.log("Step 4: Generating AI descriptions for new events...");
+    // Step 4: Generate AI descriptions for events without short_description
+    console.log("Step 4: Fetching events without AI descriptions...");
     
+    // Query for events that don't have a short_description yet
+    const { data: eventsNeedingDescriptions, error: fetchError } = await externalSupabase
+      .from('events')
+      .select('id, title, venue_name, address_city, start_date, description, short_description')
+      .or('short_description.is.null,short_description.eq.')
+      .order('id', { ascending: false })
+      .limit(200);
+
+    if (fetchError) {
+      console.error("Error fetching events needing descriptions:", fetchError);
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://phlhbbjeqabjhkkyennz.supabase.co';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
     const aiDescriptionUrl = `${supabaseUrl}/functions/v1/generate-ai-descriptions`;
     
     let descriptionsGenerated = 0;
     const descriptionErrors: string[] = [];
 
-    const eventsToDescribe = insertedData || [];
+    const eventsToDescribe = eventsNeedingDescriptions || [];
     
-    console.log(`Processing ${eventsToDescribe.length} events for AI descriptions...`);
+    console.log(`Found ${eventsToDescribe.length} events needing AI descriptions...`);
     
     for (const event of eventsToDescribe) {
       try {
@@ -233,7 +244,6 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${supabaseAnonKey}`,
           },
           body: JSON.stringify({
             title: event.title || "",
