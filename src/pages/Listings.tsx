@@ -517,9 +517,8 @@ const Listings = () => {
             {!loading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredEvents.map((event, index) => {
-                  const eventImage = event.image_url && event.image_url.trim() !== '' 
-                    ? event.image_url 
-                    : getPlaceholderImage(index);
+                  // Always use placeholder images - they're beautiful!
+                  const eventImage = getPlaceholderImage(index);
                   const eventSlug = event.external_id || event.id;
                   
                   return (
@@ -534,10 +533,6 @@ const Listings = () => {
                             src={eventImage}
                             alt={event.title}
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = getPlaceholderImage(index);
-                            }}
                           />
 
                           {/* Favorite Button */}
