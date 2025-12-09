@@ -6,6 +6,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to fetch venue details from Ticketmaster
+async function fetchVenueDetails(venueId: string, apiKey: string): Promise<{
+  street: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string;
+  name: string | null;
+}> {
+  try {
+    const venueUrl = `https://app.ticketmaster.com/discovery/v2/venues/${venueId}.json?apikey=${apiKey}`;
+    const response = await fetch(venueUrl);
+    
+    if (!response.ok) {
+      console.log(`Venue API returned ${response.status} for venue ${venueId}`);
+      return { street: null, city: null, postalCode: null, country: "CH", name: null };
+    }
+    
+    const venueData = await response.json();
+    
+    const street = venueData.address?.line1 || null;
+    const city = venueData.city?.name || null;
+    const postalCode = venueData.postalCode || null;
+    const country = venueData.country?.countryCode || "CH";
+    const name = venueData.name || null;
+    
+    console.log(`Venue ${venueId} details: ${name}, ${street}, ${postalCode} ${city}`);
+    
+    return { street, city, postalCode, country, name };
+  } catch (error) {
+    console.error(`Error fetching venue ${venueId}:`, error);
+    return { street: null, city: null, postalCode: null, country: "CH", name: null };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -63,17 +97,34 @@ serve(async (req) => {
     // Create external Supabase client with SERVICE ROLE KEY to bypass RLS
     const externalSupabase = createClient(externalUrl, serviceRoleKey);
 
-    console.log("Step 2: Parsing events with full venue data...");
+    console.log("Step 2: Parsing events with FULL venue data (fetching each venue separately)...");
 
     // Map Ticketmaster events to our events table schema
-    const eventsToInsert = ticketmasterEvents.map((event: any) => {
-      // Extract venue information from _embedded
+    const eventsToInsert = [];
+    
+    for (const event of ticketmasterEvents) {
+      // Extract venue ID from _embedded
       const venue = event._embedded?.venues?.[0];
-      const venueName = venue?.name || null;
-      const addressStreet = venue?.address?.line1 || null;
-      const addressCity = venue?.city?.name || null;
-      const addressZip = venue?.postalCode || null;
-      const addressCountry = venue?.country?.countryCode || "CH";
+      const venueId = venue?.id;
+      
+      let venueName = venue?.name || null;
+      let addressStreet = venue?.address?.line1 || null;
+      let addressCity = venue?.city?.name || null;
+      let addressZip = venue?.postalCode || null;
+      let addressCountry = venue?.country?.countryCode || "CH";
+      
+      // If venue ID exists and we don't have street address, fetch venue details
+      if (venueId && !addressStreet) {
+        console.log(`Fetching detailed venue info for ${venueId} (${venueName})...`);
+        const venueDetails = await fetchVenueDetails(venueId, ticketmasterApiKey);
+        
+        // Use fetched data if available
+        if (venueDetails.street) addressStreet = venueDetails.street;
+        if (venueDetails.city) addressCity = venueDetails.city;
+        if (venueDetails.postalCode) addressZip = venueDetails.postalCode;
+        if (venueDetails.country) addressCountry = venueDetails.country;
+        if (venueDetails.name && !venueName) venueName = venueDetails.name;
+      }
       
       // Build location string
       const locationParts = [venueName, addressCity].filter(Boolean);
@@ -102,9 +153,9 @@ serve(async (req) => {
       // Get external ID
       const externalId = event.id || null;
 
-      console.log(`Event: ${event.name} | Venue: ${venueName} | City: ${addressCity} | Street: ${addressStreet}`);
+      console.log(`Event: ${event.name} | Venue: ${venueName} | Street: ${addressStreet} | City: ${addressCity}`);
 
-      return {
+      eventsToInsert.push({
         title: event.name || "Unnamed Event",
         description: description,
         venue_name: venueName,
@@ -119,10 +170,10 @@ serve(async (req) => {
         image_url: imageUrl,
         location: location,
         external_id: externalId,
-      };
-    });
+      });
+    }
 
-    console.log(`Prepared ${eventsToInsert.length} events with venue data`);
+    console.log(`Prepared ${eventsToInsert.length} events with enriched venue data`);
 
     console.log("Step 3: Inserting events into database...");
 

@@ -24,31 +24,31 @@ serve(async (req) => {
 
     const externalSupabase = createClient(externalUrl, serviceRoleKey);
 
-    // Delete events with null venue_name (broken imports)
-    console.log("Deleting events with null venue_name...");
-    const { data: deletedBroken, error: deleteError1 } = await externalSupabase
+    // Delete events with null address_street (missing street address)
+    console.log("Deleting events with null address_street...");
+    const { data: deletedNoStreet, error: deleteError1 } = await externalSupabase
       .from('events')
       .delete()
-      .is('venue_name', null)
+      .is('address_street', null)
       .select('id');
 
     if (deleteError1) {
-      console.error("Error deleting broken events:", deleteError1);
+      console.error("Error deleting events without street:", deleteError1);
     }
 
-    // Delete events with empty location
-    console.log("Deleting events with empty location...");
-    const { data: deletedEmpty, error: deleteError2 } = await externalSupabase
+    // Delete events with empty address_street
+    console.log("Deleting events with empty address_street...");
+    const { data: deletedEmptyStreet, error: deleteError2 } = await externalSupabase
       .from('events')
       .delete()
-      .eq('location', '')
+      .eq('address_street', '')
       .select('id');
 
     if (deleteError2) {
-      console.error("Error deleting empty location events:", deleteError2);
+      console.error("Error deleting empty street events:", deleteError2);
     }
 
-    const totalDeleted = (deletedBroken?.length || 0) + (deletedEmpty?.length || 0);
+    const totalDeleted = (deletedNoStreet?.length || 0) + (deletedEmptyStreet?.length || 0);
     console.log(`Deleted ${totalDeleted} broken events`);
 
     // Count remaining events
