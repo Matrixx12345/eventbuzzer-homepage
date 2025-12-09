@@ -207,6 +207,25 @@ const Listings = () => {
     );
   };
 
+  // Romantic keywords for filtering (same as backend)
+  const ROMANTIC_KEYWORDS = [
+    "romantisch", "romantic", "date", "liebe", "love", "candlelight", "kerzenlicht",
+    "kerzenschein", "dinner", "gala", "piano", "klavier", "ballett", "ballet",
+    "valentinstag", "valentine", "champagner", "champagne", "sunset", "sonnenuntergang",
+    "couples", "paare", "jazz", "soul", "acoustic", "oper", "opera", "klassik", "classical"
+  ];
+
+  // Check if event matches romantic criteria
+  const isRomanticEvent = (event: ExternalEvent) => {
+    const textToCheck = [
+      event.title,
+      event.short_description,
+      event.venue_name,
+    ].filter(Boolean).join(" ").toLowerCase();
+    
+    return ROMANTIC_KEYWORDS.some(keyword => textToCheck.includes(keyword));
+  };
+
   // Filter events
   const filteredEvents = events.filter((event) => {
     // Price filter
@@ -225,6 +244,11 @@ const Listings = () => {
     if (selectedDate && event.start_date) {
       const eventDate = parseISO(event.start_date);
       if (!isSameDay(eventDate, selectedDate)) return false;
+    }
+    
+    // Quick filters - Romantik
+    if (selectedQuickFilters.includes("romantik")) {
+      if (!isRomanticEvent(event)) return false;
     }
     
     return true;
