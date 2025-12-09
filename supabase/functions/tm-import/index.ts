@@ -50,19 +50,23 @@ serve(async (req) => {
   try {
     console.log("Starte Import V4 (AI Age Rating & Budget Fix)...");
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // Use EXTERNAL Supabase credentials (user's own Supabase, not Lovable Cloud)
+    const EXTERNAL_SUPABASE_URL = Deno.env.get("Supabase_URL");
+    const EXTERNAL_SERVICE_ROLE_KEY = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const TM_API_KEY = Deno.env.get("TICKETMASTER_API_KEY");
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Supabase credentials not configured");
+    console.log("External Supabase URL configured:", !!EXTERNAL_SUPABASE_URL);
+    console.log("External Service Role Key configured:", !!EXTERNAL_SERVICE_ROLE_KEY);
+
+    if (!EXTERNAL_SUPABASE_URL || !EXTERNAL_SERVICE_ROLE_KEY) {
+      throw new Error("External Supabase credentials not configured (Supabase_URL, Supabase_SERVICE_ROLE_KEY)");
     }
     if (!TM_API_KEY) {
       throw new Error("TICKETMASTER_API_KEY not configured");
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SERVICE_ROLE_KEY);
 
     // 1. IDs aus der Datenbank laden (Dynamisch!)
     const { data: taxonomy, error: taxError } = await supabase.from("taxonomy").select("id, name");
