@@ -9,7 +9,7 @@ const corsHeaders = {
 // KONFIGURATION
 const TM_API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 
-// Die wichtigsten Ticketmaster-Genres mappen wir auf DEINE Subkategorien (Namen müssen exakt stimmen!)
+// GENRE MAPPING (Ticketmaster -> Deine Subkategorien)
 const SUB_CATEGORY_MAPPING: Record<string, string> = {
   "Rock": "Rock & Pop Konzerte",
   "Pop": "Rock & Pop Konzerte",
@@ -28,15 +28,18 @@ const SUB_CATEGORY_MAPPING: Record<string, string> = {
   "Comedy": "Comedy & Kabarett",
   "Fine Art": "Museum, Kunst & Ausstellung",
   "Spectacular": "Show & Entertainment",
+  "Family": "Show & Entertainment",
+  "Miscellaneous": "Freizeit & Aktivitäten"
 };
 
-// VIBE-KEYWORDS (Deutsch & Englisch)
-const ROMANTIC_KEYWORDS = [
-  "romantisch", "romantic", "date", "liebe", "love", "candlelight", "kerzenlicht",
-  "kerzenschein", "dinner", "gala", "piano", "klavier", "ballett", "ballet",
-  "valentinstag", "valentine", "champagner", "champagne", "sunset", "sonnenuntergang",
-  "couples", "paare", "night", "nacht", "jazz", "soul", "acoustic"
-];
+// KEYWORDS FÜR BASIS-TAGS
+const TAG_KEYWORDS = {
+  "romantisch": ["romantisch", "romantic", "date", "liebe", "love", "candlelight", "kerzenlicht", "piano", "ballett", "valentinstag", "champagner", "sunset", "jazz", "soul"],
+  "familie": ["familie", "family", "kinder", "kids", "disney", "zirkus", "circus", "magic", "zauberer", "harry potter", "jurassic", "ice age", "figurentheater", "peppa", "paw patrol"],
+  "outdoor": ["open air", "openair", "festival", "streetfood", "markt", "market", "park", "see", "bühne am", "draussen", "sommer"],
+  "indoor": ["halle", "hall", "theater", "theatre", "club", "oper", "opera", "museum", "kulturhaus", "casino", "arena"],
+  "budget_text": ["gratis", "kostenlos", "freier eintritt", "free entry", "kollekte", "pay what you want"]
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -45,78 +48,79 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starte TM-Import...");
+    console.log("Starte Import V4 (AI Age Rating & Budget Fix)...");
 
-    // Get secrets
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    const EXTERNAL_SUPABASE_URL = Deno.env.get("Supabase_URL");
-    const EXTERNAL_SERVICE_ROLE_KEY = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
     const TM_API_KEY = Deno.env.get("TICKETMASTER_API_KEY");
 
-    if (!EXTERNAL_SUPABASE_URL || !EXTERNAL_SERVICE_ROLE_KEY) {
-      throw new Error("External Supabase credentials not configured");
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase credentials not configured");
     }
-
     if (!TM_API_KEY) {
-      throw new Error("Ticketmaster API key not configured");
+      throw new Error("TICKETMASTER_API_KEY not configured");
     }
 
-    const supabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // 1. Lade deine Kategorien & Tags aus der DB (damit wir die IDs kennen)
-    const { data: taxonomy, error: taxonomyError } = await supabase.from("taxonomy").select("id, name, type");
-    const { data: tags, error: tagsError } = await supabase.from("tags").select("id, name, slug");
+    // 1. IDs aus der Datenbank laden (Dynamisch!)
+    const { data: taxonomy, error: taxError } = await supabase.from("taxonomy").select("id, name");
+    const { data: tags, error: tagsError } = await supabase.from("tags").select("id, slug");
 
-    if (taxonomyError) {
-      console.log("Taxonomy table might not exist, continuing without category mapping:", taxonomyError.message);
-    }
-    if (tagsError) {
-      console.log("Tags table might not exist, continuing without tag mapping:", tagsError.message);
+    if (taxError || tagsError) {
+      console.error("DB Error:", taxError, tagsError);
+      throw new Error("Konnte DB-Struktur nicht laden.");
     }
 
-    // Hilfsfunktion: Finde ID anhand des Namens
-    const findCatId = (name: string) => taxonomy?.find(t => t.name === name)?.id || null;
-    const findTagId = (slugPart: string) => tags?.find(t => t.slug?.includes(slugPart))?.id || null;
+    console.log("Taxonomy loaded:", taxonomy?.length, "categories");
+    console.log("Tags loaded:", tags?.length, "tags");
 
-    // Wir suchen den "Romantisch"-Tag (Slug enthält 'romantisch')
-    const romanticTagId = findTagId("romantisch");
-    console.log("Romantisch Tag ID:", romanticTagId);
+    const findCatId = (name: string) => taxonomy?.find(t => t.name === name)?.id;
+    // Slug-Suche (Teilwort reicht)
+    const findTagId = (search: string) => tags?.find(t => t.slug.includes(search))?.id;
 
-    // 2. Events von Ticketmaster holen (Schweiz, sortiert nach Datum)
+    // Wir speichern uns die wichtigen Tag-IDs
+    const tagIds = {
+      romantisch: findTagId("romantisch"),
+      familie: findTagId("familie"), // Der Haupt-Tag
+      outdoor: findTagId("open-air"),
+      indoor: findTagId("indoor"),
+      budget: findTagId("budget"),
+      // Die neuen Alters-Tags (suche nach eindeutigen Slugs)
+      baby: findTagId("kleinkinder"),
+      kids: findTagId("schulkinder"),
+      teen: findTagId("teenager")
+    };
+
+    console.log("Tag IDs found:", tagIds);
+
+    // 2. Events von Ticketmaster holen
     const tmUrl = `${TM_API_URL}?apikey=${TM_API_KEY}&countryCode=CH&size=50&sort=date,asc`;
-    
-    console.log("Fetching events from Ticketmaster...");
+    console.log("Fetching from Ticketmaster...");
     const tmRes = await fetch(tmUrl);
-    
-    if (!tmRes.ok) {
-      throw new Error(`Ticketmaster API error: ${tmRes.status}`);
-    }
-    
     const tmData = await tmRes.json();
     const events = tmData._embedded?.events || [];
-    console.log(`Gefunden: ${events.length} Events.`);
-
+    
+    console.log(`Found ${events.length} events from Ticketmaster`);
+    
     let processedCount = 0;
-    let errorCount = 0;
     const errors: string[] = [];
 
     for (const event of events) {
       try {
-        // -- A. BASIS DATEN --
         const title = event.name;
         const tmId = event.id;
         const venueBasic = event._embedded?.venues?.[0];
         const venueId = venueBasic?.id;
         const segmentName = event.classifications?.[0]?.segment?.name;
         const genreName = event.classifications?.[0]?.genre?.name;
-
-        // -- B. ADRESSE NACHLADEN (Data Enrichment) --
-        let addressData = { street: "", city: "", zip: "", country: "CH" };
+        
+        // -- A. ADRESSE NACHLADEN --
+        let addressData = { street: "", city: "", zip: "", country: "" };
         if (venueId) {
           try {
-            const venueRes = await fetch(
-              `https://app.ticketmaster.com/discovery/v2/venues/${venueId}.json?apikey=${TM_API_KEY}`
-            );
+            const venueRes = await fetch(`https://app.ticketmaster.com/discovery/v2/venues/${venueId}.json?apikey=${TM_API_KEY}`);
             if (venueRes.ok) {
               const vData = await venueRes.json();
               addressData = {
@@ -126,138 +130,171 @@ serve(async (req) => {
                 country: vData.country?.countryCode ?? "CH"
               };
             }
-          } catch (e) {
-            console.error("Fehler beim Laden der Venue-Details:", e);
+          } catch(e) {
+            console.log(`Venue fetch failed for ${venueId}:`, e);
           }
         }
 
-        // -- C. KATEGORIEN ZUORDNEN --
+        // -- B. KATEGORIEN --
         let mainCatId = null;
         let subCatId = null;
 
-        if (taxonomy) {
-          // Hauptkategorie Logik
-          if (segmentName === "Music") mainCatId = findCatId("Musik & Party");
-          else if (segmentName === "Arts & Theatre") mainCatId = findCatId("Kunst & Kultur");
-          else if (segmentName === "Sports") mainCatId = findCatId("Freizeit & Aktivitäten");
-          else mainCatId = findCatId("Freizeit & Aktivitäten");
+        if (segmentName === "Music") mainCatId = findCatId("Musik & Party");
+        else if (segmentName === "Arts & Theatre") mainCatId = findCatId("Kunst & Kultur");
+        else if (segmentName === "Sports") mainCatId = findCatId("Freizeit & Aktivitäten");
+        else if (segmentName === "Family") mainCatId = findCatId("Freizeit & Aktivitäten");
+        else mainCatId = findCatId("Freizeit & Aktivitäten"); 
 
-          // Subkategorie Logik (Das Mapping!)
-          if (genreName && SUB_CATEGORY_MAPPING[genreName]) {
-            subCatId = findCatId(SUB_CATEGORY_MAPPING[genreName]);
+        if (genreName && SUB_CATEGORY_MAPPING[genreName]) {
+          subCatId = findCatId(SUB_CATEGORY_MAPPING[genreName]);
+        }
+
+        // -- C. PREIS & BUDGET-LOGIK --
+        // Wir versuchen den Preis zu finden. Wenn keiner da ist, bleibt er null.
+        let minPrice = event.priceRanges?.[0]?.min;
+        
+        const tagsToAssign: string[] = [];
+        const textForCheck = (title + " " + (genreName || "")).toLowerCase();
+
+        // Budget-Tag Logik: Entweder Preis < 25 ODER Schlüsselwörter im Text
+        const isFreeByText = TAG_KEYWORDS.budget_text.some(k => textForCheck.includes(k));
+        if (tagIds.budget && ((minPrice !== undefined && minPrice < 25) || isFreeByText)) {
+          tagsToAssign.push(tagIds.budget);
+        }
+
+        // -- D. VIBES (Basis) --
+        let isFamily = false;
+        if (tagIds.romantisch && TAG_KEYWORDS.romantisch.some(k => textForCheck.includes(k))) {
+          tagsToAssign.push(tagIds.romantisch);
+        }
+        if (TAG_KEYWORDS.familie.some(k => textForCheck.includes(k)) || segmentName === "Family") {
+          if (tagIds.familie) {
+            tagsToAssign.push(tagIds.familie);
+            isFamily = true; // Merker für die KI
           }
         }
-
-        // -- D. KI TEXT & TAGGING --
-        let description = event.description || "";
-        let shortDescription = "";
-        let isRomantic = false;
-
-        // Vibe-Check im Titel
-        const textToCheck = (title + " " + (genreName || "")).toLowerCase();
-        if (ROMANTIC_KEYWORDS.some(k => textToCheck.includes(k))) {
-          isRomantic = true;
+        if (tagIds.outdoor && TAG_KEYWORDS.outdoor.some(k => textForCheck.includes(k))) {
+          tagsToAssign.push(tagIds.outdoor);
+        } else if (tagIds.indoor) {
+          tagsToAssign.push(tagIds.indoor); // Fallback: Meistens Indoor wenn nicht explizit Outdoor
         }
 
-        // Wenn keine Beschreibung da ist -> KI generieren
-        if (OPENAI_API_KEY && (!description || description.length < 50)) {
+        // -- E. KI-TEXT & ALTERS-CHECK --
+        let description = event.description || "";
+        let shortDescription = "";
+        
+        // Wir fragen die KI, wenn: 1. Keine Beschreibung da ist ODER 2. Es ein Familien-Event ist (fürs Alter)
+        if (OPENAI_API_KEY && (!description || description.length < 50 || isFamily)) {
           try {
-            const prompt = `Schreibe eine kurze, einladende Event-Beschreibung (max 2 Sätze) auf Deutsch für: "${title}" in ${addressData.city || "der Schweiz"}. Genre: ${genreName || "Event"}. Stil: Quiet Luxury, Premium.`;
+            // Prompt wird dynamisch: Wenn Familie, frag nach Alter. Sonst nur Beschreibung.
+            let promptInstruction = `Schreibe eine kurze, einladende Event-Beschreibung (max 2 Sätze) auf Deutsch für: "${title}". Stil: Quiet Luxury.`;
             
+            if (isFamily) {
+              promptInstruction += `\nZUSATZAUFGABE: Das ist ein Familien-Event. Schätze das ideale Alter.
+              Antworte AM ENDE deiner Nachricht mit genau einem dieser Codes, wenn du sicher bist:
+              [BABY] für 0-4 Jahre, [KIDS] für 5-10 Jahre, [TEEN] für 11+ Jahre.`;
+            }
+
             const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${OPENAI_API_KEY}`,
+              headers: { 
+                "Content-Type": "application/json", 
+                "Authorization": `Bearer ${OPENAI_API_KEY}` 
               },
               body: JSON.stringify({
                 model: "gpt-4o-mini",
-                messages: [{ role: "user", content: prompt }],
-                max_tokens: 100,
+                messages: [{ role: "user", content: promptInstruction }],
+                max_tokens: 150,
               }),
             });
             const aiData = await aiRes.json();
-            shortDescription = aiData.choices?.[0]?.message?.content || "";
-            console.log(`AI description generated for: ${title}`);
-          } catch (e) {
-            console.error("OpenAI Fehler:", e);
+            const rawAiText = aiData.choices?.[0]?.message?.content || "";
+
+            // Altersextraktion & Textbereinigung
+            shortDescription = rawAiText;
+            if (isFamily) {
+              if (rawAiText.includes("[BABY]") && tagIds.baby) tagsToAssign.push(tagIds.baby);
+              if (rawAiText.includes("[KIDS]") && tagIds.kids) tagsToAssign.push(tagIds.kids);
+              if (rawAiText.includes("[TEEN]") && tagIds.teen) tagsToAssign.push(tagIds.teen);
+              // Entferne den Code aus dem Text für den User
+              shortDescription = rawAiText.replace(/\[BABY\]|\[KIDS\]|\[TEEN\]/g, "").trim();
+            }
+
+          } catch (e) { 
+            console.error("AI Fehler für Event", title, e); 
           }
         }
 
-        // -- E. SPEICHERN (UPSERT) --
-        const eventData: Record<string, any> = {
-          external_id: tmId,
-          title: title,
-          short_description: shortDescription || description || null,
-          location: venueBasic?.name || null,
-          venue_name: venueBasic?.name || null,
-          address_street: addressData.street || null,
-          address_city: addressData.city || null,
-          address_zip: addressData.zip || null,
-          address_country: addressData.country || null,
-          image_url: event.images?.[0]?.url || null,
-          start_date: event.dates?.start?.dateTime || null,
-          ticket_link: event.url || null,
-        };
-
-        // Only add category IDs if we have them
-        if (mainCatId) eventData.category_main_id = mainCatId;
-        if (subCatId) eventData.category_sub_id = subCatId;
-
-        const { data: savedEvent, error: upsertError } = await supabase
+        // -- F. SPEICHERN --
+        const { data: savedEvent, error: saveError } = await supabase
           .from("events")
-          .upsert(eventData, { onConflict: 'external_id' })
+          .upsert({
+            external_id: tmId,
+            title: title,
+            short_description: shortDescription || description,
+            location: venueBasic?.name,
+            venue_name: venueBasic?.name,
+            address_street: addressData.street,
+            address_city: addressData.city,
+            address_zip: addressData.zip,
+            address_country: addressData.country,
+            image_url: event.images?.[0]?.url,
+            start_date: event.dates?.start?.dateTime,
+            ticket_link: event.url,
+            category_main_id: mainCatId,
+            category_sub_id: subCatId,
+            price_from: minPrice
+          }, { onConflict: 'external_id' })
           .select()
           .single();
 
-        if (upsertError) {
-          console.error("Fehler beim Speichern:", upsertError);
-          errors.push(`${title}: ${upsertError.message}`);
-          errorCount++;
+        if (saveError) {
+          console.error(`Error saving event ${title}:`, saveError);
+          errors.push(`${title}: ${saveError.message}`);
           continue;
         }
 
-        // -- F. TAG VERKNÜPFEN --
-        if (isRomantic && romanticTagId && savedEvent) {
-          const { error: tagError } = await supabase.from("event_tags").upsert({
-            event_id: savedEvent.id,
-            tag_id: romanticTagId
-          }, { onConflict: 'event_id,tag_id' });
-          
-          if (tagError) {
-            console.log("Tag linking error (might be missing table):", tagError.message);
+        // -- G. TAGS VERKNÜPFEN --
+        if (savedEvent && tagsToAssign.length > 0) {
+          for (const tId of tagsToAssign) {
+            const { error: tagError } = await supabase
+              .from("event_tags")
+              .upsert({ event_id: savedEvent.id, tag_id: tId }, { onConflict: 'event_id,tag_id' });
+            
+            if (tagError) {
+              console.log(`Tag link error for event ${savedEvent.id}, tag ${tId}:`, tagError);
+            }
           }
         }
-
+        
         processedCount++;
-        console.log(`Processed: ${title}`);
+        console.log(`Processed: ${title} (price: ${minPrice}, tags: ${tagsToAssign.length})`);
         
       } catch (eventError) {
         console.error("Error processing event:", eventError);
-        errorCount++;
+        errors.push(`Event error: ${eventError}`);
       }
     }
 
-    const result = {
-      message: `Import fertig. ${processedCount} Events verarbeitet.`,
+    const result = { 
+      message: `V4 Import fertig. ${processedCount} Events verarbeitet.`,
       processed: processedCount,
-      errors: errorCount,
-      errorDetails: errors.slice(0, 10), // Only first 10 errors
-      total_found: events.length
+      total: events.length,
+      errors: errors.length > 0 ? errors : undefined
     };
 
-    console.log("Import completed:", result);
+    console.log("Import complete:", result);
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify(result), { 
+      headers: { ...corsHeaders, "Content-Type": "application/json" } 
     });
 
-  } catch (error: unknown) {
+  } catch (error: unknown) { 
     console.error("Import error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), { 
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    }); 
   }
 });
