@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.upload-assets]
 verify_jwt = false
+
+[functions.tm-import]
+verify_jwt = false
