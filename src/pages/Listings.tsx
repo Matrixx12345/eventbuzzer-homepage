@@ -111,12 +111,7 @@ const quickFilters = [
   { id: "natur", label: "Natur", icon: Mountain },
 ];
 
-const priceFilters = [
-  { id: "all", label: "Alle" },
-  { id: "free", label: "Gratis" },
-  { id: "under20", label: "< 20 €" },
-  { id: "over20", label: "> 20 €" },
-];
+// Price filter removed - using simple toggle for free events only
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
 
@@ -153,7 +148,7 @@ const Listings = () => {
   // Filter states
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
-  const [selectedPrice, setSelectedPrice] = useState("all");
+  const [showFreeOnly, setShowFreeOnly] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -228,11 +223,11 @@ const Listings = () => {
 
   // Filter events
   const filteredEvents = events.filter((event) => {
-    // Price filter
-    const price = event.price_from || 0;
-    if (selectedPrice === "free" && price > 0) return false;
-    if (selectedPrice === "under20" && price >= 20) return false;
-    if (selectedPrice === "over20" && price <= 20) return false;
+    // Free events filter - show only events with price < 1 or no price
+    if (showFreeOnly) {
+      const price = event.price_from;
+      if (price !== null && price !== undefined && price >= 1) return false;
+    }
     
     // City filter
     if (selectedCity) {
@@ -257,7 +252,7 @@ const Listings = () => {
   const clearFilters = () => {
     setSelectedDate(undefined);
     setSelectedQuickFilters([]);
-    setSelectedPrice("all");
+    setShowFreeOnly(false);
     setSelectedCity("");
     setRadius([0]);
     setSelectedCategory("all");
@@ -267,7 +262,7 @@ const Listings = () => {
   const hasActiveFilters = 
     selectedDate !== undefined ||
     selectedQuickFilters.length > 0 ||
-    selectedPrice !== "all" ||
+    showFreeOnly ||
     selectedCity !== "" ||
     radius[0] > 0 ||
     selectedCategory !== "all" ||
@@ -375,25 +370,26 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Preis (Price) */}
+      {/* Nur kostenlose Events */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Budget</h3>
-        <div className="grid grid-cols-4 gap-1 p-1 bg-white rounded-xl border border-blue-200">
-          {priceFilters.map((price) => (
-            <button
-              key={price.id}
-              onClick={() => setSelectedPrice(price.id)}
-              className={cn(
-                "py-2.5 text-xs font-bold transition-all rounded-lg",
-                selectedPrice === price.id
-                  ? "bg-blue-600 text-white"
-                  : "text-blue-900 hover:bg-blue-50"
-              )}
-            >
-              {price.label}
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => setShowFreeOnly(!showFreeOnly)}
+          className={cn(
+            "w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-semibold text-sm",
+            showFreeOnly
+              ? "bg-blue-600 text-white"
+              : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+          )}
+        >
+          <span>Nur kostenlose Events</span>
+          <span className={cn(
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+            showFreeOnly ? "bg-white border-white" : "border-blue-300"
+          )}>
+            {showFreeOnly && <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+          </span>
+        </button>
       </div>
 
       {/* Stadt und Radius */}
@@ -511,7 +507,7 @@ const Listings = () => {
                 Filter
                 {hasActiveFilters && (
                   <span className="w-5 h-5 bg-neutral-900 text-white rounded-full text-xs flex items-center justify-center">
-                    {selectedQuickFilters.length + (selectedPrice !== "all" ? 1 : 0) + selectedSubcategories.length}
+                    {selectedQuickFilters.length + (showFreeOnly ? 1 : 0) + selectedSubcategories.length}
                   </span>
                 )}
               </button>
