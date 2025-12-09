@@ -35,7 +35,7 @@ serve(async (req) => {
       .from("events")
       .select("*")
       .order("id", { ascending: false })
-      .limit(50);
+      .limit(200);
 
     if (error) {
       console.error("Supabase query error:", JSON.stringify(error));
