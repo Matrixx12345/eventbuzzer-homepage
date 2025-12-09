@@ -225,15 +225,27 @@ const Listings = () => {
 
   // City coordinates for radius filter
   const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(() => ({
-    "Zürich": { lat: 47.3769, lng: 8.5417 },
-    "Bern": { lat: 46.9480, lng: 7.4474 },
-    "Basel": { lat: 47.5596, lng: 7.5886 },
-    "Luzern": { lat: 47.0502, lng: 8.3093 },
-    "Genf": { lat: 46.2044, lng: 6.1432 },
-    "Baden": { lat: 47.4734, lng: 8.3063 },
-    "Winterthur": { lat: 47.4984, lng: 8.7246 },
-    "St. Gallen": { lat: 47.4245, lng: 9.3767 },
+    "zürich": { lat: 47.3769, lng: 8.5417 },
+    "bern": { lat: 46.9480, lng: 7.4474 },
+    "basel": { lat: 47.5596, lng: 7.5886 },
+    "luzern": { lat: 47.0502, lng: 8.3093 },
+    "genf": { lat: 46.2044, lng: 6.1432 },
+    "baden": { lat: 47.4734, lng: 8.3063 },
+    "winterthur": { lat: 47.4984, lng: 8.7246 },
+    "st. gallen": { lat: 47.4245, lng: 9.3767 },
   }), []);
+
+  // Find city coordinates (case-insensitive, partial match)
+  const findCityCoords = (cityName: string) => {
+    const normalized = cityName.toLowerCase().trim();
+    // Direct match first
+    if (CITY_COORDINATES[normalized]) return CITY_COORDINATES[normalized];
+    // Partial match
+    for (const [key, coords] of Object.entries(CITY_COORDINATES)) {
+      if (normalized.includes(key) || key.includes(normalized)) return coords;
+    }
+    return null;
+  };
 
   // Haversine formula to calculate distance between two points
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
@@ -264,12 +276,13 @@ const Listings = () => {
     
     // Radius filter (geo-based) - only if city is selected AND radius > 0
     if (selectedCity && radius[0] > 0) {
-      const cityCoords = CITY_COORDINATES[selectedCity];
+      const cityCoords = findCityCoords(selectedCity);
       if (cityCoords && event.latitude && event.longitude) {
         const distance = calculateDistance(
           cityCoords.lat, cityCoords.lng,
           event.latitude, event.longitude
         );
+        console.log(`Event "${event.title}": distance from ${selectedCity} = ${distance.toFixed(1)}km, radius = ${radius[0]}km`);
         if (distance > radius[0]) return false;
       } else if (!event.latitude || !event.longitude) {
         // If event has no geo data, fall back to city name matching
