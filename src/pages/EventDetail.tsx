@@ -373,20 +373,21 @@ const EventDetail = () => {
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Check if slug is a UUID (dynamic event from Supabase)
-  const isUUID = slug && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  // Check if slug is a static event or needs to be fetched from Supabase
   const isStaticEvent = slug && eventsData[slug];
+  const isDynamicEvent = slug && !isStaticEvent;
 
   // Fetch dynamic event from Supabase
   useEffect(() => {
-    if (isUUID && !isStaticEvent) {
+    if (isDynamicEvent) {
       const fetchEvent = async () => {
         setLoading(true);
         try {
           const { data, error } = await supabase.functions.invoke("get-external-events");
           if (error) throw error;
           
-          const found = data?.events?.find((e: DynamicEvent) => e.id === slug);
+          // Find event by id (can be string or number)
+          const found = data?.events?.find((e: DynamicEvent) => String(e.id) === slug);
           if (found) {
             setDynamicEvent(found);
           }
@@ -398,7 +399,7 @@ const EventDetail = () => {
       };
       fetchEvent();
     }
-  }, [slug, isUUID, isStaticEvent]);
+  }, [slug, isDynamicEvent]);
 
   // Format date nicely
   const formatDate = (dateStr?: string) => {
