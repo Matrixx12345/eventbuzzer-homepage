@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Heart, 
   SlidersHorizontal, 
@@ -96,6 +96,8 @@ interface ExternalEvent {
   ticket_link?: string;
   category_main_id?: string;
   category_sub_id?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Quick filters with icons
@@ -221,6 +223,31 @@ const Listings = () => {
     return ROMANTIC_KEYWORDS.some(keyword => textToCheck.includes(keyword));
   };
 
+  // City coordinates for radius filter
+  const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(() => ({
+    "Zürich": { lat: 47.3769, lng: 8.5417 },
+    "Bern": { lat: 46.9480, lng: 7.4474 },
+    "Basel": { lat: 47.5596, lng: 7.5886 },
+    "Luzern": { lat: 47.0502, lng: 8.3093 },
+    "Genf": { lat: 46.2044, lng: 6.1432 },
+    "Baden": { lat: 47.4734, lng: 8.3063 },
+    "Winterthur": { lat: 47.4984, lng: 8.7246 },
+    "St. Gallen": { lat: 47.4245, lng: 9.3767 },
+  }), []);
+
+  // Haversine formula to calculate distance between two points
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   // Filter events
   const filteredEvents = events.filter((event) => {
     // Free events filter - show only events with price < 1 or no price
@@ -229,10 +256,26 @@ const Listings = () => {
       if (price !== null && price !== undefined && price >= 1) return false;
     }
     
-    // City filter
-    if (selectedCity) {
+    // City filter (text-based)
+    if (selectedCity && radius[0] === 0) {
       const eventCity = event.address_city || event.location || "";
       if (!eventCity.toLowerCase().includes(selectedCity.toLowerCase())) return false;
+    }
+    
+    // Radius filter (geo-based) - only if city is selected AND radius > 0
+    if (selectedCity && radius[0] > 0) {
+      const cityCoords = CITY_COORDINATES[selectedCity];
+      if (cityCoords && event.latitude && event.longitude) {
+        const distance = calculateDistance(
+          cityCoords.lat, cityCoords.lng,
+          event.latitude, event.longitude
+        );
+        if (distance > radius[0]) return false;
+      } else if (!event.latitude || !event.longitude) {
+        // If event has no geo data, fall back to city name matching
+        const eventCity = event.address_city || event.location || "";
+        if (!eventCity.toLowerCase().includes(selectedCity.toLowerCase())) return false;
+      }
     }
     
     // Date filter
