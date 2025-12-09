@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Heart, Loader2, Sparkles, CheckCircle, RefreshCw } from "lucide-react";
@@ -62,9 +63,10 @@ const ExternalEventCard = ({ event, index }: { event: ExternalEvent; index: numb
   const displayDescription = event.short_description || event.description;
 
   return (
-    <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-      {/* Image Container */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+    <Link to={`/event/${event.id}`} className="block">
+      <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+        {/* Image Container */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img
           src={imageToShow}
           alt={event.title}
@@ -125,7 +127,8 @@ const ExternalEventCard = ({ event, index }: { event: ExternalEvent; index: numb
           </p>
         )}
       </div>
-    </article>
+      </article>
+    </Link>
   );
 };
 
