@@ -6,38 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Fetch venue details from Ticketmaster API to get full address
-async function fetchVenueDetails(venueId: string, apiKey: string): Promise<{
-  address_street: string | null;
-  address_city: string | null;
-  address_zip: string | null;
-  address_country: string | null;
-} | null> {
-  try {
-    const venueUrl = `https://app.ticketmaster.com/discovery/v2/venues/${venueId}.json?apikey=${apiKey}`;
-    console.log(`Fetching venue details for: ${venueId}`);
-    
-    const response = await fetch(venueUrl);
-    
-    if (!response.ok) {
-      console.error(`Venue API error for ${venueId}: ${response.status}`);
-      return null;
-    }
-    
-    const venueData = await response.json();
-    
-    return {
-      address_street: venueData.address?.line1 || null,
-      address_city: venueData.city?.name || null,
-      address_zip: venueData.postalCode || null,
-      address_country: venueData.country?.countryCode || null,
-    };
-  } catch (error) {
-    console.error(`Error fetching venue ${venueId}:`, error);
-    return null;
-  }
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -46,11 +14,10 @@ serve(async (req) => {
 
   try {
     const externalUrl = Deno.env.get('Supabase_URL');
-    const externalKey = Deno.env.get('Supabase_ANON_KEY');
     const serviceRoleKey = Deno.env.get('Supabase_SERVICE_ROLE_KEY');
     const ticketmasterApiKey = Deno.env.get('TICKETMASTER_API_KEY');
 
-    if (!externalUrl || !externalKey || !serviceRoleKey) {
+    if (!externalUrl || !serviceRoleKey) {
       console.error("External Supabase credentials not configured");
       return new Response(
         JSON.stringify({ error: "External Supabase credentials not configured" }),
@@ -66,20 +33,12 @@ serve(async (req) => {
       );
     }
 
-    console.log("Step 1: Fetching events from Ticketmaster API...");
+    console.log("Step 1: Fetching events directly from Ticketmaster Discovery API...");
 
-    // Fetch events from the external ticketmaster-events function
-    const ticketmasterResponse = await fetch(
-      'https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/ticketmaster-events',
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${externalKey}`,
-          'apikey': externalKey,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Fetch events directly from Ticketmaster Discovery API for Switzerland
+    const ticketmasterUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${ticketmasterApiKey}&countryCode=CH&size=50&sort=date,asc`;
+    
+    const ticketmasterResponse = await fetch(ticketmasterUrl);
 
     if (!ticketmasterResponse.ok) {
       const errorText = await ticketmasterResponse.text();
@@ -91,8 +50,8 @@ serve(async (req) => {
     }
 
     const ticketmasterData = await ticketmasterResponse.json();
-    const ticketmasterEvents = ticketmasterData.events || [];
-    console.log(`Fetched ${ticketmasterEvents.length} events from Ticketmaster`);
+    const ticketmasterEvents = ticketmasterData._embedded?.events || [];
+    console.log(`Fetched ${ticketmasterEvents.length} events from Ticketmaster Discovery API`);
 
     if (ticketmasterEvents.length === 0) {
       return new Response(
@@ -104,58 +63,70 @@ serve(async (req) => {
     // Create external Supabase client with SERVICE ROLE KEY to bypass RLS
     const externalSupabase = createClient(externalUrl, serviceRoleKey);
 
-    console.log("Step 2: Enriching events with venue details...");
+    console.log("Step 2: Parsing events with full venue data...");
 
-    // Map Ticketmaster events to our events table schema WITH venue enrichment
-    const eventsToInsert = [];
-    let venuesEnriched = 0;
-
-    for (const event of ticketmasterEvents) {
-      // Extract venue ID from the event
-      const venueId = event._embedded?.venues?.[0]?.id || event.venueId || null;
+    // Map Ticketmaster events to our events table schema
+    const eventsToInsert = ticketmasterEvents.map((event: any) => {
+      // Extract venue information from _embedded
+      const venue = event._embedded?.venues?.[0];
+      const venueName = venue?.name || null;
+      const addressStreet = venue?.address?.line1 || null;
+      const addressCity = venue?.city?.name || null;
+      const addressZip = venue?.postalCode || null;
+      const addressCountry = venue?.country?.countryCode || "CH";
       
-      // Default address values from the initial event data
-      let addressStreet = null;
-      let addressCity = event.city || event._embedded?.venues?.[0]?.city?.name || null;
-      let addressZip = null;
-      let addressCountry = event.country || event._embedded?.venues?.[0]?.country?.name || "CH";
+      // Build location string
+      const locationParts = [venueName, addressCity].filter(Boolean);
+      const location = locationParts.join(", ");
 
-      // If we have a venue ID, fetch full venue details
-      if (venueId) {
-        console.log(`Enriching event "${event.name}" with venue ID: ${venueId}`);
-        const venueDetails = await fetchVenueDetails(venueId, ticketmasterApiKey);
-        
-        if (venueDetails) {
-          addressStreet = venueDetails.address_street || addressStreet;
-          addressCity = venueDetails.address_city || addressCity;
-          addressZip = venueDetails.address_zip || addressZip;
-          addressCountry = venueDetails.address_country || addressCountry;
-          venuesEnriched++;
-          console.log(`✓ Enriched: ${addressStreet}, ${addressZip} ${addressCity}, ${addressCountry}`);
-        }
-      }
+      // Get best image (prefer larger images)
+      const images = event.images || [];
+      const bestImage = images.find((img: any) => img.ratio === "16_9" && img.width >= 1024) 
+        || images.find((img: any) => img.ratio === "16_9") 
+        || images[0];
+      const imageUrl = bestImage?.url || null;
 
-      eventsToInsert.push({
-        title: event.name || event.title || "Unnamed Event",
-        description: event.description || event.info || null,
-        venue_name: event.venue || event._embedded?.venues?.[0]?.name || null,
+      // Get price
+      const priceFrom = event.priceRanges?.[0]?.min || null;
+
+      // Get date
+      const startDate = event.dates?.start?.dateTime || event.dates?.start?.localDate || null;
+      const endDate = event.dates?.end?.dateTime || event.dates?.end?.localDate || null;
+
+      // Get description
+      const description = event.info || event.description || event.pleaseNote || null;
+
+      // Get ticket link
+      const ticketLink = event.url || null;
+
+      // Get external ID
+      const externalId = event.id || null;
+
+      console.log(`Event: ${event.name} | Venue: ${venueName} | City: ${addressCity} | Street: ${addressStreet}`);
+
+      return {
+        title: event.name || "Unnamed Event",
+        description: description,
+        venue_name: venueName,
         address_street: addressStreet,
         address_city: addressCity,
         address_zip: addressZip,
         address_country: addressCountry,
-        start_date: event.date || event.dates?.start?.localDate || null,
-        price_from: event.priceRanges?.[0]?.min || event.price || null,
-        ticket_link: event.url || event.ticket_link || null,
-        image_url: event.image || event.images?.[0]?.url || null,
-        location: `${event.venue || event._embedded?.venues?.[0]?.name || ''}, ${addressCity || ''}`.replace(/^, |, $/g, ''),
-      });
-    }
+        start_date: startDate,
+        end_date: endDate,
+        price_from: priceFrom,
+        ticket_link: ticketLink,
+        image_url: imageUrl,
+        location: location,
+        external_id: externalId,
+      };
+    });
 
-    console.log(`Prepared ${eventsToInsert.length} events, enriched ${venuesEnriched} venues with addresses`);
+    console.log(`Prepared ${eventsToInsert.length} events with venue data`);
 
     console.log("Step 3: Inserting events into database...");
 
-    // Insert events (simple insert, no upsert since we're not tracking external IDs)
+    // Insert events
     const { data: insertedData, error: insertError } = await externalSupabase
       .from('events')
       .insert(eventsToInsert)
@@ -172,10 +143,9 @@ serve(async (req) => {
     const syncedCount = insertedData?.length || eventsToInsert.length;
     console.log(`Successfully synced ${syncedCount} events to database`);
 
-    // Step 4: Generate AI descriptions using OpenAI (via generate-ai-descriptions edge function)
+    // Step 4: Generate AI descriptions using OpenAI
     console.log("Step 4: Generating AI descriptions for new events...");
     
-    // Get the Lovable Cloud function URL and anon key from environment
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://phlhbbjeqabjhkkyennz.supabase.co';
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
     const aiDescriptionUrl = `${supabaseUrl}/functions/v1/generate-ai-descriptions`;
@@ -183,7 +153,6 @@ serve(async (req) => {
     let descriptionsGenerated = 0;
     const descriptionErrors: string[] = [];
 
-    // Only process the newly inserted events
     const eventsToDescribe = insertedData || [];
     
     console.log(`Processing ${eventsToDescribe.length} events for AI descriptions...`);
@@ -254,9 +223,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `${syncedCount} Events synchronisiert, ${venuesEnriched} Venues mit Adresse angereichert, ${descriptionsGenerated} AI-Beschreibungen generiert`,
+        message: `${syncedCount} Events synchronisiert, ${descriptionsGenerated} AI-Beschreibungen generiert`,
         synced: syncedCount,
-        venuesEnriched: venuesEnriched,
         descriptions: descriptionsGenerated,
         descriptionErrors: descriptionErrors.length > 0 ? descriptionErrors : undefined,
         events: insertedData || eventsToInsert
