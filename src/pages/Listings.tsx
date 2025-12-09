@@ -541,8 +541,8 @@ const Listings = () => {
             {!loading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredEvents.map((event, index) => {
-                  // Always use placeholder images - they're beautiful!
-                  const eventImage = getPlaceholderImage(index);
+                  // Use real image if available, otherwise fallback to placeholder
+                  const eventImage = event.image_url || getPlaceholderImage(index);
                   // Use the database ID (not external_id) for routing - matches how EventDetail fetches
                   const eventSlug = event.id;
                   
