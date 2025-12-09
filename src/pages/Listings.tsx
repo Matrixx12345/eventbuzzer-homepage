@@ -36,7 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format, addDays, isToday, isTomorrow, parseISO, isSameDay } from "date-fns";
+import { format, addDays, addWeeks, isToday, isTomorrow, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { de } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -149,12 +149,32 @@ const Listings = () => {
   
   // Filter states
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTimeFilters, setSelectedTimeFilters] = useState<string[]>([]);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
   const [showFreeOnly, setShowFreeOnly] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+
+  // Time filter definitions
+  const timeFilters = [
+    { id: "today", label: "Heute" },
+    { id: "tomorrow", label: "Morgen" },
+    { id: "thisWeek", label: "Diese Woche" },
+    { id: "nextWeek", label: "Nächste Woche" },
+    { id: "thisMonth", label: "Dieser Monat" },
+  ];
+
+  const toggleTimeFilter = (filterId: string) => {
+    setSelectedTimeFilters((prev) =>
+      prev.includes(filterId)
+        ? prev.filter((f) => f !== filterId)
+        : [...prev, filterId]
+    );
+    // Clear specific date when using time filters
+    setSelectedDate(undefined);
+  };
 
   // Fetch events from Supabase
   useEffect(() => {
@@ -291,10 +311,43 @@ const Listings = () => {
       }
     }
     
-    // Date filter
+    // Date filter - specific date
     if (selectedDate && event.start_date) {
       const eventDate = parseISO(event.start_date);
       if (!isSameDay(eventDate, selectedDate)) return false;
+    }
+    
+    // Time filters (multi-select)
+    if (selectedTimeFilters.length > 0 && event.start_date) {
+      const eventDate = parseISO(event.start_date);
+      const now = new Date();
+      
+      const matchesAnyTimeFilter = selectedTimeFilters.some((filter) => {
+        switch (filter) {
+          case "today":
+            return isToday(eventDate);
+          case "tomorrow":
+            return isTomorrow(eventDate);
+          case "thisWeek":
+            return isWithinInterval(eventDate, {
+              start: startOfWeek(now, { weekStartsOn: 1 }),
+              end: endOfWeek(now, { weekStartsOn: 1 })
+            });
+          case "nextWeek":
+            const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+            const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+            return isWithinInterval(eventDate, { start: nextWeekStart, end: nextWeekEnd });
+          case "thisMonth":
+            return isWithinInterval(eventDate, {
+              start: startOfMonth(now),
+              end: endOfMonth(now)
+            });
+          default:
+            return true;
+        }
+      });
+      
+      if (!matchesAnyTimeFilter) return false;
     }
     
     // Quick filters - Romantik
@@ -307,6 +360,7 @@ const Listings = () => {
 
   const clearFilters = () => {
     setSelectedDate(undefined);
+    setSelectedTimeFilters([]);
     setSelectedQuickFilters([]);
     setShowFreeOnly(false);
     setSelectedCity("");
@@ -317,6 +371,7 @@ const Listings = () => {
 
   const hasActiveFilters = 
     selectedDate !== undefined ||
+    selectedTimeFilters.length > 0 ||
     selectedQuickFilters.length > 0 ||
     showFreeOnly ||
     selectedCity !== "" ||
@@ -364,35 +419,26 @@ const Listings = () => {
             {selectedDate ? format(selectedDate, "d. MMMM yyyy", { locale: de }) : "Datum wählen"}
           </span>
         </button>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              const today = new Date();
-              setSelectedDate(isToday(selectedDate || new Date(0)) ? undefined : today);
-            }}
-            className={cn(
-              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
-              selectedDate && isToday(selectedDate)
-                ? "bg-blue-600 text-white"
-                : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-            )}
-          >
-            Heute
-          </button>
-          <button
-            onClick={() => {
-              const tomorrow = addDays(new Date(), 1);
-              setSelectedDate(isTomorrow(selectedDate || new Date(0)) ? undefined : tomorrow);
-            }}
-            className={cn(
-              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
-              selectedDate && isTomorrow(selectedDate)
-                ? "bg-blue-600 text-white"
-                : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-            )}
-          >
-            Morgen
-          </button>
+        
+        {/* Time filter buttons - multi-select */}
+        <div className="grid grid-cols-2 gap-2">
+          {timeFilters.map((filter) => {
+            const isActive = selectedTimeFilters.includes(filter.id);
+            return (
+              <button
+                key={filter.id}
+                onClick={() => toggleTimeFilter(filter.id)}
+                className={cn(
+                  "px-3 py-2.5 rounded-xl text-xs font-semibold transition-all",
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                )}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -563,7 +609,7 @@ const Listings = () => {
                 Filter
                 {hasActiveFilters && (
                   <span className="w-5 h-5 bg-neutral-900 text-white rounded-full text-xs flex items-center justify-center">
-                    {selectedQuickFilters.length + (showFreeOnly ? 1 : 0) + selectedSubcategories.length}
+                    {selectedTimeFilters.length + selectedQuickFilters.length + (showFreeOnly ? 1 : 0) + selectedSubcategories.length}
                   </span>
                 )}
               </button>
