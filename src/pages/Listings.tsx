@@ -519,7 +519,8 @@ const Listings = () => {
                 {filteredEvents.map((event, index) => {
                   // Always use placeholder images - they're beautiful!
                   const eventImage = getPlaceholderImage(index);
-                  const eventSlug = event.external_id || event.id;
+                  // Use the database ID (not external_id) for routing - matches how EventDetail fetches
+                  const eventSlug = event.id;
                   
                   return (
                     <Link
