@@ -116,8 +116,8 @@ serve(async (req) => {
         const segmentName = event.classifications?.[0]?.segment?.name;
         const genreName = event.classifications?.[0]?.genre?.name;
         
-        // -- A. ADRESSE NACHLADEN --
-        let addressData = { street: "", city: "", zip: "", country: "" };
+        // -- A. ADRESSE & GEO-DATEN NACHLADEN --
+        let addressData = { street: "", city: "", zip: "", country: "", lat: null as number | null, lng: null as number | null };
         if (venueId) {
           try {
             const venueRes = await fetch(`https://app.ticketmaster.com/discovery/v2/venues/${venueId}.json?apikey=${TM_API_KEY}`);
@@ -127,8 +127,11 @@ serve(async (req) => {
                 street: vData.address?.line1 ?? "",
                 city: vData.city?.name ?? "",
                 zip: vData.postalCode ?? "",
-                country: vData.country?.countryCode ?? "CH"
+                country: vData.country?.countryCode ?? "CH",
+                lat: vData.location?.latitude ? parseFloat(vData.location.latitude) : null,
+                lng: vData.location?.longitude ? parseFloat(vData.location.longitude) : null
               };
+              console.log(`Venue ${venueId}: lat=${addressData.lat}, lng=${addressData.lng}`);
             }
           } catch(e) {
             console.log(`Venue fetch failed for ${venueId}:`, e);
@@ -238,6 +241,8 @@ serve(async (req) => {
             address_city: addressData.city,
             address_zip: addressData.zip,
             address_country: addressData.country,
+            latitude: addressData.lat,
+            longitude: addressData.lng,
             image_url: event.images?.[0]?.url,
             start_date: event.dates?.start?.dateTime,
             ticket_link: event.url,
