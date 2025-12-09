@@ -1,5 +1,8 @@
 project_id = "phlhbbjeqabjhkkyennz"
 
+[functions.cleanup-events]
+verify_jwt = false
+
 [functions.get-external-events]
 verify_jwt = false
 
