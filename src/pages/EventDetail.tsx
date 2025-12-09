@@ -1,8 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight, Navigation } from "lucide-react";
-import { useState } from "react";
+import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight, Navigation, Loader2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Carousel,
   CarouselContent,
@@ -347,23 +348,141 @@ const MasonryProductCard = ({ image, name, price, partner, size }: {
   );
 };
 
+// Dynamic event interface for Supabase data
+interface DynamicEvent {
+  id: string;
+  title: string;
+  description?: string;
+  short_description?: string;
+  venue_name?: string;
+  address_street?: string;
+  address_city?: string;
+  address_zip?: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  image_url?: string;
+  price_from?: number;
+  ticket_link?: string;
+}
+
 const EventDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const eventId = slug || "unknown";
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Get event data or use default
-  const event = slug && eventsData[slug] ? eventsData[slug] : {
-    image: weekendJazz,
-    title: "Event Not Found",
-    venue: "Unknown Venue",
-    location: "Switzerland",
-    date: "Coming Soon",
-    time: "TBA",
-    distance: "Unknown",
-    description: "This event is not available."
+  // Check if slug is a UUID (dynamic event from Supabase)
+  const isUUID = slug && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  const isStaticEvent = slug && eventsData[slug];
+
+  // Fetch dynamic event from Supabase
+  useEffect(() => {
+    if (isUUID && !isStaticEvent) {
+      const fetchEvent = async () => {
+        setLoading(true);
+        try {
+          const { data, error } = await supabase.functions.invoke("get-external-events");
+          if (error) throw error;
+          
+          const found = data?.events?.find((e: DynamicEvent) => e.id === slug);
+          if (found) {
+            setDynamicEvent(found);
+          }
+        } catch (err) {
+          console.error("Error fetching event:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchEvent();
+    }
+  }, [slug, isUUID, isStaticEvent]);
+
+  // Format date nicely
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    try {
+      return new Date(dateStr).toLocaleDateString("de-CH", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
   };
+
+  const formatTime = (dateStr?: string) => {
+    if (!dateStr) return null;
+    try {
+      return new Date(dateStr).toLocaleTimeString("de-CH", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  // Build event data from either static or dynamic source
+  const eventId = slug || "unknown";
+  let event: {
+    image: string;
+    title: string;
+    venue: string;
+    location: string;
+    address?: string;
+    date: string;
+    time: string;
+    distance: string;
+    description: string;
+    ticketLink?: string;
+    priceFrom?: number;
+  };
+
+  if (isStaticEvent) {
+    event = eventsData[slug!];
+  } else if (dynamicEvent) {
+    const addressParts = [dynamicEvent.address_street, dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean);
+    event = {
+      image: dynamicEvent.image_url || weekendJazz,
+      title: dynamicEvent.title,
+      venue: dynamicEvent.venue_name || dynamicEvent.location || "Veranstaltungsort",
+      location: dynamicEvent.address_city || "Schweiz",
+      address: addressParts.join(" "),
+      date: formatDate(dynamicEvent.start_date) || "Datum folgt",
+      time: formatTime(dynamicEvent.start_date) || "Zeit folgt",
+      distance: "",
+      description: dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
+      ticketLink: dynamicEvent.ticket_link,
+      priceFrom: dynamicEvent.price_from,
+    };
+  } else {
+    event = {
+      image: weekendJazz,
+      title: loading ? "Lädt..." : "Event nicht gefunden",
+      venue: "",
+      location: "",
+      date: "",
+      time: "",
+      distance: "",
+      description: loading ? "" : "Dieses Event konnte nicht gefunden werden.",
+    };
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -389,29 +508,59 @@ const EventDetail = () => {
 
           {/* Meta Info */}
           <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3 text-neutral-600">
-              <Calendar size={18} className="text-neutral-400" />
-              <span className="text-base">{event.date}</span>
-            </div>
-            <div className="flex items-center gap-3 text-neutral-600">
-              <Clock size={18} className="text-neutral-400" />
-              <span className="text-base">{event.time}</span>
-            </div>
-            <div className="flex items-center gap-3 text-neutral-600">
-              <MapPin size={18} className="text-neutral-400" />
-              <span className="text-base">{event.venue}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Navigation size={18} className="text-neutral-900" />
-              <span className="text-base font-medium text-neutral-900">{event.distance}</span>
-            </div>
+            {event.date && (
+              <div className="flex items-center gap-3 text-neutral-600">
+                <Calendar size={18} className="text-neutral-400" />
+                <span className="text-base">{event.date}</span>
+              </div>
+            )}
+            {event.time && (
+              <div className="flex items-center gap-3 text-neutral-600">
+                <Clock size={18} className="text-neutral-400" />
+                <span className="text-base">{event.time}</span>
+              </div>
+            )}
+            {event.venue && (
+              <div className="flex items-center gap-3 text-neutral-600">
+                <MapPin size={18} className="text-neutral-400" />
+                <span className="text-base">{event.venue}</span>
+              </div>
+            )}
+            {event.address && (
+              <div className="flex items-center gap-3 text-neutral-600">
+                <Navigation size={18} className="text-neutral-400" />
+                <span className="text-base">{event.address}</span>
+              </div>
+            )}
+            {event.priceFrom && (
+              <div className="flex items-center gap-3 text-neutral-900 font-medium">
+                <span className="text-base">ab CHF {event.priceFrom}</span>
+              </div>
+            )}
+            {event.distance && (
+              <div className="flex items-center gap-3">
+                <Navigation size={18} className="text-neutral-900" />
+                <span className="text-base font-medium text-neutral-900">{event.distance}</span>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-3 mb-8">
-            <button className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors flex-1 lg:flex-none">
-              Get Tickets
-            </button>
+            {event.ticketLink ? (
+              <a 
+                href={event.ticketLink} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors flex-1 lg:flex-none flex items-center justify-center gap-2"
+              >
+                Tickets kaufen <ExternalLink size={16} />
+              </a>
+            ) : (
+              <button className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors flex-1 lg:flex-none">
+                Get Tickets
+              </button>
+            )}
             <button
               onClick={() => toggleFavorite({ 
                 id: eventId, 
@@ -430,16 +579,11 @@ const EventDetail = () => {
 
           {/* Description - Fills remaining space with "mehr lesen" at bottom */}
           <div className="border-t border-neutral-100 pt-6 flex-1 flex flex-col min-h-0">
-            <h2 className="font-serif text-neutral-900 text-lg font-semibold mb-3">About This Event</h2>
+            <h2 className="font-serif text-neutral-900 text-lg font-semibold mb-3">Über dieses Event</h2>
             <div className={`text-neutral-600 leading-relaxed flex-1 overflow-hidden ${!showFullDescription ? 'line-clamp-6' : 'overflow-y-auto'}`}>
               <p>{event.description}</p>
-              {showFullDescription && (
-                <p className="mt-3">
-                  Join us for an extraordinary experience that combines world-class entertainment with Swiss precision and elegance.
-                </p>
-              )}
             </div>
-            {!showFullDescription && (
+            {event.description && event.description.length > 300 && !showFullDescription && (
               <button 
                 onClick={() => setShowFullDescription(true)}
                 className="text-neutral-900 text-sm underline mt-4 hover:text-neutral-600 transition-colors self-start"
