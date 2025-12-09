@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Heart, 
   SlidersHorizontal, 
@@ -15,7 +15,7 @@ import {
   Waves,
   Mountain,
   Search,
-  CalendarDays
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -36,9 +36,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format, addDays, isToday, isTomorrow } from "date-fns";
+import { format, addDays, isToday, isTomorrow, parseISO, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
+// Placeholder images for fallback
 import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
 import eventConcert from "@/assets/event-concert.jpg";
@@ -49,20 +51,52 @@ import swissLucerne from "@/assets/swiss-lucerne.jpg";
 import swissGeneva from "@/assets/swiss-geneva.jpg";
 import weekendJazz from "@/assets/weekend-jazz.jpg";
 import weekendOpera from "@/assets/weekend-opera.jpg";
+import festivalCrowd from "@/assets/festival-crowd.jpg";
+import festivalSinger from "@/assets/festival-singer.jpg";
+import festivalStage from "@/assets/festival-stage.jpg";
+import festivalFriends from "@/assets/festival-friends.jpg";
+import festivalChoir from "@/assets/festival-choir.jpg";
 
-// Sample events data
-const allEvents = [
-  { id: "einsiedeln-abbey", slug: "einsiedeln-abbey", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln", category: "Kultur", subcategory: "Foto-Spots", date: "15. Dez 2025", price: 0 },
-  { id: "nordportal", slug: "nordportal", image: eventVenue, title: "Nordportal", venue: "Leonard House", location: "Baden", category: "Musik", subcategory: "Konzert", date: "20. Dez 2025", price: 25 },
-  { id: "kulturbetrieb-royal", slug: "kulturbetrieb-royal", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden", category: "Musik", subcategory: "Konzert", date: "22. Dez 2025", price: 30 },
-  { id: "zurich-tonhalle", slug: "zurich-tonhalle", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich", category: "Musik", subcategory: "Klassik", date: "28. Dez 2025", price: 45 },
-  { id: "zurich-lights", slug: "zurich-lights", image: swissZurich, title: "Zurich Christmas Lights", venue: "Old Town", location: "Zürich", category: "Festival", subcategory: "Festival", date: "10. Dez 2025", price: 0 },
-  { id: "bern-markets", slug: "bern-markets", image: swissBern, title: "Bern Christmas Markets", venue: "Bundesplatz", location: "Bern", category: "Kultur", subcategory: "Markt", date: "12. Dez 2025", price: 0 },
-  { id: "lucerne-festival", slug: "lucerne-festival", image: swissLucerne, title: "Lucerne Light Festival", venue: "Chapel Bridge", location: "Luzern", category: "Festival", subcategory: "Festival", date: "5. Jan 2026", price: 15 },
-  { id: "geneva-gala", slug: "geneva-gala", image: swissGeneva, title: "Geneva New Year Gala", venue: "Jet d'Eau", location: "Genf", category: "Nightlife", subcategory: "Gala", date: "31. Dez 2025", price: 85 },
-  { id: "jazz-night", slug: "jazz-night", image: weekendJazz, title: "Jazz Night at Moods", venue: "Moods Club", location: "Zürich", category: "Musik", subcategory: "Jazz", date: "18. Dez 2025", price: 35 },
-  { id: "opera-house", slug: "opera-house", image: weekendOpera, title: "La Traviata", venue: "Opera House", location: "Zürich", category: "Kultur", subcategory: "Oper", date: "10. Jan 2026", price: 120 },
+// Rotating placeholder images
+const placeholderImages = [
+  eventAbbey,
+  eventVenue,
+  eventConcert,
+  eventSymphony,
+  swissZurich,
+  swissBern,
+  swissLucerne,
+  swissGeneva,
+  weekendJazz,
+  weekendOpera,
+  festivalCrowd,
+  festivalSinger,
+  festivalStage,
+  festivalFriends,
+  festivalChoir,
 ];
+
+const getPlaceholderImage = (index: number) => {
+  return placeholderImages[index % placeholderImages.length];
+};
+
+interface ExternalEvent {
+  id: string;
+  external_id?: string;
+  title: string;
+  description?: string;
+  short_description?: string;
+  location?: string;
+  venue_name?: string;
+  address_city?: string;
+  start_date?: string;
+  end_date?: string;
+  image_url?: string;
+  price_from?: number;
+  ticket_link?: string;
+  category_main_id?: string;
+  category_sub_id?: string;
+}
 
 // Quick filters with icons
 const quickFilters = [
@@ -111,6 +145,11 @@ const Listings = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   
+  // Events state
+  const [events, setEvents] = useState<ExternalEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   // Filter states
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
@@ -120,16 +159,36 @@ const Listings = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
 
+  // Fetch events from Supabase
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const { data, error: fetchError } = await supabase.functions.invoke('get-external-events', {
+          body: { limit: 200 }
+        });
+
+        if (fetchError) {
+          throw new Error(fetchError.message);
+        }
+
+        if (data?.events) {
+          setEvents(data.events);
+        }
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load events');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setShowCalendar(false);
-  };
-
-  const getDateLabel = () => {
-    if (!selectedDate) return null;
-    if (isToday(selectedDate)) return "Heute";
-    if (isTomorrow(selectedDate)) return "Morgen";
-    return format(selectedDate, "d. MMM", { locale: de });
   };
 
   const toggleQuickFilter = (filterId: string) => {
@@ -148,18 +207,25 @@ const Listings = () => {
     );
   };
 
-  // Filter events (simplified for demo)
-  const filteredEvents = allEvents.filter((event) => {
+  // Filter events
+  const filteredEvents = events.filter((event) => {
     // Price filter
-    if (selectedPrice === "free" && event.price > 0) return false;
-    if (selectedPrice === "under20" && event.price >= 20) return false;
-    if (selectedPrice === "over20" && event.price <= 20) return false;
+    const price = event.price_from || 0;
+    if (selectedPrice === "free" && price > 0) return false;
+    if (selectedPrice === "under20" && price >= 20) return false;
+    if (selectedPrice === "over20" && price <= 20) return false;
     
-    // Category filter
-    if (selectedCategory !== "all" && event.category.toLowerCase() !== selectedCategory) return false;
+    // City filter
+    if (selectedCity) {
+      const eventCity = event.address_city || event.location || "";
+      if (!eventCity.toLowerCase().includes(selectedCity.toLowerCase())) return false;
+    }
     
-    // Subcategory filter
-    if (selectedSubcategories.length > 0 && !selectedSubcategories.includes(event.subcategory)) return false;
+    // Date filter
+    if (selectedDate && event.start_date) {
+      const eventDate = parseISO(event.start_date);
+      if (!isSameDay(eventDate, selectedDate)) return false;
+    }
     
     return true;
   });
@@ -184,6 +250,20 @@ const Listings = () => {
     selectedSubcategories.length > 0;
 
   const currentSubcategories = subcategories[selectedCategory] || subcategories.all;
+
+  const formatEventDate = (dateString?: string) => {
+    if (!dateString) return "Datum TBA";
+    try {
+      const date = parseISO(dateString);
+      return format(date, "d. MMM yyyy", { locale: de });
+    } catch {
+      return "Datum TBA";
+    }
+  };
+
+  const getEventLocation = (event: ExternalEvent) => {
+    return event.address_city || event.location || event.venue_name || "Schweiz";
+  };
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -381,7 +461,7 @@ const Listings = () => {
             Events entdecken
           </h1>
           <p className="text-neutral-400 mt-1 text-sm">
-            {filteredEvents.length} Events gefunden
+            {loading ? "Lädt..." : `${filteredEvents.length} Events gefunden`}
           </p>
         </div>
       </div>
@@ -413,68 +493,103 @@ const Listings = () => {
               </button>
             </div>
 
-            {/* Uniform Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {filteredEvents.map((event) => (
-                <Link
-                  key={event.id}
-                  to={`/event/${event.slug}`}
-                  className="block group"
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && !loading && (
+              <div className="text-center py-20">
+                <p className="text-red-500 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-neutral-900 text-white rounded-full text-sm font-medium hover:bg-neutral-800 transition-colors"
                 >
-                  <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out">
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      
-                      {/* Category Badge */}
-                      <div className="absolute top-3 left-3 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-xs font-medium text-neutral-700 shadow-sm">
-                        {event.category}
-                      </div>
+                  Erneut versuchen
+                </button>
+              </div>
+            )}
 
-                      {/* Favorite Button */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleFavorite({
-                            id: event.id,
-                            slug: event.slug,
-                            title: event.title,
-                            venue: event.venue,
-                            location: event.location,
-                            image: event.image,
-                            date: event.date,
-                          });
-                        }}
-                        className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-sm transition-all hover:scale-110"
-                        aria-label={isFavorite(event.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
-                      >
-                        <Heart
-                          size={16}
-                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
-                        />
-                      </button>
-                    </div>
+            {/* Uniform Grid */}
+            {!loading && !error && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filteredEvents.map((event, index) => {
+                  const eventImage = event.image_url && event.image_url.trim() !== '' 
+                    ? event.image_url 
+                    : getPlaceholderImage(index);
+                  const eventSlug = event.external_id || event.id;
+                  
+                  return (
+                    <Link
+                      key={event.id}
+                      to={`/event/${eventSlug}`}
+                      className="block group"
+                    >
+                      <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out">
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={eventImage}
+                            alt={event.title}
+                            className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = getPlaceholderImage(index);
+                            }}
+                          />
 
-                    <div className="p-5">
-                      <p className="text-xs text-neutral-400 mb-1.5 font-medium">{event.date}</p>
-                      <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
-                        {event.title}
-                      </h3>
-                      <p className="text-sm text-neutral-400 mt-1.5 flex items-center gap-1.5">
-                        <MapPin size={12} />
-                        {event.location}
-                      </p>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
+                          {/* Favorite Button */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleFavorite({
+                                id: event.id,
+                                slug: eventSlug,
+                                title: event.title,
+                                venue: event.venue_name || "",
+                                location: getEventLocation(event),
+                                image: eventImage,
+                                date: formatEventDate(event.start_date),
+                              });
+                            }}
+                            className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-sm transition-all hover:scale-110"
+                            aria-label={isFavorite(event.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                          >
+                            <Heart
+                              size={16}
+                              className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
+                            />
+                          </button>
+                        </div>
 
-            {filteredEvents.length === 0 && (
+                        <div className="p-5">
+                          <p className="text-xs text-neutral-400 mb-1.5 font-medium">
+                            {formatEventDate(event.start_date)}
+                          </p>
+                          <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
+                            {event.title}
+                          </h3>
+                          <p className="text-sm text-neutral-400 mt-1.5 flex items-center gap-1.5">
+                            <MapPin size={12} />
+                            {getEventLocation(event)}
+                          </p>
+                          {event.short_description && (
+                            <p className="text-xs text-neutral-500 mt-2 line-clamp-2">
+                              {event.short_description}
+                            </p>
+                          )}
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
+            {!loading && !error && filteredEvents.length === 0 && (
               <div className="text-center py-20">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-neutral-100 flex items-center justify-center">
                   <Search size={24} className="text-neutral-400" />
