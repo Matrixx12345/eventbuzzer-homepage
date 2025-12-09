@@ -149,7 +149,7 @@ const Listings = () => {
   
   // Filter states
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTimeFilters, setSelectedTimeFilters] = useState<string[]>([]);
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
   const [showFreeOnly, setShowFreeOnly] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
@@ -166,12 +166,9 @@ const Listings = () => {
     { id: "thisMonth", label: "Dieser Monat" },
   ];
 
-  const toggleTimeFilter = (filterId: string) => {
-    setSelectedTimeFilters((prev) =>
-      prev.includes(filterId)
-        ? prev.filter((f) => f !== filterId)
-        : [...prev, filterId]
-    );
+  const selectTimeFilter = (filterId: string) => {
+    // Single select - toggle off if already selected, otherwise select new one
+    setSelectedTimeFilter((prev) => prev === filterId ? null : filterId);
     // Clear specific date when using time filters
     setSelectedDate(undefined);
   };
@@ -317,37 +314,41 @@ const Listings = () => {
       if (!isSameDay(eventDate, selectedDate)) return false;
     }
     
-    // Time filters (multi-select)
-    if (selectedTimeFilters.length > 0 && event.start_date) {
+    // Time filter (single-select)
+    if (selectedTimeFilter && event.start_date) {
       const eventDate = parseISO(event.start_date);
       const now = new Date();
       
-      const matchesAnyTimeFilter = selectedTimeFilters.some((filter) => {
-        switch (filter) {
-          case "today":
-            return isToday(eventDate);
-          case "tomorrow":
-            return isTomorrow(eventDate);
-          case "thisWeek":
-            return isWithinInterval(eventDate, {
-              start: startOfWeek(now, { weekStartsOn: 1 }),
-              end: endOfWeek(now, { weekStartsOn: 1 })
-            });
-          case "nextWeek":
-            const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
-            const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
-            return isWithinInterval(eventDate, { start: nextWeekStart, end: nextWeekEnd });
-          case "thisMonth":
-            return isWithinInterval(eventDate, {
-              start: startOfMonth(now),
-              end: endOfMonth(now)
-            });
-          default:
-            return true;
-        }
-      });
+      let matchesTimeFilter = false;
+      switch (selectedTimeFilter) {
+        case "today":
+          matchesTimeFilter = isToday(eventDate);
+          break;
+        case "tomorrow":
+          matchesTimeFilter = isTomorrow(eventDate);
+          break;
+        case "thisWeek":
+          matchesTimeFilter = isWithinInterval(eventDate, {
+            start: startOfWeek(now, { weekStartsOn: 1 }),
+            end: endOfWeek(now, { weekStartsOn: 1 })
+          });
+          break;
+        case "nextWeek":
+          const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+          const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
+          matchesTimeFilter = isWithinInterval(eventDate, { start: nextWeekStart, end: nextWeekEnd });
+          break;
+        case "thisMonth":
+          matchesTimeFilter = isWithinInterval(eventDate, {
+            start: startOfMonth(now),
+            end: endOfMonth(now)
+          });
+          break;
+        default:
+          matchesTimeFilter = true;
+      }
       
-      if (!matchesAnyTimeFilter) return false;
+      if (!matchesTimeFilter) return false;
     }
     
     // Quick filters - Romantik
@@ -360,7 +361,7 @@ const Listings = () => {
 
   const clearFilters = () => {
     setSelectedDate(undefined);
-    setSelectedTimeFilters([]);
+    setSelectedTimeFilter(null);
     setSelectedQuickFilters([]);
     setShowFreeOnly(false);
     setSelectedCity("");
@@ -371,7 +372,7 @@ const Listings = () => {
 
   const hasActiveFilters = 
     selectedDate !== undefined ||
-    selectedTimeFilters.length > 0 ||
+    selectedTimeFilter !== null ||
     selectedQuickFilters.length > 0 ||
     showFreeOnly ||
     selectedCity !== "" ||
@@ -420,16 +421,16 @@ const Listings = () => {
           </span>
         </button>
         
-        {/* Time filter buttons - multi-select */}
+        {/* Time filter buttons - single-select, uniform size */}
         <div className="grid grid-cols-2 gap-2">
           {timeFilters.map((filter) => {
-            const isActive = selectedTimeFilters.includes(filter.id);
+            const isActive = selectedTimeFilter === filter.id;
             return (
               <button
                 key={filter.id}
-                onClick={() => toggleTimeFilter(filter.id)}
+                onClick={() => selectTimeFilter(filter.id)}
                 className={cn(
-                  "px-3 py-2.5 rounded-xl text-xs font-semibold transition-all",
+                  "py-3 rounded-xl text-xs font-semibold transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
@@ -609,7 +610,7 @@ const Listings = () => {
                 Filter
                 {hasActiveFilters && (
                   <span className="w-5 h-5 bg-neutral-900 text-white rounded-full text-xs flex items-center justify-center">
-                    {selectedTimeFilters.length + selectedQuickFilters.length + (showFreeOnly ? 1 : 0) + selectedSubcategories.length}
+                    {(selectedTimeFilter ? 1 : 0) + selectedQuickFilters.length + (showFreeOnly ? 1 : 0) + selectedSubcategories.length}
                   </span>
                 )}
               </button>
