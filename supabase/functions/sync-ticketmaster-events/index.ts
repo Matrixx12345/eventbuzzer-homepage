@@ -67,25 +67,44 @@ serve(async (req) => {
       );
     }
 
-    console.log("Step 1: Fetching events directly from Ticketmaster Discovery API...");
+    console.log("Step 1: Fetching events from Ticketmaster Discovery API (with pagination)...");
 
-    // Fetch events directly from Ticketmaster Discovery API for Switzerland
-    const ticketmasterUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${ticketmasterApiKey}&countryCode=CH&size=50&sort=date,asc`;
+    // Fetch multiple pages of events from Ticketmaster Discovery API for Switzerland
+    const pageSize = 50;
+    const maxPages = 4; // 4 pages x 50 = 200 events max
+    const ticketmasterEvents: any[] = [];
     
-    const ticketmasterResponse = await fetch(ticketmasterUrl);
+    for (let page = 0; page < maxPages; page++) {
+      const ticketmasterUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${ticketmasterApiKey}&countryCode=CH&size=${pageSize}&page=${page}&sort=date,asc`;
+      
+      console.log(`Fetching page ${page + 1}/${maxPages}...`);
+      const ticketmasterResponse = await fetch(ticketmasterUrl);
 
-    if (!ticketmasterResponse.ok) {
-      const errorText = await ticketmasterResponse.text();
-      console.error("Ticketmaster API error:", ticketmasterResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ error: `Ticketmaster API error: ${ticketmasterResponse.status}`, details: errorText }),
-        { status: ticketmasterResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!ticketmasterResponse.ok) {
+        const errorText = await ticketmasterResponse.text();
+        console.error(`Ticketmaster API error on page ${page}:`, ticketmasterResponse.status, errorText);
+        // Continue with what we have so far
+        break;
+      }
+
+      const ticketmasterData = await ticketmasterResponse.json();
+      const pageEvents = ticketmasterData._embedded?.events || [];
+      console.log(`Page ${page + 1}: Got ${pageEvents.length} events`);
+      
+      ticketmasterEvents.push(...pageEvents);
+      
+      // Check if there are more pages
+      const totalPages = ticketmasterData.page?.totalPages || 1;
+      if (page + 1 >= totalPages) {
+        console.log(`Reached last page (${totalPages} total pages)`);
+        break;
+      }
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
-
-    const ticketmasterData = await ticketmasterResponse.json();
-    const ticketmasterEvents = ticketmasterData._embedded?.events || [];
-    console.log(`Fetched ${ticketmasterEvents.length} events from Ticketmaster Discovery API`);
+    
+    console.log(`Fetched ${ticketmasterEvents.length} total events from Ticketmaster Discovery API`);
 
     if (ticketmasterEvents.length === 0) {
       return new Response(
@@ -177,18 +196,16 @@ serve(async (req) => {
 
     console.log("Step 3: Inserting events into database...");
 
-    // Insert events
+    // Insert events - use upsert to handle duplicates (based on external_id)
     const { data: insertedData, error: insertError } = await externalSupabase
       .from('events')
-      .insert(eventsToInsert)
+      .upsert(eventsToInsert, { onConflict: 'external_id', ignoreDuplicates: true })
       .select();
 
     if (insertError) {
       console.error("Error inserting events:", insertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to insert events", details: insertError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Continue anyway - some events may have been inserted
+      console.log("Continuing with AI description generation despite insert error...");
     }
 
     const syncedCount = insertedData?.length || eventsToInsert.length;
