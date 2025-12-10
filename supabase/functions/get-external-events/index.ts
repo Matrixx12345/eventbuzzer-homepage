@@ -30,11 +30,15 @@ serve(async (req) => {
     // Create client for external Supabase
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // Fetch events - prioritize those with AI-generated descriptions
+    // Get today's date in ISO format for filtering future events
+    const today = new Date().toISOString();
+
+    // Fetch only future events, sorted by start_date ascending
     const { data, error } = await externalSupabase
       .from("events")
       .select("*")
-      .order("id", { ascending: false })
+      .gte("start_date", today)
+      .order("start_date", { ascending: true })
       .limit(200);
 
     if (error) {
@@ -42,15 +46,17 @@ serve(async (req) => {
       throw new Error(`Query failed: ${error.message} (code: ${error.code})`);
     }
 
-    // Log the column names from first row
+    // Log price statistics
     if (data && data.length > 0) {
-      console.log("Available columns:", Object.keys(data[0]));
-      console.log("Sample event:", JSON.stringify(data[0]));
+      const withPrice = data.filter(e => e.price_from !== null && e.price_from !== undefined);
+      const withLabel = data.filter(e => e.price_label !== null && e.price_label !== undefined);
+      console.log(`Future Events: ${data.length} total, ${withPrice.length} with price_from, ${withLabel.length} with price_label`);
+      console.log("First event:", JSON.stringify(data[0]?.title));
     } else {
-      console.log("No events found in table");
+      console.log("No future events found in table");
     }
 
-    return new Response(JSON.stringify({ events: data, columns: data && data.length > 0 ? Object.keys(data[0]) : [] }), {
+    return new Response(JSON.stringify({ events: data || [], columns: data && data.length > 0 ? Object.keys(data[0]) : [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
