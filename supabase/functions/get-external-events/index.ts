@@ -48,6 +48,12 @@ serve(async (req) => {
       .is("start_date", null)
       .limit(100);
 
+    // Fetch taxonomy for categories
+    const { data: taxonomy, error: taxonomyError } = await externalSupabase
+      .from("taxonomy")
+      .select("id, name, type, parent_id")
+      .order("name");
+
     const error = futureError || permanentError;
     
     // Combine and deduplicate by id
@@ -64,17 +70,26 @@ serve(async (req) => {
       throw new Error(`Query failed: ${error.message} (code: ${error.code})`);
     }
 
+    if (taxonomyError) {
+      console.error("Taxonomy query error:", JSON.stringify(taxonomyError));
+    }
+
     // Log price statistics
     if (data && data.length > 0) {
       const withPrice = data.filter(e => e.price_from !== null && e.price_from !== undefined);
       const withLabel = data.filter(e => e.price_label !== null && e.price_label !== undefined);
       console.log(`Future Events: ${data.length} total, ${withPrice.length} with price_from, ${withLabel.length} with price_label`);
       console.log("First event:", JSON.stringify(data[0]?.title));
+      console.log(`Taxonomy: ${taxonomy?.length || 0} categories loaded`);
     } else {
       console.log("No future events found in table");
     }
 
-    return new Response(JSON.stringify({ events: data || [], columns: data && data.length > 0 ? Object.keys(data[0]) : [] }), {
+    return new Response(JSON.stringify({ 
+      events: data || [], 
+      taxonomy: taxonomy || [],
+      columns: data && data.length > 0 ? Object.keys(data[0]) : [] 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
