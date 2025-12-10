@@ -364,6 +364,7 @@ interface DynamicEvent {
   image_url?: string;
   price_from?: number;
   price_to?: number;
+  price_label?: string;
   ticket_link?: string;
 }
 
@@ -448,6 +449,7 @@ const EventDetail = () => {
     ticketLink?: string;
     priceFrom?: number;
     priceTo?: number;
+    priceLabel?: string;
   };
 
   if (isStaticEvent) {
@@ -469,6 +471,7 @@ const EventDetail = () => {
       ticketLink: dynamicEvent.ticket_link,
       priceFrom: dynamicEvent.price_from,
       priceTo: dynamicEvent.price_to,
+      priceLabel: dynamicEvent.price_label,
     };
   } else {
     event = {
@@ -546,12 +549,14 @@ const EventDetail = () => {
                 <span className="text-base">{event.address}</span>
               </div>
             )}
-            {event.priceFrom && (
+            {(event.priceLabel || event.priceFrom) && (
               <div className="flex items-center gap-3 text-neutral-900 font-medium">
                 <span className="text-base">
-                  {event.priceTo && event.priceTo !== event.priceFrom
-                    ? `CHF ${event.priceFrom} – ${event.priceTo}`
-                    : `ab CHF ${event.priceFrom}`}
+                  {event.priceLabel 
+                    ? event.priceLabel 
+                    : event.priceTo && event.priceTo !== event.priceFrom
+                      ? `CHF ${event.priceFrom} – ${event.priceTo}`
+                      : `ab CHF ${event.priceFrom}`}
                 </span>
               </div>
             )}
