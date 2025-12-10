@@ -126,13 +126,20 @@ serve(async (req) => {
     if (!taxonomy || !tags) throw new Error("DB Fehler: Taxonomy/Tags nicht geladen");
 
     // DEBUG: Log alle verfügbaren Kategorien
-    console.log("=== TAXONOMY DEBUG ===");
-    console.log("Main categories:", taxonomy.filter(t => t.type === 'main').map(t => `${t.id}: ${t.name}`));
-    console.log("Sub categories:", taxonomy.filter(t => t.type === 'sub').map(t => `${t.id}: ${t.name}`));
+    console.log("=== TAXONOMY DEBUG (myswitzerland-import) ===");
+    console.log("Main categories:", taxonomy.filter(t => t.type === 'main').map(t => `[${t.id}] "${t.name}"`).join(", "));
+    console.log("Sub categories:", taxonomy.filter(t => t.type === 'sub').map(t => `[${t.id}] "${t.name}"`).join(", "));
 
+    // Case-insensitive und trimmed matching
     const findCatId = (name: string) => {
-      const found = taxonomy.find(t => t.name === name);
-      if (!found) console.log(`⚠️ KATEGORIE NICHT GEFUNDEN: "${name}"`);
+      const searchName = name.trim().toLowerCase();
+      const found = taxonomy.find(t => t.name.trim().toLowerCase() === searchName);
+      if (!found) {
+        console.log(`⚠️ KATEGORIE NICHT GEFUNDEN: "${name}" (suche: "${searchName}")`);
+        // Zeige ähnliche Namen
+        const similar = taxonomy.filter(t => t.name.toLowerCase().includes(searchName.split(" ")[0].toLowerCase()));
+        if (similar.length > 0) console.log(`   Ähnliche: ${similar.map(s => s.name).join(", ")}`);
+      }
       return found?.id;
     };
     const findTagId = (search: string) => tags.find(t => t.slug.includes(search))?.id;

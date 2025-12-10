@@ -223,11 +223,27 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. IDs laden
-    const { data: taxonomy } = await supabase.from("taxonomy").select("id, name");
+    const { data: taxonomy } = await supabase.from("taxonomy").select("id, name, type");
     const { data: tags } = await supabase.from("tags").select("id, slug");
     if (!taxonomy || !tags) throw new Error("DB Fehler");
 
-    const findCatId = (name: string) => taxonomy.find(t => t.name === name)?.id;
+    // DEBUG: Log all taxonomy entries
+    console.log("=== TAXONOMY DEBUG (tm-import) ===");
+    console.log("Main categories:", taxonomy.filter(t => t.type === 'main').map(t => `[${t.id}] "${t.name}"`).join(", "));
+    console.log("Sub categories:", taxonomy.filter(t => t.type === 'sub').map(t => `[${t.id}] "${t.name}"`).join(", "));
+
+    // Case-insensitive und trimmed matching
+    const findCatId = (name: string) => {
+      const searchName = name.trim().toLowerCase();
+      const found = taxonomy.find(t => t.name.trim().toLowerCase() === searchName);
+      if (!found) {
+        console.log(`⚠️ KATEGORIE NICHT GEFUNDEN: "${name}" (suche: "${searchName}")`);
+        // Zeige ähnliche Namen
+        const similar = taxonomy.filter(t => t.name.toLowerCase().includes(searchName.split(" ")[0].toLowerCase()));
+        if (similar.length > 0) console.log(`   Ähnliche: ${similar.map(s => s.name).join(", ")}`);
+      }
+      return found?.id;
+    };
     const findTagId = (search: string) => tags.find(t => t.slug.includes(search))?.id;
 
     // Tag slugs - exact matches to tags table
