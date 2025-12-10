@@ -334,10 +334,11 @@ serve(async (req) => {
         if (tagIds.romantisch) tagsToAssign.push(tagIds.romantisch);
       }
 
-      // Preis extrahieren und $/$$/$$$ Logik anwenden
+      // Preis extrahieren und $/$$/$$$ Logik anwenden mit INTELLIGENTER Schätzung
       let priceFrom: number | null = null;
       let priceLabel: string | null = null;
       
+      // Echten Preis aus API extrahieren
       if (item.offers) {
         const offers = Array.isArray(item.offers) ? item.offers : [item.offers];
         const prices = offers.map((o: any) => o.price || o.lowPrice).filter((p: number) => p > 0);
@@ -352,12 +353,12 @@ serve(async (req) => {
       }
 
       // Gratis-Events erkennen
-      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos") || textForCheck.includes("free")) {
+      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos") || textForCheck.includes("free entry")) {
         priceFrom = 0;
         priceLabel = "Gratis";
         if (tagIds.budget) tagsToAssign.push(tagIds.budget);
       } else if (priceFrom !== null && priceFrom > 0) {
-        // $/$$/$$$ Label basierend auf Preis
+        // $/$$/$$$ Label basierend auf echtem Preis
         if (priceFrom <= 50) {
           priceLabel = "$";
           if (tagIds.budget) tagsToAssign.push(tagIds.budget);
@@ -367,9 +368,53 @@ serve(async (req) => {
           priceLabel = "$$$";
         }
       } else {
-        // Kein Preis bekannt - Standard $$ (mittel) setzen
-        priceLabel = "$$";
-        priceFrom = 55;
+        // KEIN echter Preis bekannt - INTELLIGENTE Schätzung basierend auf Typ und Keywords
+        const titleLower = title.toLowerCase();
+        
+        // Keywords für günstige Angebote ($)
+        const budgetKeywords = [
+          "self guided", "self-guided", "audio tour", "audio experience", 
+          "rundweg", "wanderweg", "route", "etappe", "loipe", 
+          "citytrain", "stadtrundfahrt", "weg", "pfad",
+          "rundloipe", "panoramaweg"
+        ];
+        
+        // Keywords für Premium Angebote ($$$)
+        const premiumKeywords = [
+          "vip", "premium", "luxury", "luxus", "privat", "private",
+          "chauffeur", "helicopter", "helikopter", "gourmet", "fine dining",
+          "exclusive", "exklusiv", "first class"
+        ];
+        
+        // Keywords für mittlere Preisklasse ($$)
+        const midKeywords = [
+          "museum", "führung", "gruppenführung", "experience", "tour",
+          "tagesausflug", "day trip", "excursion"
+        ];
+        
+        // Typ-basierte Schätzung
+        const isBudget = budgetKeywords.some(kw => titleLower.includes(kw) || textForCheck.includes(kw));
+        const isPremium = premiumKeywords.some(kw => titleLower.includes(kw) || textForCheck.includes(kw));
+        
+        if (isBudget || itemType === 'tour') {
+          // Tours und Self-guided sind meist günstig
+          priceLabel = "$";
+          priceFrom = 25;
+          if (tagIds.budget) tagsToAssign.push(tagIds.budget);
+        } else if (isPremium) {
+          priceLabel = "$$$";
+          priceFrom = 150;
+        } else if (categoryText.includes("museum") || categoryText.includes("attraction")) {
+          // Museen und Attraktionen meist mittlere Preisklasse
+          priceLabel = "$$";
+          priceFrom = 55;
+        } else {
+          // Default: $ für unbekannte (lieber günstiger schätzen)
+          priceLabel = "$";
+          priceFrom = 25;
+        }
+        
+        console.log(`Price estimate for "${title}": ${priceLabel} (type: ${itemType}, budget: ${isBudget}, premium: ${isPremium})`);
       }
 
       // KI-Beschreibung generieren falls nötig
