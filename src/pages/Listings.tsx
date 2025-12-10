@@ -689,14 +689,6 @@ const Listings = () => {
             const Icon = getCategoryIcon(cat.name);
             const isActive = selectedCategoryId === cat.id;
             
-            // Shorten long category names
-            const getShortName = (name: string) => {
-              if (name.includes('&')) {
-                return name.split('&')[0].trim();
-              }
-              return name;
-            };
-            
             return (
               <button
                 key={cat.id}
@@ -724,7 +716,7 @@ const Listings = () => {
                   strokeWidth={1.8} 
                   className="mb-1"
                 />
-                <span className="text-[10px] font-bold leading-tight text-center">{getShortName(cat.name)}</span>
+                <span className="text-[10px] font-bold leading-tight text-center">{cat.name}</span>
               </button>
             );
           })}
