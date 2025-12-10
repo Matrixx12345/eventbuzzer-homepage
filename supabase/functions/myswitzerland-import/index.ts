@@ -287,10 +287,9 @@ Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
           latitude: lat,
           longitude: lng,
           image_url: imageUrl,
-          start_date: item.startDate || null, // Kein Default-Datum mehr - Attraktionen sind permanent
+          start_date: item.startDate || null,
           end_date: item.endDate || null,
           ticket_link: ticketLink,
-          source: 'myswitzerland', // Quelle markieren für Filterung
           category_main_id: mainCatId,
           category_sub_id: subCatId,
           price_from: priceFrom,
