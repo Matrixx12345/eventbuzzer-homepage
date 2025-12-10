@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ST_API_URL = "https://open-api.myswitzerland.com/v1/attractions";
+// discover.swiss API (Switzerland Tourism)
+const API_BASE_URL = "https://api.discover.swiss/info/v2";
 
 // Hilfsfunktion: HTML-Tags entfernen
 const stripHtml = (html: string) => {
@@ -19,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starte MySwitzerland Import...");
+    console.log("Starte MySwitzerland/discover.swiss Import...");
 
     const SUPABASE_URL = Deno.env.get("Supabase_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
@@ -53,78 +54,102 @@ serve(async (req) => {
 
     console.log("Tag IDs found:", tagIds);
 
-    // 2. Daten von MySwitzerland API holen
-    const res = await fetch(`${ST_API_URL}?limit=50`, {
+    // 2. Events von discover.swiss API holen
+    // Versuche zuerst OpenData Projekt für Events
+    const apiUrl = `${API_BASE_URL}/events?project=opendata&top=50`;
+    console.log("Fetching from:", apiUrl);
+
+    const res = await fetch(apiUrl, {
       method: "GET",
       headers: {
         "Accept": "application/json",
+        "Accept-Language": "de",
+        // discover.swiss nutzt diesen Header
+        "Ocp-Apim-Subscription-Key": MY_SWITZERLAND_KEY,
+        // Falls der Key auch x-api-key braucht
         "x-api-key": MY_SWITZERLAND_KEY
       }
     });
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`MySwitzerland API Fehler: ${res.status} ${text}`);
+      console.error("API Response:", res.status, text);
+      throw new Error(`discover.swiss API Fehler: ${res.status} - ${text}`);
     }
 
     const data = await res.json();
-    const items = data.entries || data.data || [];
-    console.log(`${items.length} Einträge von MySwitzerland gefunden.`);
+    console.log("API Response structure:", JSON.stringify(data).substring(0, 500));
+    
+    // discover.swiss gibt data Array zurück
+    const items = data.data || data.entries || data.events || [];
+    console.log(`${items.length} Events von discover.swiss gefunden.`);
 
     let processedCount = 0;
 
     for (const item of items) {
-      const title = item.name?.de || item.name?.en || item.title?.de || item.title?.en || "Unbekannte Attraktion";
-      const externalId = `st_${item.id}`;
+      // discover.swiss Event Struktur
+      const title = item.name?.de || item.name?.en || item.name || "Unbekanntes Event";
+      const externalId = `ds_${item.identifier || item.id}`;
       
       // Beschreibung extrahieren und säubern
-      const rawDescription = item.description?.de || item.description?.en || item.abstract?.de || item.abstract?.en || "";
+      const rawDescription = item.description?.de || item.description?.en || item.description || "";
       const cleanDescription = stripHtml(rawDescription);
       
       // Bild URL extrahieren
       let imageUrl: string | null = null;
-      if (item.gallery && item.gallery.length > 0) {
-        imageUrl = item.gallery[0].url || item.gallery[0].src;
+      if (item.image?.url) {
+        imageUrl = item.image.url;
       } else if (item.images && item.images.length > 0) {
-        imageUrl = item.images[0].url || item.images[0].src;
-      } else if (item.image) {
-        imageUrl = item.image.url || item.image;
+        imageUrl = item.images[0].url || item.images[0].contentUrl;
+      } else if (item.photo?.url) {
+        imageUrl = item.photo.url;
       }
 
-      // Adressdaten extrahieren
-      const address = item.address || item.location || {};
-      const city = address.addressLocality || address.city || address.locality || "";
+      // Adressdaten extrahieren (schema.org Format)
+      const location = item.location || {};
+      const address = location.address || item.address || {};
+      const city = address.addressLocality || address.city || location.name || "";
       const street = address.streetAddress || address.street || "";
-      const zip = address.postalCode || address.zipCode || "";
+      const zip = address.postalCode || "";
       const country = address.addressCountry || "CH";
 
       // Koordinaten extrahieren
-      const geo = item.geo || item.coordinates || address.geo || {};
+      const geo = location.geo || item.geo || {};
       const lat = geo.latitude ? parseFloat(geo.latitude) : null;
       const lng = geo.longitude ? parseFloat(geo.longitude) : null;
 
-      // Kategorie-Zuordnung (Attraktionen → Freizeit & Aktivitäten)
+      // Datum extrahieren
+      const startDate = item.startDate || item.eventSchedule?.[0]?.startDate || new Date().toISOString();
+      const endDate = item.endDate || item.eventSchedule?.[0]?.endDate || null;
+
+      // Kategorie-Zuordnung basierend auf Event-Typ
       let mainCatId = findCatId("Freizeit & Aktivitäten");
       let subCatId = null;
 
-      // Je nach Typ andere Kategorie zuweisen
-      const itemType = (item.type || item.category || "").toLowerCase();
-      if (itemType.includes("museum") || itemType.includes("kunst") || itemType.includes("art")) {
-        mainCatId = findCatId("Kunst & Kultur");
-        subCatId = findCatId("Museum, Kunst & Ausstellung");
-      } else if (itemType.includes("konzert") || itemType.includes("music") || itemType.includes("festival")) {
+      const itemType = (item.additionalType || item["@type"] || "").toLowerCase();
+      const categories = item.category || [];
+      const categoryText = Array.isArray(categories) ? categories.map((c: any) => c.name?.de || c.name || c).join(" ") : "";
+      
+      if (itemType.includes("music") || categoryText.includes("Konzert") || categoryText.includes("Musik")) {
         mainCatId = findCatId("Musik & Party");
-      } else if (itemType.includes("theater") || itemType.includes("theatre")) {
+      } else if (itemType.includes("theater") || itemType.includes("theatre") || categoryText.includes("Theater")) {
         mainCatId = findCatId("Kunst & Kultur");
         subCatId = findCatId("Theater, Musical & Show");
+      } else if (itemType.includes("exhibition") || categoryText.includes("Ausstellung") || categoryText.includes("Museum")) {
+        mainCatId = findCatId("Kunst & Kultur");
+        subCatId = findCatId("Museum, Kunst & Ausstellung");
+      } else if (itemType.includes("festival") || categoryText.includes("Festival")) {
+        mainCatId = findCatId("Musik & Party");
+      } else if (categoryText.includes("Sport")) {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
       }
 
       // Tags zuweisen basierend auf Inhalt
       const tagsToAssign: (number | undefined)[] = [];
-      const textForCheck = (title + " " + cleanDescription).toLowerCase();
+      const textForCheck = (title + " " + cleanDescription + " " + categoryText).toLowerCase();
 
       // Outdoor/Indoor Detection
-      if (textForCheck.includes("outdoor") || textForCheck.includes("open air") || textForCheck.includes("wandern") || textForCheck.includes("berg") || textForCheck.includes("see")) {
+      if (textForCheck.includes("outdoor") || textForCheck.includes("open air") || textForCheck.includes("openair") || textForCheck.includes("draussen") || textForCheck.includes("festival")) {
         if (tagIds.outdoor) tagsToAssign.push(tagIds.outdoor);
       } else {
         if (tagIds.indoor) tagsToAssign.push(tagIds.indoor);
@@ -136,8 +161,28 @@ serve(async (req) => {
       }
 
       // Romantik-Detection
-      if (textForCheck.includes("romantisch") || textForCheck.includes("romantic") || textForCheck.includes("dinner") || textForCheck.includes("spa") || textForCheck.includes("wellness")) {
+      if (textForCheck.includes("romantisch") || textForCheck.includes("romantic") || textForCheck.includes("dinner") || textForCheck.includes("jazz") || textForCheck.includes("klassik")) {
         if (tagIds.romantisch) tagsToAssign.push(tagIds.romantisch);
+      }
+
+      // Preis extrahieren
+      let priceFrom: number | null = null;
+      let priceLabel: string | null = null;
+      
+      if (item.offers) {
+        const offers = Array.isArray(item.offers) ? item.offers : [item.offers];
+        const minPrice = Math.min(...offers.map((o: any) => o.price || o.lowPrice || 999999).filter((p: number) => p > 0 && p < 999999));
+        if (minPrice < 999999) {
+          priceFrom = minPrice;
+          priceLabel = `ab CHF ${Math.round(minPrice)}.-`;
+        }
+      }
+
+      // Gratis-Events erkennen
+      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos") || textForCheck.includes("freier eintritt")) {
+        priceFrom = 0;
+        priceLabel = "Eintritt frei";
+        if (tagIds.budget) tagsToAssign.push(tagIds.budget);
       }
 
       // KI-Beschreibung generieren falls nötig
@@ -146,40 +191,25 @@ serve(async (req) => {
 
       if (OPENAI_API_KEY && (!cleanDescription || cleanDescription.length < 50)) {
         try {
-          const promptInstruction = `Schreibe eine einladende Beschreibung auf Deutsch für diese Schweizer Attraktion: "${title}" in ${city || "der Schweiz"}. 
+          const promptInstruction = `Schreibe eine einladende Event-Beschreibung auf Deutsch für: "${title}" in ${city || "der Schweiz"}. 
           
-Erstelle:
-1. Eine kurze Version (max 2 Sätze) für Karten-Vorschau
-2. Eine längere Version (3-5 Sätze) für die Detailseite
-
-Stil: Einladend, informativ, Quiet Luxury. Keine Emojis.
-
-Format:
-[KURZ] Kurze Beschreibung hier
-[LANG] Längere Beschreibung hier`;
+Erstelle eine kurze Version (max 2 Sätze) für die Karten-Vorschau.
+Stil: Einladend, informativ, Quiet Luxury. Keine Emojis.`;
 
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: promptInstruction }], max_tokens: 300 }),
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: promptInstruction }], max_tokens: 150 }),
           });
           const aiData = await aiRes.json();
-          const rawAiText = aiData.choices?.[0]?.message?.content || "";
-
-          // Kurz und Lang extrahieren
-          const kurzMatch = rawAiText.match(/\[KURZ\]\s*(.+?)(?=\[LANG\]|$)/s);
-          const langMatch = rawAiText.match(/\[LANG\]\s*(.+?)$/s);
-
-          if (kurzMatch) shortDescription = kurzMatch[1].trim();
-          if (langMatch) longDescription = langMatch[1].trim();
-
+          shortDescription = aiData.choices?.[0]?.message?.content || shortDescription;
         } catch (e) {
           console.error("AI Fehler für", title, e);
         }
       }
 
-      // Ticket-Link (falls vorhanden)
-      const ticketLink = item.url || item.website || item.ticketUrl || null;
+      // Ticket-Link
+      const ticketLink = item.url || item.sameAs || (item.offers && item.offers[0]?.url) || null;
 
       // Event speichern (gleiches Schema wie tm-import)
       const { data: savedEvent, error } = await supabase
@@ -190,7 +220,7 @@ Format:
           description: longDescription,
           short_description: shortDescription,
           location: city || "Schweiz",
-          venue_name: title,
+          venue_name: location.name || title,
           address_street: street,
           address_city: city,
           address_zip: zip,
@@ -198,12 +228,13 @@ Format:
           latitude: lat,
           longitude: lng,
           image_url: imageUrl,
-          start_date: new Date().toISOString(), // Attraktionen haben kein fixes Datum
+          start_date: startDate,
+          end_date: endDate,
           ticket_link: ticketLink,
           category_main_id: mainCatId,
           category_sub_id: subCatId,
-          price_from: 0, // Attraktionen oft kostenlos/variabel
-          price_label: null
+          price_from: priceFrom,
+          price_label: priceLabel
         }, { onConflict: 'external_id' })
         .select()
         .maybeSingle();
@@ -231,7 +262,7 @@ Format:
 
     const result = {
       success: true,
-      message: `MySwitzerland Import fertig.`,
+      message: `MySwitzerland/discover.swiss Import fertig.`,
       imported: processedCount,
       total_found: items.length
     };
