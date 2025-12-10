@@ -298,7 +298,7 @@ serve(async (req) => {
       const country = address.addressCountry || address.country || "CH";
 
       // Kategorie-Zuordnung basierend auf Typ - exact matches to taxonomy table
-      let mainCatId = findCatId("Freizeit & Aktivitäten");
+      let mainCatId = null;
       let subCatId = null;
 
       // MySwitzerland Kategorien auswerten
@@ -309,40 +309,66 @@ serve(async (req) => {
       
       const additionalType = (typeof item.additionalType === 'string' ? item.additionalType : "").toLowerCase();
       const titleLowerForCat = title.toLowerCase();
+      const descLower = cleanDescription.toLowerCase();
 
-      // Kategorisierung mit exakten Taxonomy-Namen
-      if (categoryText.includes("wellness") || categoryText.includes("spa") || 
-          titleLowerForCat.includes("wellness") || titleLowerForCat.includes("spa") || titleLowerForCat.includes("thermal")) {
-        // Wellness → Freizeit & Aktivitäten / Wellness & Relax Events
+      // Erweiterte Keyword-Listen für bessere Kategorisierung
+      const wellnessKeywords = ["wellness", "spa", "thermal", "sauna", "massage", "entspannung", "relax", "bad", "bäder"];
+      const tourKeywords = ["wanderung", "route", "tour", "etappe", "weg", "pfad", "loipe", "rundweg", "panoramaweg"];
+      const sportKeywords = ["sport", "ski", "snowboard", "bike", "velo", "klettern", "climbing", "golf", "tennis", "kartbahn", "outdoor", "adventure", "rafting", "paragliding"];
+      const museumKeywords = ["museum", "ausstellung", "galerie", "kunst", "art", "exhibition"];
+      const theaterKeywords = ["theater", "theatre", "oper", "opera", "konzert", "aufführung", "show"];
+      const festivalKeywords = ["festival", "fest", "feier", "party"];
+      const kulinarikKeywords = ["tasting", "schokolade", "chocolate", "käse", "cheese", "wein", "wine", "kulinarik", "food", "essen", "restaurant", "dining"];
+      const marktKeywords = ["markt", "market", "streetfood", "flohmarkt"];
+      const naturKeywords = ["schlucht", "see", "berg", "mountain", "lake", "natur", "nature", "gletscher", "glacier", "wasserfall"];
+
+      // Kategorisierung mit Priorität (spezifisch → allgemein)
+      if (wellnessKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw))) {
         mainCatId = findCatId("Freizeit & Aktivitäten");
         subCatId = findCatId("Wellness & Relax Events");
-      } else if (itemType === 'tour' || titleLowerForCat.includes("wanderung") || titleLowerForCat.includes("route") || titleLowerForCat.includes("tour")) {
+      } else if (tourKeywords.some(kw => titleLowerForCat.includes(kw)) || itemType === 'tour') {
         mainCatId = findCatId("Freizeit & Aktivitäten");
         subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
-      } else if (categoryText.includes("museum") || categoryText.includes("kunst") || additionalType.includes("museum") ||
-                 titleLowerForCat.includes("museum") || titleLowerForCat.includes("ausstellung")) {
-        mainCatId = findCatId("Kunst & Kultur");
-        subCatId = findCatId("Museum, Kunst & Ausstellung");
-      } else if (categoryText.includes("theater") || categoryText.includes("theatre") || categoryText.includes("oper") ||
-                 titleLowerForCat.includes("theater") || titleLowerForCat.includes("oper")) {
-        mainCatId = findCatId("Kunst & Kultur");
-        subCatId = findCatId("Theater, Musical & Show");
-      } else if (categoryText.includes("konzert") || categoryText.includes("musik") || categoryText.includes("festival") ||
-                 titleLowerForCat.includes("konzert") || titleLowerForCat.includes("festival")) {
-        mainCatId = findCatId("Musik & Party");
-        subCatId = findCatId("Musik-Festivals");
-      } else if (categoryText.includes("sport") || categoryText.includes("aktiv") || titleLowerForCat.includes("sport") ||
-                 titleLowerForCat.includes("ski") || titleLowerForCat.includes("snowboard") || titleLowerForCat.includes("bike")) {
+      } else if (sportKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw))) {
         mainCatId = findCatId("Freizeit & Aktivitäten");
         subCatId = findCatId("Active Lifestyle & Sport-Events");
-      } else if (categoryText.includes("kulinarik") || categoryText.includes("food") || categoryText.includes("wein") ||
-                 titleLowerForCat.includes("tasting") || titleLowerForCat.includes("schokolade") || titleLowerForCat.includes("käse")) {
+      } else if (museumKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw) || additionalType.includes(kw))) {
+        mainCatId = findCatId("Kunst & Kultur");
+        subCatId = findCatId("Museum, Kunst & Ausstellung");
+      } else if (theaterKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw))) {
+        mainCatId = findCatId("Kunst & Kultur");
+        subCatId = findCatId("Theater, Musical & Show");
+      } else if (festivalKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw))) {
+        mainCatId = findCatId("Musik & Party");
+        subCatId = findCatId("Musik-Festivals");
+      } else if (kulinarikKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw))) {
         mainCatId = findCatId("Kulinarik & Genuss");
         subCatId = findCatId("Tastings, Workshops & Kurse");
-      } else if (categoryText.includes("markt") || titleLowerForCat.includes("markt") || titleLowerForCat.includes("streetfood")) {
+      } else if (marktKeywords.some(kw => titleLowerForCat.includes(kw) || categoryText.includes(kw))) {
         mainCatId = findCatId("Märkte & Lokales");
         subCatId = findCatId("Streetfood & Designmärkte");
+      } else if (naturKeywords.some(kw => titleLowerForCat.includes(kw) || descLower.includes(kw))) {
+        // Natur-Erlebnisse → Geführte Touren
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+        subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
+      } else {
+        // Default basierend auf Item-Typ
+        if (itemType === 'tour') {
+          mainCatId = findCatId("Freizeit & Aktivitäten");
+          subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
+        } else if (itemType === 'attraction') {
+          mainCatId = findCatId("Freizeit & Aktivitäten");
+          subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
+        } else if (itemType === 'offer') {
+          mainCatId = findCatId("Freizeit & Aktivitäten");
+          subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
+        } else {
+          mainCatId = findCatId("Freizeit & Aktivitäten");
+          subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
+        }
       }
+      
+      console.log(`Category for "${title}": Type=${itemType}, Categories=${categoryText} → Main=${mainCatId}, Sub=${subCatId}`);
 
       // Tags zuweisen basierend auf Inhalt
       const tagsToAssign: (number | undefined)[] = [];

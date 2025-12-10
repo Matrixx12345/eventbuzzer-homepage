@@ -9,18 +9,104 @@ const corsHeaders = {
 const TM_API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 
 // MAPPINGS & KEYWORDS - exact matches to taxonomy table
+// ERWEITERT: Alle bekannten Ticketmaster Genres
 const SUB_CATEGORY_MAPPING: Record<string, string> = {
-  // Musik & Party subcategories
-  "Rock": "Rock & Pop Konzerte", "Pop": "Rock & Pop Konzerte", "Alternative": "Rock & Pop Konzerte", "Metal": "Rock & Pop Konzerte",
-  "Jazz": "Jazz, Blues & Soul", "Blues": "Jazz, Blues & Soul", "Soul": "Jazz, Blues & Soul",
-  "R&B": "Hip-Hop, RnB & Electronic", "Hip-Hop/Rap": "Hip-Hop, RnB & Electronic", "Dance/Electronic": "Hip-Hop, RnB & Electronic",
-  "Classical": "Klassik, Oper & Ballett", "Opera": "Klassik, Oper & Ballett",
-  // Kunst & Kultur subcategories
-  "Theatre": "Theater, Musical & Show", "Musical": "Theater, Musical & Show", "Comedy": "Comedy & Kabarett",
-  "Fine Art": "Museum, Kunst & Ausstellung", 
-  "Spectacular": "Theater, Musical & Show", "Family": "Theater, Musical & Show",
-  // Freizeit & Aktivitäten subcategories
-  "Miscellaneous": "Geführte Touren & Besondere Erlebnisse"
+  // Musik & Party subcategories - Rock & Pop
+  "Rock": "Rock & Pop Konzerte", 
+  "Pop": "Rock & Pop Konzerte", 
+  "Alternative": "Rock & Pop Konzerte", 
+  "Metal": "Rock & Pop Konzerte",
+  "Hard Rock": "Rock & Pop Konzerte",
+  "Punk": "Rock & Pop Konzerte",
+  "Indie Rock": "Rock & Pop Konzerte",
+  "Folk": "Rock & Pop Konzerte",
+  "Country": "Rock & Pop Konzerte",
+  "Chanson Francaise": "Rock & Pop Konzerte",
+  "Schlager": "Rock & Pop Konzerte",
+  "Volksmusik": "Rock & Pop Konzerte",
+  "German Folk": "Rock & Pop Konzerte",
+  "World": "Rock & Pop Konzerte",
+  
+  // Musik & Party - Jazz, Blues & Soul
+  "Jazz": "Jazz, Blues & Soul", 
+  "Blues": "Jazz, Blues & Soul", 
+  "Soul": "Jazz, Blues & Soul",
+  "Reggae": "Jazz, Blues & Soul",
+  
+  // Musik & Party - Hip-Hop, RnB & Electronic
+  "R&B": "Hip-Hop, RnB & Electronic", 
+  "Hip-Hop/Rap": "Hip-Hop, RnB & Electronic", 
+  "Dance/Electronic": "Hip-Hop, RnB & Electronic",
+  "Hip-Hop": "Hip-Hop, RnB & Electronic",
+  "Rap": "Hip-Hop, RnB & Electronic",
+  "Urban": "Hip-Hop, RnB & Electronic",
+  "Electronic": "Hip-Hop, RnB & Electronic",
+  "Techno": "Hip-Hop, RnB & Electronic",
+  "House": "Hip-Hop, RnB & Electronic",
+  "EDM": "Hip-Hop, RnB & Electronic",
+  
+  // Musik & Party - Klassik, Oper & Ballett
+  "Classical": "Klassik, Oper & Ballett", 
+  "Opera": "Klassik, Oper & Ballett",
+  "Ballet": "Klassik, Oper & Ballett",
+  "Symphony": "Klassik, Oper & Ballett",
+  "Chamber Music": "Klassik, Oper & Ballett",
+  "Orchestral": "Klassik, Oper & Ballett",
+  
+  // Musik & Party - Musik-Festivals
+  "Festival": "Musik-Festivals",
+  
+  // Kunst & Kultur - Theater, Musical & Show
+  "Theatre": "Theater, Musical & Show", 
+  "Musical": "Theater, Musical & Show",
+  "Spectacular": "Theater, Musical & Show",
+  "Circus & Specialty Acts": "Theater, Musical & Show",
+  "Dance": "Theater, Musical & Show",
+  "Variety": "Theater, Musical & Show",
+  "Cabaret": "Theater, Musical & Show",
+  "Performance Art": "Theater, Musical & Show",
+  
+  // Kunst & Kultur - Comedy & Kabarett
+  "Comedy": "Comedy & Kabarett",
+  "Kabarett": "Comedy & Kabarett",
+  "Stand-up": "Comedy & Kabarett",
+  "Stand-up Comedy": "Comedy & Kabarett",
+  "Humour": "Comedy & Kabarett",
+  
+  // Kunst & Kultur - Museum, Kunst & Ausstellung
+  "Fine Art": "Museum, Kunst & Ausstellung",
+  "Exhibition": "Museum, Kunst & Ausstellung",
+  
+  // Kunst & Kultur - Literatur & Vorträge
+  "Literary": "Literatur & Vorträge",
+  "Lecture": "Literatur & Vorträge",
+  
+  // Kunst & Kultur - Film & Kino Events
+  "Film": "Film & Kino Events",
+  "Screening": "Film & Kino Events",
+  
+  // Freizeit & Aktivitäten - Active Lifestyle & Sport-Events
+  "Sports": "Active Lifestyle & Sport-Events",
+  "Equestrian": "Active Lifestyle & Sport-Events",
+  "Basketball": "Active Lifestyle & Sport-Events",
+  "Football": "Active Lifestyle & Sport-Events",
+  "Soccer": "Active Lifestyle & Sport-Events",
+  "Hockey": "Active Lifestyle & Sport-Events",
+  "Tennis": "Active Lifestyle & Sport-Events",
+  "Motorsports/Racing": "Active Lifestyle & Sport-Events",
+  "Wrestling": "Active Lifestyle & Sport-Events",
+  "Boxing": "Active Lifestyle & Sport-Events",
+  "Martial Arts": "Active Lifestyle & Sport-Events",
+  
+  // Freizeit & Aktivitäten - Geführte Touren
+  "Family": "Geführte Touren & Besondere Erlebnisse",
+  "Miscellaneous": "Geführte Touren & Besondere Erlebnisse",
+  "Undefined": "Geführte Touren & Besondere Erlebnisse",
+  "Other": "Geführte Touren & Besondere Erlebnisse",
+  
+  // Kulinarik & Genuss
+  "Food & Drink": "Tastings, Workshops & Kurse",
+  "Dining": "Dinner-Shows & Erlebnis-Gastro"
 };
 
 const TAG_KEYWORDS = {
@@ -196,14 +282,60 @@ serve(async (req) => {
         }
       }
 
-      // -- B. KATEGORIEN --
-      let mainCatId = null; let subCatId = null;
-      if (segmentName === "Music") mainCatId = findCatId("Musik & Party");
-      else if (segmentName === "Arts & Theatre") mainCatId = findCatId("Kunst & Kultur");
-      else if (segmentName === "Sports") mainCatId = findCatId("Freizeit & Aktivitäten");
-      else if (segmentName === "Family") mainCatId = findCatId("Freizeit & Aktivitäten");
-      else mainCatId = findCatId("Freizeit & Aktivitäten"); 
-      if (genreName && SUB_CATEGORY_MAPPING[genreName]) subCatId = findCatId(SUB_CATEGORY_MAPPING[genreName]);
+      // -- B. KATEGORIEN (ERWEITERT) --
+      let mainCatId = null; 
+      let subCatId = null;
+      
+      // Auch Subgenre und Type als Fallback
+      const subGenreName = event.classifications?.[0]?.subGenre?.name;
+      const typeName = event.classifications?.[0]?.type?.name;
+      
+      // 1. Main Category basierend auf Segment
+      if (segmentName === "Music") {
+        mainCatId = findCatId("Musik & Party");
+      } else if (segmentName === "Arts & Theatre") {
+        mainCatId = findCatId("Kunst & Kultur");
+      } else if (segmentName === "Sports") {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+      } else if (segmentName === "Family") {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+      } else if (segmentName === "Miscellaneous") {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+      } else {
+        // Default für unbekannte Segmente
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+      }
+      
+      // 2. Sub Category - versuche Genre, dann Subgenre, dann Type
+      if (genreName && SUB_CATEGORY_MAPPING[genreName]) {
+        subCatId = findCatId(SUB_CATEGORY_MAPPING[genreName]);
+      } else if (subGenreName && SUB_CATEGORY_MAPPING[subGenreName]) {
+        subCatId = findCatId(SUB_CATEGORY_MAPPING[subGenreName]);
+      } else if (typeName && SUB_CATEGORY_MAPPING[typeName]) {
+        subCatId = findCatId(SUB_CATEGORY_MAPPING[typeName]);
+      }
+      
+      // 3. Fallback basierend auf Segment wenn immer noch keine Sub
+      if (!subCatId) {
+        if (segmentName === "Sports") {
+          subCatId = findCatId("Active Lifestyle & Sport-Events");
+        } else if (segmentName === "Music" && !genreName) {
+          // Musik ohne Genre → Rock & Pop als Default
+          subCatId = findCatId("Rock & Pop Konzerte");
+        } else if (segmentName === "Arts & Theatre" && !genreName) {
+          // Arts ohne Genre → Theater als Default
+          subCatId = findCatId("Theater, Musical & Show");
+        }
+      }
+      
+      // 4. Override für spezielle Klassifikationen
+      // Klassik im Music-Segment → Main bleibt Musik & Party
+      if (genreName === "Classical" || genreName === "Opera" || genreName === "Ballet") {
+        mainCatId = findCatId("Musik & Party");
+        subCatId = findCatId("Klassik, Oper & Ballett");
+      }
+      
+      console.log(`Category for "${title}": Segment=${segmentName}, Genre=${genreName}, SubGenre=${subGenreName}, Type=${typeName} → Main=${mainCatId}, Sub=${subCatId}`);
 
       // -- C. PREIS-LOGIK (4-stufig) --
       let minPrice: number | undefined = event.priceRanges?.[0]?.min;
