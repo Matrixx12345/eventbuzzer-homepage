@@ -8,15 +8,19 @@ const corsHeaders = {
 
 const TM_API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 
-// MAPPINGS & KEYWORDS
+// MAPPINGS & KEYWORDS - exact matches to taxonomy table
 const SUB_CATEGORY_MAPPING: Record<string, string> = {
+  // Musik & Party subcategories
   "Rock": "Rock & Pop Konzerte", "Pop": "Rock & Pop Konzerte", "Alternative": "Rock & Pop Konzerte", "Metal": "Rock & Pop Konzerte",
   "Jazz": "Jazz, Blues & Soul", "Blues": "Jazz, Blues & Soul", "Soul": "Jazz, Blues & Soul",
   "R&B": "Hip-Hop, RnB & Electronic", "Hip-Hop/Rap": "Hip-Hop, RnB & Electronic", "Dance/Electronic": "Hip-Hop, RnB & Electronic",
   "Classical": "Klassik, Oper & Ballett", "Opera": "Klassik, Oper & Ballett",
+  // Kunst & Kultur subcategories
   "Theatre": "Theater, Musical & Show", "Musical": "Theater, Musical & Show", "Comedy": "Comedy & Kabarett",
-  "Fine Art": "Museum, Kunst & Ausstellung", "Spectacular": "Show & Entertainment", "Family": "Show & Entertainment",
-  "Miscellaneous": "Freizeit & Aktivitäten"
+  "Fine Art": "Museum, Kunst & Ausstellung", 
+  "Spectacular": "Theater, Musical & Show", "Family": "Theater, Musical & Show",
+  // Freizeit & Aktivitäten subcategories
+  "Miscellaneous": "Geführte Touren & Besondere Erlebnisse"
 };
 
 const TAG_KEYWORDS = {
@@ -140,10 +144,18 @@ serve(async (req) => {
     const findCatId = (name: string) => taxonomy.find(t => t.name === name)?.id;
     const findTagId = (search: string) => tags.find(t => t.slug.includes(search))?.id;
 
+    // Tag slugs - exact matches to tags table
     const tagIds = {
-      romantisch: findTagId("romantisch"), familie: findTagId("familie"),
-      outdoor: findTagId("open-air"), indoor: findTagId("indoor"), budget: findTagId("budget"),
-      baby: findTagId("kleinkinder"), kids: findTagId("schulkinder"), teen: findTagId("teenager")
+      romantisch: findTagId("romantisch-date"), 
+      familie: findTagId("familie-kinder"),
+      outdoor: findTagId("open-air"), 
+      indoor: findTagId("schlechtwetter-indoor"), 
+      budget: findTagId("kostenlos-budget"),
+      baby: findTagId("kleinkinder"), 
+      kids: findTagId("schulkinder"), 
+      teen: findTagId("teenager"),
+      wellness: findTagId("wellness-selfcare"),
+      natur: findTagId("natur-erlebnisse")
     };
 
     console.log("Tag IDs found:", tagIds);

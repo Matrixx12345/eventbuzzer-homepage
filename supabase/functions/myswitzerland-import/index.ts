@@ -137,12 +137,15 @@ serve(async (req) => {
     };
     const findTagId = (search: string) => tags.find(t => t.slug.includes(search))?.id;
 
+    // Tag slugs - exact matches to tags table
     const tagIds = {
-      romantisch: findTagId("romantisch"),
-      familie: findTagId("familie"),
+      romantisch: findTagId("romantisch-date"),
+      familie: findTagId("familie-kinder"),
       outdoor: findTagId("open-air"),
-      indoor: findTagId("indoor"),
-      budget: findTagId("budget")
+      indoor: findTagId("schlechtwetter-indoor"),
+      budget: findTagId("kostenlos-budget"),
+      wellness: findTagId("wellness-selfcare"),
+      natur: findTagId("natur-erlebnisse")
     };
 
     console.log("Tag IDs found:", tagIds);
@@ -294,7 +297,7 @@ serve(async (req) => {
       const zip = address.postalCode || address.zipCode || address.zip || "";
       const country = address.addressCountry || address.country || "CH";
 
-      // Kategorie-Zuordnung basierend auf Typ
+      // Kategorie-Zuordnung basierend auf Typ - exact matches to taxonomy table
       let mainCatId = findCatId("Freizeit & Aktivitäten");
       let subCatId = null;
 
@@ -305,19 +308,40 @@ serve(async (req) => {
         : (typeof categories === 'string' ? categories.toLowerCase() : '');
       
       const additionalType = (typeof item.additionalType === 'string' ? item.additionalType : "").toLowerCase();
+      const titleLowerForCat = title.toLowerCase();
 
-      if (itemType === 'tour') {
+      // Kategorisierung mit exakten Taxonomy-Namen
+      if (categoryText.includes("wellness") || categoryText.includes("spa") || 
+          titleLowerForCat.includes("wellness") || titleLowerForCat.includes("spa") || titleLowerForCat.includes("thermal")) {
+        // Wellness → Freizeit & Aktivitäten / Wellness & Relax Events
         mainCatId = findCatId("Freizeit & Aktivitäten");
-      } else if (categoryText.includes("museum") || categoryText.includes("kunst") || additionalType.includes("museum")) {
+        subCatId = findCatId("Wellness & Relax Events");
+      } else if (itemType === 'tour' || titleLowerForCat.includes("wanderung") || titleLowerForCat.includes("route") || titleLowerForCat.includes("tour")) {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+        subCatId = findCatId("Geführte Touren & Besondere Erlebnisse");
+      } else if (categoryText.includes("museum") || categoryText.includes("kunst") || additionalType.includes("museum") ||
+                 titleLowerForCat.includes("museum") || titleLowerForCat.includes("ausstellung")) {
         mainCatId = findCatId("Kunst & Kultur");
         subCatId = findCatId("Museum, Kunst & Ausstellung");
-      } else if (categoryText.includes("theater") || categoryText.includes("theatre") || categoryText.includes("oper")) {
+      } else if (categoryText.includes("theater") || categoryText.includes("theatre") || categoryText.includes("oper") ||
+                 titleLowerForCat.includes("theater") || titleLowerForCat.includes("oper")) {
         mainCatId = findCatId("Kunst & Kultur");
         subCatId = findCatId("Theater, Musical & Show");
-      } else if (categoryText.includes("konzert") || categoryText.includes("musik") || categoryText.includes("festival")) {
+      } else if (categoryText.includes("konzert") || categoryText.includes("musik") || categoryText.includes("festival") ||
+                 titleLowerForCat.includes("konzert") || titleLowerForCat.includes("festival")) {
         mainCatId = findCatId("Musik & Party");
-      } else if (categoryText.includes("wellness") || categoryText.includes("spa")) {
-        mainCatId = findCatId("Gastronomie & Genuss");
+        subCatId = findCatId("Musik-Festivals");
+      } else if (categoryText.includes("sport") || categoryText.includes("aktiv") || titleLowerForCat.includes("sport") ||
+                 titleLowerForCat.includes("ski") || titleLowerForCat.includes("snowboard") || titleLowerForCat.includes("bike")) {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+        subCatId = findCatId("Active Lifestyle & Sport-Events");
+      } else if (categoryText.includes("kulinarik") || categoryText.includes("food") || categoryText.includes("wein") ||
+                 titleLowerForCat.includes("tasting") || titleLowerForCat.includes("schokolade") || titleLowerForCat.includes("käse")) {
+        mainCatId = findCatId("Kulinarik & Genuss");
+        subCatId = findCatId("Tastings, Workshops & Kurse");
+      } else if (categoryText.includes("markt") || titleLowerForCat.includes("markt") || titleLowerForCat.includes("streetfood")) {
+        mainCatId = findCatId("Märkte & Lokales");
+        subCatId = findCatId("Streetfood & Designmärkte");
       }
 
       // Tags zuweisen basierend auf Inhalt
@@ -329,6 +353,7 @@ serve(async (req) => {
           textForCheck.includes("berg") || textForCheck.includes("see") || textForCheck.includes("natur") ||
           itemType === 'tour') {
         if (tagIds.outdoor) tagsToAssign.push(tagIds.outdoor);
+        if (tagIds.natur) tagsToAssign.push(tagIds.natur);
       } else {
         if (tagIds.indoor) tagsToAssign.push(tagIds.indoor);
       }
@@ -339,8 +364,13 @@ serve(async (req) => {
       }
 
       // Romantik-Detection
-      if (textForCheck.includes("romantisch") || textForCheck.includes("romantic") || textForCheck.includes("wellness") || textForCheck.includes("spa")) {
+      if (textForCheck.includes("romantisch") || textForCheck.includes("romantic") || textForCheck.includes("date")) {
         if (tagIds.romantisch) tagsToAssign.push(tagIds.romantisch);
+      }
+      
+      // Wellness-Detection (separate tag)
+      if (textForCheck.includes("wellness") || textForCheck.includes("spa") || textForCheck.includes("thermal") || textForCheck.includes("massage")) {
+        if (tagIds.wellness) tagsToAssign.push(tagIds.wellness);
       }
 
       // Preis extrahieren und $/$$/$$$ Logik anwenden mit INTELLIGENTER Schätzung
