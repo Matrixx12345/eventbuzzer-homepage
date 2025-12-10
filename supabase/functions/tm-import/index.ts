@@ -251,8 +251,16 @@ serve(async (req) => {
             
             // Die Preis-Frage an die KI (nur wenn weder API, noch Title, noch Meta einen Preis hatten)
             if (!minPrice && !priceLabel) {
-                promptInstruction += `\nZUSATZ: Schätze das Preisniveau in der Schweiz basierend auf Künstler/Venue. Antworte NUR mit einem Code am Ende:
-                [LOW] (<30 CHF), [MID] (30-80 CHF), [HIGH] (80-150 CHF), [LUX] (>150 CHF).`;
+                promptInstruction += `\nZUSATZ: Schätze den EINSTIEGSPREIS für dieses Event in der Schweiz. Sei KONSERVATIV - die meisten Events kosten 40-80 CHF.
+                
+WICHTIG für die Schweiz:
+- Klassische Konzerte, Kammermusik, Orchester: meist [MID] (50-80 CHF) oder [LOW] (unter 50 CHF)
+- Kleine Clubs, lokale Bands, Theater: [LOW] oder [MID]
+- Pop/Rock Stars in grossen Hallen: [HIGH] (80-120 CHF)
+- Nur internationale Mega-Stars (Taylor Swift, Coldplay, etc.): [LUX]
+
+Antworte NUR mit einem Code am Ende:
+[LOW] (unter 40 CHF), [MID] (40-80 CHF), [HIGH] (80-120 CHF), [LUX] (über 120 CHF).`; 
             }
 
             const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -270,12 +278,12 @@ serve(async (req) => {
                 if (rawAiText.includes("[TEEN]") && tagIds.teen) tagsToAssign.push(tagIds.teen);
             }
             
-            // 4. Preis-Fallback: KI-Schätzung
+            // 4. Preis-Fallback: KI-Schätzung (konservativere Werte für Schweiz)
             if (!minPrice && !priceLabel) {
-                if (rawAiText.includes("[LOW]")) { minPrice = 15; priceLabel = "$"; priceSource = "AI"; if (tagIds.budget) tagsToAssign.push(tagIds.budget); }
-                else if (rawAiText.includes("[MID]")) { minPrice = 50; priceLabel = "$$"; priceSource = "AI"; }
-                else if (rawAiText.includes("[HIGH]")) { minPrice = 100; priceLabel = "$$$"; priceSource = "AI"; }
-                else if (rawAiText.includes("[LUX]")) { minPrice = 200; priceLabel = "$$$$"; priceSource = "AI"; }
+                if (rawAiText.includes("[LOW]")) { minPrice = 25; priceLabel = "ca. CHF 25.-"; priceSource = "AI"; if (tagIds.budget) tagsToAssign.push(tagIds.budget); }
+                else if (rawAiText.includes("[MID]")) { minPrice = 60; priceLabel = "ca. CHF 60.-"; priceSource = "AI"; }
+                else if (rawAiText.includes("[HIGH]")) { minPrice = 95; priceLabel = "ca. CHF 95.-"; priceSource = "AI"; }
+                else if (rawAiText.includes("[LUX]")) { minPrice = 150; priceLabel = "ab CHF 150.-"; priceSource = "AI"; }
             }
 
             // Clean Text
