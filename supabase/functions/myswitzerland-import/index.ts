@@ -148,10 +148,10 @@ serve(async (req) => {
     let totalProcessed = 0;
     const allItems: any[] = [];
 
-    // 2. Attractions holen (Hauptdatenquelle für Events)
+    // 2. Attractions holen (Hauptdatenquelle für Events) - MIT lang=de Parameter!
     console.log("Fetching attractions...");
     try {
-      const attractionsRes = await fetch(`${API_BASE_URL}/attractions/?pageSize=50`, {
+      const attractionsRes = await fetch(`${API_BASE_URL}/attractions/?pageSize=50&lang=de`, {
         method: "GET",
         headers: apiHeaders
       });
@@ -172,7 +172,7 @@ serve(async (req) => {
     // 3. Offers holen (Angebote)
     console.log("Fetching offers...");
     try {
-      const offersRes = await fetch(`${API_BASE_URL}/offers/?pageSize=50`, {
+      const offersRes = await fetch(`${API_BASE_URL}/offers/?pageSize=50&lang=de`, {
         method: "GET",
         headers: apiHeaders
       });
@@ -193,7 +193,7 @@ serve(async (req) => {
     // 4. Tours holen
     console.log("Fetching tours...");
     try {
-      const toursRes = await fetch(`${API_BASE_URL}/tours/?pageSize=50`, {
+      const toursRes = await fetch(`${API_BASE_URL}/tours/?pageSize=50&lang=de`, {
         method: "GET",
         headers: apiHeaders
       });
@@ -229,21 +229,42 @@ serve(async (req) => {
                             item.shortDescription || item.longDescription || "";
       const cleanDescription = stripHtml(rawDescription);
       
-      // Bild URL extrahieren - erweiterte Suche
+      // Bild URL extrahieren - sehr erweiterte Suche für alle API-Formate
       let imageUrl: string | null = null;
-      if (item.image?.url) {
-        imageUrl = item.image.url;
-      } else if (item.image?.contentUrl) {
-        imageUrl = item.image.contentUrl;
-      } else if (typeof item.image === 'string') {
-        imageUrl = item.image;
-      } else if (item.images && item.images.length > 0) {
-        imageUrl = item.images[0].url || item.images[0].contentUrl || item.images[0];
-      } else if (item.photo?.url) {
-        imageUrl = item.photo.url;
-      } else if (item.media && item.media.length > 0) {
-        imageUrl = item.media[0].url || item.media[0].contentUrl;
+      
+      // Prüfe alle möglichen Bild-Felder
+      const imageFields = [
+        item.image?.url,
+        item.image?.contentUrl,
+        typeof item.image === 'string' ? item.image : null,
+        item.images?.[0]?.url,
+        item.images?.[0]?.contentUrl,
+        typeof item.images?.[0] === 'string' ? item.images[0] : null,
+        item.photo?.url,
+        item.photo?.contentUrl,
+        typeof item.photo === 'string' ? item.photo : null,
+        item.media?.[0]?.url,
+        item.media?.[0]?.contentUrl,
+        item.thumbnail?.url,
+        item.thumbnail?.contentUrl,
+        typeof item.thumbnail === 'string' ? item.thumbnail : null,
+        item.primaryImage?.url,
+        item.primaryImage?.contentUrl,
+        item.logo?.url,
+        // Nested structures
+        item.gallery?.[0]?.url,
+        item.gallery?.[0]?.contentUrl,
+        item.gallery?.[0]?.image?.url,
+      ];
+      
+      for (const imgField of imageFields) {
+        if (imgField && typeof imgField === 'string' && imgField.startsWith('http')) {
+          imageUrl = imgField;
+          break;
+        }
       }
+      
+      console.log(`Image URL for "${title}":`, imageUrl || "NONE FOUND");
 
       // Adressdaten extrahieren - erweiterte Suche für verschiedene API-Formate
       const geo = item.geo || item.location?.geo || {};
@@ -371,9 +392,20 @@ Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
         }
       }
 
-      // Ticket/Website-Link - MySwitzerland URL verwenden
-      const ticketLink = item.url || item.mainEntityOfPage || item.sameAs || 
-                         (item["@id"] ? `https://www.myswitzerland.com${item["@id"]}` : null);
+      // Ticket/Website-Link - MySwitzerland Deutsche URL bevorzugen
+      let ticketLink = item.url || item.mainEntityOfPage || item.sameAs || null;
+      
+      // Falls URL vorhanden aber englisch, versuche auf Deutsch umzuleiten
+      if (ticketLink && ticketLink.includes('/en/')) {
+        ticketLink = ticketLink.replace('/en/', '/de/');
+      }
+      
+      // Falls keine URL, versuche aus @id eine deutsche URL zu bauen
+      if (!ticketLink && item["@id"]) {
+        ticketLink = `https://www.myswitzerland.com/de${item["@id"]}`;
+      }
+      
+      console.log(`Ticket link for "${title}":`, ticketLink || "NONE");
 
       // Event speichern
       const { data: savedEvent, error } = await supabase
