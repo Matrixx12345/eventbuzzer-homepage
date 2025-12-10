@@ -287,33 +287,44 @@ const Listings = () => {
 
   // Filter events
   const filteredEvents = events.filter((event) => {
-    // Strict price tier filter based on price_from AND price_label
+    // Strict price tier filter - price_label takes PRIORITY over price_from
     if (selectedPriceTier) {
       const price = event.price_from;
       const priceLabel = event.price_label || "";
+      const hasPriceLabel = priceLabel === "$" || priceLabel === "$$" || priceLabel === "$$$";
       
       if (selectedPriceTier === "gratis") {
-        // Gratis: ONLY price_from === 0 OR has budget tag
-        // Explicitly exclude NULL price_from (unless has tag)
+        // Gratis: price_from === 0 OR has gratis/kostenlos in label
+        // If event has a price label ($, $$, $$$), it's NOT free
+        if (hasPriceLabel) return false;
         const hasPrice = price !== null && price !== undefined;
         const isFree = hasPrice && price === 0;
-        const hasBudgetTag = priceLabel.toLowerCase().includes("kostenlos") || priceLabel.toLowerCase().includes("gratis");
-        if (!isFree && !hasBudgetTag) return false;
+        const hasFreeLabel = priceLabel.toLowerCase().includes("kostenlos") || priceLabel.toLowerCase().includes("gratis");
+        if (!isFree && !hasFreeLabel) return false;
       } else if (selectedPriceTier === "$") {
-        // Budget: price_from > 0 AND <= 50 OR price_label is exactly "$"
-        const hasValidPrice = price !== null && price !== undefined && price > 0 && price <= 50;
-        const hasMatchingLabel = priceLabel === "$";
-        if (!hasValidPrice && !hasMatchingLabel) return false;
+        // Budget: If price_label exists, it MUST be "$"
+        if (hasPriceLabel) {
+          if (priceLabel !== "$") return false;
+        } else {
+          // No label: fall back to price_from range
+          if (price === null || price === undefined || price <= 0 || price > 50) return false;
+        }
       } else if (selectedPriceTier === "$$") {
-        // Standard: price_from > 50 AND <= 120 OR price_label is exactly "$$"
-        const hasValidPrice = price !== null && price !== undefined && price > 50 && price <= 120;
-        const hasMatchingLabel = priceLabel === "$$";
-        if (!hasValidPrice && !hasMatchingLabel) return false;
+        // Standard: If price_label exists, it MUST be "$$"
+        if (hasPriceLabel) {
+          if (priceLabel !== "$$") return false;
+        } else {
+          // No label: fall back to price_from range
+          if (price === null || price === undefined || price <= 50 || price > 120) return false;
+        }
       } else if (selectedPriceTier === "$$$") {
-        // Premium: price_from > 120 OR price_label is exactly "$$$"
-        const hasValidPrice = price !== null && price !== undefined && price > 120;
-        const hasMatchingLabel = priceLabel === "$$$";
-        if (!hasValidPrice && !hasMatchingLabel) return false;
+        // Premium: If price_label exists, it MUST be "$$$"
+        if (hasPriceLabel) {
+          if (priceLabel !== "$$$") return false;
+        } else {
+          // No label: fall back to price_from range
+          if (price === null || price === undefined || price <= 120) return false;
+        }
       }
     }
     
