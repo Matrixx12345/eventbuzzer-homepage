@@ -15,12 +15,14 @@ import {
   Waves,
   Mountain,
   Search,
-  Loader2
+  Loader2,
+  Check
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -680,15 +682,38 @@ const Listings = () => {
 
       {/* Kategorie */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
+          {selectedCategoryId && (
+            <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+              <Check size={12} />
+              Ausgewählt
+            </span>
+          )}
+        </div>
         <Select 
           value={selectedCategoryId?.toString() || "all"} 
           onValueChange={(val) => {
-            setSelectedCategoryId(val === "all" ? null : parseInt(val));
+            const newCategoryId = val === "all" ? null : parseInt(val);
+            setSelectedCategoryId(newCategoryId);
             setSelectedSubcategoryId(null); // Reset subcategory when main changes
+            
+            // Show toast feedback
+            if (newCategoryId) {
+              const categoryName = mainCategories.find(c => c.id === newCategoryId)?.name;
+              toast.success(`Kategorie: ${categoryName}`, {
+                description: "Subkategorien verfügbar",
+                duration: 2000,
+              });
+            }
           }}
         >
-          <SelectTrigger className="w-full rounded-xl border border-blue-200 bg-white py-3.5 text-sm font-medium text-blue-900 focus:ring-2 focus:ring-blue-300 hover:bg-blue-50 transition-all">
+          <SelectTrigger className={cn(
+            "w-full rounded-xl border py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-300 transition-all",
+            selectedCategoryId 
+              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+              : "bg-white text-blue-900 border-blue-200 hover:bg-blue-50"
+          )}>
             <SelectValue placeholder="Alle Kategorien" />
           </SelectTrigger>
           <SelectContent className="bg-white border border-blue-200 shadow-xl rounded-xl overflow-hidden z-50">
@@ -712,18 +737,47 @@ const Listings = () => {
       </div>
 
       {/* Subkategorie - only show if main category selected */}
-      {subCategories.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Art</h3>
+      {selectedCategoryId && subCategories.length > 0 && (
+        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Subkategorie</h3>
+            {selectedSubcategoryId && (
+              <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                <Check size={12} />
+                Aktiv
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
+            {/* "Alle" pill to reset subcategory */}
+            <button
+              onClick={() => {
+                setSelectedSubcategoryId(null);
+                toast.info("Alle Subkategorien anzeigen", { duration: 1500 });
+              }}
+              className={cn(
+                "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
+                selectedSubcategoryId === null
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+              )}
+            >
+              Alle
+            </button>
             {subCategories.map((sub) => (
               <button
                 key={sub.id}
-                onClick={() => selectSubcategory(sub.id)}
+                onClick={() => {
+                  const newSubId = selectedSubcategoryId === sub.id ? null : sub.id;
+                  setSelectedSubcategoryId(newSubId);
+                  if (newSubId) {
+                    toast.success(`${sub.name}`, { duration: 1500 });
+                  }
+                }}
                 className={cn(
                   "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
                   selectedSubcategoryId === sub.id
-                    ? "bg-blue-600 text-white"
+                    ? "bg-blue-600 text-white shadow-md"
                     : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
                 )}
               >
