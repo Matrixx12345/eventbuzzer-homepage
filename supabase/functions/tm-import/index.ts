@@ -157,8 +157,14 @@ serve(async (req) => {
         }
 
         // -- C. PREIS & BUDGET-LOGIK --
-        // Wir versuchen den Preis zu finden. Wenn keiner da ist, bleibt er null.
-        let minPrice = event.priceRanges?.[0]?.min;
+        // Extrahiere min und max aus priceRanges[0]
+        const priceRange = event.priceRanges?.[0];
+        const minPrice = priceRange?.min ?? null;
+        const maxPrice = priceRange?.max ?? null;
+        // Wenn min und max identisch sind, setze price_to auf null (vermeidet Redundanz)
+        const priceToValue = (maxPrice !== null && maxPrice !== minPrice) ? maxPrice : null;
+        
+        console.log(`Price for ${title}: min=${minPrice}, max=${maxPrice}, price_to=${priceToValue}`);
         
         const tagsToAssign: string[] = [];
         const textForCheck = (title + " " + (genreName || "")).toLowerCase();
@@ -252,7 +258,8 @@ serve(async (req) => {
             ticket_link: event.url,
             category_main_id: mainCatId,
             category_sub_id: subCatId,
-            price_from: minPrice
+            price_from: minPrice,
+            price_to: priceToValue
           }, { onConflict: 'external_id' })
           .select()
           .single();
