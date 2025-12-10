@@ -33,13 +33,31 @@ serve(async (req) => {
     // Get today's date in ISO format for filtering future events
     const today = new Date().toISOString();
 
-    // Fetch only future events, sorted by start_date ascending
-    const { data, error } = await externalSupabase
+    // Fetch future events OR events with null start_date (permanent attractions)
+    // Using two queries and combining them
+    const { data: futureEvents, error: futureError } = await externalSupabase
       .from("events")
       .select("*")
       .gte("start_date", today)
       .order("start_date", { ascending: true })
       .limit(200);
+
+    const { data: permanentEvents, error: permanentError } = await externalSupabase
+      .from("events")
+      .select("*")
+      .is("start_date", null)
+      .limit(100);
+
+    const error = futureError || permanentError;
+    
+    // Combine and deduplicate by id
+    const allEvents = [...(futureEvents || []), ...(permanentEvents || [])];
+    const uniqueIds = new Set();
+    const data = allEvents.filter(event => {
+      if (uniqueIds.has(event.id)) return false;
+      uniqueIds.add(event.id);
+      return true;
+    });
 
     if (error) {
       console.error("Supabase query error:", JSON.stringify(error));
