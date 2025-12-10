@@ -151,6 +151,7 @@ const Listings = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Derive categories from taxonomy
   const mainCategories = useMemo(() => 
@@ -286,6 +287,20 @@ const Listings = () => {
 
   // Filter events
   const filteredEvents = events.filter((event) => {
+    // Search filter - matches title, venue, location, description
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      const searchableText = [
+        event.title,
+        event.venue_name,
+        event.address_city,
+        event.location,
+        event.short_description,
+      ].filter(Boolean).join(" ").toLowerCase();
+      
+      if (!searchableText.includes(query)) return false;
+    }
+    
     // Strict price tier filter - price_label takes PRIORITY over price_from
     if (selectedPriceTier) {
       const price = event.price_from;
@@ -428,6 +443,7 @@ const Listings = () => {
     setSelectedCategoryId(null);
     setSelectedSubcategoryId(null);
     setSelectedSource(null);
+    setSearchQuery("");
   };
 
   const hasActiveFilters = 
@@ -439,7 +455,8 @@ const Listings = () => {
     radius[0] > 0 ||
     selectedCategoryId !== null ||
     selectedSubcategoryId !== null ||
-    selectedSource !== null;
+    selectedSource !== null ||
+    searchQuery.trim() !== "";
 
   const formatEventDate = (dateString?: string, externalId?: string) => {
     // MySwitzerland events (permanent attractions) have null dates
@@ -470,6 +487,29 @@ const Listings = () => {
           ✕ Filter zurücksetzen
         </button>
       )}
+
+      {/* Search Bar */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Suche</h3>
+        <div className="relative">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+          <input
+            type="text"
+            placeholder="Künstler, Event, Stichwort..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3.5 bg-white rounded-xl text-sm text-blue-900 font-medium placeholder:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-blue-200"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Quelle (Source) - Debug Filter */}
       <div className="space-y-3">
