@@ -74,12 +74,26 @@ serve(async (req) => {
       console.error("Taxonomy query error:", JSON.stringify(taxonomyError));
     }
 
-    // Log price statistics
+    // Log price and category statistics
+    const stats = {
+      total: data?.length || 0,
+      noMainCategory: 0,
+      noSubCategory: 0,
+      uncategorizedTitles: [] as string[],
+    };
+    
     if (data && data.length > 0) {
       const withPrice = data.filter(e => e.price_from !== null && e.price_from !== undefined);
       const withLabel = data.filter(e => e.price_label !== null && e.price_label !== undefined);
-      console.log(`Future Events: ${data.length} total, ${withPrice.length} with price_from, ${withLabel.length} with price_label`);
-      console.log("First event:", JSON.stringify(data[0]?.title));
+      const noMainCat = data.filter(e => e.category_main_id === null || e.category_main_id === undefined);
+      const noSubCat = data.filter(e => e.category_sub_id === null || e.category_sub_id === undefined);
+      
+      stats.noMainCategory = noMainCat.length;
+      stats.noSubCategory = noSubCat.length;
+      stats.uncategorizedTitles = noMainCat.slice(0, 20).map(e => e.title);
+      
+      console.log(`Events: ${data.length} total, ${withPrice.length} with price, ${withLabel.length} with label`);
+      console.log(`Categories: ${noMainCat.length} without main, ${noSubCat.length} without sub`);
       console.log(`Taxonomy: ${taxonomy?.length || 0} categories loaded`);
     } else {
       console.log("No future events found in table");
@@ -88,6 +102,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       events: data || [], 
       taxonomy: taxonomy || [],
+      stats,
       columns: data && data.length > 0 ? Object.keys(data[0]) : [] 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
