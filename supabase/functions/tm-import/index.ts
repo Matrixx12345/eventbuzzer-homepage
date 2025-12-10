@@ -278,12 +278,12 @@ Antworte NUR mit einem Code am Ende:
                 if (rawAiText.includes("[TEEN]") && tagIds.teen) tagsToAssign.push(tagIds.teen);
             }
             
-            // 4. Preis-Fallback: KI-Schätzung (konservativere Werte für Schweiz)
+            // 4. Preis-Fallback: KI-Schätzung als Preisstufe (nicht exakter Betrag)
             if (!minPrice && !priceLabel) {
-                if (rawAiText.includes("[LOW]")) { minPrice = 25; priceLabel = "ca. CHF 25.-"; priceSource = "AI"; if (tagIds.budget) tagsToAssign.push(tagIds.budget); }
-                else if (rawAiText.includes("[MID]")) { minPrice = 60; priceLabel = "ca. CHF 60.-"; priceSource = "AI"; }
-                else if (rawAiText.includes("[HIGH]")) { minPrice = 95; priceLabel = "ca. CHF 95.-"; priceSource = "AI"; }
-                else if (rawAiText.includes("[LUX]")) { minPrice = 150; priceLabel = "ab CHF 150.-"; priceSource = "AI"; }
+                if (rawAiText.includes("[LOW]")) { minPrice = 25; priceLabel = "$"; priceSource = "AI"; if (tagIds.budget) tagsToAssign.push(tagIds.budget); }
+                else if (rawAiText.includes("[MID]")) { minPrice = 55; priceLabel = "$$"; priceSource = "AI"; }
+                else if (rawAiText.includes("[HIGH]")) { minPrice = 95; priceLabel = "$$$"; priceSource = "AI"; }
+                else if (rawAiText.includes("[LUX]")) { minPrice = 150; priceLabel = "$$$$"; priceSource = "AI"; }
             }
 
             // Clean Text
