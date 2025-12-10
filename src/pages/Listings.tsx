@@ -20,7 +20,8 @@ import {
   Music,
   Palette,
   Sparkles,
-  Flame
+  Flame,
+  LayoutGrid
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -659,67 +660,88 @@ const Listings = () => {
 
       {/* Kategorie - as visual cards with icons like Stimmung */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
-          {selectedCategoryId && (
-            <button 
-              onClick={() => {
-                setSelectedCategoryId(null);
-                setSelectedSubcategoryId(null);
-              }}
-              className="text-xs text-blue-600 font-medium hover:text-blue-800"
-            >
-              Zurücksetzen
-            </button>
-          )}
-        </div>
+        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
         <div className="grid grid-cols-2 gap-2">
-          {mainCategories.map((cat) => {
-            // Map category names to icons
+          {/* Alle Kategorien pill */}
+          <button
+            onClick={() => {
+              setSelectedCategoryId(null);
+              setSelectedSubcategoryId(null);
+            }}
+            className={cn(
+              "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+              selectedCategoryId === null
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+            )}
+          >
+            <LayoutGrid 
+              size={20} 
+              strokeWidth={1.8} 
+              className="mb-1"
+            />
+            <span className="text-[10px] font-bold leading-tight text-center">Alle Kategorien</span>
+          </button>
+          
+          {/* Ordered categories */}
+          {(() => {
+            const categoryOrder = [
+              'Musik & Party',
+              'Kunst & Kultur', 
+              'Kulinarik & Genuss',
+              'Freizeit & Aktivitäten',
+              'Märkte & Lokales'
+            ];
+            
             const getCategoryIcon = (name: string) => {
               const lower = name.toLowerCase();
               if (lower.includes('musik') || lower.includes('party')) return Music;
               if (lower.includes('kunst') || lower.includes('kultur')) return Palette;
-              if (lower.includes('gastro') || lower.includes('genuss')) return UtensilsCrossed;
+              if (lower.includes('kulinarik') || lower.includes('genuss') || lower.includes('gastro')) return UtensilsCrossed;
               if (lower.includes('freizeit') || lower.includes('aktiv')) return Sparkles;
-              if (lower.includes('familie') || lower.includes('kind')) return Heart;
-              if (lower.includes('sport')) return Flame;
+              if (lower.includes('märkte') || lower.includes('lokales')) return Heart;
               return Sparkles;
             };
-            const Icon = getCategoryIcon(cat.name);
-            const isActive = selectedCategoryId === cat.id;
             
-            return (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  const newCategoryId = isActive ? null : cat.id;
-                  setSelectedCategoryId(newCategoryId);
-                  setSelectedSubcategoryId(null);
-                  
-                  if (newCategoryId) {
+            // Sort categories by defined order
+            const sortedCategories = [...mainCategories].sort((a, b) => {
+              const indexA = categoryOrder.findIndex(name => a.name.toLowerCase().includes(name.toLowerCase().split(' ')[0]));
+              const indexB = categoryOrder.findIndex(name => b.name.toLowerCase().includes(name.toLowerCase().split(' ')[0]));
+              return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+            });
+            
+            return sortedCategories.map((cat) => {
+              const Icon = getCategoryIcon(cat.name);
+              const isActive = selectedCategoryId === cat.id;
+              
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedCategoryId(cat.id);
+                    setSelectedSubcategoryId(null);
                     toast.success(`${cat.name}`, {
                       description: "Subkategorien verfügbar",
                       duration: 2000,
                     });
-                  }
-                }}
-                className={cn(
-                  "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-                )}
-              >
-                <Icon 
-                  size={20} 
-                  strokeWidth={1.8} 
-                  className="mb-1"
-                />
-                <span className="text-[10px] font-bold leading-tight text-center">{cat.name}</span>
-              </button>
-            );
-          })}
+                  }}
+                  className={cn(
+                    "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                  )}
+                >
+                  <Icon 
+                    size={20} 
+                    strokeWidth={1.8} 
+                    className="mb-1"
+                  />
+                  <span className="text-[10px] font-bold leading-tight text-center">{cat.name}</span>
+                </button>
+              );
+            });
+          })()}
         </div>
       </div>
 
