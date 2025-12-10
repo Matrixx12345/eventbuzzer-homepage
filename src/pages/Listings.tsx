@@ -7,7 +7,7 @@ import {
   Calendar as CalendarIcon, 
   Cake, 
   CloudRain, 
-  UtensilsCrossed,
+  Star,
   Camera,
   Heart as HeartIcon,
   Smile,
@@ -21,7 +21,9 @@ import {
   Palette,
   Sparkles,
   Flame,
-  LayoutGrid
+  LayoutGrid,
+  Zap,
+  UtensilsCrossed
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -126,7 +128,7 @@ interface TaxonomyItem {
 const quickFilters = [
   { id: "geburtstag", label: "Geburtstag", icon: Cake },
   { id: "mistwetter", label: "Mistwetter", icon: CloudRain },
-  { id: "streetfood", label: "Streetfood", icon: UtensilsCrossed },
+  { id: "top-stars", label: "Top Stars", icon: Star },
   { id: "foto-spots", label: "Foto-Spots", icon: Camera },
   { id: "romantik", label: "Romantik", icon: HeartIcon },
   { id: "mit-kind", label: "Mit Kind", icon: Smile },
@@ -174,12 +176,16 @@ const Listings = () => {
 
   // Time filter definitions
   const timeFilters = [
+    { id: "now", label: "Jetzt" },
     { id: "today", label: "Heute" },
     { id: "tomorrow", label: "Morgen" },
     { id: "thisWeek", label: "Diese Woche" },
     { id: "nextWeek", label: "Nächste Woche" },
     { id: "thisMonth", label: "Dieser Monat" },
   ];
+  
+  // Check if "Top Stars" filter is active (overrides radius)
+  const isTopStarsActive = selectedQuickFilters.includes("top-stars");
 
   const selectTimeFilter = (filterId: string) => {
     // Single select - toggle off if already selected, otherwise select new one
@@ -349,14 +355,14 @@ const Listings = () => {
       }
     }
     
-    // City filter (text-based)
-    if (selectedCity && radius[0] === 0) {
+    // City filter (text-based) - SKIP if "Top Stars" is active (national mode)
+    if (selectedCity && radius[0] === 0 && !isTopStarsActive) {
       const eventCity = event.address_city || event.location || "";
       if (!eventCity.toLowerCase().includes(selectedCity.toLowerCase())) return false;
     }
     
-    // Radius filter (geo-based) - only if city is selected AND radius > 0
-    if (selectedCity && radius[0] > 0) {
+    // Radius filter (geo-based) - SKIP if "Top Stars" is active (national mode)
+    if (selectedCity && radius[0] > 0 && !isTopStarsActive) {
       const cityCoords = findCityCoords(selectedCity);
       if (cityCoords && event.latitude && event.longitude) {
         const distance = calculateDistance(
@@ -385,6 +391,16 @@ const Listings = () => {
       
       let matchesTimeFilter = false;
       switch (selectedTimeFilter) {
+        case "now":
+          // Events happening right now: starts today and current time is after start or starts within 2 hours
+          if (isToday(eventDate)) {
+            const eventTime = eventDate.getTime();
+            const currentTime = now.getTime();
+            const twoHoursFromNow = currentTime + (2 * 60 * 60 * 1000);
+            // Event already started OR starts within 2 hours
+            matchesTimeFilter = eventTime <= currentTime || eventTime <= twoHoursFromNow;
+          }
+          break;
         case "today":
           matchesTimeFilter = isToday(eventDate);
           break;
@@ -521,6 +537,21 @@ const Listings = () => {
       {/* Datum (Date) */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
+        
+        {/* "Jetzt" Button - special live/urgent styling */}
+        <button
+          onClick={() => selectTimeFilter("now")}
+          className={cn(
+            "w-full h-11 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
+            selectedTimeFilter === "now"
+              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30"
+              : "bg-white text-gray-800 hover:bg-orange-50 border border-gray-200 hover:border-orange-300"
+          )}
+        >
+          <Zap size={16} className={selectedTimeFilter === "now" ? "animate-pulse" : ""} />
+          <span>Jetzt</span>
+        </button>
+        
         <button 
           onClick={() => setShowCalendar(true)}
           className="w-full px-5 py-2.5 bg-white hover:bg-gray-50 rounded-xl text-gray-800 transition-all flex items-center justify-center gap-2 font-medium border border-gray-200"
@@ -533,7 +564,7 @@ const Listings = () => {
         
         {/* Time filter buttons - single-select, uniform size */}
         <div className="grid grid-cols-2 gap-2">
-          {timeFilters.map((filter) => {
+          {timeFilters.filter(f => f.id !== "now").map((filter) => {
             const isActive = selectedTimeFilter === filter.id;
             return (
               <button
@@ -556,31 +587,54 @@ const Listings = () => {
       {/* Schnellfilter (Quick Filters) */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
-        <div className="grid grid-cols-3 gap-2">
-          {quickFilters.map((filter) => {
-            const Icon = filter.icon;
-            const isActive = selectedQuickFilters.includes(filter.id);
-            return (
-              <button
-                key={filter.id}
-                onClick={() => toggleQuickFilter(filter.id)}
-                className={cn(
-                  "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                )}
-              >
-                <Icon 
-                  size={20} 
-                  strokeWidth={1.8} 
-                  className="mb-1"
-                />
-                <span className="text-xs font-medium leading-tight text-center">{filter.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <TooltipProvider>
+          <div className="grid grid-cols-3 gap-2">
+            {quickFilters.map((filter) => {
+              const Icon = filter.icon;
+              const isActive = selectedQuickFilters.includes(filter.id);
+              const isTopStars = filter.id === "top-stars";
+              
+              const buttonElement = (
+                <button
+                  key={filter.id}
+                  onClick={() => toggleQuickFilter(filter.id)}
+                  className={cn(
+                    "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
+                    isActive && isTopStars
+                      ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30"
+                      : isActive
+                      ? "bg-blue-600 text-white"
+                      : isTopStars
+                      ? "bg-white text-gray-800 hover:bg-amber-50 border border-gray-200 hover:border-amber-300"
+                      : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                  )}
+                >
+                  <Icon 
+                    size={20} 
+                    strokeWidth={1.8} 
+                    className={cn("mb-1", isActive && isTopStars && "fill-white")}
+                  />
+                  <span className="text-xs font-medium leading-tight text-center">{filter.label}</span>
+                </button>
+              );
+              
+              if (isTopStars) {
+                return (
+                  <Tooltip key={filter.id}>
+                    <TooltipTrigger asChild>
+                      {buttonElement}
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[180px]">
+                      <p className="text-center">Grosse Events schweizweit – ohne lokale Einschränkung</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+              
+              return buttonElement;
+            })}
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Budget - Preisstufen */}
@@ -626,7 +680,15 @@ const Listings = () => {
 
       {/* Stadt und Radius */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wo?</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wo?</h3>
+          {isTopStarsActive && (
+            <span className="text-xs font-medium text-amber-400 flex items-center gap-1">
+              <Star size={12} className="fill-amber-400" />
+              National
+            </span>
+          )}
+        </div>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -635,7 +697,13 @@ const Listings = () => {
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-gray-200"
+            disabled={isTopStarsActive}
+            className={cn(
+              "w-full pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border",
+              isTopStarsActive 
+                ? "bg-neutral-800 text-gray-500 border-neutral-700 cursor-not-allowed"
+                : "bg-white text-gray-800 border-gray-200"
+            )}
           />
           <datalist id="cities">
             {cities.map((city) => (
@@ -643,19 +711,38 @@ const Listings = () => {
             ))}
           </datalist>
         </div>
-        <div className="pt-2 px-1">
-          <Slider
-            value={radius}
-            onValueChange={setRadius}
-            max={100}
-            step={5}
-            className="w-full"
-          />
-          <div className="flex justify-between items-center mt-2">
-            <span className="text-xs text-gray-400 font-medium">Umkreis</span>
-            <span className="text-sm font-semibold text-gray-800 tabular-nums bg-white px-2.5 py-1 rounded-lg border border-gray-200">{radius[0]} km</span>
-          </div>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className={cn("pt-2 px-1", isTopStarsActive && "opacity-50 cursor-not-allowed")}>
+                <Slider
+                  value={radius}
+                  onValueChange={isTopStarsActive ? undefined : setRadius}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                  disabled={isTopStarsActive}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-gray-400 font-medium">Umkreis</span>
+                  <span className={cn(
+                    "text-sm font-semibold tabular-nums px-2.5 py-1 rounded-lg border",
+                    isTopStarsActive 
+                      ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                      : "bg-white text-gray-800 border-gray-200"
+                  )}>
+                    {isTopStarsActive ? "∞" : `${radius[0]} km`}
+                  </span>
+                </div>
+              </div>
+            </TooltipTrigger>
+            {isTopStarsActive && (
+              <TooltipContent side="top" className="max-w-[200px]">
+                <p className="text-center">Schweizweit – Entfernung spielt keine Rolle bei Top Stars</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Kategorie - Inline Drawer Pattern */}
