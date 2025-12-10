@@ -676,13 +676,13 @@ const Listings = () => {
             return Sparkles;
           };
           
-          // Build array with "Alle" + categories
+          // Build array with categories + "Alle" at the end
           const allItems = [
-            { id: null, name: 'Alle Kategorien', icon: LayoutGrid },
             ...orderedCategories.map(catName => {
               const cat = mainCategories.find(c => c.name === catName);
               return cat ? { id: cat.id, name: cat.name, icon: getCategoryIcon(cat.name) } : null;
-            }).filter(Boolean) as { id: number; name: string; icon: typeof Music }[]
+            }).filter(Boolean) as { id: number; name: string; icon: typeof Music }[],
+            { id: null, name: 'Alle Kategorien', icon: LayoutGrid },
           ];
           
           // Group items into rows of 2
