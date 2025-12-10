@@ -351,8 +351,10 @@ const MasonryProductCard = ({ image, name, price, partner, size }: {
 // Dynamic event interface for Supabase data
 interface DynamicEvent {
   id: string;
+  external_id?: string;
   title: string;
   description?: string;
+  long_description?: string;
   short_description?: string;
   venue_name?: string;
   address_street?: string;
@@ -458,16 +460,33 @@ const EventDetail = () => {
     const addressParts = [dynamicEvent.address_street, dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean);
     // Use real image if available, otherwise fallback to placeholder
     const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';
+    
+    // Check if it's a MySwitzerland event (permanent attraction without date)
+    const isMySwitzerland = dynamicEvent.external_id?.startsWith('mys_');
+    const isPermanentAttraction = !dynamicEvent.start_date;
+    
+    // Determine date and time display
+    let dateDisplay: string;
+    let timeDisplay: string;
+    
+    if (isPermanentAttraction) {
+      dateDisplay = "Jederzeit verfügbar";
+      timeDisplay = "";  // Don't show time for permanent attractions
+    } else {
+      dateDisplay = formatDate(dynamicEvent.start_date) || "Datum folgt";
+      timeDisplay = formatTime(dynamicEvent.start_date) || "";
+    }
+    
     event = {
       image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
       title: dynamicEvent.title,
-      venue: dynamicEvent.venue_name || dynamicEvent.location || "Veranstaltungsort",
-      location: dynamicEvent.address_city || "Schweiz",
-      address: addressParts.join(" "),
-      date: formatDate(dynamicEvent.start_date) || "Datum folgt",
-      time: formatTime(dynamicEvent.start_date) || "Zeit folgt",
+      venue: dynamicEvent.venue_name || dynamicEvent.location || dynamicEvent.address_city || "Veranstaltungsort",
+      location: dynamicEvent.address_city || dynamicEvent.location || "Schweiz",
+      address: addressParts.length > 0 ? addressParts.join(" ") : "",
+      date: dateDisplay,
+      time: timeDisplay,
       distance: "",
-      description: dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
+      description: dynamicEvent.long_description || dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
       ticketLink: dynamicEvent.ticket_link,
       priceFrom: dynamicEvent.price_from,
       priceTo: dynamicEvent.price_to,
