@@ -540,7 +540,7 @@ const Listings = () => {
                 key={filter.id}
                 onClick={() => selectTimeFilter(filter.id)}
                 className={cn(
-                  "py-2.5 rounded-xl text-sm font-medium transition-all text-center",
+                  "h-11 px-3 rounded-xl text-sm font-medium transition-all text-center whitespace-nowrap",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
@@ -565,14 +565,14 @@ const Listings = () => {
                 key={filter.id}
                 onClick={() => toggleQuickFilter(filter.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                  "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
                 )}
               >
                 <Icon 
-                  size={18} 
+                  size={20} 
                   strokeWidth={1.8} 
                   className="mb-1"
                 />
@@ -605,7 +605,7 @@ const Listings = () => {
                         setSelectedPriceTier(isActive ? null : tier.id);
                       }}
                       className={cn(
-                        "py-2.5 rounded-xl text-sm font-semibold transition-all text-center",
+                        "h-11 rounded-xl text-sm font-semibold transition-all text-center",
                         isActive
                           ? "bg-blue-600 text-white"
                           : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
@@ -727,14 +727,14 @@ const Listings = () => {
                             }
                           }}
                           className={cn(
-                            "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                            "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
                             isActive
                               ? "bg-blue-600 text-white shadow-md"
                               : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
                           )}
                         >
                           <Icon 
-                            size={18} 
+                            size={20} 
                             strokeWidth={1.8} 
                             className="mb-1"
                           />
@@ -800,7 +800,7 @@ const Listings = () => {
                 key={source.id}
                 onClick={() => setSelectedSource(isActive ? null : source.id)}
                 className={cn(
-                  "py-2.5 rounded-xl text-sm font-medium transition-all text-center",
+                  "h-11 rounded-xl text-sm font-medium transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white/50 text-slate-700 hover:bg-white border border-blue-200"
@@ -834,8 +834,8 @@ const Listings = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
-          <aside className="hidden lg:block w-72 flex-shrink-0 -mt-2">
-            <div className="bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200">
+          <aside className="hidden lg:block w-80 flex-shrink-0 -mt-2">
+            <div className="bg-blue-50 rounded-2xl p-5 shadow-lg shadow-blue-200/50 border border-blue-200">
               <FilterContent />
             </div>
           </aside>
