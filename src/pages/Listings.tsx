@@ -489,7 +489,7 @@ const Listings = () => {
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
-          className="w-full py-2.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 hover:bg-white rounded-xl transition-all border border-transparent hover:border-stone-200"
+          className="w-full py-3 text-base font-medium text-slate-600 hover:text-slate-900 hover:bg-white rounded-xl transition-all border border-transparent hover:border-stone-200"
         >
           ✕ Filter zurücksetzen
         </button>
@@ -497,20 +497,20 @@ const Listings = () => {
 
       {/* Search Bar */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Suche</h3>
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Suche</h3>
         <div className="relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
           <input
             type="text"
             placeholder="Künstler, Event, Stichwort..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 bg-white rounded-xl text-sm text-blue-900 font-medium placeholder:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-blue-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-slate-800 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-blue-200"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <X size={16} />
             </button>
@@ -520,10 +520,10 @@ const Listings = () => {
 
       {/* Datum (Date) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Wann?</h3>
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-4 py-3.5 bg-white hover:bg-blue-50 rounded-xl text-blue-900 transition-all flex items-center justify-center gap-2.5 font-semibold border border-blue-200"
+          className="w-full px-4 py-2.5 bg-white hover:bg-blue-50 rounded-xl text-slate-800 transition-all flex items-center justify-center gap-2 font-medium border border-blue-200"
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
@@ -540,10 +540,10 @@ const Listings = () => {
                 key={filter.id}
                 onClick={() => selectTimeFilter(filter.id)}
                 className={cn(
-                  "py-3 rounded-xl text-xs font-semibold transition-all text-center",
+                  "py-2.5 rounded-xl text-sm font-medium transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                    : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
                 )}
               >
                 {filter.label}
@@ -555,7 +555,7 @@ const Listings = () => {
 
       {/* Schnellfilter (Quick Filters) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Stimmung</h3>
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Stimmung</h3>
         <div className="grid grid-cols-3 gap-2">
           {quickFilters.map((filter) => {
             const Icon = filter.icon;
@@ -568,15 +568,15 @@ const Listings = () => {
                   "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                    : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
                 )}
               >
                 <Icon 
-                  size={20} 
+                  size={18} 
                   strokeWidth={1.8} 
                   className="mb-1"
                 />
-                <span className="text-[10px] font-bold leading-tight text-center">{filter.label}</span>
+                <span className="text-xs font-medium leading-tight text-center">{filter.label}</span>
               </button>
             );
           })}
@@ -585,7 +585,7 @@ const Listings = () => {
 
       {/* Budget - Preisstufen */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Budget</h3>
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Budget</h3>
         
         {/* Price tier pills - single select */}
         <TooltipProvider>
@@ -605,10 +605,10 @@ const Listings = () => {
                         setSelectedPriceTier(isActive ? null : tier.id);
                       }}
                       className={cn(
-                        "py-3 rounded-xl text-sm font-bold transition-all text-center",
+                        "py-2.5 rounded-xl text-sm font-semibold transition-all text-center",
                         isActive
                           ? "bg-blue-600 text-white"
-                          : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                          : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
                       )}
                     >
                       {tier.label}
@@ -626,16 +626,16 @@ const Listings = () => {
 
       {/* Stadt und Radius */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Wo?</h3>
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Wo?</h3>
         <div className="relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
           <input
             type="text"
             placeholder="Stadt eingeben..."
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-12 pr-4 py-3.5 bg-white rounded-xl text-sm text-blue-900 font-medium placeholder:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-blue-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-slate-800 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-blue-200"
           />
           <datalist id="cities">
             {cities.map((city) => (
@@ -651,16 +651,16 @@ const Listings = () => {
             step={5}
             className="w-full"
           />
-          <div className="flex justify-between items-center mt-3">
-            <span className="text-xs text-blue-900 font-medium">Umkreis</span>
-            <span className="text-sm font-bold text-blue-900 tabular-nums bg-white px-3 py-1 rounded-lg border border-blue-200">{radius[0]} km</span>
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs text-slate-600 font-medium">Umkreis</span>
+            <span className="text-sm font-semibold text-slate-800 tabular-nums bg-white px-2.5 py-1 rounded-lg border border-blue-200">{radius[0]} km</span>
           </div>
         </div>
       </div>
 
       {/* Kategorie - Inline Drawer Pattern */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Kategorie</h3>
         
         {/* Category grid with inline drawer for subcategories */}
         {(() => {
@@ -730,15 +730,15 @@ const Listings = () => {
                             "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
                             isActive
                               ? "bg-blue-600 text-white shadow-md"
-                              : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                              : "bg-white text-slate-700 hover:bg-blue-50 border border-blue-200"
                           )}
                         >
                           <Icon 
-                            size={20} 
+                            size={18} 
                             strokeWidth={1.8} 
                             className="mb-1"
                           />
-                          <span className="text-[10px] font-bold leading-tight text-center">{item.name}</span>
+                          <span className="text-xs font-medium leading-tight text-center">{item.name}</span>
                         </button>
                       );
                     })}
@@ -747,15 +747,16 @@ const Listings = () => {
                   {/* Inline Drawer - appears below the row containing the selected category */}
                   {rowIndex === selectedRowIndex && selectedCategoryId !== null && subCategories.length > 0 && (
                     <div className="mt-2 p-3 bg-blue-50 rounded-xl border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-200">
-                      <div className="flex flex-wrap gap-2">
+                      {/* Single column - full width pills stacked */}
+                      <div className="flex flex-col gap-2">
                         {/* "Alle" chip */}
                         <button
                           onClick={() => setSelectedSubcategoryId(null)}
                           className={cn(
-                            "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                            "w-full py-2.5 px-3 rounded-full text-sm font-medium transition-all text-left",
                             selectedSubcategoryId === null
                               ? "bg-blue-600 text-white"
-                              : "bg-white text-blue-800 hover:bg-blue-100 border border-blue-200"
+                              : "bg-white text-slate-700 hover:bg-blue-100 border border-blue-200"
                           )}
                         >
                           Alle
@@ -766,10 +767,10 @@ const Listings = () => {
                             key={sub.id}
                             onClick={() => setSelectedSubcategoryId(selectedSubcategoryId === sub.id ? null : sub.id)}
                             className={cn(
-                              "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                              "w-full py-2.5 px-3 rounded-full text-sm font-medium transition-all text-left",
                               selectedSubcategoryId === sub.id
                                 ? "bg-blue-600 text-white"
-                                : "bg-white text-blue-800 hover:bg-blue-100 border border-blue-200"
+                                : "bg-white text-slate-700 hover:bg-blue-100 border border-blue-200"
                             )}
                           >
                             {sub.name}
@@ -787,7 +788,7 @@ const Listings = () => {
 
       {/* Quelle (Source) - at bottom */}
       <div className="space-y-3 pt-4 border-t border-blue-200">
-        <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wide">Datenquelle</h3>
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Datenquelle</h3>
         <div className="grid grid-cols-2 gap-2">
           {[
             { id: "ticketmaster", label: "Ticketmaster" },
@@ -799,10 +800,10 @@ const Listings = () => {
                 key={source.id}
                 onClick={() => setSelectedSource(isActive ? null : source.id)}
                 className={cn(
-                  "py-2.5 rounded-xl text-xs font-semibold transition-all text-center",
+                  "py-2.5 rounded-xl text-sm font-medium transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-white/50 text-blue-700 hover:bg-white border border-blue-200"
+                    : "bg-white/50 text-slate-700 hover:bg-white border border-blue-200"
                 )}
               >
                 {source.label}
