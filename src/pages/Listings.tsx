@@ -154,6 +154,7 @@ const Listings = () => {
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
   const [showFreeOnly, setShowFreeOnly] = useState(false);
+  const [selectedPriceTiers, setSelectedPriceTiers] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -287,6 +288,18 @@ const Listings = () => {
       if (price !== null && price !== undefined && price >= 1) return false;
     }
     
+    // Price tier filter
+    if (selectedPriceTiers.length > 0) {
+      const priceLabel = event.price_label || "";
+      // Count $ signs in the price label
+      const dollarCount = (priceLabel.match(/\$/g) || []).length;
+      const eventTier = dollarCount > 0 ? "$".repeat(dollarCount) : null;
+      
+      if (!eventTier || !selectedPriceTiers.includes(eventTier)) {
+        return false;
+      }
+    }
+    
     // City filter (text-based)
     if (selectedCity && radius[0] === 0) {
       const eventCity = event.address_city || event.location || "";
@@ -366,6 +379,7 @@ const Listings = () => {
     setSelectedTimeFilter(null);
     setSelectedQuickFilters([]);
     setShowFreeOnly(false);
+    setSelectedPriceTiers([]);
     setSelectedCity("");
     setRadius([0]);
     setSelectedCategory("all");
@@ -377,6 +391,7 @@ const Listings = () => {
     selectedTimeFilter !== null ||
     selectedQuickFilters.length > 0 ||
     showFreeOnly ||
+    selectedPriceTiers.length > 0 ||
     selectedCity !== "" ||
     radius[0] > 0 ||
     selectedCategory !== "all" ||
@@ -475,9 +490,38 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Nur kostenlose Events */}
+      {/* Budget - Preisstufen */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Budget</h3>
+        
+        {/* Price tier buttons */}
+        <div className="grid grid-cols-4 gap-2">
+          {["$", "$$", "$$$", "$$$$"].map((tier) => {
+            const isActive = selectedPriceTiers.includes(tier);
+            return (
+              <button
+                key={tier}
+                onClick={() => {
+                  setSelectedPriceTiers((prev) =>
+                    prev.includes(tier)
+                      ? prev.filter((t) => t !== tier)
+                      : [...prev, tier]
+                  );
+                }}
+                className={cn(
+                  "py-3 rounded-xl text-sm font-bold transition-all text-center",
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                )}
+              >
+                {tier}
+              </button>
+            );
+          })}
+        </div>
+        
+        {/* Free events toggle */}
         <button
           onClick={() => setShowFreeOnly(!showFreeOnly)}
           className={cn(
