@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// discover.swiss API (Switzerland Tourism)
-const API_BASE_URL = "https://api.discover.swiss/info/v2";
+// MySwitzerland OpenData API
+const API_BASE_URL = "https://opendata.myswitzerland.io/v1";
 
 // Hilfsfunktion: HTML-Tags entfernen
 const stripHtml = (html: string) => {
@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starte MySwitzerland/discover.swiss Import...");
+    console.log("Starte MySwitzerland OpenData Import...");
 
     const SUPABASE_URL = Deno.env.get("Supabase_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
@@ -54,45 +54,89 @@ serve(async (req) => {
 
     console.log("Tag IDs found:", tagIds);
 
-    // 2. Events von discover.swiss API holen
-    // Versuche zuerst OpenData Projekt für Events
-    const apiUrl = `${API_BASE_URL}/events?project=opendata&top=50`;
-    console.log("Fetching from:", apiUrl);
+    // API Request Headers
+    const apiHeaders = {
+      "Accept": "application/json",
+      "Accept-Language": "de",
+      "x-api-key": MY_SWITZERLAND_KEY
+    };
 
-    const res = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "Accept-Language": "de",
-        // discover.swiss nutzt diesen Header
-        "Ocp-Apim-Subscription-Key": MY_SWITZERLAND_KEY,
-        // Falls der Key auch x-api-key braucht
-        "x-api-key": MY_SWITZERLAND_KEY
+    let totalProcessed = 0;
+    const allItems: any[] = [];
+
+    // 2. Attractions holen (Hauptdatenquelle für Events)
+    console.log("Fetching attractions...");
+    try {
+      const attractionsRes = await fetch(`${API_BASE_URL}/attractions/?pageSize=50`, {
+        method: "GET",
+        headers: apiHeaders
+      });
+
+      if (attractionsRes.ok) {
+        const attractionsData = await attractionsRes.json();
+        const attractions = attractionsData.data || [];
+        console.log(`${attractions.length} Attractions gefunden`);
+        allItems.push(...attractions.map((a: any) => ({ ...a, _type: 'attraction' })));
+      } else {
+        const errorText = await attractionsRes.text();
+        console.error("Attractions API error:", attractionsRes.status, errorText);
       }
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("API Response:", res.status, text);
-      throw new Error(`discover.swiss API Fehler: ${res.status} - ${text}`);
+    } catch (e) {
+      console.error("Attractions fetch error:", e);
     }
 
-    const data = await res.json();
-    console.log("API Response structure:", JSON.stringify(data).substring(0, 500));
-    
-    // discover.swiss gibt data Array zurück
-    const items = data.data || data.entries || data.events || [];
-    console.log(`${items.length} Events von discover.swiss gefunden.`);
+    // 3. Offers holen (Angebote)
+    console.log("Fetching offers...");
+    try {
+      const offersRes = await fetch(`${API_BASE_URL}/offers/?pageSize=50`, {
+        method: "GET",
+        headers: apiHeaders
+      });
 
-    let processedCount = 0;
+      if (offersRes.ok) {
+        const offersData = await offersRes.json();
+        const offers = offersData.data || [];
+        console.log(`${offers.length} Offers gefunden`);
+        allItems.push(...offers.map((o: any) => ({ ...o, _type: 'offer' })));
+      } else {
+        const errorText = await offersRes.text();
+        console.error("Offers API error:", offersRes.status, errorText);
+      }
+    } catch (e) {
+      console.error("Offers fetch error:", e);
+    }
 
-    for (const item of items) {
-      // discover.swiss Event Struktur
-      const title = item.name?.de || item.name?.en || item.name || "Unbekanntes Event";
-      const externalId = `ds_${item.identifier || item.id}`;
+    // 4. Tours holen
+    console.log("Fetching tours...");
+    try {
+      const toursRes = await fetch(`${API_BASE_URL}/tours/?pageSize=50`, {
+        method: "GET",
+        headers: apiHeaders
+      });
+
+      if (toursRes.ok) {
+        const toursData = await toursRes.json();
+        const tours = toursData.data || [];
+        console.log(`${tours.length} Tours gefunden`);
+        allItems.push(...tours.map((t: any) => ({ ...t, _type: 'tour' })));
+      } else {
+        const errorText = await toursRes.text();
+        console.error("Tours API error:", toursRes.status, errorText);
+      }
+    } catch (e) {
+      console.error("Tours fetch error:", e);
+    }
+
+    console.log(`Total: ${allItems.length} Items zum Import`);
+
+    // 5. Items verarbeiten und speichern
+    for (const item of allItems) {
+      const itemType = item._type;
+      const title = item.name || item.title || "Unbekannt";
+      const externalId = `mys_${item.id || item.identifier}`;
       
       // Beschreibung extrahieren und säubern
-      const rawDescription = item.description?.de || item.description?.en || item.description || "";
+      const rawDescription = item.description || item.abstract || "";
       const cleanDescription = stripHtml(rawDescription);
       
       // Bild URL extrahieren
@@ -106,42 +150,39 @@ serve(async (req) => {
       }
 
       // Adressdaten extrahieren (schema.org Format)
-      const location = item.location || {};
-      const address = location.address || item.address || {};
-      const city = address.addressLocality || address.city || location.name || "";
-      const street = address.streetAddress || address.street || "";
+      const geo = item.geo || {};
+      const address = item.address || {};
+      const city = address.addressLocality || item.containedInPlace?.name || "";
+      const street = address.streetAddress || "";
       const zip = address.postalCode || "";
       const country = address.addressCountry || "CH";
-
-      // Koordinaten extrahieren
-      const geo = location.geo || item.geo || {};
       const lat = geo.latitude ? parseFloat(geo.latitude) : null;
       const lng = geo.longitude ? parseFloat(geo.longitude) : null;
 
-      // Datum extrahieren
-      const startDate = item.startDate || item.eventSchedule?.[0]?.startDate || new Date().toISOString();
-      const endDate = item.endDate || item.eventSchedule?.[0]?.endDate || null;
-
-      // Kategorie-Zuordnung basierend auf Event-Typ
+      // Kategorie-Zuordnung basierend auf Typ
       let mainCatId = findCatId("Freizeit & Aktivitäten");
       let subCatId = null;
 
-      const itemType = (item.additionalType || item["@type"] || "").toLowerCase();
-      const categories = item.category || [];
-      const categoryText = Array.isArray(categories) ? categories.map((c: any) => c.name?.de || c.name || c).join(" ") : "";
+      // MySwitzerland Kategorien auswerten
+      const categories = item.categories || item.category || [];
+      const categoryText = Array.isArray(categories) 
+        ? categories.map((c: any) => typeof c === 'string' ? c : c.name || '').join(" ").toLowerCase()
+        : (typeof categories === 'string' ? categories.toLowerCase() : '');
       
-      if (itemType.includes("music") || categoryText.includes("Konzert") || categoryText.includes("Musik")) {
-        mainCatId = findCatId("Musik & Party");
-      } else if (itemType.includes("theater") || itemType.includes("theatre") || categoryText.includes("Theater")) {
-        mainCatId = findCatId("Kunst & Kultur");
-        subCatId = findCatId("Theater, Musical & Show");
-      } else if (itemType.includes("exhibition") || categoryText.includes("Ausstellung") || categoryText.includes("Museum")) {
+      const additionalType = (typeof item.additionalType === 'string' ? item.additionalType : "").toLowerCase();
+
+      if (itemType === 'tour') {
+        mainCatId = findCatId("Freizeit & Aktivitäten");
+      } else if (categoryText.includes("museum") || categoryText.includes("kunst") || additionalType.includes("museum")) {
         mainCatId = findCatId("Kunst & Kultur");
         subCatId = findCatId("Museum, Kunst & Ausstellung");
-      } else if (itemType.includes("festival") || categoryText.includes("Festival")) {
+      } else if (categoryText.includes("theater") || categoryText.includes("theatre") || categoryText.includes("oper")) {
+        mainCatId = findCatId("Kunst & Kultur");
+        subCatId = findCatId("Theater, Musical & Show");
+      } else if (categoryText.includes("konzert") || categoryText.includes("musik") || categoryText.includes("festival")) {
         mainCatId = findCatId("Musik & Party");
-      } else if (categoryText.includes("Sport")) {
-        mainCatId = findCatId("Freizeit & Aktivitäten");
+      } else if (categoryText.includes("wellness") || categoryText.includes("spa")) {
+        mainCatId = findCatId("Gastronomie & Genuss");
       }
 
       // Tags zuweisen basierend auf Inhalt
@@ -149,19 +190,21 @@ serve(async (req) => {
       const textForCheck = (title + " " + cleanDescription + " " + categoryText).toLowerCase();
 
       // Outdoor/Indoor Detection
-      if (textForCheck.includes("outdoor") || textForCheck.includes("open air") || textForCheck.includes("openair") || textForCheck.includes("draussen") || textForCheck.includes("festival")) {
+      if (textForCheck.includes("outdoor") || textForCheck.includes("wandern") || textForCheck.includes("hiking") || 
+          textForCheck.includes("berg") || textForCheck.includes("see") || textForCheck.includes("natur") ||
+          itemType === 'tour') {
         if (tagIds.outdoor) tagsToAssign.push(tagIds.outdoor);
       } else {
         if (tagIds.indoor) tagsToAssign.push(tagIds.indoor);
       }
 
       // Familien-Detection
-      if (textForCheck.includes("familie") || textForCheck.includes("kinder") || textForCheck.includes("family") || textForCheck.includes("kids")) {
+      if (textForCheck.includes("familie") || textForCheck.includes("kinder") || textForCheck.includes("family")) {
         if (tagIds.familie) tagsToAssign.push(tagIds.familie);
       }
 
       // Romantik-Detection
-      if (textForCheck.includes("romantisch") || textForCheck.includes("romantic") || textForCheck.includes("dinner") || textForCheck.includes("jazz") || textForCheck.includes("klassik")) {
+      if (textForCheck.includes("romantisch") || textForCheck.includes("romantic") || textForCheck.includes("wellness") || textForCheck.includes("spa")) {
         if (tagIds.romantisch) tagsToAssign.push(tagIds.romantisch);
       }
 
@@ -171,15 +214,22 @@ serve(async (req) => {
       
       if (item.offers) {
         const offers = Array.isArray(item.offers) ? item.offers : [item.offers];
-        const minPrice = Math.min(...offers.map((o: any) => o.price || o.lowPrice || 999999).filter((p: number) => p > 0 && p < 999999));
-        if (minPrice < 999999) {
-          priceFrom = minPrice;
-          priceLabel = `ab CHF ${Math.round(minPrice)}.-`;
+        const prices = offers.map((o: any) => o.price || o.lowPrice).filter((p: number) => p > 0);
+        if (prices.length > 0) {
+          priceFrom = Math.min(...prices);
+          priceLabel = `ab CHF ${Math.round(priceFrom)}.-`;
+        }
+      } else if (item.priceRange) {
+        // Parse price range string like "CHF 20 - 50"
+        const priceMatch = item.priceRange.match(/(\d+)/);
+        if (priceMatch) {
+          priceFrom = parseInt(priceMatch[1]);
+          priceLabel = item.priceRange;
         }
       }
 
       // Gratis-Events erkennen
-      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos") || textForCheck.includes("freier eintritt")) {
+      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos")) {
         priceFrom = 0;
         priceLabel = "Eintritt frei";
         if (tagIds.budget) tagsToAssign.push(tagIds.budget);
@@ -187,19 +237,16 @@ serve(async (req) => {
 
       // KI-Beschreibung generieren falls nötig
       let shortDescription = cleanDescription ? cleanDescription.substring(0, 200) : "";
-      let longDescription = cleanDescription;
 
       if (OPENAI_API_KEY && (!cleanDescription || cleanDescription.length < 50)) {
         try {
-          const promptInstruction = `Schreibe eine einladende Event-Beschreibung auf Deutsch für: "${title}" in ${city || "der Schweiz"}. 
-          
-Erstelle eine kurze Version (max 2 Sätze) für die Karten-Vorschau.
-Stil: Einladend, informativ, Quiet Luxury. Keine Emojis.`;
+          const promptInstruction = `Schreibe eine einladende Beschreibung auf Deutsch für diese Schweizer Attraktion: "${title}" in ${city || "der Schweiz"}. 
+Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
 
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: promptInstruction }], max_tokens: 150 }),
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: promptInstruction }], max_tokens: 100 }),
           });
           const aiData = await aiRes.json();
           shortDescription = aiData.choices?.[0]?.message?.content || shortDescription;
@@ -208,19 +255,19 @@ Stil: Einladend, informativ, Quiet Luxury. Keine Emojis.`;
         }
       }
 
-      // Ticket-Link
-      const ticketLink = item.url || item.sameAs || (item.offers && item.offers[0]?.url) || null;
+      // Ticket/Website-Link
+      const ticketLink = item.url || item.sameAs || item.mainEntityOfPage || null;
 
-      // Event speichern (gleiches Schema wie tm-import)
+      // Event speichern
       const { data: savedEvent, error } = await supabase
         .from("events")
         .upsert({
           external_id: externalId,
           title: title,
-          description: longDescription,
+          description: cleanDescription,
           short_description: shortDescription,
           location: city || "Schweiz",
-          venue_name: location.name || title,
+          venue_name: item.containedInPlace?.name || title,
           address_street: street,
           address_city: city,
           address_zip: zip,
@@ -228,8 +275,8 @@ Stil: Einladend, informativ, Quiet Luxury. Keine Emojis.`;
           latitude: lat,
           longitude: lng,
           image_url: imageUrl,
-          start_date: startDate,
-          end_date: endDate,
+          start_date: item.startDate || new Date().toISOString(),
+          end_date: item.endDate || null,
           ticket_link: ticketLink,
           category_main_id: mainCatId,
           category_sub_id: subCatId,
@@ -256,15 +303,15 @@ Stil: Einladend, informativ, Quiet Luxury. Keine Emojis.`;
         }
       }
 
-      processedCount++;
-      console.log(`Importiert: ${title} (${city})`);
+      totalProcessed++;
+      console.log(`Importiert: ${title} (${city}) [${itemType}]`);
     }
 
     const result = {
       success: true,
-      message: `MySwitzerland/discover.swiss Import fertig.`,
-      imported: processedCount,
-      total_found: items.length
+      message: `MySwitzerland OpenData Import fertig.`,
+      imported: totalProcessed,
+      total_found: allItems.length
     };
 
     console.log("Import complete:", result);
