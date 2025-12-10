@@ -435,8 +435,12 @@ const Listings = () => {
 
   const currentSubcategories = subcategories[selectedCategory] || subcategories.all;
 
-  const formatEventDate = (dateString?: string) => {
-    if (!dateString) return "Datum TBA";
+  const formatEventDate = (dateString?: string, externalId?: string) => {
+    // MySwitzerland events (permanent attractions) have null dates
+    if (!dateString) {
+      const isMySwitzerland = externalId?.startsWith('mys_');
+      return isMySwitzerland ? "Jederzeit" : "Datum TBA";
+    }
     try {
       const date = parseISO(dateString);
       return format(date, "d. MMM yyyy", { locale: de });
@@ -770,7 +774,7 @@ const Listings = () => {
                                 venue: event.venue_name || "",
                                 location: getEventLocation(event),
                                 image: eventImage,
-                                date: formatEventDate(event.start_date),
+                                date: formatEventDate(event.start_date, event.external_id),
                               });
                             }}
                             className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-sm transition-all hover:scale-110"
@@ -785,7 +789,7 @@ const Listings = () => {
 
                         <div className="p-5">
                           <p className="text-xs text-neutral-400 mb-1.5 font-medium">
-                            {formatEventDate(event.start_date)}
+                            {formatEventDate(event.start_date, event.external_id)}
                           </p>
                           <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
                             {event.title}
