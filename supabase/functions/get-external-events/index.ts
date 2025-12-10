@@ -79,7 +79,8 @@ serve(async (req) => {
       total: data?.length || 0,
       noMainCategory: 0,
       noSubCategory: 0,
-      uncategorizedTitles: [] as string[],
+      eventsWithoutMainCategory: [] as { id: number; title: string; external_id: string }[],
+      eventsWithoutSubCategory: [] as { id: number; title: string; external_id: string; category_main_id: number | null }[],
     };
     
     if (data && data.length > 0) {
@@ -90,7 +91,19 @@ serve(async (req) => {
       
       stats.noMainCategory = noMainCat.length;
       stats.noSubCategory = noSubCat.length;
-      stats.uncategorizedTitles = noMainCat.slice(0, 20).map(e => e.title);
+      stats.eventsWithoutMainCategory = noMainCat.map(e => ({ 
+        id: e.id, 
+        title: e.title, 
+        external_id: e.external_id || '' 
+      }));
+      stats.eventsWithoutSubCategory = noSubCat
+        .filter(e => e.category_main_id !== null) // Only show events that HAVE main but missing sub
+        .map(e => ({ 
+          id: e.id, 
+          title: e.title, 
+          external_id: e.external_id || '',
+          category_main_id: e.category_main_id
+        }));
       
       console.log(`Events: ${data.length} total, ${withPrice.length} with price, ${withLabel.length} with label`);
       console.log(`Categories: ${noMainCat.length} without main, ${noSubCat.length} without sub`);
