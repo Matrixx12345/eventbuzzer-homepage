@@ -523,7 +523,7 @@ const Listings = () => {
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-4 py-2.5 bg-white hover:bg-gray-50 rounded-xl text-gray-800 transition-all flex items-center justify-center gap-2 font-medium border border-gray-200"
+          className="w-full px-5 py-2.5 bg-white hover:bg-gray-50 rounded-xl text-gray-800 transition-all flex items-center justify-center gap-2 font-medium border border-gray-200"
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
@@ -540,7 +540,7 @@ const Listings = () => {
                 key={filter.id}
                 onClick={() => selectTimeFilter(filter.id)}
                 className={cn(
-                  "h-11 px-3 rounded-xl text-sm font-medium transition-all text-center whitespace-nowrap",
+                  "h-11 px-4 rounded-xl text-sm font-medium transition-all text-center whitespace-nowrap",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
@@ -605,7 +605,7 @@ const Listings = () => {
                         setSelectedPriceTier(isActive ? null : tier.id);
                       }}
                       className={cn(
-                        "h-11 rounded-xl text-sm font-semibold transition-all text-center",
+                        "h-11 px-3 rounded-xl text-sm font-semibold transition-all text-center",
                         isActive
                           ? "bg-blue-600 text-white"
                           : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
@@ -753,7 +753,7 @@ const Listings = () => {
                         <button
                           onClick={() => setSelectedSubcategoryId(null)}
                           className={cn(
-                            "w-full py-2.5 px-3 rounded-full text-sm font-medium transition-all text-left",
+                            "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left",
                             selectedSubcategoryId === null
                               ? "bg-blue-600 text-white"
                               : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
@@ -761,13 +761,13 @@ const Listings = () => {
                         >
                           Alle
                         </button>
-                        {/* Subcategory chips */}
+                        {/* Subcategory chips - allow text wrapping */}
                         {subCategories.map((sub) => (
                           <button
                             key={sub.id}
                             onClick={() => setSelectedSubcategoryId(selectedSubcategoryId === sub.id ? null : sub.id)}
                             className={cn(
-                              "w-full py-2.5 px-3 rounded-full text-sm font-medium transition-all text-left",
+                              "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left leading-snug",
                               selectedSubcategoryId === sub.id
                                 ? "bg-blue-600 text-white"
                                 : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
@@ -800,7 +800,7 @@ const Listings = () => {
                 key={source.id}
                 onClick={() => setSelectedSource(isActive ? null : source.id)}
                 className={cn(
-                  "h-11 rounded-xl text-sm font-medium transition-all text-center",
+                  "h-11 px-4 rounded-xl text-sm font-medium transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
@@ -834,8 +834,8 @@ const Listings = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
-          <aside className="hidden lg:block w-80 flex-shrink-0 -mt-2">
-            <div className="bg-neutral-900 rounded-2xl p-5 shadow-xl">
+          <aside className="hidden lg:block w-[340px] flex-shrink-0 -mt-2">
+            <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">
               <FilterContent />
             </div>
           </aside>
