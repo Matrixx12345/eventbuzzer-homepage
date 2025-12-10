@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.tm-import]
 verify_jwt = false
+
+[functions.myswitzerland-import]
+verify_jwt = false
