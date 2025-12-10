@@ -30,22 +30,94 @@ const TAG_KEYWORDS = {
 // Hilfsfunktion: Preis aus Text extrahieren (Regex Sniper)
 function extractPriceFromText(text: string): number | null {
     if (!text) return null;
-    // Sucht nach "CHF 20", "CHF 20.-", "20 CHF", "ab 20.-"
-    const regex = /(?:CHF|Fr\.|ab)\s?(\d+)(?:[\.,-]|00)?/i;
-    const match = text.match(regex);
-    return match ? parseInt(match[1]) : null;
+    // Sucht nach "CHF 20", "CHF 20.-", "20 CHF", "ab 20.-", "ab CHF 89", "from CHF 50"
+    const patterns = [
+      /(?:ab|from|ab\s+CHF|CHF|Fr\.)\s?(\d+)(?:[\.,-]|00)?/i,
+      /(\d+)\s*(?:CHF|Fr\.)/i,
+      /prices?\s+(?:ab|from)?\s*(\d+)/i
+    ];
+    
+    for (const regex of patterns) {
+      const match = text.match(regex);
+      if (match) return parseInt(match[1]);
+    }
+    return null;
+}
+
+// NEU: Meta-Description von der Ticket-Seite holen
+async function fetchPriceFromTicketPage(ticketUrl: string): Promise<number | null> {
+  if (!ticketUrl) return null;
+  
+  try {
+    // Nur den HEAD/Anfang der Seite holen (schneller)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 Sek Timeout
+    
+    const response = await fetch(ticketUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; EventBuzzer/1.0)'
+      }
+    });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) return null;
+    
+    // Nur die ersten 10KB lesen (Meta-Tags sind am Anfang)
+    const reader = response.body?.getReader();
+    if (!reader) return null;
+    
+    let html = '';
+    const decoder = new TextDecoder();
+    
+    while (html.length < 10000) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+      
+      // Wenn wir </head> gefunden haben, reicht das
+      if (html.includes('</head>')) break;
+    }
+    reader.cancel();
+    
+    // Meta-Description extrahieren
+    const metaMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
+    
+    if (metaMatch) {
+      const description = metaMatch[1];
+      const price = extractPriceFromText(description);
+      if (price) {
+        console.log(`Found price in meta-description: ${price} CHF`);
+        return price;
+      }
+    }
+    
+    // Auch og:description versuchen
+    const ogMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+    if (ogMatch) {
+      const price = extractPriceFromText(ogMatch[1]);
+      if (price) {
+        console.log(`Found price in og:description: ${price} CHF`);
+        return price;
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    console.log(`Meta-scrape failed for ${ticketUrl}:`, e);
+    return null;
+  }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Starte Import V6 (Price Intelligence)...");
+    console.log("Starte Import V7 (Price Intelligence + Meta-Scrape)...");
 
-    // Use EXTERNAL Supabase credentials (user's own Supabase, not Lovable Cloud)
     const SUPABASE_URL = Deno.env.get("Supabase_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -85,6 +157,7 @@ serve(async (req) => {
     console.log(`Found ${events.length} events from Ticketmaster`);
     
     let processedCount = 0;
+    let pricesFoundFromMeta = 0;
 
     for (const event of events) {
       const title = event.name;
@@ -95,6 +168,7 @@ serve(async (req) => {
       const lng = venueBasic?.location?.longitude ? parseFloat(venueBasic.location.longitude) : null;
       const segmentName = event.classifications?.[0]?.segment?.name;
       const genreName = event.classifications?.[0]?.genre?.name;
+      const ticketLink = event.url;
       
       // -- A. ADRESSE NACHLADEN --
       let addressData = { street: "", city: "", zip: "", country: "" };
@@ -119,13 +193,15 @@ serve(async (req) => {
       else mainCatId = findCatId("Freizeit & Aktivitäten"); 
       if (genreName && SUB_CATEGORY_MAPPING[genreName]) subCatId = findCatId(SUB_CATEGORY_MAPPING[genreName]);
 
-      // -- C. TAGGING & PREIS-LOGIK (DAS NEUE HERZSTÜCK) --
-      let minPrice = event.priceRanges?.[0]?.min;
-      let priceLabel: string | null = null; // Für das Frontend: $, $$, $$$ oder "35 CHF"
+      // -- C. PREIS-LOGIK (4-stufig) --
+      let minPrice: number | undefined = event.priceRanges?.[0]?.min;
+      let priceLabel: string | null = null;
+      let priceSource = "";
       
-      // 1. Versuch: Preis aus API
+      // 1. Versuch: Preis aus Ticketmaster API
       if (minPrice !== undefined && minPrice !== null) {
           priceLabel = `ab CHF ${Math.round(minPrice)}.-`;
+          priceSource = "API";
       } 
       // 2. Versuch: Preis aus Titel/Text "snipen"
       else {
@@ -133,6 +209,18 @@ serve(async (req) => {
           if (extracted) {
               minPrice = extracted;
               priceLabel = `ca. CHF ${extracted}.-`;
+              priceSource = "title";
+          }
+      }
+      
+      // 3. NEU: Preis aus Meta-Description der Ticket-Seite
+      if (!minPrice && ticketLink) {
+          const metaPrice = await fetchPriceFromTicketPage(ticketLink);
+          if (metaPrice) {
+              minPrice = metaPrice;
+              priceLabel = `ab CHF ${metaPrice}.-`;
+              priceSource = "meta";
+              pricesFoundFromMeta++;
           }
       }
 
@@ -151,18 +239,17 @@ serve(async (req) => {
       if (tagIds.outdoor && TAG_KEYWORDS.outdoor.some(k => textForCheck.includes(k))) tagsToAssign.push(tagIds.outdoor);
       else if (tagIds.indoor) tagsToAssign.push(tagIds.indoor);
 
-      // -- D. KI: TEXT & PREIS-SCHÄTZUNG --
+      // -- D. KI: TEXT & PREIS-SCHÄTZUNG (nur wenn immer noch kein Preis) --
       let description = event.description || "";
       let shortDescription = "";
       
-      // Wir fragen die KI, wenn: 1. Keine Beschreibung da ODER 2. Kein Preis da ODER 3. Familien-Alter fehlt
-      if (OPENAI_API_KEY && (!description || description.length < 50 || isFamily || (minPrice === undefined && !priceLabel))) {
+      if (OPENAI_API_KEY && (!description || description.length < 50 || isFamily || (!minPrice && !priceLabel))) {
           try {
             let promptInstruction = `Schreibe eine kurze, einladende Event-Beschreibung (max 2 Sätze) auf Deutsch für: "${title}" in ${addressData.city}. Genre: ${genreName}. Stil: Quiet Luxury.`;
             
             if (isFamily) promptInstruction += `\nZUSATZ: Familien-Event. Schätze Alter: [BABY], [KIDS] oder [TEEN].`;
             
-            // Die Preis-Frage an die KI
+            // Die Preis-Frage an die KI (nur wenn weder API, noch Title, noch Meta einen Preis hatten)
             if (!minPrice && !priceLabel) {
                 promptInstruction += `\nZUSATZ: Schätze das Preisniveau in der Schweiz basierend auf Künstler/Venue. Antworte NUR mit einem Code am Ende:
                 [LOW] (<30 CHF), [MID] (30-80 CHF), [HIGH] (80-150 CHF), [LUX] (>150 CHF).`;
@@ -183,12 +270,12 @@ serve(async (req) => {
                 if (rawAiText.includes("[TEEN]") && tagIds.teen) tagsToAssign.push(tagIds.teen);
             }
             
-            // Preis-Mapping (Der Schatten-Preis für die Filter!)
+            // 4. Preis-Fallback: KI-Schätzung
             if (!minPrice && !priceLabel) {
-                if (rawAiText.includes("[LOW]")) { minPrice = 15; priceLabel = "$"; if (tagIds.budget) tagsToAssign.push(tagIds.budget); }
-                else if (rawAiText.includes("[MID]")) { minPrice = 50; priceLabel = "$$"; }
-                else if (rawAiText.includes("[HIGH]")) { minPrice = 100; priceLabel = "$$$"; }
-                else if (rawAiText.includes("[LUX]")) { minPrice = 200; priceLabel = "$$$$"; }
+                if (rawAiText.includes("[LOW]")) { minPrice = 15; priceLabel = "$"; priceSource = "AI"; if (tagIds.budget) tagsToAssign.push(tagIds.budget); }
+                else if (rawAiText.includes("[MID]")) { minPrice = 50; priceLabel = "$$"; priceSource = "AI"; }
+                else if (rawAiText.includes("[HIGH]")) { minPrice = 100; priceLabel = "$$$"; priceSource = "AI"; }
+                else if (rawAiText.includes("[LUX]")) { minPrice = 200; priceLabel = "$$$$"; priceSource = "AI"; }
             }
 
             // Clean Text
@@ -214,11 +301,11 @@ serve(async (req) => {
             longitude: lng,
             image_url: event.images?.[0]?.url,
             start_date: event.dates?.start?.dateTime,
-            ticket_link: event.url,
+            ticket_link: ticketLink,
             category_main_id: mainCatId,
             category_sub_id: subCatId,
-            price_from: minPrice, // Zahl für Filter
-            price_label: priceLabel // Text für Anzeige ($, $$, ab 20.-)
+            price_from: minPrice,
+            price_label: priceLabel
         }, { onConflict: 'external_id' })
         .select().single();
 
@@ -231,10 +318,17 @@ serve(async (req) => {
       }
       
       processedCount++;
-      console.log(`Processed: ${title} (price: ${minPrice}, label: ${priceLabel}, tags: ${tagsToAssign.length})`);
+      console.log(`Processed: ${title} (price: ${minPrice}, source: ${priceSource || "none"}, label: ${priceLabel})`);
     }
 
-    return new Response(JSON.stringify({ message: `V6 Import fertig. ${processedCount} Events.` }), { 
+    const result = {
+      message: `V7 Import fertig. ${processedCount} Events.`,
+      pricesFromMeta: pricesFoundFromMeta
+    };
+    
+    console.log("Import complete:", result);
+
+    return new Response(JSON.stringify(result), { 
       headers: { ...corsHeaders, "Content-Type": "application/json" } 
     });
   } catch (error) { 
