@@ -14,6 +14,90 @@ const stripHtml = (html: string) => {
   return html ? html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim() : '';
 };
 
+// Schweizer Städte mit Koordinaten für Reverse-Geocoding
+const SWISS_CITIES = [
+  { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+  { name: "Bern", lat: 46.9480, lng: 7.4474 },
+  { name: "Basel", lat: 47.5596, lng: 7.5886 },
+  { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+  { name: "Genf", lat: 46.2044, lng: 6.1432 },
+  { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+  { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+  { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+  { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+  { name: "Interlaken", lat: 46.6863, lng: 7.8632 },
+  { name: "Zermatt", lat: 46.0207, lng: 7.7491 },
+  { name: "Davos", lat: 46.8027, lng: 9.8360 },
+  { name: "Grindelwald", lat: 46.6244, lng: 8.0341 },
+  { name: "Montreux", lat: 46.4312, lng: 6.9107 },
+  { name: "Andermatt", lat: 46.6367, lng: 8.5936 },
+  { name: "Laax", lat: 46.8096, lng: 9.2588 },
+  { name: "Arosa", lat: 46.7837, lng: 9.6806 },
+  { name: "Thun", lat: 46.7580, lng: 7.6280 },
+  { name: "Chur", lat: 46.8508, lng: 9.5320 },
+  { name: "Sion", lat: 46.2330, lng: 7.3592 },
+  { name: "Neuchâtel", lat: 46.9900, lng: 6.9293 },
+  { name: "Rapperswil", lat: 47.2267, lng: 8.8183 },
+  { name: "Solothurn", lat: 47.2088, lng: 7.5323 },
+  { name: "Baden", lat: 47.4734, lng: 8.3063 },
+  { name: "Ascona", lat: 46.1570, lng: 8.7727 },
+  { name: "Locarno", lat: 46.1711, lng: 8.7996 },
+  { name: "Verbier", lat: 46.0962, lng: 7.2284 },
+  { name: "Saas-Fee", lat: 46.1082, lng: 7.9277 },
+  { name: "Engelberg", lat: 46.8200, lng: 8.4075 },
+  { name: "Pontresina", lat: 46.4948, lng: 9.9003 },
+  { name: "Wengen", lat: 46.6085, lng: 7.9222 },
+  { name: "Brig", lat: 46.3147, lng: 7.9878 },
+  { name: "Bellinzona", lat: 46.1944, lng: 9.0249 },
+  { name: "Schaffhausen", lat: 47.6962, lng: 8.6350 },
+  { name: "Aarau", lat: 47.3913, lng: 8.0454 },
+  { name: "Fribourg", lat: 46.8065, lng: 7.1619 },
+  { name: "Köniz", lat: 46.9241, lng: 7.4135 },
+  { name: "Uster", lat: 47.3505, lng: 8.7207 },
+  { name: "Vevey", lat: 46.4628, lng: 6.8433 },
+  { name: "Morschach", lat: 46.9783, lng: 8.6317 },
+  { name: "Belalp", lat: 46.3722, lng: 7.9917 },
+  { name: "Göschenen", lat: 46.6658, lng: 8.5875 }
+];
+
+// Stadt aus Koordinaten ermitteln (nächste Stadt)
+const findNearestCity = (lat: number | null, lng: number | null): string => {
+  if (!lat || !lng) return "Schweiz";
+  
+  let nearestCity = "Schweiz";
+  let minDistance = Infinity;
+  
+  for (const city of SWISS_CITIES) {
+    const distance = Math.sqrt(
+      Math.pow(lat - city.lat, 2) + Math.pow(lng - city.lng, 2)
+    );
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestCity = city.name;
+    }
+  }
+  
+  // Nur zurückgeben wenn in vernünftiger Nähe (ca. 50km)
+  return minDistance < 0.5 ? nearestCity : "Schweiz";
+};
+
+// Stadt aus Titel extrahieren
+const extractCityFromTitle = (title: string): string | null => {
+  const lowerTitle = title.toLowerCase();
+  for (const city of SWISS_CITIES) {
+    const cityLower = city.name.toLowerCase();
+    if (lowerTitle.includes(cityLower) || 
+        lowerTitle.includes(` ${cityLower}`) || 
+        lowerTitle.includes(`${cityLower} `) ||
+        lowerTitle.includes(`in ${cityLower}`) ||
+        lowerTitle.includes(`from ${cityLower}`) ||
+        lowerTitle.includes(`to ${cityLower}`)) {
+      return city.name;
+    }
+  }
+  return null;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -135,29 +219,50 @@ serve(async (req) => {
       const title = item.name || item.title || "Unbekannt";
       const externalId = `mys_${item.id || item.identifier}`;
       
-      // Beschreibung extrahieren und säubern
-      const rawDescription = item.description || item.abstract || "";
+      // Debug: Log item structure für erstes Item
+      if (totalProcessed === 0) {
+        console.log("Sample item structure:", JSON.stringify(item, null, 2).substring(0, 2000));
+      }
+      
+      // Beschreibung extrahieren und säubern - mehr Felder prüfen
+      const rawDescription = item.description || item.abstract || item.text || 
+                            item.shortDescription || item.longDescription || "";
       const cleanDescription = stripHtml(rawDescription);
       
-      // Bild URL extrahieren
+      // Bild URL extrahieren - erweiterte Suche
       let imageUrl: string | null = null;
       if (item.image?.url) {
         imageUrl = item.image.url;
+      } else if (item.image?.contentUrl) {
+        imageUrl = item.image.contentUrl;
+      } else if (typeof item.image === 'string') {
+        imageUrl = item.image;
       } else if (item.images && item.images.length > 0) {
-        imageUrl = item.images[0].url || item.images[0].contentUrl;
+        imageUrl = item.images[0].url || item.images[0].contentUrl || item.images[0];
       } else if (item.photo?.url) {
         imageUrl = item.photo.url;
+      } else if (item.media && item.media.length > 0) {
+        imageUrl = item.media[0].url || item.media[0].contentUrl;
       }
 
-      // Adressdaten extrahieren (schema.org Format)
-      const geo = item.geo || {};
-      const address = item.address || {};
-      const city = address.addressLocality || item.containedInPlace?.name || "";
-      const street = address.streetAddress || "";
-      const zip = address.postalCode || "";
-      const country = address.addressCountry || "CH";
-      const lat = geo.latitude ? parseFloat(geo.latitude) : null;
-      const lng = geo.longitude ? parseFloat(geo.longitude) : null;
+      // Adressdaten extrahieren - erweiterte Suche für verschiedene API-Formate
+      const geo = item.geo || item.location?.geo || {};
+      const address = item.address || item.location?.address || item.location || {};
+      
+      // Koordinaten extrahieren (zuerst, für Stadt-Ermittlung)
+      const lat = geo.latitude ? parseFloat(geo.latitude) : 
+                  (geo.lat ? parseFloat(geo.lat) : null);
+      const lng = geo.longitude ? parseFloat(geo.longitude) : 
+                  (geo.lng || geo.lon ? parseFloat(geo.lng || geo.lon) : null);
+      
+      // Stadt ermitteln: 1. Aus Titel, 2. Aus Koordinaten, 3. Fallback
+      const city = extractCityFromTitle(title) || 
+                   findNearestCity(lat, lng) ||
+                   "Schweiz";
+      
+      const street = address.streetAddress || address.street || "";
+      const zip = address.postalCode || address.zipCode || address.zip || "";
+      const country = address.addressCountry || address.country || "CH";
 
       // Kategorie-Zuordnung basierend auf Typ
       let mainCatId = findCatId("Freizeit & Aktivitäten");
