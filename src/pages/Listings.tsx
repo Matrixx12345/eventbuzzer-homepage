@@ -653,7 +653,7 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Kategorie */}
+      {/* Kategorie - as pills */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
@@ -664,49 +664,48 @@ const Listings = () => {
             </span>
           )}
         </div>
-        <Select 
-          value={selectedCategoryId?.toString() || "all"} 
-          onValueChange={(val) => {
-            const newCategoryId = val === "all" ? null : parseInt(val);
-            setSelectedCategoryId(newCategoryId);
-            setSelectedSubcategoryId(null); // Reset subcategory when main changes
-            
-            // Show toast feedback
-            if (newCategoryId) {
-              const categoryName = mainCategories.find(c => c.id === newCategoryId)?.name;
-              toast.success(`Kategorie: ${categoryName}`, {
-                description: "Subkategorien verfügbar",
-                duration: 2000,
-              });
-            }
-          }}
-        >
-          <SelectTrigger className={cn(
-            "w-full rounded-xl border py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-300 transition-all",
-            selectedCategoryId 
-              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-              : "bg-white text-blue-900 border-blue-200 hover:bg-blue-50"
-          )}>
-            <SelectValue placeholder="Alle Kategorien" />
-          </SelectTrigger>
-          <SelectContent className="bg-white border border-blue-200 shadow-xl rounded-xl overflow-hidden z-50">
-            <SelectItem 
-              value="all" 
-              className="cursor-pointer py-3 text-sm font-medium focus:bg-blue-50 text-blue-900"
+        <div className="flex flex-col gap-2">
+          {/* "Alle" pill to reset category */}
+          <button
+            onClick={() => {
+              setSelectedCategoryId(null);
+              setSelectedSubcategoryId(null);
+            }}
+            className={cn(
+              "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
+              selectedCategoryId === null
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+            )}
+          >
+            Alle Kategorien
+          </button>
+          {mainCategories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                const newCategoryId = selectedCategoryId === cat.id ? null : cat.id;
+                setSelectedCategoryId(newCategoryId);
+                setSelectedSubcategoryId(null); // Reset subcategory when main changes
+                
+                if (newCategoryId) {
+                  toast.success(`Kategorie: ${cat.name}`, {
+                    description: "Subkategorien verfügbar",
+                    duration: 2000,
+                  });
+                }
+              }}
+              className={cn(
+                "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
+                selectedCategoryId === cat.id
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+              )}
             >
-              Alle Kategorien
-            </SelectItem>
-            {mainCategories.map((cat) => (
-              <SelectItem 
-                key={cat.id} 
-                value={cat.id.toString()} 
-                className="cursor-pointer py-3 text-sm font-medium focus:bg-blue-50 text-blue-900"
-              >
-                {cat.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Subkategorie - only show if main category selected */}
@@ -810,7 +809,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0 -mt-2">
-            <div className="sticky top-24 bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100">
+            <div className="bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200">
               <FilterContent />
             </div>
           </aside>
