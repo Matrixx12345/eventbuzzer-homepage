@@ -497,15 +497,15 @@ const Listings = () => {
 
       {/* Search Bar */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Suche</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Suche</h3>
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Künstler, Event, Stichwort..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-900 font-medium placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-gray-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-gray-200"
           />
           {searchQuery && (
             <button
@@ -520,10 +520,10 @@ const Listings = () => {
 
       {/* Datum (Date) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Wann?</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
         <button 
           onClick={() => setShowCalendar(true)}
-          className="w-full px-4 py-2.5 bg-white hover:bg-gray-50 rounded-xl text-gray-900 transition-all flex items-center justify-center gap-2 font-medium border border-gray-200"
+          className="w-full px-4 py-2.5 bg-white hover:bg-gray-50 rounded-xl text-gray-800 transition-all flex items-center justify-center gap-2 font-medium border border-gray-200"
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
@@ -543,7 +543,7 @@ const Listings = () => {
                   "h-11 px-3 rounded-xl text-sm font-medium transition-all text-center whitespace-nowrap",
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200"
+                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                 )}
               >
                 {filter.label}
@@ -555,7 +555,7 @@ const Listings = () => {
 
       {/* Schnellfilter (Quick Filters) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Stimmung</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
         <div className="grid grid-cols-3 gap-2">
           {quickFilters.map((filter) => {
             const Icon = filter.icon;
@@ -568,7 +568,7 @@ const Listings = () => {
                   "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200"
+                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                 )}
               >
                 <Icon 
@@ -585,7 +585,7 @@ const Listings = () => {
 
       {/* Budget - Preisstufen */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Budget</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
         
         {/* Price tier pills - single select */}
         <TooltipProvider>
@@ -608,7 +608,7 @@ const Listings = () => {
                         "h-11 rounded-xl text-sm font-semibold transition-all text-center",
                         isActive
                           ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200"
+                          : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                       )}
                     >
                       {tier.label}
@@ -626,16 +626,16 @@ const Listings = () => {
 
       {/* Stadt und Radius */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Wo?</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wo?</h3>
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Stadt eingeben..."
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-900 font-medium placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all border border-gray-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-gray-200"
           />
           <datalist id="cities">
             {cities.map((city) => (
@@ -652,15 +652,15 @@ const Listings = () => {
             className="w-full"
           />
           <div className="flex justify-between items-center mt-2">
-            <span className="text-xs text-slate-600 font-medium">Umkreis</span>
-            <span className="text-sm font-semibold text-gray-900 tabular-nums bg-white px-2.5 py-1 rounded-lg border border-gray-200">{radius[0]} km</span>
+            <span className="text-xs text-gray-400 font-medium">Umkreis</span>
+            <span className="text-sm font-semibold text-gray-800 tabular-nums bg-white px-2.5 py-1 rounded-lg border border-gray-200">{radius[0]} km</span>
           </div>
         </div>
       </div>
 
       {/* Kategorie - Inline Drawer Pattern */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Kategorie</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
         
         {/* Category grid with inline drawer for subcategories */}
         {(() => {
@@ -730,7 +730,7 @@ const Listings = () => {
                             "h-20 flex flex-col items-center justify-center rounded-xl transition-all",
                             isActive
                               ? "bg-blue-600 text-white shadow-md"
-                              : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200"
+                              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                           )}
                         >
                           <Icon 
@@ -746,7 +746,7 @@ const Listings = () => {
                   
                   {/* Inline Drawer - appears below the row containing the selected category */}
                   {rowIndex === selectedRowIndex && selectedCategoryId !== null && subCategories.length > 0 && (
-                    <div className="mt-2 p-3 bg-gray-50 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="mt-2 p-3 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
                       {/* Single column - full width pills stacked */}
                       <div className="flex flex-col gap-2">
                         {/* "Alle" chip */}
@@ -756,7 +756,7 @@ const Listings = () => {
                             "w-full py-2.5 px-3 rounded-full text-sm font-medium transition-all text-left",
                             selectedSubcategoryId === null
                               ? "bg-blue-600 text-white"
-                              : "bg-white text-gray-900 hover:bg-gray-100 border border-gray-200"
+                              : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
                           )}
                         >
                           Alle
@@ -770,7 +770,7 @@ const Listings = () => {
                               "w-full py-2.5 px-3 rounded-full text-sm font-medium transition-all text-left",
                               selectedSubcategoryId === sub.id
                                 ? "bg-blue-600 text-white"
-                                : "bg-white text-gray-900 hover:bg-gray-100 border border-gray-200"
+                                : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
                             )}
                           >
                             {sub.name}
@@ -787,8 +787,8 @@ const Listings = () => {
       </div>
 
       {/* Quelle (Source) - at bottom */}
-      <div className="space-y-3 pt-4 border-t border-gray-200">
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Datenquelle</h3>
+      <div className="space-y-3 pt-4 border-t border-neutral-700">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Datenquelle</h3>
         <div className="grid grid-cols-2 gap-2">
           {[
             { id: "ticketmaster", label: "Ticketmaster" },
@@ -803,7 +803,7 @@ const Listings = () => {
                   "h-11 rounded-xl text-sm font-medium transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200"
+                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                 )}
               >
                 {source.label}
@@ -835,7 +835,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-80 flex-shrink-0 -mt-2">
-            <div className="bg-blue-50 rounded-2xl p-5 shadow-lg shadow-blue-200/50 border border-blue-200">
+            <div className="bg-neutral-900 rounded-2xl p-5 shadow-xl">
               <FilterContent />
             </div>
           </aside>
