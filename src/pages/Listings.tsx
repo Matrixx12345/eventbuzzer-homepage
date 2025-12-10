@@ -810,7 +810,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0 -mt-2">
-            <div className="sticky top-24 bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200">
+            <div className="sticky top-24 bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100">
               <FilterContent />
             </div>
           </aside>
