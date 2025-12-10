@@ -121,11 +121,20 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. Taxonomy & Tags laden (wie bei tm-import)
-    const { data: taxonomy } = await supabase.from("taxonomy").select("id, name");
+    const { data: taxonomy } = await supabase.from("taxonomy").select("id, name, type");
     const { data: tags } = await supabase.from("tags").select("id, slug");
     if (!taxonomy || !tags) throw new Error("DB Fehler: Taxonomy/Tags nicht geladen");
 
-    const findCatId = (name: string) => taxonomy.find(t => t.name === name)?.id;
+    // DEBUG: Log alle verfügbaren Kategorien
+    console.log("=== TAXONOMY DEBUG ===");
+    console.log("Main categories:", taxonomy.filter(t => t.type === 'main').map(t => `${t.id}: ${t.name}`));
+    console.log("Sub categories:", taxonomy.filter(t => t.type === 'sub').map(t => `${t.id}: ${t.name}`));
+
+    const findCatId = (name: string) => {
+      const found = taxonomy.find(t => t.name === name);
+      if (!found) console.log(`⚠️ KATEGORIE NICHT GEFUNDEN: "${name}"`);
+      return found?.id;
+    };
     const findTagId = (search: string) => tags.find(t => t.slug.includes(search))?.id;
 
     const tagIds = {
