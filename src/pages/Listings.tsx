@@ -503,9 +503,9 @@ const Listings = () => {
           <div className="grid grid-cols-4 gap-2">
             {[
               { id: "gratis", label: "Gratis", tooltip: "Kostenlose Events" },
-              { id: "$", label: "$", tooltip: "Budget (bis 50 CHF)" },
-              { id: "$$", label: "$$", tooltip: "Standard (50 - 120 CHF)" },
-              { id: "$$$", label: "$$$", tooltip: "Premium (ab 120 CHF)" },
+              { id: "$", label: "$", tooltip: "Budget (ca. bis 50 CHF)" },
+              { id: "$$", label: "$$", tooltip: "Standard (ca. 50 - 120 CHF)" },
+              { id: "$$$", label: "$$$", tooltip: "Premium (ab ca. 120 CHF)" },
             ].map((tier) => {
               const isActive = selectedPriceTier === tier.id;
               return (
