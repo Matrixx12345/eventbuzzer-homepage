@@ -268,7 +268,10 @@ const Listings = () => {
 
   // Check if event matches VIP artist (for "Top Stars" filter)
   const isTopStarsEvent = (event: ExternalEvent) => {
-    if (vipArtists.length === 0) return false;
+    if (vipArtists.length === 0) {
+      console.log('No VIP artists loaded!');
+      return false;
+    }
     const textToCheck = [
       event.title,
       event.short_description,
@@ -276,10 +279,17 @@ const Listings = () => {
     ].filter(Boolean).join(" ").toLowerCase();
     
     // Case-insensitive partial matching
-    return vipArtists.some(artist => {
-      const artistLower = artist.toLowerCase();
+    const match = vipArtists.some(artist => {
+      if (!artist) return false;
+      const artistLower = artist.toLowerCase().trim();
       return textToCheck.includes(artistLower);
     });
+    
+    if (match) {
+      console.log(`TOP STAR MATCH: "${event.title}"`);
+    }
+    
+    return match;
   };
 
   // City coordinates for radius filter
@@ -459,6 +469,7 @@ const Listings = () => {
     
     // Quick filters - Top Stars (filter by VIP artists, radius already disabled above)
     if (selectedQuickFilters.includes("top-stars")) {
+      console.log(`Top Stars filter active. VIP Artists count: ${vipArtists.length}`);
       if (!isTopStarsEvent(event)) return false;
     }
     
