@@ -102,10 +102,17 @@ interface ExternalEvent {
   price_to?: number;
   price_label?: string;
   ticket_link?: string;
-  category_main_id?: string;
-  category_sub_id?: string;
+  category_main_id?: number;
+  category_sub_id?: number;
   latitude?: number;
   longitude?: number;
+}
+
+interface TaxonomyItem {
+  id: number;
+  name: string;
+  type: 'main' | 'sub';
+  parent_id: number | null;
 }
 
 // Quick filters with icons
@@ -121,29 +128,7 @@ const quickFilters = [
   { id: "natur", label: "Natur", icon: Mountain },
 ];
 
-// Price filter removed - using simple toggle for free events only
-
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
-
-const categories = [
-  { value: "all", label: "Alle Kategorien" },
-  { value: "musik", label: "Musik" },
-  { value: "kultur", label: "Kultur" },
-  { value: "festival", label: "Festival" },
-  { value: "nightlife", label: "Nightlife" },
-  { value: "sport", label: "Sport" },
-  { value: "kulinarik", label: "Kulinarik" },
-];
-
-const subcategories: Record<string, string[]> = {
-  all: ["Festival", "Konzert", "Klassik", "Jazz", "Oper", "Markt", "Gala", "Foto-Spots"],
-  musik: ["Konzert", "Klassik", "Jazz", "Rock", "Pop", "Electronic"],
-  kultur: ["Oper", "Theater", "Museum", "Ausstellung", "Foto-Spots"],
-  festival: ["Festival", "Markt", "Messe"],
-  nightlife: ["Club", "Bar", "Gala", "Party"],
-  sport: ["Fussball", "Hockey", "Tennis", "Laufen"],
-  kulinarik: ["Restaurant", "Streetfood", "Weinprobe", "Kochkurs"],
-};
 
 const Listings = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -152,6 +137,7 @@ const Listings = () => {
   
   // Events state
   const [events, setEvents] = useState<ExternalEvent[]>([]);
+  const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -162,9 +148,21 @@ const Listings = () => {
   const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
+
+  // Derive categories from taxonomy
+  const mainCategories = useMemo(() => 
+    taxonomy.filter(t => t.type === 'main').sort((a, b) => a.name.localeCompare(b.name)),
+    [taxonomy]
+  );
+
+  const subCategories = useMemo(() => {
+    if (!selectedCategoryId) return [];
+    return taxonomy.filter(t => t.type === 'sub' && t.parent_id === selectedCategoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [taxonomy, selectedCategoryId]);
 
   // Time filter definitions
   const timeFilters = [
@@ -198,6 +196,10 @@ const Listings = () => {
         if (data?.events) {
           setEvents(data.events);
         }
+        if (data?.taxonomy) {
+          setTaxonomy(data.taxonomy);
+          console.log('Taxonomy loaded:', data.taxonomy.length, 'categories');
+        }
       } catch (err) {
         console.error('Error fetching events:', err);
         setError(err instanceof Error ? err.message : 'Failed to load events');
@@ -222,12 +224,8 @@ const Listings = () => {
     );
   };
 
-  const toggleSubcategory = (sub: string) => {
-    setSelectedSubcategories((prev) =>
-      prev.includes(sub)
-        ? prev.filter((s) => s !== sub)
-        : [...prev, sub]
-    );
+  const selectSubcategory = (subId: number) => {
+    setSelectedSubcategoryId((prev) => prev === subId ? null : subId);
   };
 
   // Romantic keywords for filtering (same as backend)
@@ -407,6 +405,16 @@ const Listings = () => {
       if (selectedSource === "myswitzerland" && !externalId.startsWith("mys_")) return false;
     }
     
+    // Category filter - by category_main_id
+    if (selectedCategoryId !== null) {
+      if (event.category_main_id !== selectedCategoryId) return false;
+    }
+    
+    // Subcategory filter - by category_sub_id
+    if (selectedSubcategoryId !== null) {
+      if (event.category_sub_id !== selectedSubcategoryId) return false;
+    }
+    
     return true;
   });
 
@@ -417,8 +425,8 @@ const Listings = () => {
     setSelectedPriceTier(null);
     setSelectedCity("");
     setRadius([0]);
-    setSelectedCategory("all");
-    setSelectedSubcategories([]);
+    setSelectedCategoryId(null);
+    setSelectedSubcategoryId(null);
     setSelectedSource(null);
   };
 
@@ -429,11 +437,9 @@ const Listings = () => {
     selectedPriceTier !== null ||
     selectedCity !== "" ||
     radius[0] > 0 ||
-    selectedCategory !== "all" ||
-    selectedSubcategories.length > 0 ||
+    selectedCategoryId !== null ||
+    selectedSubcategoryId !== null ||
     selectedSource !== null;
-
-  const currentSubcategories = subcategories[selectedCategory] || subcategories.all;
 
   const formatEventDate = (dateString?: string, externalId?: string) => {
     // MySwitzerland events (permanent attractions) have null dates
@@ -635,44 +641,58 @@ const Listings = () => {
       {/* Kategorie */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <Select 
+          value={selectedCategoryId?.toString() || "all"} 
+          onValueChange={(val) => {
+            setSelectedCategoryId(val === "all" ? null : parseInt(val));
+            setSelectedSubcategoryId(null); // Reset subcategory when main changes
+          }}
+        >
           <SelectTrigger className="w-full rounded-xl border border-blue-200 bg-white py-3.5 text-sm font-medium text-blue-900 focus:ring-2 focus:ring-blue-300 hover:bg-blue-50 transition-all">
             <SelectValue placeholder="Alle Kategorien" />
           </SelectTrigger>
           <SelectContent className="bg-white border border-blue-200 shadow-xl rounded-xl overflow-hidden z-50">
-            {categories.map((cat) => (
+            <SelectItem 
+              value="all" 
+              className="cursor-pointer py-3 text-sm font-medium focus:bg-blue-50 text-blue-900"
+            >
+              Alle Kategorien
+            </SelectItem>
+            {mainCategories.map((cat) => (
               <SelectItem 
-                key={cat.value} 
-                value={cat.value} 
+                key={cat.id} 
+                value={cat.id.toString()} 
                 className="cursor-pointer py-3 text-sm font-medium focus:bg-blue-50 text-blue-900"
               >
-                {cat.label}
+                {cat.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Subkategorie */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Art</h3>
-        <div className="flex flex-wrap gap-2">
-          {currentSubcategories.map((sub) => (
-            <button
-              key={sub}
-              onClick={() => toggleSubcategory(sub)}
-              className={cn(
-                "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
-                selectedSubcategories.includes(sub)
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-              )}
-            >
-              {sub}
-            </button>
-          ))}
+      {/* Subkategorie - only show if main category selected */}
+      {subCategories.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Art</h3>
+          <div className="flex flex-wrap gap-2">
+            {subCategories.map((sub) => (
+              <button
+                key={sub.id}
+                onClick={() => selectSubcategory(sub.id)}
+                className={cn(
+                  "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
+                  selectedSubcategoryId === sub.id
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                )}
+              >
+                {sub.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -713,7 +733,7 @@ const Listings = () => {
                 Filter
                 {hasActiveFilters && (
                   <span className="w-5 h-5 bg-neutral-900 text-white rounded-full text-xs flex items-center justify-center">
-                    {(selectedTimeFilter ? 1 : 0) + selectedQuickFilters.length + (selectedPriceTier ? 1 : 0) + selectedSubcategories.length}
+                    {(selectedTimeFilter ? 1 : 0) + selectedQuickFilters.length + (selectedPriceTier ? 1 : 0) + (selectedCategoryId ? 1 : 0) + (selectedSubcategoryId ? 1 : 0)}
                   </span>
                 )}
               </button>
