@@ -208,7 +208,7 @@ serve(async (req) => {
         if (tagIds.romantisch) tagsToAssign.push(tagIds.romantisch);
       }
 
-      // Preis extrahieren
+      // Preis extrahieren und $/$$/$$$ Logik anwenden
       let priceFrom: number | null = null;
       let priceLabel: string | null = null;
       
@@ -217,22 +217,33 @@ serve(async (req) => {
         const prices = offers.map((o: any) => o.price || o.lowPrice).filter((p: number) => p > 0);
         if (prices.length > 0) {
           priceFrom = Math.min(...prices);
-          priceLabel = `ab CHF ${Math.round(priceFrom)}.-`;
         }
       } else if (item.priceRange) {
-        // Parse price range string like "CHF 20 - 50"
         const priceMatch = item.priceRange.match(/(\d+)/);
         if (priceMatch) {
           priceFrom = parseInt(priceMatch[1]);
-          priceLabel = item.priceRange;
         }
       }
 
       // Gratis-Events erkennen
-      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos")) {
+      if (item.isAccessibleForFree || textForCheck.includes("gratis") || textForCheck.includes("kostenlos") || textForCheck.includes("free")) {
         priceFrom = 0;
-        priceLabel = "Eintritt frei";
+        priceLabel = "Gratis";
         if (tagIds.budget) tagsToAssign.push(tagIds.budget);
+      } else if (priceFrom !== null && priceFrom > 0) {
+        // $/$$/$$$ Label basierend auf Preis
+        if (priceFrom <= 50) {
+          priceLabel = "$";
+          if (tagIds.budget) tagsToAssign.push(tagIds.budget);
+        } else if (priceFrom <= 120) {
+          priceLabel = "$$";
+        } else {
+          priceLabel = "$$$";
+        }
+      } else {
+        // Kein Preis bekannt - Standard $$ (mittel) setzen
+        priceLabel = "$$";
+        priceFrom = 55;
       }
 
       // KI-Beschreibung generieren falls nötig
@@ -255,8 +266,9 @@ Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
         }
       }
 
-      // Ticket/Website-Link
-      const ticketLink = item.url || item.sameAs || item.mainEntityOfPage || null;
+      // Ticket/Website-Link - MySwitzerland URL verwenden
+      const ticketLink = item.url || item.mainEntityOfPage || item.sameAs || 
+                         (item["@id"] ? `https://www.myswitzerland.com${item["@id"]}` : null);
 
       // Event speichern
       const { data: savedEvent, error } = await supabase
@@ -275,9 +287,10 @@ Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
           latitude: lat,
           longitude: lng,
           image_url: imageUrl,
-          start_date: item.startDate || new Date().toISOString(),
+          start_date: item.startDate || null, // Kein Default-Datum mehr - Attraktionen sind permanent
           end_date: item.endDate || null,
           ticket_link: ticketLink,
+          source: 'myswitzerland', // Quelle markieren für Filterung
           category_main_id: mainCatId,
           category_sub_id: subCatId,
           price_from: priceFrom,
