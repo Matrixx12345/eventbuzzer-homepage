@@ -371,6 +371,28 @@ serve(async (req) => {
         // KEIN echter Preis bekannt - INTELLIGENTE Schätzung basierend auf Typ und Keywords
         const titleLower = title.toLowerCase();
         
+        // ZUERST: Mehrtages-Reisen erkennen (IMMER teuer, überschreibt alles andere!)
+        const multiDayPatterns = [
+          /\d+\s*tage?\b/i,           // "7 Tage", "5 Tag"
+          /\d+\s*-?\s*day/i,          // "7-day", "7 day"
+          /\d+\s*nächte?\b/i,         // "6 Nächte"
+          /\d+\s*nights?\b/i,         // "6 nights"
+          /mehrtägig/i,               // "mehrtägig"
+          /multi-?day/i,              // "multi-day"
+          /rundreise/i,               // "Rundreise"
+          /self\s*drive.*schweiz/i,   // "Self Drive Schweiz" (immer Rundreise)
+          /grand\s*tour/i,            // "Grand Tour"
+        ];
+        
+        const isMultiDay = multiDayPatterns.some(pattern => pattern.test(titleLower) || pattern.test(textForCheck));
+        
+        // Keywords für Premium Angebote ($$$)
+        const premiumKeywords = [
+          "vip", "premium", "luxury", "luxus", "privat", "private",
+          "chauffeur", "helicopter", "helikopter", "gourmet", "fine dining",
+          "exclusive", "exklusiv", "first class", "coaching camp"
+        ];
+        
         // Keywords für günstige Angebote ($)
         const budgetKeywords = [
           "self guided", "self-guided", "audio tour", "audio experience", 
@@ -379,42 +401,47 @@ serve(async (req) => {
           "rundloipe", "panoramaweg"
         ];
         
-        // Keywords für Premium Angebote ($$$)
-        const premiumKeywords = [
-          "vip", "premium", "luxury", "luxus", "privat", "private",
-          "chauffeur", "helicopter", "helikopter", "gourmet", "fine dining",
-          "exclusive", "exklusiv", "first class"
-        ];
-        
-        // Keywords für mittlere Preisklasse ($$)
-        const midKeywords = [
-          "museum", "führung", "gruppenführung", "experience", "tour",
-          "tagesausflug", "day trip", "excursion"
-        ];
-        
-        // Typ-basierte Schätzung
-        const isBudget = budgetKeywords.some(kw => titleLower.includes(kw) || textForCheck.includes(kw));
         const isPremium = premiumKeywords.some(kw => titleLower.includes(kw) || textForCheck.includes(kw));
+        const isBudget = budgetKeywords.some(kw => titleLower.includes(kw) || textForCheck.includes(kw));
         
-        if (isBudget || itemType === 'tour') {
-          // Tours und Self-guided sind meist günstig
-          priceLabel = "$";
-          priceFrom = 25;
-          if (tagIds.budget) tagsToAssign.push(tagIds.budget);
+        // Priorität: Mehrtages > Premium > Budget > Standard
+        if (isMultiDay) {
+          // Mehrtägige Reisen sind IMMER teuer (mehrere Tausend CHF)
+          priceLabel = "$$$";
+          priceFrom = 150;
+          console.log(`Price estimate for "${title}": $$$ (MULTI-DAY detected)`);
         } else if (isPremium) {
           priceLabel = "$$$";
           priceFrom = 150;
-        } else if (categoryText.includes("museum") || categoryText.includes("attraction")) {
+          console.log(`Price estimate for "${title}": $$$ (premium keywords)`);
+        } else if (isBudget && itemType !== 'offer') {
+          // Budget nur für Tours/Wege, nicht für "offers"
+          priceLabel = "$";
+          priceFrom = 25;
+          if (tagIds.budget) tagsToAssign.push(tagIds.budget);
+          console.log(`Price estimate for "${title}": $ (budget keywords, type: ${itemType})`);
+        } else if (itemType === 'tour') {
+          // Wanderwege/Routen ohne Multi-Day sind günstig
+          priceLabel = "$";
+          priceFrom = 25;
+          if (tagIds.budget) tagsToAssign.push(tagIds.budget);
+          console.log(`Price estimate for "${title}": $ (type: tour)`);
+        } else if (categoryText.includes("museum") || categoryText.includes("attraction") || itemType === 'attraction') {
           // Museen und Attraktionen meist mittlere Preisklasse
           priceLabel = "$$";
           priceFrom = 55;
+          console.log(`Price estimate for "${title}": $$ (museum/attraction)`);
+        } else if (itemType === 'offer') {
+          // Offers sind meist bezahlte Erlebnisse - $$
+          priceLabel = "$$";
+          priceFrom = 55;
+          console.log(`Price estimate for "${title}": $$ (type: offer)`);
         } else {
-          // Default: $ für unbekannte (lieber günstiger schätzen)
-          priceLabel = "$";
-          priceFrom = 25;
+          // Default: $$ für unbekannte
+          priceLabel = "$$";
+          priceFrom = 55;
+          console.log(`Price estimate for "${title}": $$ (default)`);
         }
-        
-        console.log(`Price estimate for "${title}": ${priceLabel} (type: ${itemType}, budget: ${isBudget}, premium: ${isPremium})`);
       }
 
       // KI-Beschreibung generieren falls nötig
