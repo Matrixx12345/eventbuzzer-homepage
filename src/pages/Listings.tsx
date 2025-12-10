@@ -483,7 +483,7 @@ const Listings = () => {
     return event.address_city || event.location || event.venue_name || "Schweiz";
   };
 
-  const FilterContent = () => (
+  const filterContent = (
     <div className="space-y-6">
       {/* Reset button */}
       {hasActiveFilters && (
@@ -836,7 +836,7 @@ const Listings = () => {
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-[340px] flex-shrink-0 -mt-2">
             <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">
-              <FilterContent />
+              {filterContent}
             </div>
           </aside>
 
@@ -1001,7 +1001,7 @@ const Listings = () => {
               </button>
             </div>
 
-            <FilterContent />
+            {filterContent}
 
             <div className="sticky bottom-0 bg-white pt-6 mt-6 border-t border-neutral-100">
               <div className="flex gap-3">
