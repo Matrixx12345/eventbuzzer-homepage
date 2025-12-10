@@ -36,6 +36,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { format, addDays, addWeeks, isToday, isTomorrow, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { de } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -153,8 +159,7 @@ const Listings = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
-  const [showFreeOnly, setShowFreeOnly] = useState(false);
-  const [selectedPriceTiers, setSelectedPriceTiers] = useState<string[]>([]);
+  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -282,21 +287,22 @@ const Listings = () => {
 
   // Filter events
   const filteredEvents = events.filter((event) => {
-    // Free events filter - show only events with price < 1 or no price
-    if (showFreeOnly) {
+    // Price tier filter based on price_from ranges
+    if (selectedPriceTier) {
       const price = event.price_from;
-      if (price !== null && price !== undefined && price >= 1) return false;
-    }
-    
-    // Price tier filter
-    if (selectedPriceTiers.length > 0) {
-      const priceLabel = event.price_label || "";
-      // Count $ signs in the price label
-      const dollarCount = (priceLabel.match(/\$/g) || []).length;
-      const eventTier = dollarCount > 0 ? "$".repeat(dollarCount) : null;
       
-      if (!eventTier || !selectedPriceTiers.includes(eventTier)) {
-        return false;
+      if (selectedPriceTier === "gratis") {
+        // Gratis: price is 0, null, or undefined
+        if (price !== null && price !== undefined && price > 0) return false;
+      } else if (selectedPriceTier === "$") {
+        // Budget: > 0 AND <= 50
+        if (price === null || price === undefined || price <= 0 || price > 50) return false;
+      } else if (selectedPriceTier === "$$") {
+        // Standard: > 50 AND <= 120
+        if (price === null || price === undefined || price <= 50 || price > 120) return false;
+      } else if (selectedPriceTier === "$$$") {
+        // Premium: > 120
+        if (price === null || price === undefined || price <= 120) return false;
       }
     }
     
@@ -378,8 +384,7 @@ const Listings = () => {
     setSelectedDate(undefined);
     setSelectedTimeFilter(null);
     setSelectedQuickFilters([]);
-    setShowFreeOnly(false);
-    setSelectedPriceTiers([]);
+    setSelectedPriceTier(null);
     setSelectedCity("");
     setRadius([0]);
     setSelectedCategory("all");
@@ -390,8 +395,7 @@ const Listings = () => {
     selectedDate !== undefined ||
     selectedTimeFilter !== null ||
     selectedQuickFilters.length > 0 ||
-    showFreeOnly ||
-    selectedPriceTiers.length > 0 ||
+    selectedPriceTier !== null ||
     selectedCity !== "" ||
     radius[0] > 0 ||
     selectedCategory !== "all" ||
@@ -494,51 +498,41 @@ const Listings = () => {
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Budget</h3>
         
-        {/* Price tier buttons */}
-        <div className="grid grid-cols-4 gap-2">
-          {["$", "$$", "$$$", "$$$$"].map((tier) => {
-            const isActive = selectedPriceTiers.includes(tier);
-            return (
-              <button
-                key={tier}
-                onClick={() => {
-                  setSelectedPriceTiers((prev) =>
-                    prev.includes(tier)
-                      ? prev.filter((t) => t !== tier)
-                      : [...prev, tier]
-                  );
-                }}
-                className={cn(
-                  "py-3 rounded-xl text-sm font-bold transition-all text-center",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-                )}
-              >
-                {tier}
-              </button>
-            );
-          })}
-        </div>
-        
-        {/* Free events toggle */}
-        <button
-          onClick={() => setShowFreeOnly(!showFreeOnly)}
-          className={cn(
-            "w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-semibold text-sm",
-            showFreeOnly
-              ? "bg-blue-600 text-white"
-              : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-          )}
-        >
-          <span>Nur kostenlose Events</span>
-          <span className={cn(
-            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-            showFreeOnly ? "bg-white border-white" : "border-blue-300"
-          )}>
-            {showFreeOnly && <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
-          </span>
-        </button>
+        {/* Price tier pills - single select */}
+        <TooltipProvider>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { id: "gratis", label: "Gratis", tooltip: "Kostenlose Events" },
+              { id: "$", label: "$", tooltip: "Budget (bis 50 CHF)" },
+              { id: "$$", label: "$$", tooltip: "Standard (50 - 120 CHF)" },
+              { id: "$$$", label: "$$$", tooltip: "Premium (ab 120 CHF)" },
+            ].map((tier) => {
+              const isActive = selectedPriceTier === tier.id;
+              return (
+                <Tooltip key={tier.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        setSelectedPriceTier(isActive ? null : tier.id);
+                      }}
+                      className={cn(
+                        "py-3 rounded-xl text-sm font-bold transition-all text-center",
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                      )}
+                    >
+                      {tier.label}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{tier.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Stadt und Radius */}
@@ -656,7 +650,7 @@ const Listings = () => {
                 Filter
                 {hasActiveFilters && (
                   <span className="w-5 h-5 bg-neutral-900 text-white rounded-full text-xs flex items-center justify-center">
-                    {(selectedTimeFilter ? 1 : 0) + selectedQuickFilters.length + (showFreeOnly ? 1 : 0) + selectedSubcategories.length}
+                    {(selectedTimeFilter ? 1 : 0) + selectedQuickFilters.length + (selectedPriceTier ? 1 : 0) + selectedSubcategories.length}
                   </span>
                 )}
               </button>
