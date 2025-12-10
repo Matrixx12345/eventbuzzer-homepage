@@ -157,10 +157,25 @@ serve(async (req) => {
         }
 
         // -- C. PREIS & BUDGET-LOGIK --
-        // Extrahiere min und max aus priceRanges[0]
-        const priceRange = event.priceRanges?.[0];
-        const minPrice = priceRange?.min ?? null;
-        const maxPrice = priceRange?.max ?? null;
+        // Versuche erst priceRanges aus dem Haupt-Event
+        let minPrice = event.priceRanges?.[0]?.min ?? null;
+        let maxPrice = event.priceRanges?.[0]?.max ?? null;
+        
+        // Falls keine Preise vorhanden: Hole sie vom Event Details Endpoint
+        if (minPrice === null && tmId) {
+          try {
+            const eventDetailRes = await fetch(`https://app.ticketmaster.com/discovery/v2/events/${tmId}.json?apikey=${TM_API_KEY}`);
+            if (eventDetailRes.ok) {
+              const eventDetail = await eventDetailRes.json();
+              minPrice = eventDetail.priceRanges?.[0]?.min ?? null;
+              maxPrice = eventDetail.priceRanges?.[0]?.max ?? null;
+              console.log(`Fetched price from details for ${title}: min=${minPrice}, max=${maxPrice}`);
+            }
+          } catch (e) {
+            console.log(`Price detail fetch failed for ${tmId}:`, e);
+          }
+        }
+        
         // Wenn min und max identisch sind, setze price_to auf null (vermeidet Redundanz)
         const priceToValue = (maxPrice !== null && maxPrice !== minPrice) ? maxPrice : null;
         
