@@ -16,7 +16,11 @@ import {
   Mountain,
   Search,
   Loader2,
-  Check
+  Check,
+  Music,
+  Palette,
+  Sparkles,
+  Flame
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -653,58 +657,77 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Kategorie - as pills */}
+      {/* Kategorie - as visual cards with icons like Stimmung */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
           {selectedCategoryId && (
-            <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-              <Check size={12} />
-              Ausgewählt
-            </span>
+            <button 
+              onClick={() => {
+                setSelectedCategoryId(null);
+                setSelectedSubcategoryId(null);
+              }}
+              className="text-xs text-blue-600 font-medium hover:text-blue-800"
+            >
+              Zurücksetzen
+            </button>
           )}
         </div>
-        <div className="flex flex-col gap-2">
-          {/* "Alle" pill to reset category */}
-          <button
-            onClick={() => {
-              setSelectedCategoryId(null);
-              setSelectedSubcategoryId(null);
-            }}
-            className={cn(
-              "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
-              selectedCategoryId === null
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-            )}
-          >
-            Alle Kategorien
-          </button>
-          {mainCategories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => {
-                const newCategoryId = selectedCategoryId === cat.id ? null : cat.id;
-                setSelectedCategoryId(newCategoryId);
-                setSelectedSubcategoryId(null); // Reset subcategory when main changes
-                
-                if (newCategoryId) {
-                  toast.success(`Kategorie: ${cat.name}`, {
-                    description: "Subkategorien verfügbar",
-                    duration: 2000,
-                  });
-                }
-              }}
-              className={cn(
-                "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
-                selectedCategoryId === cat.id
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-              )}
-            >
-              {cat.name}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-2">
+          {mainCategories.map((cat) => {
+            // Map category names to icons
+            const getCategoryIcon = (name: string) => {
+              const lower = name.toLowerCase();
+              if (lower.includes('musik') || lower.includes('party')) return Music;
+              if (lower.includes('kunst') || lower.includes('kultur')) return Palette;
+              if (lower.includes('gastro') || lower.includes('genuss')) return UtensilsCrossed;
+              if (lower.includes('freizeit') || lower.includes('aktiv')) return Sparkles;
+              if (lower.includes('familie') || lower.includes('kind')) return Heart;
+              if (lower.includes('sport')) return Flame;
+              return Sparkles;
+            };
+            const Icon = getCategoryIcon(cat.name);
+            const isActive = selectedCategoryId === cat.id;
+            
+            // Shorten long category names
+            const getShortName = (name: string) => {
+              if (name.includes('&')) {
+                return name.split('&')[0].trim();
+              }
+              return name;
+            };
+            
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  const newCategoryId = isActive ? null : cat.id;
+                  setSelectedCategoryId(newCategoryId);
+                  setSelectedSubcategoryId(null);
+                  
+                  if (newCategoryId) {
+                    toast.success(`${cat.name}`, {
+                      description: "Subkategorien verfügbar",
+                      duration: 2000,
+                    });
+                  }
+                }}
+                className={cn(
+                  "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                )}
+              >
+                <Icon 
+                  size={20} 
+                  strokeWidth={1.8} 
+                  className="mb-1"
+                />
+                <span className="text-[10px] font-bold leading-tight text-center">{getShortName(cat.name)}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
