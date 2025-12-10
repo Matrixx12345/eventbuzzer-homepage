@@ -164,6 +164,7 @@ const Listings = () => {
   const [radius, setRadius] = useState([0]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
 
   // Time filter definitions
   const timeFilters = [
@@ -399,6 +400,13 @@ const Listings = () => {
       if (!isRomanticEvent(event)) return false;
     }
     
+    // Source filter (based on external_id prefix)
+    if (selectedSource) {
+      const externalId = event.external_id || "";
+      if (selectedSource === "ticketmaster" && !externalId.startsWith("tm_")) return false;
+      if (selectedSource === "myswitzerland" && !externalId.startsWith("mys_")) return false;
+    }
+    
     return true;
   });
 
@@ -411,6 +419,7 @@ const Listings = () => {
     setRadius([0]);
     setSelectedCategory("all");
     setSelectedSubcategories([]);
+    setSelectedSource(null);
   };
 
   const hasActiveFilters = 
@@ -421,7 +430,8 @@ const Listings = () => {
     selectedCity !== "" ||
     radius[0] > 0 ||
     selectedCategory !== "all" ||
-    selectedSubcategories.length > 0;
+    selectedSubcategories.length > 0 ||
+    selectedSource !== null;
 
   const currentSubcategories = subcategories[selectedCategory] || subcategories.all;
 
@@ -450,6 +460,33 @@ const Listings = () => {
           ✕ Filter zurücksetzen
         </button>
       )}
+
+      {/* Quelle (Source) - Debug Filter */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Quelle</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { id: "ticketmaster", label: "Ticketmaster" },
+            { id: "myswitzerland", label: "MySwitzerland" },
+          ].map((source) => {
+            const isActive = selectedSource === source.id;
+            return (
+              <button
+                key={source.id}
+                onClick={() => setSelectedSource(isActive ? null : source.id)}
+                className={cn(
+                  "py-3 rounded-xl text-xs font-semibold transition-all text-center",
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                )}
+              >
+                {source.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Datum (Date) */}
       <div className="space-y-3">
