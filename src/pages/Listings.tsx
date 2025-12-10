@@ -658,130 +658,132 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Kategorie - as visual cards with icons like Stimmung */}
+      {/* Kategorie - Inline Drawer Pattern */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Kategorie</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {/* Alle Kategorien pill - always first */}
-          <button
-            onClick={() => {
-              setSelectedCategoryId(null);
-              setSelectedSubcategoryId(null);
-            }}
-            className={cn(
-              "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
-              selectedCategoryId === null
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-            )}
-          >
-            <LayoutGrid 
-              size={20} 
-              strokeWidth={1.8} 
-              className="mb-1"
-            />
-            <span className="text-[10px] font-bold leading-tight text-center">Alle Kategorien</span>
-          </button>
+        
+        {/* Category grid with inline drawer for subcategories */}
+        {(() => {
+          const orderedCategories = ['Musik & Party', 'Kunst & Kultur', 'Kulinarik & Genuss', 'Freizeit & Aktivitäten', 'Märkte & Lokales'];
           
-          {/* Categories in specific order */}
-          {['Musik & Party', 'Kunst & Kultur', 'Kulinarik & Genuss', 'Freizeit & Aktivitäten', 'Märkte & Lokales'].map((catName) => {
-            const cat = mainCategories.find(c => c.name === catName);
-            if (!cat) return null;
-            
-            const getCategoryIcon = (name: string) => {
-              const lower = name.toLowerCase();
-              if (lower.includes('musik')) return Music;
-              if (lower.includes('kunst')) return Palette;
-              if (lower.includes('kulinarik')) return UtensilsCrossed;
-              if (lower.includes('freizeit')) return Sparkles;
-              if (lower.includes('märkte')) return Heart;
-              return Sparkles;
-            };
-            
-            const Icon = getCategoryIcon(cat.name);
-            const isActive = selectedCategoryId === cat.id;
-            
-            return (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategoryId(cat.id);
-                  setSelectedSubcategoryId(null);
-                  toast.success(`${cat.name}`, {
-                    description: "Subkategorien verfügbar",
-                    duration: 2000,
-                  });
-                }}
-                className={cn(
-                  "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-                )}
-              >
-                <Icon 
-                  size={20} 
-                  strokeWidth={1.8} 
-                  className="mb-1"
-                />
-                <span className="text-[10px] font-bold leading-tight text-center">{cat.name}</span>
-              </button>
-            );
-          })}
-        </div>
+          const getCategoryIcon = (name: string) => {
+            const lower = name.toLowerCase();
+            if (lower.includes('musik')) return Music;
+            if (lower.includes('kunst')) return Palette;
+            if (lower.includes('kulinarik')) return UtensilsCrossed;
+            if (lower.includes('freizeit')) return Sparkles;
+            if (lower.includes('märkte')) return Heart;
+            return Sparkles;
+          };
+          
+          // Build array with "Alle" + categories
+          const allItems = [
+            { id: null, name: 'Alle Kategorien', icon: LayoutGrid },
+            ...orderedCategories.map(catName => {
+              const cat = mainCategories.find(c => c.name === catName);
+              return cat ? { id: cat.id, name: cat.name, icon: getCategoryIcon(cat.name) } : null;
+            }).filter(Boolean) as { id: number; name: string; icon: typeof Music }[]
+          ];
+          
+          // Group items into rows of 2
+          const rows: typeof allItems[] = [];
+          for (let i = 0; i < allItems.length; i += 2) {
+            rows.push(allItems.slice(i, i + 2));
+          }
+          
+          // Find which row contains the selected category (to show drawer below it)
+          const selectedRowIndex = selectedCategoryId !== null 
+            ? rows.findIndex(row => row.some(item => item.id === selectedCategoryId))
+            : -1;
+          
+          return (
+            <div className="space-y-2">
+              {rows.map((row, rowIndex) => (
+                <div key={rowIndex}>
+                  {/* Row of 2 category cards */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {row.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = item.id === null 
+                        ? selectedCategoryId === null 
+                        : selectedCategoryId === item.id;
+                      
+                      return (
+                        <button
+                          key={item.id ?? 'alle'}
+                          onClick={() => {
+                            if (item.id === null) {
+                              setSelectedCategoryId(null);
+                              setSelectedSubcategoryId(null);
+                            } else {
+                              // Toggle: if clicking same category, deselect
+                              if (selectedCategoryId === item.id) {
+                                setSelectedCategoryId(null);
+                                setSelectedSubcategoryId(null);
+                              } else {
+                                setSelectedCategoryId(item.id);
+                                setSelectedSubcategoryId(null);
+                              }
+                            }
+                          }}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                            isActive
+                              ? "bg-blue-600 text-white shadow-md"
+                              : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
+                          )}
+                        >
+                          <Icon 
+                            size={20} 
+                            strokeWidth={1.8} 
+                            className="mb-1"
+                          />
+                          <span className="text-[10px] font-bold leading-tight text-center">{item.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Inline Drawer - appears below the row containing the selected category */}
+                  {rowIndex === selectedRowIndex && selectedCategoryId !== null && subCategories.length > 0 && (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-xl border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="flex flex-wrap gap-2">
+                        {/* "Alle" chip */}
+                        <button
+                          onClick={() => setSelectedSubcategoryId(null)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                            selectedSubcategoryId === null
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-blue-800 hover:bg-blue-100 border border-blue-200"
+                          )}
+                        >
+                          Alle
+                        </button>
+                        {/* Subcategory chips */}
+                        {subCategories.map((sub) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => setSelectedSubcategoryId(selectedSubcategoryId === sub.id ? null : sub.id)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                              selectedSubcategoryId === sub.id
+                                ? "bg-blue-600 text-white"
+                                : "bg-white text-blue-800 hover:bg-blue-100 border border-blue-200"
+                            )}
+                          >
+                            {sub.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
-
-      {/* Subkategorie - only show if main category selected */}
-      {selectedCategoryId && subCategories.length > 0 && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Subkategorie</h3>
-            {selectedSubcategoryId && (
-              <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-                <Check size={12} />
-                Aktiv
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* "Alle" pill to reset subcategory */}
-            <button
-              onClick={() => {
-                setSelectedSubcategoryId(null);
-                toast.info("Alle Subkategorien anzeigen", { duration: 1500 });
-              }}
-              className={cn(
-                "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
-                selectedSubcategoryId === null
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-              )}
-            >
-              Alle anzeigen
-            </button>
-            {subCategories.map((sub) => (
-              <button
-                key={sub.id}
-                onClick={() => {
-                  const newSubId = selectedSubcategoryId === sub.id ? null : sub.id;
-                  setSelectedSubcategoryId(newSubId);
-                  if (newSubId) {
-                    toast.success(`${sub.name}`, { duration: 1500 });
-                  }
-                }}
-                className={cn(
-                  "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
-                  selectedSubcategoryId === sub.id
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-                )}
-              >
-                {sub.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Quelle (Source) - at bottom */}
       <div className="space-y-3 pt-4 border-t border-blue-200">
