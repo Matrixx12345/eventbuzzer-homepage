@@ -54,6 +54,17 @@ serve(async (req) => {
       .select("id, name, type, parent_id")
       .order("name");
 
+    // Fetch VIP artists for "Top Stars" filter
+    const { data: vipArtists, error: vipArtistsError } = await externalSupabase
+      .from("vip_artists")
+      .select("artists_name");
+
+    if (vipArtistsError) {
+      console.error("VIP Artists query error:", JSON.stringify(vipArtistsError));
+    } else {
+      console.log(`VIP Artists: ${vipArtists?.length || 0} loaded`);
+    }
+
     const error = futureError || permanentError;
     
     // Combine and deduplicate by id
@@ -115,6 +126,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       events: data || [], 
       taxonomy: taxonomy || [],
+      vipArtists: vipArtists?.map(a => a.artists_name).filter(Boolean) || [],
       stats,
       columns: data && data.length > 0 ? Object.keys(data[0]) : [] 
     }), {
