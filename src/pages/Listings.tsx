@@ -513,33 +513,6 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Quelle (Source) - Debug Filter */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Quelle</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { id: "ticketmaster", label: "Ticketmaster" },
-            { id: "myswitzerland", label: "MySwitzerland" },
-          ].map((source) => {
-            const isActive = selectedSource === source.id;
-            return (
-              <button
-                key={source.id}
-                onClick={() => setSelectedSource(isActive ? null : source.id)}
-                className={cn(
-                  "py-3 rounded-xl text-xs font-semibold transition-all text-center",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
-                )}
-              >
-                {source.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Datum (Date) */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">Wann?</h3>
@@ -748,7 +721,7 @@ const Listings = () => {
               </span>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2">
             {/* "Alle" pill to reset subcategory */}
             <button
               onClick={() => {
@@ -756,13 +729,13 @@ const Listings = () => {
                 toast.info("Alle Subkategorien anzeigen", { duration: 1500 });
               }}
               className={cn(
-                "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
+                "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
                 selectedSubcategoryId === null
                   ? "bg-blue-600 text-white shadow-md"
                   : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
               )}
             >
-              Alle
+              Alle anzeigen
             </button>
             {subCategories.map((sub) => (
               <button
@@ -775,7 +748,7 @@ const Listings = () => {
                   }
                 }}
                 className={cn(
-                  "px-3.5 py-2 rounded-full text-xs font-bold transition-all",
+                  "w-full py-2.5 rounded-xl text-xs font-bold transition-all text-center",
                   selectedSubcategoryId === sub.id
                     ? "bg-blue-600 text-white shadow-md"
                     : "bg-white text-blue-900 hover:bg-blue-50 border border-blue-200"
@@ -787,6 +760,33 @@ const Listings = () => {
           </div>
         </div>
       )}
+
+      {/* Quelle (Source) - at bottom */}
+      <div className="space-y-3 pt-4 border-t border-blue-200">
+        <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wide">Datenquelle</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { id: "ticketmaster", label: "Ticketmaster" },
+            { id: "myswitzerland", label: "MySwitzerland" },
+          ].map((source) => {
+            const isActive = selectedSource === source.id;
+            return (
+              <button
+                key={source.id}
+                onClick={() => setSelectedSource(isActive ? null : source.id)}
+                className={cn(
+                  "py-2.5 rounded-xl text-xs font-semibold transition-all text-center",
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "bg-white/50 text-blue-700 hover:bg-white border border-blue-200"
+                )}
+              >
+                {source.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 
@@ -810,7 +810,7 @@ const Listings = () => {
         <div className="flex gap-10">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0 -mt-2">
-            <div className="sticky top-24 bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="sticky top-24 bg-blue-50 rounded-2xl p-6 shadow-lg shadow-blue-200/50 border border-blue-200">
               <FilterContent />
             </div>
           </aside>
