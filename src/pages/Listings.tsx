@@ -147,6 +147,7 @@ const Listings = () => {
   // Events state
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+  const [vipArtists, setVipArtists] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -214,6 +215,10 @@ const Listings = () => {
           setTaxonomy(data.taxonomy);
           console.log('Taxonomy loaded:', data.taxonomy.length, 'categories');
         }
+        if (data?.vipArtists) {
+          setVipArtists(data.vipArtists);
+          console.log('VIP Artists loaded:', data.vipArtists.length, 'artists');
+        }
       } catch (err) {
         console.error('Error fetching events:', err);
         setError(err instanceof Error ? err.message : 'Failed to load events');
@@ -259,6 +264,22 @@ const Listings = () => {
     ].filter(Boolean).join(" ").toLowerCase();
     
     return ROMANTIC_KEYWORDS.some(keyword => textToCheck.includes(keyword));
+  };
+
+  // Check if event matches VIP artist (for "Top Stars" filter)
+  const isTopStarsEvent = (event: ExternalEvent) => {
+    if (vipArtists.length === 0) return false;
+    const textToCheck = [
+      event.title,
+      event.short_description,
+      event.venue_name,
+    ].filter(Boolean).join(" ").toLowerCase();
+    
+    // Case-insensitive partial matching
+    return vipArtists.some(artist => {
+      const artistLower = artist.toLowerCase();
+      return textToCheck.includes(artistLower);
+    });
   };
 
   // City coordinates for radius filter
@@ -434,6 +455,11 @@ const Listings = () => {
     // Quick filters - Romantik
     if (selectedQuickFilters.includes("romantik")) {
       if (!isRomanticEvent(event)) return false;
+    }
+    
+    // Quick filters - Top Stars (filter by VIP artists, radius already disabled above)
+    if (selectedQuickFilters.includes("top-stars")) {
+      if (!isTopStarsEvent(event)) return false;
     }
     
     // Source filter (based on external_id prefix)
