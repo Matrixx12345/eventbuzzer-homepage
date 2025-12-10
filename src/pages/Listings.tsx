@@ -93,6 +93,7 @@ interface ExternalEvent {
   end_date?: string;
   image_url?: string;
   price_from?: number;
+  price_to?: number;
   ticket_link?: string;
   category_main_id?: string;
   category_sub_id?: string;
@@ -695,6 +696,14 @@ const Listings = () => {
                             <MapPin size={12} />
                             {getEventLocation(event)}
                           </p>
+                          {/* Price Display */}
+                          {event.price_from && (
+                            <p className="text-sm font-medium text-neutral-900 mt-2">
+                              {event.price_to && event.price_to !== event.price_from
+                                ? `CHF ${event.price_from} – ${event.price_to}`
+                                : `ab CHF ${event.price_from}`}
+                            </p>
+                          )}
                           {event.short_description && (
                             <p className="text-xs text-neutral-500 mt-2 line-clamp-2">
                               {event.short_description}
