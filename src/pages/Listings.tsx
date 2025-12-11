@@ -173,8 +173,19 @@ const Listings = () => {
     { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
   ];
   
+  // Mistwetter / Indoor filter options
+  const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
+  const indoorFilters = [
+    { id: "alles-indoor", label: "Alles Indoor", tags: ["schlechtwetter-indoor"] },
+    { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
+    { id: "wellness", label: "Wellness & Relax", tags: ["wellness-selfcare"] },
+  ];
+  
   // Check if "Mit Kind" filter is active (opens inline drawer)
   const isFamilyFilterActive = selectedQuickFilters.includes("mit-kind");
+  
+  // Check if "Mistwetter" filter is active (opens inline drawer)
+  const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
 
   // Derive categories from taxonomy
   const mainCategories = useMemo(() => 
@@ -256,6 +267,9 @@ const Listings = () => {
       if (filterId === "mit-kind") {
         setSelectedFamilyAgeFilter(null);
       }
+      if (filterId === "mistwetter") {
+        setSelectedIndoorFilter(null);
+      }
       setSelectedQuickFilters([]);
       return;
     }
@@ -266,9 +280,19 @@ const Listings = () => {
       setSelectedFamilyAgeFilter(null);
     }
     
+    // Reset indoor filter if switching away from "mistwetter"
+    if (selectedQuickFilters.includes("mistwetter") && filterId !== "mistwetter") {
+      setSelectedIndoorFilter(null);
+    }
+    
     // If activating "mit-kind", set default age filter
     if (filterId === "mit-kind") {
       setSelectedFamilyAgeFilter("alle");
+    }
+    
+    // If activating "mistwetter", set default indoor filter
+    if (filterId === "mistwetter") {
+      setSelectedIndoorFilter("alles-indoor");
     }
     
     // If activating "top-stars", reset category and subcategory to "Alle"
@@ -535,6 +559,16 @@ const Listings = () => {
       if (!eventTags.includes(tagToMatch)) return false;
     }
     
+    // Quick filters - Mistwetter / Indoor (filter by indoor/wellness tags)
+    if (selectedQuickFilters.includes("mistwetter")) {
+      const eventTags = event.tags || [];
+      const currentFilter = indoorFilters.find(f => f.id === selectedIndoorFilter) || indoorFilters[0];
+      
+      // Event must have ALL tags required by the filter
+      const hasAllTags = currentFilter.tags.every(tag => eventTags.includes(tag));
+      if (!hasAllTags) return false;
+    }
+    
     // Source filter (based on external_id prefix)
     if (selectedSource) {
       const externalId = event.external_id || "";
@@ -567,6 +601,7 @@ const Listings = () => {
     setSelectedSource(null);
     setSearchQuery("");
     setSelectedFamilyAgeFilter(null);
+    setSelectedIndoorFilter(null);
   };
 
   const hasActiveFilters = 
@@ -689,6 +724,8 @@ const Listings = () => {
             
             // Find which row contains "mit-kind" (to show drawer below it)
             const familyRowIndex = rows.findIndex(row => row.some(f => f.id === "mit-kind"));
+            // Find which row contains "mistwetter" (to show drawer below it)
+            const mistwetterRowIndex = rows.findIndex(row => row.some(f => f.id === "mistwetter"));
             
             return (
               <div className="space-y-2">
@@ -701,6 +738,7 @@ const Listings = () => {
                         const isActive = selectedQuickFilters.includes(filter.id);
                         const isTopStars = filter.id === "top-stars";
                         const isMitKind = filter.id === "mit-kind";
+                        const isMistwetter = filter.id === "mistwetter";
                         
                         const buttonElement = (
                           <button
@@ -712,12 +750,16 @@ const Listings = () => {
                                 ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30"
                                 : isActive && isMitKind
                                 ? "bg-gradient-to-br from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/30"
+                                : isActive && isMistwetter
+                                ? "bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30"
                                 : isActive
                                 ? "bg-blue-600 text-white"
                                 : isTopStars
                                 ? "bg-white text-gray-800 hover:bg-amber-50 border border-gray-200 hover:border-amber-300"
                                 : isMitKind
                                 ? "bg-white text-gray-800 hover:bg-pink-50 border border-gray-200 hover:border-pink-300"
+                                : isMistwetter
+                                ? "bg-white text-gray-800 hover:bg-sky-50 border border-gray-200 hover:border-sky-300"
                                 : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                             )}
                           >
@@ -746,6 +788,31 @@ const Listings = () => {
                         return buttonElement;
                       })}
                     </div>
+                    
+                    {/* Inline Drawer for "Mistwetter" - appears below the row containing it */}
+                    {rowIndex === mistwetterRowIndex && isMistwetterFilterActive && (
+                      <div className="mt-2 p-3 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-col gap-2">
+                          {indoorFilters.map((indoorFilter) => {
+                            const isIndoorActive = selectedIndoorFilter === indoorFilter.id;
+                            return (
+                              <button
+                                key={indoorFilter.id}
+                                onClick={() => setSelectedIndoorFilter(indoorFilter.id)}
+                                className={cn(
+                                  "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left",
+                                  isIndoorActive
+                                    ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white"
+                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+                                )}
+                              >
+                                {indoorFilter.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Inline Drawer for "Mit Kind" - appears below the row containing it */}
                     {rowIndex === familyRowIndex && isFamilyFilterActive && (
