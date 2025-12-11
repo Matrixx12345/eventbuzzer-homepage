@@ -176,9 +176,8 @@ const Listings = () => {
   // Mistwetter / Indoor filter options
   const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
   const indoorFilters = [
-    { id: "alles-indoor", label: "Alles Indoor", tags: ["schlechtwetter-indoor"] },
+    { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
     { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
-    { id: "wellness", label: "Wellness & Relax", tags: ["wellness-selfcare"] },
   ];
   
   // Check if "Mit Kind" filter is active (opens inline drawer)
