@@ -249,36 +249,35 @@ const Listings = () => {
   };
 
   const toggleQuickFilter = (filterId: string) => {
-    setSelectedQuickFilters((prev) => {
-      const isCurrentlyActive = prev.includes(filterId);
-      
-      // If deselecting the current filter
-      if (isCurrentlyActive) {
-        if (filterId === "mit-kind") {
-          setSelectedFamilyAgeFilter(null);
-        }
-        return [];
-      }
-      
-      // If selecting a new filter (single-select: replace all others)
-      // Reset family age filter if switching away from "mit-kind"
-      if (prev.includes("mit-kind") && filterId !== "mit-kind") {
+    const isCurrentlyActive = selectedQuickFilters.includes(filterId);
+    
+    // If deselecting the current filter
+    if (isCurrentlyActive) {
+      if (filterId === "mit-kind") {
         setSelectedFamilyAgeFilter(null);
       }
-      
-      // If activating "mit-kind", set default age filter
-      if (filterId === "mit-kind") {
-        setSelectedFamilyAgeFilter("alle");
-      }
-      
-      // If activating "top-stars", reset category and subcategory to "Alle"
-      if (filterId === "top-stars") {
-        setSelectedCategoryId(null);
-        setSelectedSubcategoryId(null);
-      }
-      
-      return [filterId]; // Single-select: only this filter is active
-    });
+      setSelectedQuickFilters([]);
+      return;
+    }
+    
+    // If selecting a new filter (single-select: replace all others)
+    // Reset family age filter if switching away from "mit-kind"
+    if (selectedQuickFilters.includes("mit-kind") && filterId !== "mit-kind") {
+      setSelectedFamilyAgeFilter(null);
+    }
+    
+    // If activating "mit-kind", set default age filter
+    if (filterId === "mit-kind") {
+      setSelectedFamilyAgeFilter("alle");
+    }
+    
+    // If activating "top-stars", reset category and subcategory to "Alle"
+    if (filterId === "top-stars") {
+      setSelectedCategoryId(null);
+      setSelectedSubcategoryId(null);
+    }
+    
+    setSelectedQuickFilters([filterId]); // Single-select: only this filter is active
   };
 
   const selectSubcategory = (subId: number) => {
@@ -527,7 +526,7 @@ const Listings = () => {
     
     // Quick filters - Top Stars (filter by VIP artists, radius already disabled above)
     if (selectedQuickFilters.includes("top-stars")) {
-      console.log(`Top Stars filter active. VIP Artists count: ${vipArtists.length}`);
+      console.log(`Top Stars filter active. VIP Artists count: ${vipArtists.length}, CategoryId: ${selectedCategoryId}, SubcategoryId: ${selectedSubcategoryId}`);
       if (!isTopStarsEvent(event)) return false;
     }
     
@@ -549,13 +548,13 @@ const Listings = () => {
       if (selectedSource === "myswitzerland" && !externalId.startsWith("mys_")) return false;
     }
     
-    // Category filter - by category_main_id
-    if (selectedCategoryId !== null) {
+    // Category filter - by category_main_id (SKIP if Top Stars is active)
+    if (selectedCategoryId !== null && !selectedQuickFilters.includes("top-stars")) {
       if (event.category_main_id !== selectedCategoryId) return false;
     }
     
-    // Subcategory filter - by category_sub_id
-    if (selectedSubcategoryId !== null) {
+    // Subcategory filter - by category_sub_id (SKIP if Top Stars is active)
+    if (selectedSubcategoryId !== null && !selectedQuickFilters.includes("top-stars")) {
       if (event.category_sub_id !== selectedSubcategoryId) return false;
     }
     
