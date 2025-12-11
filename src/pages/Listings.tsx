@@ -267,22 +267,30 @@ const Listings = () => {
   };
 
   // Check if event matches VIP artist (for "Top Stars" filter)
+  // Uses word-boundary matching to avoid false positives like "YES" matching "YES: Spuren..."
   const isTopStarsEvent = (event: ExternalEvent) => {
     if (vipArtists.length === 0) {
       console.log('No VIP artists loaded!');
       return false;
     }
-    const textToCheck = [
-      event.title,
-      event.short_description,
-      event.venue_name,
-    ].filter(Boolean).join(" ").toLowerCase();
     
-    // Case-insensitive partial matching
+    const titleLower = (event.title || "").toLowerCase();
+    
+    // Check if any VIP artist name matches the event title
     const match = vipArtists.some(artist => {
-      if (!artist) return false;
+      if (!artist || artist.length < 3) return false; // Skip very short names
       const artistLower = artist.toLowerCase().trim();
-      return textToCheck.includes(artistLower);
+      
+      // Check if the title STARTS with the artist name (most common pattern)
+      // e.g., "Taylor Swift: The Eras Tour" starts with "Taylor Swift"
+      if (titleLower.startsWith(artistLower)) return true;
+      
+      // Check for artist name as a distinct segment (with word boundaries)
+      // This prevents "YES" from matching "YES: Spuren spüren" (which is theater, not the band YES)
+      const regex = new RegExp(`\\b${artistLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      if (regex.test(event.title || "")) return true;
+      
+      return false;
     });
     
     if (match) {
