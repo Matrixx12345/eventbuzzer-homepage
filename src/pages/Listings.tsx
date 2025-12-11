@@ -251,17 +251,27 @@ const Listings = () => {
   const toggleQuickFilter = (filterId: string) => {
     setSelectedQuickFilters((prev) => {
       const isCurrentlyActive = prev.includes(filterId);
-      // If deselecting "mit-kind", also reset the age filter
-      if (filterId === "mit-kind" && isCurrentlyActive) {
+      
+      // If deselecting the current filter
+      if (isCurrentlyActive) {
+        if (filterId === "mit-kind") {
+          setSelectedFamilyAgeFilter(null);
+        }
+        return [];
+      }
+      
+      // If selecting a new filter (single-select: replace all others)
+      // Reset family age filter if switching away from "mit-kind"
+      if (prev.includes("mit-kind") && filterId !== "mit-kind") {
         setSelectedFamilyAgeFilter(null);
       }
-      // If activating "mit-kind", set default age filter to "alle"
-      if (filterId === "mit-kind" && !isCurrentlyActive) {
+      
+      // If activating "mit-kind", set default age filter
+      if (filterId === "mit-kind") {
         setSelectedFamilyAgeFilter("alle");
       }
-      return isCurrentlyActive
-        ? prev.filter((f) => f !== filterId)
-        : [...prev, filterId];
+      
+      return [filterId]; // Single-select: only this filter is active
     });
   };
 
