@@ -433,9 +433,9 @@ const Listings = () => {
       
       // If event has no date but filter is NOT "now", include it (permanent attractions)
       if (!event.start_date) {
+        console.log(`PERMANENT INCLUDED: "${event.title}" for filter "${selectedTimeFilter}"`);
         // Permanent attractions pass through for today, tomorrow, this week, etc.
-        // (they're always available)
-        return true;
+        return true; // <-- This should include them!
       }
       
       const eventDate = parseISO(event.start_date);
