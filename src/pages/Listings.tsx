@@ -424,7 +424,10 @@ const Listings = () => {
     }
     
     // Time filter (single-select)
-    if (selectedTimeFilter && event.start_date) {
+    // If a time filter is selected, events WITHOUT a start_date are excluded
+    if (selectedTimeFilter) {
+      if (!event.start_date) return false; // Exclude permanent attractions from time-based filters
+      
       const eventDate = parseISO(event.start_date);
       const now = new Date();
       
