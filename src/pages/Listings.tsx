@@ -128,15 +128,15 @@ interface TaxonomyItem {
 
 // Quick filters with icons
 const quickFilters = [
+  { id: "geburtstag", label: "Geburtstag & Gruppen", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
+  { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
+  { id: "top-stars", label: "Top Stars", icon: Star, tags: [] },
+  { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["fotospots"] },
   { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
   { id: "mit-kind", label: "Mit Kind", icon: Smile, tags: ["familie-kinder"] },
-  { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
-  { id: "top-stars", label: "Top Stars", icon: Star, tags: [] }, // Special logic, no tag filter
+  { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
   { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
   { id: "natur", label: "Natur & Outdoor", icon: Mountain, tags: ["natur-erlebnisse"] },
-  { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["fotospots"] },
-  { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
-  { id: "geburtstag", label: "Geburtstag & Gruppen", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
 ];
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
