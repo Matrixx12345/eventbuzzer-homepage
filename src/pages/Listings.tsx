@@ -115,6 +115,7 @@ interface ExternalEvent {
   category_sub_id?: number;
   latitude?: number;
   longitude?: number;
+  tags?: string[];
 }
 
 interface TaxonomyItem {
@@ -162,6 +163,18 @@ const Listings = () => {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
+  
+  // Family age filter options
+  const familyAgeFilters = [
+    { id: "alle", label: "Alle Altersgruppen", tag: "familie-kinder" },
+    { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
+    { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
+    { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
+  ];
+  
+  // Check if "Mit Kind" filter is active (opens inline drawer)
+  const isFamilyFilterActive = selectedQuickFilters.includes("mit-kind");
 
   // Derive categories from taxonomy
   const mainCategories = useMemo(() => 
@@ -236,11 +249,20 @@ const Listings = () => {
   };
 
   const toggleQuickFilter = (filterId: string) => {
-    setSelectedQuickFilters((prev) =>
-      prev.includes(filterId)
+    setSelectedQuickFilters((prev) => {
+      const isCurrentlyActive = prev.includes(filterId);
+      // If deselecting "mit-kind", also reset the age filter
+      if (filterId === "mit-kind" && isCurrentlyActive) {
+        setSelectedFamilyAgeFilter(null);
+      }
+      // If activating "mit-kind", set default age filter to "alle"
+      if (filterId === "mit-kind" && !isCurrentlyActive) {
+        setSelectedFamilyAgeFilter("alle");
+      }
+      return isCurrentlyActive
         ? prev.filter((f) => f !== filterId)
-        : [...prev, filterId]
-    );
+        : [...prev, filterId];
+    });
   };
 
   const selectSubcategory = (subId: number) => {
@@ -433,9 +455,8 @@ const Listings = () => {
       
       // If event has no date but filter is NOT "now", include it (permanent attractions)
       if (!event.start_date) {
-        console.log(`PERMANENT INCLUDED: "${event.title}" for filter "${selectedTimeFilter}"`);
         // Permanent attractions pass through for today, tomorrow, this week, etc.
-        return true; // <-- This should include them!
+        return true;
       }
       
       const eventDate = parseISO(event.start_date);
@@ -494,6 +515,17 @@ const Listings = () => {
       if (!isTopStarsEvent(event)) return false;
     }
     
+    // Quick filters - Mit Kind (filter by family/age tags)
+    if (selectedQuickFilters.includes("mit-kind")) {
+      const eventTags = event.tags || [];
+      // Determine which tag to filter by based on selected age filter
+      const tagToMatch = selectedFamilyAgeFilter === "alle" || selectedFamilyAgeFilter === null
+        ? "familie-kinder"
+        : selectedFamilyAgeFilter;
+      
+      if (!eventTags.includes(tagToMatch)) return false;
+    }
+    
     // Source filter (based on external_id prefix)
     if (selectedSource) {
       const externalId = event.external_id || "";
@@ -525,6 +557,7 @@ const Listings = () => {
     setSelectedSubcategoryId(null);
     setSelectedSource(null);
     setSearchQuery("");
+    setSelectedFamilyAgeFilter(null);
   };
 
   const hasActiveFilters = 
@@ -638,52 +671,102 @@ const Listings = () => {
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
         <TooltipProvider>
-          <div className="grid grid-cols-3 gap-2">
-            {quickFilters.map((filter) => {
-              const Icon = filter.icon;
-              const isActive = selectedQuickFilters.includes(filter.id);
-              const isTopStars = filter.id === "top-stars";
-              
-              const buttonElement = (
-                <button
-                  key={filter.id}
-                  onClick={() => toggleQuickFilter(filter.id)}
-                  className={cn(
-                    "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
-                    isActive && isTopStars
-                      ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30"
-                      : isActive
-                      ? "bg-blue-600 text-white"
-                      : isTopStars
-                      ? "bg-white text-gray-800 hover:bg-amber-50 border border-gray-200 hover:border-amber-300"
-                      : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                  )}
-                >
-                  <Icon 
-                    size={20} 
-                    strokeWidth={1.8} 
-                    className={cn("mb-1", isActive && isTopStars && "fill-white")}
-                  />
-                  <span className="text-xs font-medium leading-tight text-center">{filter.label}</span>
-                </button>
-              );
-              
-              if (isTopStars) {
-                return (
-                  <Tooltip key={filter.id}>
-                    <TooltipTrigger asChild>
-                      {buttonElement}
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[180px]">
-                      <p className="text-center">Grosse Events schweizweit – ohne lokale Einschränkung</p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-              
-              return buttonElement;
-            })}
-          </div>
+          {(() => {
+            // Group quick filters into rows of 3
+            const rows: typeof quickFilters[] = [];
+            for (let i = 0; i < quickFilters.length; i += 3) {
+              rows.push(quickFilters.slice(i, i + 3));
+            }
+            
+            // Find which row contains "mit-kind" (to show drawer below it)
+            const familyRowIndex = rows.findIndex(row => row.some(f => f.id === "mit-kind"));
+            
+            return (
+              <div className="space-y-2">
+                {rows.map((row, rowIndex) => (
+                  <div key={rowIndex}>
+                    {/* Row of 3 quick filter buttons */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {row.map((filter) => {
+                        const Icon = filter.icon;
+                        const isActive = selectedQuickFilters.includes(filter.id);
+                        const isTopStars = filter.id === "top-stars";
+                        const isMitKind = filter.id === "mit-kind";
+                        
+                        const buttonElement = (
+                          <button
+                            key={filter.id}
+                            onClick={() => toggleQuickFilter(filter.id)}
+                            className={cn(
+                              "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
+                              isActive && isTopStars
+                                ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30"
+                                : isActive && isMitKind
+                                ? "bg-gradient-to-br from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/30"
+                                : isActive
+                                ? "bg-blue-600 text-white"
+                                : isTopStars
+                                ? "bg-white text-gray-800 hover:bg-amber-50 border border-gray-200 hover:border-amber-300"
+                                : isMitKind
+                                ? "bg-white text-gray-800 hover:bg-pink-50 border border-gray-200 hover:border-pink-300"
+                                : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                            )}
+                          >
+                            <Icon 
+                              size={20} 
+                              strokeWidth={1.8} 
+                              className={cn("mb-1", (isActive && isTopStars) && "fill-white")}
+                            />
+                            <span className="text-xs font-medium leading-tight text-center">{filter.label}</span>
+                          </button>
+                        );
+                        
+                        if (isTopStars) {
+                          return (
+                            <Tooltip key={filter.id}>
+                              <TooltipTrigger asChild>
+                                {buttonElement}
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[180px]">
+                                <p className="text-center">Grosse Events schweizweit – ohne lokale Einschränkung</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        
+                        return buttonElement;
+                      })}
+                    </div>
+                    
+                    {/* Inline Drawer for "Mit Kind" - appears below the row containing it */}
+                    {rowIndex === familyRowIndex && isFamilyFilterActive && (
+                      <div className="mt-2 p-3 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-col gap-2">
+                          {familyAgeFilters.map((ageFilter) => {
+                            const isAgeActive = selectedFamilyAgeFilter === ageFilter.id;
+                            return (
+                              <button
+                                key={ageFilter.id}
+                                onClick={() => setSelectedFamilyAgeFilter(ageFilter.id)}
+                                className={cn(
+                                  "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left",
+                                  isAgeActive
+                                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
+                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+                                )}
+                              >
+                                {ageFilter.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </TooltipProvider>
       </div>
 
