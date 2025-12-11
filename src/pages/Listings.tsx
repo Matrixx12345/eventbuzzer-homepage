@@ -426,7 +426,10 @@ const Listings = () => {
     // Time filter (single-select)
     // If a time filter is selected, events WITHOUT a start_date are excluded
     if (selectedTimeFilter) {
-      if (!event.start_date) return false; // Exclude permanent attractions from time-based filters
+      if (!event.start_date) {
+        console.log(`EXCLUDED (no date): "${event.title}" - start_date: ${event.start_date}`);
+        return false; // Exclude permanent attractions from time-based filters
+      }
       
       const eventDate = parseISO(event.start_date);
       const now = new Date();
@@ -441,6 +444,7 @@ const Listings = () => {
           // Event already started today OR starts within 4 hours
           matchesTimeFilter = (isToday(eventDate) && eventTime <= currentTime) || 
                               (eventTime >= currentTime && eventTime <= fourHoursFromNow);
+          console.log(`NOW CHECK: "${event.title}" - ${event.start_date} - matches: ${matchesTimeFilter}`);
           break;
         }
         case "today":
