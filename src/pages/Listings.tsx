@@ -462,16 +462,10 @@ const Listings = () => {
     
     // Time filter (single-select)
     if (selectedTimeFilter) {
-      // For "now" filter: exclude events without start_date (permanent attractions)
-      // For other filters: include permanent attractions (they're always available)
-      if (selectedTimeFilter === "now" && !event.start_date) {
-        return false;
-      }
-      
-      // If event has no date but filter is NOT "now", include it (permanent attractions)
+      // Events without start_date should be EXCLUDED from specific time filters
+      // (they can't match "today", "tomorrow", etc. since they have no date)
       if (!event.start_date) {
-        // Permanent attractions pass through for today, tomorrow, this week, etc.
-        return true;
+        return false;
       }
       
       const eventDate = parseISO(event.start_date);
