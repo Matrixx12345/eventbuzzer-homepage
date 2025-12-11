@@ -137,7 +137,6 @@ const quickFilters = [
   { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["fotospots"] },
   { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
   { id: "geburtstag", label: "Geburtstag & Gruppen", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
-  { id: "gratis", label: "Gratis", icon: Gift, tags: ["kostenlos-budget"] },
 ];
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
@@ -605,12 +604,6 @@ const Listings = () => {
       const birthdayTags = ["besondere-anlaesse", "freunde-gruppen"];
       const hasAnyTag = birthdayTags.some(tag => eventTags.includes(tag));
       if (!hasAnyTag) return false;
-    }
-    
-    // Quick filters - Gratis (tag-based)
-    if (selectedQuickFilters.includes("gratis")) {
-      const eventTags = event.tags || [];
-      if (!eventTags.includes("kostenlos-budget")) return false;
     }
     
     // Source filter (based on external_id prefix)
