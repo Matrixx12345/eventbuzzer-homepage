@@ -23,7 +23,8 @@ import {
   Flame,
   LayoutGrid,
   Zap,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Gift
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -127,15 +128,16 @@ interface TaxonomyItem {
 
 // Quick filters with icons
 const quickFilters = [
-  { id: "geburtstag", label: "Geburtstag", icon: Cake },
-  { id: "mistwetter", label: "Mistwetter", icon: CloudRain },
-  { id: "top-stars", label: "Top Stars", icon: Star },
-  { id: "foto-spots", label: "Foto-Spots", icon: Camera },
-  { id: "romantik", label: "Romantik", icon: HeartIcon },
-  { id: "mit-kind", label: "Mit Kind", icon: Smile },
-  { id: "nightlife", label: "Nightlife", icon: PartyPopper },
-  { id: "wellness", label: "Wellness", icon: Waves },
-  { id: "natur", label: "Natur", icon: Mountain },
+  { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
+  { id: "mit-kind", label: "Mit Kind", icon: Smile, tags: ["familie-kinder"] },
+  { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
+  { id: "top-stars", label: "Top Stars", icon: Star, tags: [] }, // Special logic, no tag filter
+  { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
+  { id: "natur", label: "Natur & Outdoor", icon: Mountain, tags: ["natur-erlebnisse"] },
+  { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["fotospots"] },
+  { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
+  { id: "geburtstag", label: "Geburtstag & Gruppen", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
+  { id: "gratis", label: "Gratis", icon: Gift, tags: ["kostenlos-budget"] },
 ];
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
@@ -536,9 +538,12 @@ const Listings = () => {
       if (!matchesTimeFilter) return false;
     }
     
-    // Quick filters - Romantik
+    // Quick filters - Romantik (tag-based + keyword fallback)
     if (selectedQuickFilters.includes("romantik")) {
-      if (!isRomanticEvent(event)) return false;
+      const eventTags = event.tags || [];
+      const hasRomanticTag = eventTags.includes("romantisch-date");
+      // Fallback to keyword matching if no tag
+      if (!hasRomanticTag && !isRomanticEvent(event)) return false;
     }
     
     // Quick filters - Top Stars (filter by VIP artists, radius already disabled above)
@@ -566,6 +571,46 @@ const Listings = () => {
       // Event must have ALL tags required by the filter
       const hasAllTags = currentFilter.tags.every(tag => eventTags.includes(tag));
       if (!hasAllTags) return false;
+    }
+    
+    // Quick filters - Wellness (tag-based)
+    if (selectedQuickFilters.includes("wellness")) {
+      const eventTags = event.tags || [];
+      if (!eventTags.includes("wellness-selfcare")) return false;
+    }
+    
+    // Quick filters - Natur & Outdoor (tag-based)
+    if (selectedQuickFilters.includes("natur")) {
+      const eventTags = event.tags || [];
+      if (!eventTags.includes("natur-erlebnisse")) return false;
+    }
+    
+    // Quick filters - Foto-Spots (tag-based)
+    if (selectedQuickFilters.includes("foto-spots")) {
+      const eventTags = event.tags || [];
+      if (!eventTags.includes("fotospots")) return false;
+    }
+    
+    // Quick filters - Nightlife (OR logic: any of the tags)
+    if (selectedQuickFilters.includes("nightlife")) {
+      const eventTags = event.tags || [];
+      const nightlifeTags = ["nightlife-party", "afterwork", "rooftop-aussicht"];
+      const hasAnyTag = nightlifeTags.some(tag => eventTags.includes(tag));
+      if (!hasAnyTag) return false;
+    }
+    
+    // Quick filters - Geburtstag & Gruppen (OR logic: any of the tags)
+    if (selectedQuickFilters.includes("geburtstag")) {
+      const eventTags = event.tags || [];
+      const birthdayTags = ["besondere-anlaesse", "freunde-gruppen"];
+      const hasAnyTag = birthdayTags.some(tag => eventTags.includes(tag));
+      if (!hasAnyTag) return false;
+    }
+    
+    // Quick filters - Gratis (tag-based)
+    if (selectedQuickFilters.includes("gratis")) {
+      const eventTags = event.tags || [];
+      if (!eventTags.includes("kostenlos-budget")) return false;
     }
     
     // Source filter (based on external_id prefix)
