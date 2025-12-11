@@ -430,16 +430,16 @@ const Listings = () => {
       
       let matchesTimeFilter = false;
       switch (selectedTimeFilter) {
-        case "now":
-          // Events happening right now: starts today and current time is after start or starts within 2 hours
-          if (isToday(eventDate)) {
-            const eventTime = eventDate.getTime();
-            const currentTime = now.getTime();
-            const twoHoursFromNow = currentTime + (2 * 60 * 60 * 1000);
-            // Event already started OR starts within 2 hours
-            matchesTimeFilter = eventTime <= currentTime || eventTime <= twoHoursFromNow;
-          }
+        case "now": {
+          // Events starting within the next 4 hours (regardless of day)
+          const eventTime = eventDate.getTime();
+          const currentTime = now.getTime();
+          const fourHoursFromNow = currentTime + (4 * 60 * 60 * 1000);
+          // Event already started today OR starts within 4 hours
+          matchesTimeFilter = (isToday(eventDate) && eventTime <= currentTime) || 
+                              (eventTime >= currentTime && eventTime <= fourHoursFromNow);
           break;
+        }
         case "today":
           matchesTimeFilter = isToday(eventDate);
           break;
