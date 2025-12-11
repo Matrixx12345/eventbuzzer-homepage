@@ -271,6 +271,12 @@ const Listings = () => {
         setSelectedFamilyAgeFilter("alle");
       }
       
+      // If activating "top-stars", reset category and subcategory to "Alle"
+      if (filterId === "top-stars") {
+        setSelectedCategoryId(null);
+        setSelectedSubcategoryId(null);
+      }
+      
       return [filterId]; // Single-select: only this filter is active
     });
   };
