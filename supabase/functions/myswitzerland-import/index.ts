@@ -516,21 +516,42 @@ serve(async (req) => {
         }
       }
 
-      // KI-Beschreibung generieren falls nötig
+      // KI-Beschreibungen generieren falls nötig (BEIDE: short UND long)
       let shortDescription = cleanDescription ? cleanDescription.substring(0, 200) : "";
+      let longDescription = cleanDescription || "";
 
       if (OPENAI_API_KEY && (!cleanDescription || cleanDescription.length < 50)) {
         try {
-          const promptInstruction = `Schreibe eine einladende Beschreibung auf Deutsch für diese Schweizer Attraktion: "${title}" in ${city || "der Schweiz"}. 
-Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
+          const promptInstruction = `Du bist ein Schweiz-Tourismus-Experte. Schreibe für diese Attraktion ZWEI Beschreibungen auf Deutsch:
+
+Attraktion: "${title}" in ${city || "der Schweiz"}
+Typ: ${itemType}
+
+WICHTIG: Antworte EXAKT in diesem JSON-Format:
+{"short": "Kurze einladende Beschreibung (max 2 Sätze, ca. 150 Zeichen)", "long": "Ausführliche Beschreibung (3-5 Sätze, ca. 300-500 Zeichen)"}
+
+Stil: Einladend, Quiet Luxury. Keine Emojis. Nur das JSON, keine Erklärungen.`;
 
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_API_KEY}` },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: promptInstruction }], max_tokens: 100 }),
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: promptInstruction }], max_tokens: 300 }),
           });
           const aiData = await aiRes.json();
-          shortDescription = aiData.choices?.[0]?.message?.content || shortDescription;
+          const aiContent = aiData.choices?.[0]?.message?.content || "";
+          
+          // JSON parsen
+          try {
+            const parsed = JSON.parse(aiContent.trim());
+            shortDescription = parsed.short || shortDescription;
+            longDescription = parsed.long || longDescription;
+            console.log(`AI generated descriptions for "${title}": short=${shortDescription.length} chars, long=${longDescription.length} chars`);
+          } catch (parseErr) {
+            // Falls kein JSON, verwende den ganzen Text als short
+            shortDescription = aiContent.substring(0, 200);
+            longDescription = aiContent;
+            console.log(`AI fallback (no JSON) for "${title}"`);
+          }
         } catch (e) {
           console.error("AI Fehler für", title, e);
         }
@@ -557,7 +578,7 @@ Typ: ${itemType}. Max 2 Sätze. Stil: Einladend, Quiet Luxury. Keine Emojis.`;
         .upsert({
           external_id: externalId,
           title: title,
-          description: cleanDescription,
+          description: longDescription,
           short_description: shortDescription,
           location: city || "Schweiz",
           venue_name: item.containedInPlace?.name || title,
