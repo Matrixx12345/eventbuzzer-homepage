@@ -128,7 +128,7 @@ interface TaxonomyItem {
 
 // Quick filters with icons - using exact tag strings from backend
 const quickFilters = [
-  { id: "geburtstag", label: "Geburtstag & Gruppen", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
+  { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
   { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
   { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
   { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["foto-spot"] },
@@ -136,7 +136,7 @@ const quickFilters = [
   { id: "mit-kind", label: "Mit Kind", icon: Smile, tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"] },
   { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
   { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
-  { id: "natur", label: "Natur & Outdoor", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
+  { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
 ];
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
