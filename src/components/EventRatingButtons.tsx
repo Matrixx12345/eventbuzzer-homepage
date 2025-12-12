@@ -98,6 +98,7 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
           handleRating('like');
         }}
         disabled={isLoading || !sessionId}
+        title="Gefällt mir"
         className={`
           flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-sm
           ${userRating === 'like' 
@@ -119,6 +120,7 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
           handleRating('dislike');
         }}
         disabled={isLoading || !sessionId}
+        title="Gefällt mir nicht"
         className={`
           flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-sm
           ${userRating === 'dislike' 
