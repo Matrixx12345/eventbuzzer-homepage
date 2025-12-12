@@ -46,6 +46,33 @@ serve(async (req) => {
       throw error;
     }
 
+    // Fetch feedback for all events with ratings
+    const eventIds = data?.map((item: any) => item.event_id) || [];
+    
+    const { data: feedbackData, error: feedbackError } = await supabase
+      .from("event_ratings")
+      .select("event_id, feedback_category, feedback_text")
+      .in("event_id", eventIds)
+      .not("feedback_category", "is", null);
+
+    if (feedbackError) {
+      console.error("Feedback query error:", feedbackError);
+    }
+
+    // Group feedback by event_id
+    const feedbackByEvent: Record<string, { categories: string[], texts: string[] }> = {};
+    feedbackData?.forEach((fb: any) => {
+      if (!feedbackByEvent[fb.event_id]) {
+        feedbackByEvent[fb.event_id] = { categories: [], texts: [] };
+      }
+      if (fb.feedback_category) {
+        feedbackByEvent[fb.event_id].categories.push(fb.feedback_category);
+      }
+      if (fb.feedback_text) {
+        feedbackByEvent[fb.event_id].texts.push(fb.feedback_text);
+      }
+    });
+
     // Transform data for frontend
     const ratings = data?.map((item: any) => ({
       id: item.events.id,
@@ -55,6 +82,8 @@ serve(async (req) => {
       dislikes_count: item.dislikes_count,
       total_ratings: item.total_ratings,
       quality_score: item.quality_score,
+      feedback_categories: feedbackByEvent[item.event_id]?.categories || [],
+      feedback_texts: feedbackByEvent[item.event_id]?.texts || [],
     })) || [];
 
     return new Response(JSON.stringify({ success: true, data: ratings }), {
