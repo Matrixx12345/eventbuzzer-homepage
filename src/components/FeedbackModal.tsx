@@ -43,37 +43,37 @@ export function FeedbackModal({ eventTitle, onClose, onSubmit, isLoading }: Feed
       onClick={handleOverlayClick}
     >
       <div 
-        className="bg-card rounded-xl w-full max-w-xs shadow-2xl overflow-hidden"
+        className="bg-card rounded-lg w-full max-w-[280px] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {submitted ? (
           // Thank you message
-          <div className="p-6 text-center">
-            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Check className="w-6 h-6 text-emerald-600" />
+          <div className="p-4 text-center">
+            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Check className="w-5 h-5 text-emerald-600" />
             </div>
-            <p className="text-card-foreground font-medium">Vielen Dank!</p>
-            <p className="text-muted-foreground text-sm mt-1">Dein Feedback hilft uns</p>
+            <p className="text-card-foreground font-medium text-sm">Vielen Dank!</p>
+            <p className="text-muted-foreground text-xs mt-0.5">Dein Feedback hilft uns</p>
           </div>
         ) : (
           <>
             {/* Header */}
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-sm font-medium text-card-foreground">Was stimmt nicht?</span>
+            <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+              <span className="text-xs font-medium text-card-foreground">Was stimmt nicht?</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose();
                 }}
-                className="p-1 hover:bg-muted rounded transition-colors"
+                className="p-0.5 hover:bg-muted rounded transition-colors"
                 disabled={isLoading}
               >
-                <X className="w-4 h-4 text-muted-foreground" />
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </div>
 
             {/* Options - click to select and submit */}
-            <div className="p-2">
+            <div className="p-1.5">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
@@ -82,7 +82,7 @@ export function FeedbackModal({ eventTitle, onClose, onSubmit, isLoading }: Feed
                     handleSelect(cat.id);
                   }}
                   disabled={isLoading}
-                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-card-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                  className="w-full text-left px-2.5 py-2 rounded-md text-xs text-card-foreground hover:bg-muted transition-colors disabled:opacity-50"
                 >
                   {cat.label}
                 </button>
