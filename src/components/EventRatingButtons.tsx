@@ -54,7 +54,7 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
     }
   };
 
-  const handleFeedbackSubmit = async (category: string, text: string) => {
+  const handleFeedbackSubmit = async (category: string) => {
     if (!sessionId) return;
 
     setIsLoading(true);
@@ -67,7 +67,6 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
           rating_type: 'dislike',
           session_id: sessionId,
           feedback_category: category,
-          feedback_text: text,
         }),
       });
 
@@ -75,12 +74,12 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
       if (data.success) {
         setUserRating('dislike');
         setStats(data.stats);
-        setShowFeedbackModal(false);
       }
     } catch (error) {
       console.error('Feedback error:', error);
     } finally {
       setIsLoading(false);
+      setShowFeedbackModal(false);
     }
   };
 
@@ -102,13 +101,13 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
         className={`
           flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-sm
           ${userRating === 'like' 
-            ? 'bg-success text-success-foreground shadow-md scale-105' 
+            ? 'bg-emerald-100 text-emerald-700 shadow-md scale-105' 
             : 'bg-muted hover:bg-muted/80 text-muted-foreground'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
       >
-        <ThumbsUp className={`w-4 h-4 ${userRating === 'like' ? 'fill-current' : ''}`} />
+        <ThumbsUp className={`w-4 h-4 ${userRating === 'like' ? 'fill-emerald-500 text-emerald-600' : ''}`} />
         <span className="font-medium">{stats.likes_count}</span>
       </button>
 
