@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { 
   Heart, 
   SlidersHorizontal, 
@@ -1433,6 +1434,9 @@ const Listings = () => {
                               {event.short_description}
                             </p>
                           )}
+                          
+                          {/* Rating Buttons */}
+                          <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                         </div>
                       </article>
                     </Link>
