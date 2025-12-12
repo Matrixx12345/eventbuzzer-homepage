@@ -239,10 +239,10 @@ const AdminUpload = () => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-center text-sm text-foreground">
                         {event.likes_count}
                       </TableCell>
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-center text-sm text-foreground">
                         {event.dislikes_count}
                       </TableCell>
                       <TableCell className="text-center">
@@ -258,7 +258,7 @@ const AdminUpload = () => {
                           {(event.quality_score * 100).toFixed(0)}%
                         </span>
                       </TableCell>
-                      <TableCell className="text-center text-sm font-medium">
+                      <TableCell className="text-center text-sm font-medium text-foreground">
                         {event.total_ratings}
                       </TableCell>
                     </TableRow>
