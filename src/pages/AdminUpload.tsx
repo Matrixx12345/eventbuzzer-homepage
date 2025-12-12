@@ -11,6 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { createClient } from "@supabase/supabase-js";
+
+// External Supabase client for ratings
+const externalSupabase = createClient(
+  import.meta.env.VITE_EXTERNAL_SUPABASE_URL || "https://tfkiyvhfhvkejpljsnrk.supabase.co",
+  import.meta.env.VITE_EXTERNAL_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0Nzg2NjYsImV4cCI6MjA2NTA1NDY2Nn0.hfKLvvSDBxNrhLNBgYhmRogrpVOnmgnskMPkhWgqZOE"
+);
 
 interface EventRating {
   id: string;
@@ -19,7 +26,7 @@ interface EventRating {
   likes_count: number;
   dislikes_count: number;
   quality_score: number;
-  wrong_category_count: number;
+  total_ratings: number;
 }
 
 const AdminUpload = () => {
@@ -44,20 +51,50 @@ const AdminUpload = () => {
     setIsUploading(false);
   };
 
-  // Fetch ratings on mount
+  // Fetch ratings directly from Supabase
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const response = await fetch(
-          "https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/get-event-ratings"
-        );
-        const data = await response.json();
+        const { data, error } = await externalSupabase
+          .from('events')
+          .select(`
+            id,
+            title,
+            tags,
+            event_stats (
+              likes_count,
+              dislikes_count,
+              quality_score,
+              total_ratings
+            )
+          `)
+          .not('event_stats', 'is', null)
+          .limit(50);
         
-        if (data.error) {
-          setRatingsError(data.error);
-        } else {
-          setRatings(data.ratings || []);
+        if (error) {
+          setRatingsError(error.message);
+          return;
         }
+
+        // Transform and filter data
+        const transformed = (data || [])
+          .filter((e: any) => e.event_stats && e.event_stats.total_ratings > 0)
+          .map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            tags: e.tags,
+            likes_count: e.event_stats.likes_count || 0,
+            dislikes_count: e.event_stats.dislikes_count || 0,
+            quality_score: e.event_stats.quality_score || 0,
+            total_ratings: e.event_stats.total_ratings || 0,
+          }))
+          .sort((a: EventRating, b: EventRating) => {
+            if (b.total_ratings !== a.total_ratings) return b.total_ratings - a.total_ratings;
+            return b.quality_score - a.quality_score;
+          })
+          .slice(0, 50);
+
+        setRatings(transformed);
       } catch (err) {
         console.error("Fetch error:", err);
         setRatingsError("Fehler beim Laden der Ratings");
@@ -206,10 +243,7 @@ const AdminUpload = () => {
                       Dislikes
                     </TableHead>
                     <TableHead className="text-center w-24 text-xs">Score</TableHead>
-                    <TableHead className="text-center w-28 text-xs">
-                      <AlertTriangle size={12} className="inline mr-1 text-amber-500" />
-                      Wrong Cat
-                    </TableHead>
+                    <TableHead className="text-center w-20 text-xs">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -254,8 +288,8 @@ const AdminUpload = () => {
                           {(event.quality_score * 100).toFixed(0)}%
                         </span>
                       </TableCell>
-                      <TableCell className="text-center text-sm">
-                        {event.wrong_category_count}
+                      <TableCell className="text-center text-sm font-medium">
+                        {event.total_ratings}
                       </TableCell>
                     </TableRow>
                   ))}
