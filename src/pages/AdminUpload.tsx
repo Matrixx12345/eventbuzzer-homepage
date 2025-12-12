@@ -53,7 +53,6 @@ const AdminUpload = () => {
           .from('events')
           .select('id, title, tags, event_stats!inner(likes_count, dislikes_count, quality_score, total_ratings)')
           .gt('event_stats.total_ratings', 0)
-          .order('event_stats.total_ratings', { ascending: false })
           .limit(50);
 
         if (error) {
@@ -61,15 +60,18 @@ const AdminUpload = () => {
           return;
         }
 
-        const transformed = (data || []).map((e: any) => ({
-          id: e.id,
-          title: e.title,
-          tags: e.tags,
-          likes_count: e.event_stats?.likes_count || 0,
-          dislikes_count: e.event_stats?.dislikes_count || 0,
-          quality_score: e.event_stats?.quality_score || 0,
-          total_ratings: e.event_stats?.total_ratings || 0,
-        }));
+        // Transform and sort client-side
+        const transformed = (data || [])
+          .map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            tags: e.tags,
+            likes_count: e.event_stats?.likes_count || 0,
+            dislikes_count: e.event_stats?.dislikes_count || 0,
+            quality_score: e.event_stats?.quality_score || 0,
+            total_ratings: e.event_stats?.total_ratings || 0,
+          }))
+          .sort((a: EventRating, b: EventRating) => b.total_ratings - a.total_ratings);
 
         setRatings(transformed);
       } catch (err) {
