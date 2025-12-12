@@ -1150,7 +1150,7 @@ const Listings = () => {
             if (lower.includes('kunst')) return Palette;
             if (lower.includes('kulinarik')) return UtensilsCrossed;
             if (lower.includes('freizeit')) return Sparkles;
-            if (lower.includes('märkte')) return Heart;
+            if (lower.includes('märkte')) return Gift;
             return Sparkles;
           };
           
