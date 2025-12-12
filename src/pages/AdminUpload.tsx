@@ -199,10 +199,10 @@ const AdminUpload = () => {
               Keine Events mit Ratings gefunden.
             </div>
           ) : (
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden bg-white">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50">
+                  <TableRow className="bg-white">
                     <TableHead className="font-medium text-xs">Event</TableHead>
                     <TableHead className="text-center w-20 text-xs">
                       <Heart size={12} className="inline mr-1 text-red-500" />
@@ -218,7 +218,7 @@ const AdminUpload = () => {
                 </TableHeader>
                 <TableBody>
                   {ratings.map((event) => (
-                    <TableRow key={event.id} className="hover:bg-muted/30">
+                    <TableRow key={event.id} className="bg-white hover:bg-gray-50">
                       <TableCell className="py-2">
                         <Link 
                           to={`/event/${event.id}`}
