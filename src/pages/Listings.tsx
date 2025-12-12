@@ -1364,19 +1364,20 @@ const Listings = () => {
                   const eventSlug = event.id;
                   
                   return (
-                    <Link
+                    <article 
                       key={event.id}
-                      to={`/event/${eventSlug}`}
-                      className="block group"
+                      className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out group"
                     >
-                      <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out">
+                      <Link
+                        to={`/event/${eventSlug}`}
+                        className="block"
+                      >
                         <div className="relative overflow-hidden">
                           <img
                             src={eventImage}
                             alt={event.title}
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-
 
                           {/* Favorite Button */}
                           <button
@@ -1434,12 +1435,14 @@ const Listings = () => {
                               {event.short_description}
                             </p>
                           )}
-                          
-                          {/* Rating Buttons */}
-                          <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                         </div>
-                      </article>
-                    </Link>
+                      </Link>
+                      
+                      {/* Rating Buttons - outside of Link to prevent navigation */}
+                      <div className="px-5 pb-4 -mt-1">
+                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                      </div>
+                    </article>
                   );
                 })}
               </div>
