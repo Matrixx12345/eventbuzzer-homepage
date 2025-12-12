@@ -35,8 +35,8 @@ interface EventRating {
 
 const FILTER_OPTIONS = [
   { key: "all", label: "Alle" },
-  { key: "wrong_category", label: "Wrong Category" },
-  { key: "poor_quality", label: "Poor Quality" },
+  { key: "wrong-category", label: "Wrong Category" },
+  { key: "poor-quality", label: "Poor Quality" },
   { key: "duplicate", label: "Duplicate" },
   { key: "outdated", label: "Outdated" },
   { key: "inappropriate", label: "Inappropriate" },
@@ -106,7 +106,7 @@ const AdminUpload = () => {
   const filteredRatings = ratings.filter((event) => {
     if (activeFilter === "all") return true;
     return event.feedback_categories?.some(
-      (cat) => cat.toLowerCase().replace(/\s+/g, "_") === activeFilter
+      (cat) => cat === activeFilter
     );
   });
 
