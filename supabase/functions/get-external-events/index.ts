@@ -37,62 +37,30 @@ serve(async (req) => {
     // Create client for external Supabase
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // Get today's date in ISO format for filtering future events
-    const today = new Date().toISOString();
-
-    // First, get total count for pagination info
-    const { count: futureCount } = await externalSupabase
+    // First, get total count for pagination info (ALL events, no date filter)
+    const { count: totalEvents, error: countError } = await externalSupabase
       .from("events")
-      .select("*", { count: "exact", head: true })
-      .gte("start_date", today);
+      .select("*", { count: "exact", head: true });
 
-    const { count: permanentCount } = await externalSupabase
-      .from("events")
-      .select("*", { count: "exact", head: true })
-      .is("start_date", null);
-
-    const totalEvents = (futureCount || 0) + (permanentCount || 0);
-    console.log(`Total events in DB: ${totalEvents} (future: ${futureCount}, permanent: ${permanentCount})`);
-
-    // Fetch paginated future events
-    const { data: futureEvents, error: futureError } = await externalSupabase
-      .from("events")
-      .select("*")
-      .gte("start_date", today)
-      .order("start_date", { ascending: true })
-      .range(offset, offset + limit - 1);
-
-    // Calculate how many permanent events to fetch based on remaining slots
-    const futureEventsFetched = futureEvents?.length || 0;
-    const remainingSlots = limit - futureEventsFetched;
-    const permanentOffset = Math.max(0, offset - (futureCount || 0));
-
-    let permanentEvents: any[] = [];
-    if (remainingSlots > 0 || offset >= (futureCount || 0)) {
-      const { data: permData, error: permanentError } = await externalSupabase
-        .from("events")
-        .select("*")
-        .is("start_date", null)
-        .range(permanentOffset, permanentOffset + Math.max(remainingSlots, limit) - 1);
-      
-      if (permanentError) {
-        console.error("Permanent events query error:", JSON.stringify(permanentError));
-      }
-      permanentEvents = permData || [];
+    if (countError) {
+      console.error("Count query error:", JSON.stringify(countError));
     }
 
-    // Combine events
-    const allEvents = [...(futureEvents || []), ...permanentEvents];
-    
-    // Deduplicate by id
-    const uniqueIds = new Set();
-    const data = allEvents.filter(event => {
-      if (uniqueIds.has(event.id)) return false;
-      uniqueIds.add(event.id);
-      return true;
-    }).slice(0, limit); // Ensure we don't exceed limit
+    console.log(`Total events in DB: ${totalEvents}`);
 
-    console.log(`Fetched ${data.length} events (offset: ${offset})`);
+    // Fetch paginated events - NO date filters, show ALL events
+    const { data, error: queryError } = await externalSupabase
+      .from("events")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (queryError) {
+      console.error("Events query error:", JSON.stringify(queryError));
+      throw new Error(`Query failed: ${queryError.message}`);
+    }
+
+    console.log(`Fetched ${data?.length || 0} events (offset: ${offset})`);
 
     // Only fetch taxonomy and VIP artists on initial load
     let taxonomy: any[] = [];
@@ -121,13 +89,8 @@ serve(async (req) => {
       vipArtists = vipData?.map(a => a.artists_name).filter(Boolean) || [];
     }
 
-    if (futureError) {
-      console.error("Supabase query error:", JSON.stringify(futureError));
-      throw new Error(`Query failed: ${futureError.message} (code: ${futureError.code})`);
-    }
-
-    const hasMore = offset + data.length < totalEvents;
-    const nextOffset = offset + data.length;
+    const hasMore = offset + (data?.length || 0) < (totalEvents || 0);
+    const nextOffset = offset + (data?.length || 0);
 
     return new Response(JSON.stringify({ 
       events: data || [], 
@@ -136,8 +99,8 @@ serve(async (req) => {
       pagination: {
         offset,
         limit,
-        fetched: data.length,
-        total: totalEvents,
+        fetched: data?.length || 0,
+        total: totalEvents || 0,
         hasMore,
         nextOffset
       }
