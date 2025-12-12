@@ -1377,11 +1377,6 @@ const Listings = () => {
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
 
-                          {/* Rating Buttons - top left on image */}
-                          <div className="absolute top-3 left-3">
-                            <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                          </div>
-
                           {/* Favorite Button - top right */}
                           <button
                             onClick={(e) => {
@@ -1408,14 +1403,18 @@ const Listings = () => {
                         </div>
 
                         <div className="p-5">
-                          <p className="text-xs text-neutral-400 mb-1.5 font-medium flex items-center gap-2">
-                            <span>{formatEventDate(event.start_date, event.external_id)}</span>
-                            {event.external_id?.startsWith("mys_") && event.available_months?.length === 12 && (
-                              <span className="text-[11px] text-amber-600/80 font-medium tracking-wide">
-                                Ganzjährig
-                              </span>
-                            )}
-                          </p>
+                          {/* Date and Rating row */}
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-xs text-neutral-400 font-medium flex items-center gap-2">
+                              <span>{formatEventDate(event.start_date, event.external_id)}</span>
+                              {event.external_id?.startsWith("mys_") && event.available_months?.length === 12 && (
+                                <span className="text-[11px] text-amber-600/80 font-medium tracking-wide">
+                                  Ganzjährig
+                                </span>
+                              )}
+                            </p>
+                            <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                          </div>
                           <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
                             {event.title}
                           </h3>
