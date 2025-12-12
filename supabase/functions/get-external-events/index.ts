@@ -40,13 +40,13 @@ serve(async (req) => {
       .select("*")
       .gte("start_date", today)
       .order("start_date", { ascending: true })
-      .limit(200);
+      .limit(2000);
 
     const { data: permanentEvents, error: permanentError } = await externalSupabase
       .from("events")
       .select("*")
       .is("start_date", null)
-      .limit(100);
+      .limit(1000);
 
     // Fetch taxonomy for categories
     const { data: taxonomy, error: taxonomyError } = await externalSupabase
