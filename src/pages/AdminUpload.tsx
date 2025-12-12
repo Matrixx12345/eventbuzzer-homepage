@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { uploadAllAssetsToStorage } from "@/utils/uploadAssetsToStorage";
-import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, AlertTriangle, BarChart3 } from "lucide-react";
+import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, BarChart3 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,13 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@supabase/supabase-js";
 
-// External Supabase client for ratings
-const externalSupabase = createClient(
-  import.meta.env.VITE_EXTERNAL_SUPABASE_URL || "https://tfkiyvhfhvkejpljsnrk.supabase.co",
-  import.meta.env.VITE_EXTERNAL_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0Nzg2NjYsImV4cCI6MjA2NTA1NDY2Nn0.hfKLvvSDBxNrhLNBgYhmRogrpVOnmgnskMPkhWgqZOE"
-);
 
 interface EventRating {
   id: string;
@@ -51,48 +45,40 @@ const AdminUpload = () => {
     setIsUploading(false);
   };
 
-  // Fetch ratings directly from Supabase
+  // Fetch ratings from external Supabase via REST API
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const { data, error } = await externalSupabase
-          .from('events')
-          .select(`
-            id,
-            title,
-            tags,
-            event_stats (
-              likes_count,
-              dislikes_count,
-              quality_score,
-              total_ratings
-            )
-          `)
-          .not('event_stats', 'is', null)
-          .limit(50);
+        const externalUrl = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
+        const externalAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0Nzg2NjYsImV4cCI6MjA2NTA1NDY2Nn0.hfKLvvSDBxNrhLNBgYhmRogrpVOnmgnskMPkhWgqZOE";
         
-        if (error) {
-          setRatingsError(error.message);
+        const response = await fetch(
+          `${externalUrl}/rest/v1/events?select=id,title,tags,event_stats!inner(likes_count,dislikes_count,quality_score,total_ratings)&event_stats.total_ratings=gt.0&order=event_stats.total_ratings.desc&limit=50`,
+          {
+            headers: {
+              'apikey': externalAnonKey,
+              'Authorization': `Bearer ${externalAnonKey}`,
+            }
+          }
+        );
+        
+        if (!response.ok) {
+          setRatingsError(`HTTP ${response.status}`);
           return;
         }
 
-        // Transform and filter data
-        const transformed = (data || [])
-          .filter((e: any) => e.event_stats && e.event_stats.total_ratings > 0)
-          .map((e: any) => ({
-            id: e.id,
-            title: e.title,
-            tags: e.tags,
-            likes_count: e.event_stats.likes_count || 0,
-            dislikes_count: e.event_stats.dislikes_count || 0,
-            quality_score: e.event_stats.quality_score || 0,
-            total_ratings: e.event_stats.total_ratings || 0,
-          }))
-          .sort((a: EventRating, b: EventRating) => {
-            if (b.total_ratings !== a.total_ratings) return b.total_ratings - a.total_ratings;
-            return b.quality_score - a.quality_score;
-          })
-          .slice(0, 50);
+        const data = await response.json();
+
+        // Transform data
+        const transformed = (data || []).map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          tags: e.tags,
+          likes_count: e.event_stats?.likes_count || 0,
+          dislikes_count: e.event_stats?.dislikes_count || 0,
+          quality_score: e.event_stats?.quality_score || 0,
+          total_ratings: e.event_stats?.total_ratings || 0,
+        }));
 
         setRatings(transformed);
       } catch (err) {
