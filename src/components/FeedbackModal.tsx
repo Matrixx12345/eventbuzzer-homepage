@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 
 interface FeedbackModalProps {
@@ -23,17 +24,23 @@ export function FeedbackModal({ eventTitle, onClose, onSubmit, isLoading }: Feed
   const handleSelect = (categoryId: string) => {
     if (isLoading || submitted) return;
     setSubmitted(true);
-    onSubmit(categoryId);
+    
+    // Show thank you briefly then submit
+    setTimeout(() => {
+      onSubmit(categoryId);
+    }, 1200);
   };
 
-  return (
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoading && !submitted) onClose();
+  };
+
+  const modalContent = (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!isLoading) onClose();
-      }}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4"
+      onClick={handleOverlayClick}
     >
       <div 
         className="bg-card rounded-xl w-full max-w-xs shadow-2xl overflow-hidden"
@@ -86,4 +93,7 @@ export function FeedbackModal({ eventTitle, onClose, onSubmit, isLoading }: Feed
       </div>
     </div>
   );
+
+  // Render as portal to avoid event bubbling issues
+  return createPortal(modalContent, document.body);
 }
