@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { uploadAllAssetsToStorage } from "@/utils/uploadAssetsToStorage";
 import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, BarChart3 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -21,6 +22,8 @@ interface EventRating {
   dislikes_count: number;
   quality_score: number;
   total_ratings: number;
+  feedback_categories: string[] | null;
+  feedback_texts: string[] | null;
 }
 
 const AdminUpload = () => {
@@ -50,7 +53,7 @@ const AdminUpload = () => {
     const fetchRatings = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-event-ratings`
+          `https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/get-event-ratings-detailed`
         );
         const result = await response.json();
         
@@ -214,6 +217,7 @@ const AdminUpload = () => {
                     </TableHead>
                     <TableHead className="text-center w-24 text-xs">Score</TableHead>
                     <TableHead className="text-center w-20 text-xs">Total</TableHead>
+                    <TableHead className="text-xs min-w-[180px]">Feedback</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -260,6 +264,28 @@ const AdminUpload = () => {
                       </TableCell>
                       <TableCell className="text-center text-sm font-medium text-foreground">
                         {event.total_ratings}
+                      </TableCell>
+                      <TableCell>
+                        {event.feedback_categories && event.feedback_categories.length > 0 ? (
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap gap-1">
+                              {event.feedback_categories.map((cat, idx) => (
+                                <Badge key={idx} variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {cat}
+                                </Badge>
+                              ))}
+                            </div>
+                            {event.feedback_texts && event.feedback_texts.length > 0 && (
+                              <div className="text-[10px] text-muted-foreground">
+                                {event.feedback_texts.slice(0, 2).map((text, idx) => (
+                                  <div key={idx} className="italic truncate max-w-[150px]">"{text}"</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
