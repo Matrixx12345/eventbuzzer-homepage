@@ -10,6 +10,7 @@ import Favorites from "./pages/Favorites";
 import Listings from "./pages/Listings";
 import SupabaseTest from "./pages/SupabaseTest";
 import AdminUpload from "./pages/AdminUpload";
+import AdminRatings from "./pages/AdminRatings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/listings" element={<Listings />} />
             <Route path="/supabase-test" element={<SupabaseTest />} />
             <Route path="/admin-upload" element={<AdminUpload />} />
+            <Route path="/admin/ratings" element={<AdminRatings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
