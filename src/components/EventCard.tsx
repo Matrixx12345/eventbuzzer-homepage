@@ -12,6 +12,7 @@ interface EventCardProps {
   date?: string;
   isPopular?: boolean;
   availableMonths?: number[];
+  externalId?: string;
 }
 
 // Helper to get season name from months array
@@ -31,12 +32,13 @@ const getSeasonName = (months: number[]): string => {
   return "Prüfe Verfügbarkeit";
 };
 
-const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = false, availableMonths }: EventCardProps) => {
+const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = false, availableMonths, externalId }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const isCurrentlyFavorite = isFavorite(id);
   const currentMonth = new Date().getMonth() + 1; // 1-12
   
-  // Determine availability status
+  // Only show availability badges for MySwitzerland events
+  const isMySwitzerland = externalId?.startsWith('mys_');
   const isYearRound = availableMonths?.length === 12;
   const isAvailableNow = availableMonths?.includes(currentMonth);
   const isSeasonal = availableMonths && availableMonths.length > 0 && availableMonths.length < 12;
@@ -59,18 +61,18 @@ const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = 
           </div>
         )}
 
-        {/* Availability Badge - below Popular if present */}
-        {availableMonths && availableMonths.length > 0 && (
+        {/* Availability Badge - only for MySwitzerland events */}
+        {isMySwitzerland && availableMonths && availableMonths.length > 0 && (
           <div className={`absolute ${isPopular ? 'top-12' : 'top-3'} left-3`}>
             {isYearRound ? (
-              <Badge variant="secondary" className="bg-emerald-500/90 text-white backdrop-blur-sm border-0 text-xs">
+              <Badge variant="secondary" className="backdrop-blur-sm border-0 text-xs">
                 <Check size={12} className="mr-1" />
                 Ganzjährig
               </Badge>
             ) : isAvailableNow ? (
               <Badge variant="secondary" className="bg-green-500/90 text-white backdrop-blur-sm border-0 text-xs">
                 <Check size={12} className="mr-1" />
-                Jetzt verfügbar
+                Verfügbar
               </Badge>
             ) : isSeasonal ? (
               <Badge variant="secondary" className="bg-amber-500/90 text-white backdrop-blur-sm border-0 text-xs">
