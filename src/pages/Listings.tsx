@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
+import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import { 
   Heart, 
   SlidersHorizontal, 
@@ -148,6 +149,7 @@ const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterth
 
 const Listings = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { sendLike } = useLikeOnFavorite();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   
@@ -1382,6 +1384,7 @@ const Listings = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              const wasNotFavorite = !isFavorite(event.id);
                               toggleFavorite({
                                 id: event.id,
                                 slug: eventSlug,
@@ -1391,6 +1394,10 @@ const Listings = () => {
                                 image: eventImage,
                                 date: formatEventDate(event.start_date, event.external_id),
                               });
+                              // Send like when adding to favorites
+                              if (wasNotFavorite) {
+                                sendLike(event.id);
+                              }
                             }}
                             className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-sm transition-all hover:scale-110"
                             aria-label={isFavorite(event.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}

@@ -1,6 +1,7 @@
 import { Heart, Flame } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { EventRatingButtons } from "./EventRatingButtons";
+import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 
 interface EventCardProps {
   id: string;
@@ -17,11 +18,23 @@ interface EventCardProps {
 
 const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = false, availableMonths, external_id }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { sendLike } = useLikeOnFavorite();
   const isCurrentlyFavorite = isFavorite(id);
   
   // Only show "Ganzjährig" for MySwitzerland events with all 12 months available
   const isMySwitzerland = external_id?.startsWith('mys_');
   const isYearRound = availableMonths?.length === 12;
+  
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const wasNotFavorite = !isCurrentlyFavorite;
+    toggleFavorite({ id, slug, title, venue, location, image, date });
+    // Send like when adding to favorites (not when removing)
+    if (wasNotFavorite) {
+      sendLike(id);
+    }
+  };
 
   return (
     <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -44,11 +57,7 @@ const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = 
 
         {/* Favorite Button */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleFavorite({ id, slug, title, venue, location, image, date });
-          }}
+          onClick={handleFavoriteClick}
           className="absolute top-3 right-3 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors"
           aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
         >
