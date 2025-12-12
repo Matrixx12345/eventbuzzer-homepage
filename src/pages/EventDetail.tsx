@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight, Navigation, Loader2, ExternalLink } from "lucide-react";
+import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -585,6 +586,11 @@ const EventDetail = () => {
                 <span className="text-base font-medium text-neutral-900">{event.distance}</span>
               </div>
             )}
+          </div>
+
+          {/* Rating Buttons */}
+          <div className="mb-6">
+            <EventRatingButtons eventId={eventId} eventTitle={event.title} />
           </div>
 
           {/* Actions */}
