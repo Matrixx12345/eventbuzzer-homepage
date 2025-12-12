@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+
 
 interface EventRating {
   id: string;
@@ -45,35 +45,26 @@ const AdminUpload = () => {
     setIsUploading(false);
   };
 
-  // Fetch ratings using existing Supabase client (external project)
+  // Fetch ratings via Edge Function
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .from('events')
-          .select('id, title, tags, event_stats!inner(likes_count, dislikes_count, quality_score, total_ratings)')
-          .gt('event_stats.total_ratings', 0)
-          .limit(50);
-
-        if (error) {
-          setRatingsError(error.message);
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-event-ratings`
+        );
+        const result = await response.json();
+        
+        if (!result.success) {
+          setRatingsError(result.error || "Fehler beim Laden");
           return;
         }
 
-        // Transform and sort client-side
-        const transformed = (data || [])
-          .map((e: any) => ({
-            id: e.id,
-            title: e.title,
-            tags: e.tags,
-            likes_count: e.event_stats?.likes_count || 0,
-            dislikes_count: e.event_stats?.dislikes_count || 0,
-            quality_score: e.event_stats?.quality_score || 0,
-            total_ratings: e.event_stats?.total_ratings || 0,
-          }))
-          .sort((a: EventRating, b: EventRating) => b.total_ratings - a.total_ratings);
+        // Sort client-side by total_ratings
+        const sorted = (result.data || []).sort(
+          (a: EventRating, b: EventRating) => b.total_ratings - a.total_ratings
+        );
 
-        setRatings(transformed);
+        setRatings(sorted);
       } catch (err) {
         console.error("Fetch error:", err);
         setRatingsError("Fehler beim Laden der Ratings");
