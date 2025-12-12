@@ -40,8 +40,9 @@ serve(async (req) => {
         )
       `)
       .gt("total_ratings", 0)
-      .order("quality_score", { ascending: true })
-      .limit(100);
+      .order("total_ratings", { ascending: false })
+      .order("quality_score", { ascending: false })
+      .limit(50);
 
     if (error) {
       console.error("Query error:", error);
