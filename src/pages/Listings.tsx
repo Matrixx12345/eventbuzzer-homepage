@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { 
   Heart, 
   SlidersHorizontal, 
@@ -155,7 +155,14 @@ const Listings = () => {
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
   const [vipArtists, setVipArtists] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [nextOffset, setNextOffset] = useState(0);
+  const [totalEvents, setTotalEvents] = useState(0);
+  
+  // Infinite scroll ref
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Filter states
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -236,22 +243,47 @@ const Listings = () => {
     setSelectedDate(undefined);
   };
 
-  // Fetch events from Supabase
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
+  // Fetch events from Supabase with pagination
+  const fetchEvents = useCallback(async (isInitial: boolean = true) => {
+    try {
+      if (isInitial) {
         setLoading(true);
-        const { data, error: fetchError } = await supabase.functions.invoke('get-external-events', {
-          body: { limit: 200 }
-        });
+        setEvents([]);
+        setNextOffset(0);
+      } else {
+        setLoadingMore(true);
+      }
 
-        if (fetchError) {
-          throw new Error(fetchError.message);
+      const offset = isInitial ? 0 : nextOffset;
+      
+      const { data, error: fetchError } = await supabase.functions.invoke('get-external-events', {
+        body: { 
+          offset,
+          limit: 50,
+          initialLoad: isInitial
         }
+      });
 
-        if (data?.events) {
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      if (data?.events) {
+        if (isInitial) {
           setEvents(data.events);
+        } else {
+          setEvents(prev => [...prev, ...data.events]);
         }
+      }
+      
+      if (data?.pagination) {
+        setHasMore(data.pagination.hasMore);
+        setNextOffset(data.pagination.nextOffset);
+        setTotalEvents(data.pagination.total);
+        console.log(`Loaded ${data.events?.length} events. Total: ${data.pagination.total}, HasMore: ${data.pagination.hasMore}`);
+      }
+
+      if (isInitial) {
         if (data?.taxonomy) {
           setTaxonomy(data.taxonomy);
           console.log('Taxonomy loaded:', data.taxonomy.length, 'categories');
@@ -260,16 +292,45 @@ const Listings = () => {
           setVipArtists(data.vipArtists);
           console.log('VIP Artists loaded:', data.vipArtists.length, 'artists');
         }
-      } catch (err) {
-        console.error('Error fetching events:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load events');
-      } finally {
-        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load events');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [nextOffset]);
+
+  // Initial load
+  useEffect(() => {
+    fetchEvents(true);
+  }, []);
+
+  // Infinite scroll with IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loadingMore && !loading) {
+          console.log('Loading more events...');
+          fetchEvents(false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
-
-    fetchEvents();
-  }, []);
+  }, [hasMore, loadingMore, loading, fetchEvents]);
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -1240,7 +1301,7 @@ const Listings = () => {
             Events entdecken
           </h1>
           <p className="text-neutral-400 mt-1 text-sm">
-            {loading ? "Lädt..." : `${filteredEvents.length} Events gefunden`}
+            {loading ? "Lädt..." : `${filteredEvents.length} von ${totalEvents} Events`}
           </p>
         </div>
       </div>
@@ -1400,6 +1461,27 @@ const Listings = () => {
                     </Link>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Infinite Scroll Trigger */}
+            {!loading && !error && filteredEvents.length > 0 && (
+              <div ref={loadMoreRef} className="py-10 flex flex-col items-center justify-center">
+                {loadingMore ? (
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                    <span className="text-sm text-neutral-500">Lade weitere Events...</span>
+                  </div>
+                ) : hasMore ? (
+                  <span className="text-sm text-neutral-400">Scrolle für mehr Events</span>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-neutral-100 flex items-center justify-center">
+                      <Check size={20} className="text-neutral-400" />
+                    </div>
+                    <span className="text-sm text-neutral-500">Alle {totalEvents} Events geladen</span>
+                  </div>
+                )}
               </div>
             )}
 

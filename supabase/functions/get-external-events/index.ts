@@ -13,12 +13,19 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body for pagination parameters
+    const body = await req.json().catch(() => ({}));
+    const offset = body.offset || 0;
+    const limit = body.limit || 50;
+    const initialLoad = body.initialLoad ?? true; // For first load, also fetch taxonomy & vipArtists
+
     // Use the external Supabase credentials from secrets
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
 
     console.log("External URL configured:", !!externalUrl);
     console.log("External Key configured:", !!externalKey);
+    console.log(`Pagination: offset=${offset}, limit=${limit}, initialLoad=${initialLoad}`);
 
     if (!externalUrl || !externalKey) {
       const missing = [];
@@ -33,102 +40,107 @@ serve(async (req) => {
     // Get today's date in ISO format for filtering future events
     const today = new Date().toISOString();
 
-    // Fetch future events OR events with null start_date (permanent attractions)
-    // Using two queries and combining them
+    // First, get total count for pagination info
+    const { count: futureCount } = await externalSupabase
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .gte("start_date", today);
+
+    const { count: permanentCount } = await externalSupabase
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .is("start_date", null);
+
+    const totalEvents = (futureCount || 0) + (permanentCount || 0);
+    console.log(`Total events in DB: ${totalEvents} (future: ${futureCount}, permanent: ${permanentCount})`);
+
+    // Fetch paginated future events
     const { data: futureEvents, error: futureError } = await externalSupabase
       .from("events")
       .select("*")
       .gte("start_date", today)
       .order("start_date", { ascending: true })
-      .limit(2000);
+      .range(offset, offset + limit - 1);
 
-    const { data: permanentEvents, error: permanentError } = await externalSupabase
-      .from("events")
-      .select("*")
-      .is("start_date", null)
-      .limit(1000);
+    // Calculate how many permanent events to fetch based on remaining slots
+    const futureEventsFetched = futureEvents?.length || 0;
+    const remainingSlots = limit - futureEventsFetched;
+    const permanentOffset = Math.max(0, offset - (futureCount || 0));
 
-    // Fetch taxonomy for categories
-    const { data: taxonomy, error: taxonomyError } = await externalSupabase
-      .from("taxonomy")
-      .select("id, name, type, parent_id")
-      .order("name");
-
-    // Fetch VIP artists for "Top Stars" filter
-    const { data: vipArtists, error: vipArtistsError } = await externalSupabase
-      .from("vip_artists")
-      .select("artists_name");
-
-    if (vipArtistsError) {
-      console.error("VIP Artists query error:", JSON.stringify(vipArtistsError));
-    } else {
-      console.log(`VIP Artists: ${vipArtists?.length || 0} loaded`);
+    let permanentEvents: any[] = [];
+    if (remainingSlots > 0 || offset >= (futureCount || 0)) {
+      const { data: permData, error: permanentError } = await externalSupabase
+        .from("events")
+        .select("*")
+        .is("start_date", null)
+        .range(permanentOffset, permanentOffset + Math.max(remainingSlots, limit) - 1);
+      
+      if (permanentError) {
+        console.error("Permanent events query error:", JSON.stringify(permanentError));
+      }
+      permanentEvents = permData || [];
     }
 
-    const error = futureError || permanentError;
+    // Combine events
+    const allEvents = [...(futureEvents || []), ...permanentEvents];
     
-    // Combine and deduplicate by id
-    const allEvents = [...(futureEvents || []), ...(permanentEvents || [])];
+    // Deduplicate by id
     const uniqueIds = new Set();
     const data = allEvents.filter(event => {
       if (uniqueIds.has(event.id)) return false;
       uniqueIds.add(event.id);
       return true;
-    });
+    }).slice(0, limit); // Ensure we don't exceed limit
 
-    if (error) {
-      console.error("Supabase query error:", JSON.stringify(error));
-      throw new Error(`Query failed: ${error.message} (code: ${error.code})`);
+    console.log(`Fetched ${data.length} events (offset: ${offset})`);
+
+    // Only fetch taxonomy and VIP artists on initial load
+    let taxonomy: any[] = [];
+    let vipArtists: string[] = [];
+
+    if (initialLoad) {
+      const { data: taxonomyData, error: taxonomyError } = await externalSupabase
+        .from("taxonomy")
+        .select("id, name, type, parent_id")
+        .order("name");
+
+      if (taxonomyError) {
+        console.error("Taxonomy query error:", JSON.stringify(taxonomyError));
+      }
+      taxonomy = taxonomyData || [];
+
+      const { data: vipData, error: vipArtistsError } = await externalSupabase
+        .from("vip_artists")
+        .select("artists_name");
+
+      if (vipArtistsError) {
+        console.error("VIP Artists query error:", JSON.stringify(vipArtistsError));
+      } else {
+        console.log(`VIP Artists: ${vipData?.length || 0} loaded`);
+      }
+      vipArtists = vipData?.map(a => a.artists_name).filter(Boolean) || [];
     }
 
-    if (taxonomyError) {
-      console.error("Taxonomy query error:", JSON.stringify(taxonomyError));
+    if (futureError) {
+      console.error("Supabase query error:", JSON.stringify(futureError));
+      throw new Error(`Query failed: ${futureError.message} (code: ${futureError.code})`);
     }
 
-    // Log price and category statistics
-    const stats = {
-      total: data?.length || 0,
-      noMainCategory: 0,
-      noSubCategory: 0,
-      eventsWithoutMainCategory: [] as { id: number; title: string; external_id: string }[],
-      eventsWithoutSubCategory: [] as { id: number; title: string; external_id: string; category_main_id: number | null }[],
-    };
-    
-    if (data && data.length > 0) {
-      const withPrice = data.filter(e => e.price_from !== null && e.price_from !== undefined);
-      const withLabel = data.filter(e => e.price_label !== null && e.price_label !== undefined);
-      const noMainCat = data.filter(e => e.category_main_id === null || e.category_main_id === undefined);
-      const noSubCat = data.filter(e => e.category_sub_id === null || e.category_sub_id === undefined);
-      
-      stats.noMainCategory = noMainCat.length;
-      stats.noSubCategory = noSubCat.length;
-      stats.eventsWithoutMainCategory = noMainCat.map(e => ({ 
-        id: e.id, 
-        title: e.title, 
-        external_id: e.external_id || '' 
-      }));
-      stats.eventsWithoutSubCategory = noSubCat
-        .filter(e => e.category_main_id !== null) // Only show events that HAVE main but missing sub
-        .map(e => ({ 
-          id: e.id, 
-          title: e.title, 
-          external_id: e.external_id || '',
-          category_main_id: e.category_main_id
-        }));
-      
-      console.log(`Events: ${data.length} total, ${withPrice.length} with price, ${withLabel.length} with label`);
-      console.log(`Categories: ${noMainCat.length} without main, ${noSubCat.length} without sub`);
-      console.log(`Taxonomy: ${taxonomy?.length || 0} categories loaded`);
-    } else {
-      console.log("No future events found in table");
-    }
+    const hasMore = offset + data.length < totalEvents;
+    const nextOffset = offset + data.length;
 
     return new Response(JSON.stringify({ 
       events: data || [], 
-      taxonomy: taxonomy || [],
-      vipArtists: vipArtists?.map(a => a.artists_name).filter(Boolean) || [],
-      stats,
-      columns: data && data.length > 0 ? Object.keys(data[0]) : [] 
+      taxonomy,
+      vipArtists,
+      pagination: {
+        offset,
+        limit,
+        fetched: data.length,
+        total: totalEvents,
+        hasMore,
+        nextOffset
+      }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
