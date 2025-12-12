@@ -32,7 +32,6 @@ serve(async (req) => {
         dislikes_count,
         total_ratings,
         quality_score,
-        wrong_category_count,
         events!inner (
           id,
           title,
@@ -40,9 +39,7 @@ serve(async (req) => {
         )
       `)
       .gt("total_ratings", 0)
-      .order("total_ratings", { ascending: false })
-      .order("quality_score", { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (error) {
       console.error("Query error:", error);
@@ -58,7 +55,6 @@ serve(async (req) => {
       dislikes_count: item.dislikes_count,
       total_ratings: item.total_ratings,
       quality_score: item.quality_score,
-      wrong_category_count: item.wrong_category_count || 0,
     })) || [];
 
     return new Response(JSON.stringify({ success: true, data: ratings }), {
