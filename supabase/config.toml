@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.myswitzerland-import]
 verify_jwt = false
+
+[functions.get-event-ratings]
+verify_jwt = false
