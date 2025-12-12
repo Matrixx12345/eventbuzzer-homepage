@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventRating {
   id: string;
@@ -45,31 +45,22 @@ const AdminUpload = () => {
     setIsUploading(false);
   };
 
-  // Fetch ratings from external Supabase via REST API
+  // Fetch ratings using existing Supabase client (external project)
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const externalUrl = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
-        const externalAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDA4MDQsImV4cCI6MjA4MDY3NjgwNH0.bth3dTvG3fXSu4qILB514x1TRy0scRLo_KM9lDMMKDs";
-        
-        const response = await fetch(
-          `${externalUrl}/rest/v1/events?select=id,title,tags,event_stats!inner(likes_count,dislikes_count,quality_score,total_ratings)&event_stats.total_ratings=gt.0&order=event_stats.total_ratings.desc&limit=50`,
-          {
-            headers: {
-              'apikey': externalAnonKey,
-              'Authorization': `Bearer ${externalAnonKey}`,
-            }
-          }
-        );
-        
-        if (!response.ok) {
-          setRatingsError(`HTTP ${response.status}`);
+        const { data, error } = await (supabase as any)
+          .from('events')
+          .select('id, title, tags, event_stats!inner(likes_count, dislikes_count, quality_score, total_ratings)')
+          .gt('event_stats.total_ratings', 0)
+          .order('event_stats.total_ratings', { ascending: false })
+          .limit(50);
+
+        if (error) {
+          setRatingsError(error.message);
           return;
         }
 
-        const data = await response.json();
-
-        // Transform data
         const transformed = (data || []).map((e: any) => ({
           id: e.id,
           title: e.title,
