@@ -24,7 +24,10 @@ import {
   LayoutGrid,
   Zap,
   UtensilsCrossed,
-  Gift
+  Gift,
+  Snowflake,
+  Sun,
+  CalendarDays
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -117,6 +120,7 @@ interface ExternalEvent {
   latitude?: number;
   longitude?: number;
   tags?: string[];
+  available_months?: number[];
 }
 
 interface TaxonomyItem {
@@ -165,6 +169,19 @@ const Listings = () => {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
+  const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
+  
+  // Current month for availability filtering
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const isWinterSeason = [11, 12, 1, 2, 3].includes(currentMonth);
+  
+  // Availability filter options
+  const availabilityFilters = [
+    { id: "now", label: "Jetzt verfügbar", icon: Zap },
+    { id: "winter", label: "Winter", icon: Snowflake },
+    { id: "summer", label: "Sommer", icon: Sun },
+    { id: "year-round", label: "Ganzjährig", icon: CalendarDays },
+  ];
   
   // Family age filter options
   const familyAgeFilters = [
@@ -623,6 +640,32 @@ const Listings = () => {
       if (event.category_sub_id !== selectedSubcategoryId) return false;
     }
     
+    // Availability filter - based on available_months
+    if (selectedAvailability) {
+      const months = event.available_months || [];
+      const winterMonths = [11, 12, 1, 2, 3];
+      const summerMonths = [4, 5, 6, 7, 8, 9, 10];
+      
+      switch (selectedAvailability) {
+        case "now":
+          // Must include current month
+          if (!months.includes(currentMonth)) return false;
+          break;
+        case "winter":
+          // Must include at least one winter month
+          if (!winterMonths.some(m => months.includes(m))) return false;
+          break;
+        case "summer":
+          // Must include at least one summer month
+          if (!summerMonths.some(m => months.includes(m))) return false;
+          break;
+        case "year-round":
+          // Must be available all 12 months
+          if (months.length !== 12) return false;
+          break;
+      }
+    }
+    
     return true;
   });
 
@@ -639,6 +682,7 @@ const Listings = () => {
     setSearchQuery("");
     setSelectedFamilyAgeFilter(null);
     setSelectedIndoorFilter(null);
+    setSelectedAvailability(null);
   };
 
   const hasActiveFilters = 
@@ -651,7 +695,8 @@ const Listings = () => {
     selectedCategoryId !== null ||
     selectedSubcategoryId !== null ||
     selectedSource !== null ||
-    searchQuery.trim() !== "";
+    searchQuery.trim() !== "" ||
+    selectedAvailability !== null;
 
   const formatEventDate = (dateString?: string, externalId?: string) => {
     // MySwitzerland events (permanent attractions) have null dates
@@ -991,6 +1036,42 @@ const Listings = () => {
         </TooltipProvider>
       </div>
 
+      {/* Verfügbarkeit (Availability) */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Verfügbarkeit</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {availabilityFilters.map((filter) => {
+            const Icon = filter.icon;
+            const isActive = selectedAvailability === filter.id;
+            const isNowFilter = filter.id === "now";
+            const isWinterFilter = filter.id === "winter";
+            const isSummerFilter = filter.id === "summer";
+            
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setSelectedAvailability(isActive ? null : filter.id)}
+                className={cn(
+                  "h-11 px-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5",
+                  isActive && isNowFilter
+                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30"
+                    : isActive && isWinterFilter
+                    ? "bg-gradient-to-r from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/30"
+                    : isActive && isSummerFilter
+                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30"
+                    : isActive
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                )}
+              >
+                <Icon size={14} />
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Kategorie - Inline Drawer Pattern */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
@@ -1233,6 +1314,35 @@ const Listings = () => {
                             alt={event.title}
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
+
+                          {/* Availability Badge */}
+                          {event.available_months && event.available_months.length > 0 && (
+                            <div className="absolute top-3 left-3">
+                              {event.available_months.length === 12 ? (
+                                <span className="inline-flex items-center gap-1 bg-emerald-500/90 text-white backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full">
+                                  <Check size={12} />
+                                  Ganzjährig
+                                </span>
+                              ) : event.available_months.includes(currentMonth) ? (
+                                <span className="inline-flex items-center gap-1 bg-green-500/90 text-white backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full">
+                                  <Check size={12} />
+                                  Jetzt verfügbar
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-amber-500/90 text-white backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full">
+                                  <CalendarDays size={12} />
+                                  {(() => {
+                                    const months = event.available_months;
+                                    const hasWinter = [11, 12, 1, 2, 3].some(m => months.includes(m));
+                                    const hasSummer = [6, 7, 8].some(m => months.includes(m));
+                                    if (hasWinter && !hasSummer) return "Winter";
+                                    if (hasSummer && !hasWinter) return "Sommer";
+                                    return "Saisonal";
+                                  })()}
+                                </span>
+                              )}
+                            </div>
+                          )}
 
                           {/* Favorite Button */}
                           <button
