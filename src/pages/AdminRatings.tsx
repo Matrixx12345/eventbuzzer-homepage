@@ -20,7 +20,8 @@ interface EventRating {
   dislikes_count: number;
   total_ratings: number;
   quality_score: number;
-  wrong_category_count: number;
+  feedback_categories: string[] | null;
+  feedback_texts: string[] | null;
 }
 
 export default function AdminRatings() {
@@ -35,7 +36,7 @@ export default function AdminRatings() {
   const fetchRatings = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-event-ratings`
+        `https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/get-event-ratings-detailed`
       );
       const data = await response.json();
       
@@ -106,9 +107,7 @@ export default function AdminRatings() {
                     <ThumbsDown className="w-4 h-4 inline" />
                   </TableHead>
                   <TableHead className="text-center">Score</TableHead>
-                  <TableHead className="text-center">
-                    <span title="Wrong Category Count">Falsche Kat.</span>
-                  </TableHead>
+                  <TableHead className="min-w-[200px]">Feedback</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -146,13 +145,26 @@ export default function AdminRatings() {
                         {(event.quality_score * 100).toFixed(0)}%
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">
-                      {event.wrong_category_count > 0 ? (
-                        <span className="text-warning font-medium">
-                          {event.wrong_category_count}
-                        </span>
+                    <TableCell>
+                      {event.feedback_categories && event.feedback_categories.length > 0 ? (
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap gap-1">
+                            {event.feedback_categories.map((cat, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {cat}
+                              </Badge>
+                            ))}
+                          </div>
+                          {event.feedback_texts && event.feedback_texts.length > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {event.feedback_texts.map((text, idx) => (
+                                <div key={idx} className="italic">"{text}"</div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <span className="text-muted-foreground">0</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                   </TableRow>
