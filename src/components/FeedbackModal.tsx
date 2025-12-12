@@ -1,29 +1,29 @@
 import { useState } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 interface FeedbackModalProps {
   eventTitle: string;
   onClose: () => void;
-  onSubmit: (category: string, text: string) => void;
+  onSubmit: (category: string) => void;
   isLoading: boolean;
 }
 
 export function FeedbackModal({ eventTitle, onClose, onSubmit, isLoading }: FeedbackModalProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [feedbackText, setFeedbackText] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   const categories = [
-    { id: 'wrong-category', label: 'Falsche Kategorie', description: 'Event passt nicht zur Kategorie' },
-    { id: 'duplicate', label: 'Duplikat', description: 'Event existiert bereits mehrfach' },
-    { id: 'outdated', label: 'Veraltet', description: 'Event ist nicht mehr aktuell' },
-    { id: 'inappropriate', label: 'Unangemessen', description: 'Spam oder unpassender Inhalt' },
-    { id: 'poor-quality', label: 'Schlechte Qualität', description: 'Beschreibung oder Bilder fehlen' },
-    { id: 'other', label: 'Anderer Grund', description: 'Bitte unten beschreiben' },
+    { id: 'wrong-category', label: 'Falsche Kategorie' },
+    { id: 'duplicate', label: 'Duplikat' },
+    { id: 'outdated', label: 'Veraltet' },
+    { id: 'inappropriate', label: 'Unangemessen' },
+    { id: 'poor-quality', label: 'Schlechte Qualität' },
+    { id: 'other', label: 'Anderer Grund' },
   ];
 
-  const handleSubmit = () => {
-    if (!selectedCategory) return;
-    onSubmit(selectedCategory, feedbackText);
+  const handleSelect = (categoryId: string) => {
+    if (isLoading || submitted) return;
+    setSubmitted(true);
+    onSubmit(categoryId);
   };
 
   return (
@@ -32,111 +32,57 @@ export function FeedbackModal({ eventTitle, onClose, onSubmit, isLoading }: Feed
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isLoading) onClose();
       }}
     >
       <div 
-        className="bg-card rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-card rounded-xl w-full max-w-xs shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-warning" />
-            <div>
-              <h2 className="text-base font-bold text-card-foreground">Was gefällt dir nicht?</h2>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{eventTitle}</p>
+        {submitted ? (
+          // Thank you message
+          <div className="p-6 text-center">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Check className="w-6 h-6 text-emerald-600" />
             </div>
+            <p className="text-card-foreground font-medium">Vielen Dank!</p>
+            <p className="text-muted-foreground text-sm mt-1">Dein Feedback hilft uns</p>
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-            disabled={isLoading}
-          >
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-sm font-medium text-card-foreground">Was stimmt nicht?</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="p-1 hover:bg-muted rounded transition-colors"
+                disabled={isLoading}
+              >
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-4">
-          {/* Category Selection */}
-          <div>
-            <h3 className="text-xs font-semibold text-card-foreground mb-2">
-              Wähle einen Grund (Pflicht)
-            </h3>
-            <div className="space-y-1.5">
+            {/* Options - click to select and submit */}
+            <div className="p-2">
               {categories.map((cat) => (
-                <label
+                <button
                   key={cat.id}
-                  className={`
-                    flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-all text-sm
-                    ${selectedCategory === cat.id 
-                      ? 'border-warning bg-warning/10' 
-                      : 'border-border hover:border-muted-foreground bg-card'
-                    }
-                  `}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect(cat.id);
+                  }}
+                  disabled={isLoading}
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-card-foreground hover:bg-muted transition-colors disabled:opacity-50"
                 >
-                  <input
-                    type="radio"
-                    name="category"
-                    value={cat.id}
-                    checked={selectedCategory === cat.id}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="mt-0.5 w-3.5 h-3.5 accent-warning"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-card-foreground text-sm">{cat.label}</div>
-                    <div className="text-xs text-muted-foreground">{cat.description}</div>
-                  </div>
-                </label>
+                  {cat.label}
+                </button>
               ))}
             </div>
-          </div>
-
-          {/* Optional Text Input */}
-          <div>
-            <h3 className="text-xs font-semibold text-card-foreground mb-1.5">
-              Zusätzliche Informationen (optional)
-            </h3>
-            <textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="Teile uns weitere Details mit..."
-              className="w-full p-3 border border-border rounded-lg focus:border-warning focus:ring-0 resize-none bg-background text-foreground text-sm"
-              rows={3}
-              maxLength={500}
-            />
-            <div className="text-xs text-muted-foreground mt-1 text-right">
-              {feedbackText.length}/500 Zeichen
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-muted border-t border-border px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="px-4 py-1.5 text-muted-foreground text-sm font-medium hover:bg-background rounded-lg transition-colors"
-            disabled={isLoading}
-          >
-            Abbrechen
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSubmit();
-            }}
-            disabled={!selectedCategory || isLoading}
-            className="px-4 py-1.5 bg-warning text-warning-foreground text-sm font-medium rounded-lg hover:bg-warning/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {isLoading ? 'Wird gesendet...' : 'Feedback senden'}
-          </button>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
