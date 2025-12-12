@@ -62,8 +62,8 @@ export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsPr
         className={`
           flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs font-medium backdrop-blur-sm
           ${userRating === 'dislike' 
-            ? 'bg-neutral-800 text-white shadow-lg scale-105' 
-            : 'bg-white/90 hover:bg-white text-neutral-700 shadow-sm'
+            ? 'bg-neutral-400 text-white shadow-sm' 
+            : 'bg-white/90 hover:bg-white text-neutral-600 shadow-sm'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
