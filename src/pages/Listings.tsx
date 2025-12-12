@@ -1377,8 +1377,8 @@ const Listings = () => {
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
 
-                          {/* Rating Buttons - bottom left on image */}
-                          <div className="absolute bottom-3 left-3">
+                          {/* Rating Buttons - top left on image */}
+                          <div className="absolute top-3 left-3">
                             <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                           </div>
 
