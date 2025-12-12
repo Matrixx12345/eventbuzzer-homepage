@@ -53,7 +53,7 @@ const AdminUpload = () => {
     const fetchRatings = async () => {
       try {
         const response = await fetch(
-          `https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/get-event-ratings-detailed`
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-event-ratings`
         );
         const result = await response.json();
         
