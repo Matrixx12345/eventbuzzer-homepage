@@ -62,13 +62,13 @@ export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsPr
         className={`
           flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs font-medium backdrop-blur-sm
           ${userRating === 'dislike' 
-            ? 'bg-red-500 text-white shadow-lg scale-105' 
-            : 'bg-white/90 hover:bg-white text-neutral-600 shadow-sm'
+            ? 'bg-neutral-800 text-white shadow-lg scale-105' 
+            : 'bg-white/90 hover:bg-white text-neutral-700 shadow-sm'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
       >
-        <ThumbsDown className={`w-3 h-3 ${userRating === 'dislike' ? 'fill-current' : ''}`} />
+        <ThumbsDown className={`w-3 h-3 ${userRating === 'dislike' ? 'fill-current' : ''}`} strokeWidth={2.5} />
         {dislikesCount > 0 && <span>{dislikesCount}</span>}
       </button>
 
