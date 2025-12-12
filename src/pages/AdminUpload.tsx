@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { uploadAllAssetsToStorage } from "@/utils/uploadAssetsToStorage";
-import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, BarChart3 } from "lucide-react";
+import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, BarChart3, Trash2, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -12,6 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 
 interface EventRating {
@@ -26,6 +33,15 @@ interface EventRating {
   feedback_texts: string[] | null;
 }
 
+const FILTER_OPTIONS = [
+  { key: "all", label: "Alle" },
+  { key: "wrong_category", label: "Wrong Category" },
+  { key: "poor_quality", label: "Poor Quality" },
+  { key: "duplicate", label: "Duplicate" },
+  { key: "outdated", label: "Outdated" },
+  { key: "inappropriate", label: "Inappropriate" },
+];
+
 const AdminUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, filename: "" });
@@ -35,6 +51,14 @@ const AdminUpload = () => {
   const [ratings, setRatings] = useState<EventRating[]>([]);
   const [loadingRatings, setLoadingRatings] = useState(true);
   const [ratingsError, setRatingsError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("all");
+  
+  // Action states
+  const [editingEvent, setEditingEvent] = useState<EventRating | null>(null);
+  const [editedTags, setEditedTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isSavingTags, setIsSavingTags] = useState(false);
 
   const handleUpload = async () => {
     setIsUploading(true);
@@ -79,9 +103,96 @@ const AdminUpload = () => {
     fetchRatings();
   }, []);
 
+  const filteredRatings = ratings.filter((event) => {
+    if (activeFilter === "all") return true;
+    return event.feedback_categories?.some(
+      (cat) => cat.toLowerCase().replace(/\s+/g, "_") === activeFilter
+    );
+  });
+
+  const handleDelete = async (eventId: string) => {
+    if (!confirm("Event wirklich löschen?")) return;
+    
+    setIsDeleting(eventId);
+    try {
+      const response = await fetch(
+        `https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/delete-event`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_id: eventId }),
+        }
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        setRatings((prev) => prev.filter((e) => e.id !== eventId));
+        toast.success("Event gelöscht");
+      } else {
+        toast.error(data.error || "Fehler beim Löschen");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Fehler beim Löschen");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const openTagEditor = (event: EventRating) => {
+    setEditingEvent(event);
+    setEditedTags(event.tags || []);
+    setNewTag("");
+  };
+
+  const handleAddTag = () => {
+    if (newTag.trim() && !editedTags.includes(newTag.trim())) {
+      setEditedTags([...editedTags, newTag.trim()]);
+      setNewTag("");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setEditedTags(editedTags.filter((t) => t !== tag));
+  };
+
+  const handleSaveTags = async () => {
+    if (!editingEvent) return;
+    
+    setIsSavingTags(true);
+    try {
+      const response = await fetch(
+        `https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/update-event-tags`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_id: editingEvent.id, tags: editedTags }),
+        }
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        setRatings((prev) =>
+          prev.map((e) =>
+            e.id === editingEvent.id ? { ...e, tags: editedTags } : e
+          )
+        );
+        toast.success("Tags gespeichert");
+        setEditingEvent(null);
+      } else {
+        toast.error(data.error || "Fehler beim Speichern");
+      }
+    } catch (err) {
+      console.error("Save tags error:", err);
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setIsSavingTags(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-serif font-bold text-foreground mb-2">
           Admin Tools
         </h1>
@@ -188,6 +299,20 @@ const AdminUpload = () => {
             Events mit Bewertungen, sortiert nach Quality Score.
           </p>
 
+          {/* Filter Buttons */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {FILTER_OPTIONS.map((filter) => (
+              <Button
+                key={filter.key}
+                variant={activeFilter === filter.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveFilter(filter.key)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+
           {loadingRatings ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -197,104 +322,181 @@ const AdminUpload = () => {
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-600 text-sm">
               {ratingsError}
             </div>
-          ) : ratings.length === 0 ? (
+          ) : filteredRatings.length === 0 ? (
             <div className="text-center py-10 text-sm text-muted-foreground">
-              Keine Events mit Ratings gefunden.
+              Keine Events gefunden.
             </div>
           ) : (
-            <div className="border border-border rounded-lg overflow-hidden bg-white">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-white">
-                    <TableHead className="font-medium text-xs">Event</TableHead>
-                    <TableHead className="text-center w-20 text-xs">
-                      <Heart size={12} className="inline mr-1 text-red-500" />
-                      Likes
-                    </TableHead>
-                    <TableHead className="text-center w-20 text-xs">
-                      <ThumbsDown size={12} className="inline mr-1" strokeWidth={2.5} />
-                      Dislikes
-                    </TableHead>
-                    <TableHead className="text-center w-24 text-xs">Score</TableHead>
-                    <TableHead className="text-center w-20 text-xs">Total</TableHead>
-                    <TableHead className="text-xs min-w-[180px]">Feedback</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ratings.map((event) => (
-                    <TableRow key={event.id} className="bg-white hover:bg-gray-50">
-                      <TableCell className="py-2">
-                        <Link 
-                          to={`/event/${event.id}`}
-                          className="text-foreground hover:text-blue-600 transition-colors text-sm font-medium"
-                        >
-                          {event.title}
-                        </Link>
-                        {event.tags && event.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-0.5">
-                            {event.tags.slice(0, 2).map((tag, i) => (
-                              <span 
-                                key={i}
-                                className="text-[9px] bg-muted text-muted-foreground px-1 py-0.5 rounded"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center text-sm text-foreground">
-                        {event.likes_count}
-                      </TableCell>
-                      <TableCell className="text-center text-sm text-foreground">
-                        {event.dislikes_count}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span 
-                          className={`text-sm font-medium ${
-                            event.quality_score >= 0.7 
-                              ? 'text-emerald-600' 
-                              : event.quality_score >= 0.4 
-                                ? 'text-amber-600' 
-                                : 'text-red-600'
-                          }`}
-                        >
-                          {(event.quality_score * 100).toFixed(0)}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center text-sm font-medium text-foreground">
-                        {event.total_ratings}
-                      </TableCell>
-                      <TableCell>
-                        {event.feedback_categories && event.feedback_categories.length > 0 ? (
-                          <div className="space-y-1">
-                            <div className="flex flex-wrap gap-1">
-                              {event.feedback_categories.map((cat, idx) => (
-                                <Badge key={idx} variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {cat}
-                                </Badge>
+            <>
+              <div className="border border-border rounded-lg overflow-hidden bg-white">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-white">
+                      <TableHead className="font-medium text-xs">Event</TableHead>
+                      <TableHead className="text-center w-16 text-xs">
+                        <Heart size={12} className="inline mr-1 text-red-500" />
+                      </TableHead>
+                      <TableHead className="text-center w-16 text-xs">
+                        <ThumbsDown size={12} className="inline mr-1" strokeWidth={2.5} />
+                      </TableHead>
+                      <TableHead className="text-center w-20 text-xs">Score</TableHead>
+                      <TableHead className="text-xs min-w-[150px]">Feedback</TableHead>
+                      <TableHead className="text-xs w-24">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRatings.map((event) => (
+                      <TableRow key={event.id} className="bg-white hover:bg-gray-50">
+                        <TableCell className="py-2">
+                          <Link 
+                            to={`/event/${event.id}`}
+                            className="text-foreground hover:text-blue-600 transition-colors text-sm font-medium"
+                          >
+                            {event.title}
+                          </Link>
+                          {event.tags && event.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {event.tags.slice(0, 2).map((tag, i) => (
+                                <span 
+                                  key={i}
+                                  className="text-[9px] bg-muted text-muted-foreground px-1 py-0.5 rounded"
+                                >
+                                  {tag}
+                                </span>
                               ))}
                             </div>
-                            {event.feedback_texts && event.feedback_texts.length > 0 && (
-                              <div className="text-[10px] text-muted-foreground">
-                                {event.feedback_texts.slice(0, 2).map((text, idx) => (
-                                  <div key={idx} className="italic truncate max-w-[150px]">"{text}"</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center text-sm text-foreground">
+                          {event.likes_count}
+                        </TableCell>
+                        <TableCell className="text-center text-sm text-foreground">
+                          {event.dislikes_count}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span 
+                            className={`text-sm font-medium ${
+                              event.quality_score >= 0.7 
+                                ? 'text-emerald-600' 
+                                : event.quality_score >= 0.4 
+                                  ? 'text-amber-600' 
+                                  : 'text-red-600'
+                            }`}
+                          >
+                            {(event.quality_score * 100).toFixed(0)}%
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {event.feedback_categories && event.feedback_categories.length > 0 ? (
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap gap-1">
+                                {event.feedback_categories.map((cat, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-[10px] px-1.5 py-0">
+                                    {cat}
+                                  </Badge>
                                 ))}
                               </div>
-                            )}
+                              {event.feedback_texts && event.feedback_texts.length > 0 && (
+                                <div className="text-[10px] text-muted-foreground">
+                                  {event.feedback_texts.slice(0, 1).map((text, idx) => (
+                                    <div key={idx} className="italic truncate max-w-[120px]">"{text}"</div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => openTagEditor(event)}
+                              title="Tags bearbeiten"
+                            >
+                              <Tag className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(event.id)}
+                              disabled={isDeleting === event.id}
+                              title="Löschen"
+                            >
+                              {isDeleting === event.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-3 text-xs text-muted-foreground text-center">
+                {filteredRatings.length} von {ratings.length} Events
+              </div>
+            </>
           )}
         </div>
       </div>
+
+      {/* Tag Editor Modal */}
+      <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tags bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">{editingEvent?.title}</p>
+            
+            <div className="flex flex-wrap gap-2">
+              {editedTags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="gap-1">
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+                placeholder="Neuer Tag..."
+                className="flex-1 px-3 py-2 border rounded-md text-sm"
+              />
+              <Button variant="outline" size="sm" onClick={handleAddTag}>
+                Hinzufügen
+              </Button>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingEvent(null)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleSaveTags} disabled={isSavingTags}>
+                {isSavingTags ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Speichern
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
