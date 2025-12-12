@@ -1376,34 +1376,6 @@ const Listings = () => {
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
 
-                          {/* Availability Badge */}
-                          {event.available_months && event.available_months.length > 0 && (
-                            <div className="absolute top-3 left-3">
-                              {event.available_months.length === 12 ? (
-                                <span className="inline-flex items-center gap-1 bg-emerald-500/90 text-white backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full">
-                                  <Check size={12} />
-                                  Ganzjährig
-                                </span>
-                              ) : event.available_months.includes(currentMonth) ? (
-                                <span className="inline-flex items-center gap-1 bg-green-500/90 text-white backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full">
-                                  <Check size={12} />
-                                  Jetzt verfügbar
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 bg-amber-500/90 text-white backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full">
-                                  <CalendarDays size={12} />
-                                  {(() => {
-                                    const months = event.available_months;
-                                    const hasWinter = [11, 12, 1, 2, 3].some(m => months.includes(m));
-                                    const hasSummer = [6, 7, 8].some(m => months.includes(m));
-                                    if (hasWinter && !hasSummer) return "Winter";
-                                    if (hasSummer && !hasWinter) return "Sommer";
-                                    return "Saisonal";
-                                  })()}
-                                </span>
-                              )}
-                            </div>
-                          )}
 
                           {/* Favorite Button */}
                           <button
@@ -1431,8 +1403,13 @@ const Listings = () => {
                         </div>
 
                         <div className="p-5">
-                          <p className="text-xs text-neutral-400 mb-1.5 font-medium">
-                            {formatEventDate(event.start_date, event.external_id)}
+                          <p className="text-xs text-neutral-400 mb-1.5 font-medium flex items-center gap-2">
+                            <span>{formatEventDate(event.start_date, event.external_id)}</span>
+                            {event.external_id?.startsWith("mys_") && event.available_months?.length === 12 && (
+                              <span className="text-[11px] text-amber-600/80 font-medium tracking-wide">
+                                Ganzjährig
+                              </span>
+                            )}
                           </p>
                           <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
                             {event.title}
