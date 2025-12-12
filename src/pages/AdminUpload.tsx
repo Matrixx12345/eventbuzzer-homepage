@@ -1,12 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { uploadAllAssetsToStorage } from "@/utils/uploadAssetsToStorage";
-import { CheckCircle, XCircle, Upload, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, AlertTriangle, BarChart3 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface EventRating {
+  id: string;
+  title: string;
+  tags: string[] | null;
+  likes_count: number;
+  dislikes_count: number;
+  quality_score: number;
+  wrong_category_count: number;
+}
 
 const AdminUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, filename: "" });
   const [results, setResults] = useState<{ success: string[]; failed: string[] } | null>(null);
+
+  // Ratings state
+  const [ratings, setRatings] = useState<EventRating[]>([]);
+  const [loadingRatings, setLoadingRatings] = useState(true);
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
 
   const handleUpload = async () => {
     setIsUploading(true);
@@ -20,14 +44,39 @@ const AdminUpload = () => {
     setIsUploading(false);
   };
 
+  // Fetch ratings on mount
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const response = await fetch(
+          "https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/get-event-ratings"
+        );
+        const data = await response.json();
+        
+        if (data.error) {
+          setRatingsError(data.error);
+        } else {
+          setRatings(data.ratings || []);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setRatingsError("Fehler beim Laden der Ratings");
+      } finally {
+        setLoadingRatings(false);
+      }
+    };
+
+    fetchRatings();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-serif font-bold text-foreground mb-2">
           Admin Tools
         </h1>
         <p className="text-muted-foreground mb-8">
-          Bildkatalog Upload Funktionen.
+          Bildkatalog Upload & Event Ratings.
         </p>
 
         {/* Bildkatalog Upload Section */}
@@ -90,7 +139,7 @@ const AdminUpload = () => {
         )}
 
         {results && (
-          <div className="space-y-4">
+          <div className="space-y-4 mb-6">
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
               <div className="flex items-center gap-2 text-green-600 font-semibold mb-2">
                 <CheckCircle className="h-5 w-5" />
@@ -118,6 +167,103 @@ const AdminUpload = () => {
             )}
           </div>
         )}
+
+        {/* Event Ratings Section */}
+        <div className="bg-card border border-border rounded-xl p-6">
+          <h2 className="font-semibold mb-2 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-500" />
+            Event Ratings
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Events mit Bewertungen, sortiert nach Quality Score.
+          </p>
+
+          {loadingRatings ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">Lade Ratings...</span>
+            </div>
+          ) : ratingsError ? (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-600 text-sm">
+              {ratingsError}
+            </div>
+          ) : ratings.length === 0 ? (
+            <div className="text-center py-10 text-sm text-muted-foreground">
+              Keine Events mit Ratings gefunden.
+            </div>
+          ) : (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-medium text-xs">Event</TableHead>
+                    <TableHead className="text-center w-20 text-xs">
+                      <Heart size={12} className="inline mr-1 text-red-500" />
+                      Likes
+                    </TableHead>
+                    <TableHead className="text-center w-20 text-xs">
+                      <ThumbsDown size={12} className="inline mr-1" strokeWidth={2.5} />
+                      Dislikes
+                    </TableHead>
+                    <TableHead className="text-center w-24 text-xs">Score</TableHead>
+                    <TableHead className="text-center w-28 text-xs">
+                      <AlertTriangle size={12} className="inline mr-1 text-amber-500" />
+                      Wrong Cat
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ratings.map((event) => (
+                    <TableRow key={event.id} className="hover:bg-muted/30">
+                      <TableCell className="py-2">
+                        <Link 
+                          to={`/event/${event.id}`}
+                          className="text-foreground hover:text-blue-600 transition-colors text-sm font-medium"
+                        >
+                          {event.title}
+                        </Link>
+                        {event.tags && event.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {event.tags.slice(0, 2).map((tag, i) => (
+                              <span 
+                                key={i}
+                                className="text-[9px] bg-muted text-muted-foreground px-1 py-0.5 rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {event.likes_count}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {event.dislikes_count}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span 
+                          className={`text-sm font-medium ${
+                            event.quality_score >= 0.7 
+                              ? 'text-emerald-600' 
+                              : event.quality_score >= 0.4 
+                                ? 'text-amber-600' 
+                                : 'text-red-600'
+                          }`}
+                        >
+                          {(event.quality_score * 100).toFixed(0)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {event.wrong_category_count}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
