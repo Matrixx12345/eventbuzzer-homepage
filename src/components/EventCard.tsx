@@ -1,5 +1,6 @@
 import { Heart, Flame } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { EventRatingButtons } from "./EventRatingButtons";
 
 interface EventCardProps {
   id: string;
@@ -71,6 +72,9 @@ const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = 
             Ganzjährig
           </span>
         )}
+        
+        {/* Rating Buttons */}
+        <EventRatingButtons eventId={id} eventTitle={title} />
       </div>
     </article>
   );
