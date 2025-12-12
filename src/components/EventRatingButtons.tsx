@@ -88,7 +88,7 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
     : null;
 
   return (
-    <div className="flex items-center gap-2 mt-2">
+    <div className="flex items-center gap-1.5">
       {/* Thumbs Up Button */}
       <button
         onClick={(e) => {
@@ -99,16 +99,16 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
         disabled={isLoading || !sessionId}
         title="Gefällt mir"
         className={`
-          flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-sm
+          flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-all text-xs font-medium backdrop-blur-sm
           ${userRating === 'like' 
-            ? 'bg-emerald-100 text-emerald-700 shadow-md scale-105' 
-            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+            ? 'bg-emerald-500 text-white shadow-lg scale-105' 
+            : 'bg-white/90 hover:bg-white text-neutral-600 shadow-sm'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
       >
-        <ThumbsUp className={`w-4 h-4 ${userRating === 'like' ? 'fill-emerald-500 text-emerald-600' : ''}`} />
-        <span className="font-medium">{stats.likes_count}</span>
+        <ThumbsUp className={`w-3.5 h-3.5 ${userRating === 'like' ? 'fill-current' : ''}`} />
+        <span>{stats.likes_count}</span>
       </button>
 
       {/* Thumbs Down Button */}
@@ -121,24 +121,17 @@ export function EventRatingButtons({ eventId, eventTitle, initialStats }: EventR
         disabled={isLoading || !sessionId}
         title="Gefällt mir nicht"
         className={`
-          flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-sm
+          flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-all text-xs font-medium backdrop-blur-sm
           ${userRating === 'dislike' 
-            ? 'bg-destructive text-destructive-foreground shadow-md scale-105' 
-            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+            ? 'bg-red-500 text-white shadow-lg scale-105' 
+            : 'bg-white/90 hover:bg-white text-neutral-600 shadow-sm'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
       >
-        <ThumbsDown className={`w-4 h-4 ${userRating === 'dislike' ? 'fill-current' : ''}`} />
-        <span className="font-medium">{stats.dislikes_count}</span>
+        <ThumbsDown className={`w-3.5 h-3.5 ${userRating === 'dislike' ? 'fill-current' : ''}`} />
+        <span>{stats.dislikes_count}</span>
       </button>
-
-      {/* Percentage display */}
-      {likePercentage !== null && stats.total_ratings >= 5 && (
-        <span className="text-xs text-muted-foreground ml-1">
-          {likePercentage}% gefällt das
-        </span>
-      )}
 
       {/* Feedback Modal */}
       {showFeedbackModal && (

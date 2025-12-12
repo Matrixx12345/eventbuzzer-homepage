@@ -1364,14 +1364,12 @@ const Listings = () => {
                   const eventSlug = event.id;
                   
                   return (
-                    <article 
+                    <Link
                       key={event.id}
-                      className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out group"
+                      to={`/event/${eventSlug}`}
+                      className="block group"
                     >
-                      <Link
-                        to={`/event/${eventSlug}`}
-                        className="block"
-                      >
+                      <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out">
                         <div className="relative overflow-hidden">
                           <img
                             src={eventImage}
@@ -1379,7 +1377,12 @@ const Listings = () => {
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
 
-                          {/* Favorite Button */}
+                          {/* Rating Buttons - bottom left on image */}
+                          <div className="absolute bottom-3 left-3">
+                            <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                          </div>
+
+                          {/* Favorite Button - top right */}
                           <button
                             onClick={(e) => {
                               e.preventDefault();
@@ -1436,13 +1439,8 @@ const Listings = () => {
                             </p>
                           )}
                         </div>
-                      </Link>
-                      
-                      {/* Rating Buttons - outside of Link to prevent navigation */}
-                      <div className="px-5 pb-4 -mt-1">
-                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                      </div>
-                    </article>
+                      </article>
+                    </Link>
                   );
                 })}
               </div>
