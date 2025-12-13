@@ -67,7 +67,7 @@ const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = 
         </button>
 
         {/* Ticketmaster Badge */}
-        {external_id?.startsWith('ticketmaster_') && (
+        {external_id?.startsWith('tm_') && (
           <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded font-bold text-sm">
             T
           </div>
