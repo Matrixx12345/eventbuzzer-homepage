@@ -1360,10 +1360,10 @@ const Listings = () => {
             {!loading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredEvents.map((event, index) => {
-                   // On Discover page we ALWAYS use curated placeholder images for a consistent, sharp look
-                   const eventImage = getPlaceholderImage(index);
-                   // Use the database ID (not external_id) for routing - matches how EventDetail fetches
-                   const eventSlug = event.id;
+                  // Use real image for debugging - fallback to placeholder if missing
+                  const eventImage = event.image_url || getPlaceholderImage(index);
+                  // Use the database ID (not external_id) for routing - matches how EventDetail fetches
+                  const eventSlug = event.id;
 
                   return (
                     <Link
