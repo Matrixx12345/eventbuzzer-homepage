@@ -54,7 +54,6 @@ const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = 
           </div>
         )}
 
-
         {/* Favorite Button */}
         <button
           onClick={handleFavoriteClick}
@@ -66,6 +65,13 @@ const EventCard = ({ id, slug, image, title, venue, location, date, isPopular = 
             className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-card-foreground"}
           />
         </button>
+
+        {/* Ticketmaster Badge */}
+        {external_id?.startsWith('ticketmaster_') && (
+          <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded font-bold text-sm">
+            T
+          </div>
+        )}
       </div>
 
       {/* Content */}
