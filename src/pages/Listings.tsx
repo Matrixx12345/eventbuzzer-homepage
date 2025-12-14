@@ -1425,10 +1425,13 @@ const Listings = () => {
                             />
                           </button>
 
-                          {/* Ticketmaster Badge - bottom left */}
-                          {event.external_id?.startsWith('tm_') && (
-                            <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded font-bold text-sm">
-                              T
+                          {/* Source Badge */}
+                          {event.external_id && (
+                            <div className="absolute bottom-2 left-2 bg-black/70 text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
+                              {event.external_id.startsWith('tm_') ? 'TM' : 
+                               event.external_id.startsWith('mys_') ? 'MySW' :
+                               event.external_id.startsWith('basel_') ? 'BS' :
+                               event.external_id.split('_')[0]?.toUpperCase() || '?'}
                             </div>
                           )}
                         </div>
