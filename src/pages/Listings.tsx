@@ -1306,6 +1306,23 @@ const Listings = () => {
           <p className="text-neutral-400 mt-1 text-sm">
             {loading ? "Lädt..." : `${filteredEvents.length} von ${totalEvents} Events`}
           </p>
+          {/* Source counter for debugging */}
+          {!loading && (
+            <p className="text-neutral-300 mt-1 text-xs">
+              {(() => {
+                const tm = filteredEvents.filter(e => e.external_id?.startsWith('tm_')).length;
+                const mys = filteredEvents.filter(e => e.external_id?.startsWith('mys_')).length;
+                const basel = filteredEvents.filter(e => e.external_id?.startsWith('basel_')).length;
+                const other = filteredEvents.length - tm - mys - basel;
+                const parts = [];
+                if (tm > 0) parts.push(`TM: ${tm}`);
+                if (mys > 0) parts.push(`MySW: ${mys}`);
+                if (basel > 0) parts.push(`Basel: ${basel}`);
+                if (other > 0) parts.push(`Andere: ${other}`);
+                return parts.join(' | ');
+              })()}
+            </p>
+          )}
         </div>
       </div>
 
