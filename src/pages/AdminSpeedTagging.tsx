@@ -38,6 +38,7 @@ export default function SpeedTagging() {
   const [selectedMainCat, setSelectedMainCat] = useState<number | null>(null);
   const [selectedSubCat, setSelectedSubCat] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [markedForDeletion, setMarkedForDeletion] = useState(false);
 
   const currentEvent = events[currentIndex];
 
@@ -68,6 +69,7 @@ export default function SpeedTagging() {
       setSelectedMainCat(currentEvent.category_main_id);
       setSelectedSubCat(currentEvent.category_sub_id);
       setSelectedTags(new Set(currentEvent.tags || []));
+      setMarkedForDeletion(false);
     }
   }, [currentEvent]);
 
@@ -131,6 +133,7 @@ export default function SpeedTagging() {
         category_sub_id: selectedSubCat,
         tags: Array.from(selectedTags),
         admin_verified: true,
+        marked_for_deletion: markedForDeletion,
       })
       .eq("id", currentEvent.id);
 
@@ -287,6 +290,19 @@ export default function SpeedTagging() {
               </div>
             </div>
 
+            {/* Zum Löschen markieren */}
+            <div className="mb-6 p-4 bg-red-50 rounded-xl border border-red-200">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={markedForDeletion}
+                  onChange={(e) => setMarkedForDeletion(e.target.checked)}
+                  className="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500"
+                />
+                <span className="text-red-700 font-medium">🗑️ Zum Löschen markieren</span>
+              </label>
+            </div>
+
             {/* Buttons */}
             <div className="flex gap-4 pt-4 border-t border-slate-100">
               <button
@@ -297,9 +313,13 @@ export default function SpeedTagging() {
               </button>
               <button
                 onClick={saveAndNext}
-                className="px-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg hover:shadow-xl flex-[2]"
+                className={`px-6 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl flex-[2] ${
+                  markedForDeletion 
+                    ? "bg-gradient-to-r from-red-600 to-red-700 text-white" 
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                }`}
               >
-                Speichern & Weiter (→)
+                {markedForDeletion ? "Markieren & Weiter (→)" : "Speichern & Weiter (→)"}
               </button>
             </div>
           </div>
