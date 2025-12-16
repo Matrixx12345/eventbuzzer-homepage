@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+// Direkter Client für dein externes Supabase (nicht Lovable Cloud!)
+const EXTERNAL_SUPABASE_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
+const EXTERNAL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDA4MDQsImV4cCI6MjA4MDY3NjgwNH0.bth3dTvG3fXSu4qILB514x1TRy0scRLo_KM9lDMMKDs";
+
+const externalSupabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY);
 
 // Typen
 interface Event {
@@ -76,10 +82,9 @@ export default function SpeedTagging() {
       console.log("Starte Daten-Ladeprozess...");
 
       const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
-        // HIER IST DIE ÄNDERUNG: KEIN FILTER MEHR! Wir laden einfach alles.
-        (supabase as any).from("events").select("*").order("created_at", { ascending: false }).limit(50),
-        (supabase as any).from("taxonomy").select("*"),
-        (supabase as any).from("tags").select("name, icon").order("name"),
+        externalSupabase.from("events").select("*").order("created_at", { ascending: false }).limit(50),
+        externalSupabase.from("taxonomy").select("*"),
+        externalSupabase.from("tags").select("name, icon").order("name"),
       ]);
 
       console.log("Events geladen:", eventsRes.data?.length);
@@ -101,7 +106,7 @@ export default function SpeedTagging() {
     if (!currentEvent) return;
 
     // Wir speichern trotzdem, dass es verifiziert wurde
-    const { error } = await (supabase as any)
+    const { error } = await externalSupabase
       .from("events")
       .update({
         category_main_id: selectedMainCat,
