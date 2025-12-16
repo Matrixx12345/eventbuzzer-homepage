@@ -11,6 +11,7 @@ const Navbar = () => {
     { label: "Supabase Test", href: "/supabase-test" },
     { label: "Favorites", href: "/favorites" },
     { label: "Admin", href: "/admin-upload" },
+    { label: "Tagging", href: "/admin/speed-tagging" },
   ];
 
   return (
