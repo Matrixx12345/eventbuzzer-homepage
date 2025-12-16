@@ -1297,32 +1297,12 @@ const Listings = () => {
     <div className="min-h-screen bg-stone-50">
       <Navbar />
 
-      {/* Header */}
+      {/* Header - minimal */}
       <div className="bg-white border-b border-neutral-100">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="font-serif text-3xl md:text-4xl text-neutral-900">
             Events entdecken
           </h1>
-          <p className="text-neutral-400 mt-1 text-sm">
-            {loading ? "Lädt..." : `${filteredEvents.length} von ${totalEvents} Events`}
-          </p>
-          {/* Source counter for debugging */}
-          {!loading && (
-            <p className="text-neutral-300 mt-1 text-xs">
-              {(() => {
-                const tm = filteredEvents.filter(e => e.external_id?.startsWith('tm_')).length;
-                const mys = filteredEvents.filter(e => e.external_id?.startsWith('mys_')).length;
-                const basel = filteredEvents.filter(e => e.external_id?.startsWith('basel_')).length;
-                const other = filteredEvents.length - tm - mys - basel;
-                const parts = [];
-                if (tm > 0) parts.push(`TM: ${tm}`);
-                if (mys > 0) parts.push(`MySW: ${mys}`);
-                if (basel > 0) parts.push(`Basel: ${basel}`);
-                if (other > 0) parts.push(`Andere: ${other}`);
-                return parts.join(' | ');
-              })()}
-            </p>
-          )}
         </div>
       </div>
 
@@ -1332,6 +1312,28 @@ const Listings = () => {
           <aside className="hidden lg:block w-[340px] flex-shrink-0 -mt-2">
             <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">
               {filterContent}
+            </div>
+            {/* Event Counter - below filter */}
+            <div className="mt-4 px-2 text-xs text-neutral-500">
+              {loading ? "Lädt..." : (
+                <>
+                  <p>{filteredEvents.length} von {totalEvents} Events</p>
+                  <p className="text-neutral-400 mt-0.5">
+                    {(() => {
+                      const tm = filteredEvents.filter(e => e.external_id?.startsWith('tm_')).length;
+                      const mys = filteredEvents.filter(e => e.external_id?.startsWith('mys_')).length;
+                      const basel = filteredEvents.filter(e => e.external_id?.startsWith('basel_')).length;
+                      const other = filteredEvents.length - tm - mys - basel;
+                      const parts = [];
+                      if (tm > 0) parts.push(`TM: ${tm}`);
+                      if (mys > 0) parts.push(`MySW: ${mys}`);
+                      if (basel > 0) parts.push(`Basel: ${basel}`);
+                      if (other > 0) parts.push(`Andere: ${other}`);
+                      return parts.join(' | ');
+                    })()}
+                  </p>
+                </>
+              )}
             </div>
           </aside>
 
