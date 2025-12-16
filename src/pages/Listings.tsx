@@ -839,7 +839,7 @@ const Listings = () => {
       {/* 1. WO / ORT - Location (TOP) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wo?</h3>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">WO / ORT</h3>
           {isTopStarsActive && (
             <span className="text-xs font-medium text-amber-400 flex items-center gap-1">
               <Star size={12} className="fill-amber-400" />
