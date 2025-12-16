@@ -1297,14 +1297,6 @@ const Listings = () => {
     <div className="min-h-screen bg-stone-50">
       <Navbar />
 
-      {/* Header - minimal */}
-      <div className="bg-white border-b border-neutral-100">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="font-serif text-3xl md:text-4xl text-neutral-900">
-            Events entdecken
-          </h1>
-        </div>
-      </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
