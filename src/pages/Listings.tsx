@@ -169,7 +169,9 @@ const Listings = () => {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Filter states
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
+  const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
   const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
@@ -244,6 +246,7 @@ const Listings = () => {
     setSelectedTimeFilter((prev) => prev === filterId ? null : filterId);
     // Clear specific date when using time filters
     setSelectedDateRange(undefined);
+    setSelectedDate(undefined);
   };
 
   // Fetch events from Supabase with pagination
@@ -335,12 +338,27 @@ const Listings = () => {
     };
   }, [hasMore, loadingMore, loading, fetchEvents]);
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    setShowCalendar(false);
+  };
+
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     setSelectedDateRange(range);
     // Keep dialog open until both dates selected, or close if cleared
     if (!range || (range.from && range.to)) {
       setShowCalendar(false);
     }
+  };
+
+  const openSingleDateCalendar = () => {
+    setCalendarMode("single");
+    setShowCalendar(true);
+  };
+
+  const openRangeCalendar = () => {
+    setCalendarMode("range");
+    setShowCalendar(true);
   };
 
   const toggleQuickFilter = (filterId: string) => {
@@ -562,6 +580,12 @@ const Listings = () => {
       }
     }
     
+    // Single date filter
+    if (selectedDate && event.start_date) {
+      const eventDate = parseISO(event.start_date);
+      if (!isSameDay(eventDate, selectedDate)) return false;
+    }
+
     // Date range filter
     if (selectedDateRange?.from && event.start_date) {
       const eventDate = parseISO(event.start_date);
@@ -743,6 +767,7 @@ const Listings = () => {
   });
 
   const clearFilters = () => {
+    setSelectedDate(undefined);
     setSelectedDateRange(undefined);
     setSelectedTimeFilter(null);
     setSelectedQuickFilters([]);
@@ -759,6 +784,7 @@ const Listings = () => {
   };
 
   const hasActiveFilters = 
+    selectedDate !== undefined ||
     selectedDateRange !== undefined ||
     selectedTimeFilter !== null ||
     selectedQuickFilters.length > 0 ||
@@ -828,6 +854,22 @@ const Listings = () => {
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
         
+        {/* Datum wählen button - single date */}
+        <button 
+          onClick={openSingleDateCalendar}
+          className={cn(
+            "w-full px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 font-medium border",
+            selectedDate
+              ? "bg-blue-600 text-white border-blue-600"
+              : "bg-white text-gray-800 hover:bg-gray-50 border-gray-200"
+          )}
+        >
+          <CalendarIcon size={18} />
+          <span className="text-sm">
+            {selectedDate ? format(selectedDate, "d. MMMM yyyy", { locale: de }) : "Datum wählen"}
+          </span>
+        </button>
+        
         {/* Time filter buttons - single-select, uniform size */}
         <div className="grid grid-cols-2 gap-2">
           {timeFilters.map((filter) => {
@@ -853,9 +895,9 @@ const Listings = () => {
               </button>
             );
           })}
-          {/* Zeitraum wählen button - opens calendar */}
+          {/* Zeitraum wählen button - opens calendar for range */}
           <button 
-            onClick={() => setShowCalendar(true)}
+            onClick={openRangeCalendar}
             className={cn(
               "h-11 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 col-span-2",
               selectedDateRange?.from
@@ -1575,26 +1617,42 @@ const Listings = () => {
         </div>
       )}
 
-      {/* Calendar Dialog */}
+      {/* Calendar Dialog - switches between single and range mode */}
       <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
         <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-xl border-0 shadow-2xl rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-neutral-900">Datum auswählen</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-neutral-900">
+              {calendarMode === "single" ? "Datum auswählen" : "Zeitraum auswählen"}
+            </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center py-4">
-            <Calendar
-              mode="range"
-              selected={selectedDateRange}
-              onSelect={handleDateRangeSelect}
-              className="pointer-events-auto rounded-2xl"
-              locale={de}
-              numberOfMonths={1}
-            />
+            {calendarMode === "single" ? (
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                className="pointer-events-auto rounded-2xl"
+                locale={de}
+              />
+            ) : (
+              <Calendar
+                mode="range"
+                selected={selectedDateRange}
+                onSelect={handleDateRangeSelect}
+                className="pointer-events-auto rounded-2xl"
+                locale={de}
+                numberOfMonths={1}
+              />
+            )}
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => {
-                setSelectedDateRange(undefined);
+                if (calendarMode === "single") {
+                  setSelectedDate(undefined);
+                } else {
+                  setSelectedDateRange(undefined);
+                }
                 setShowCalendar(false);
               }}
               className="flex-1 py-3 bg-neutral-100 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-200 transition-colors"
