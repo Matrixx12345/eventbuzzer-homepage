@@ -1068,7 +1068,7 @@ const Listings = () => {
                   
                   {/* Subcategory drawer - appears below the row */}
                   {selectedInRow && relevantSubs.length > 0 && (
-                    <div className="mt-2 bg-blue-50 rounded-xl p-3 border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="mt-2 bg-neutral-900 rounded-xl p-3 border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="flex flex-col gap-1.5">
                         <button
                           onClick={() => setSelectedSubcategoryId(null)}
@@ -1076,7 +1076,7 @@ const Listings = () => {
                             "w-full px-3 py-2 rounded-full text-xs font-medium transition-all text-left",
                             selectedSubcategoryId === null
                               ? "bg-blue-600 text-white"
-                              : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                              : "bg-white text-gray-800 hover:bg-gray-100"
                           )}
                         >
                           Alle
@@ -1089,7 +1089,7 @@ const Listings = () => {
                               "w-full px-3 py-2 rounded-full text-xs font-medium transition-all text-left",
                               selectedSubcategoryId === sub.id
                                 ? "bg-blue-600 text-white"
-                                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                                : "bg-white text-gray-800 hover:bg-gray-100"
                             )}
                           >
                             {sub.name}
