@@ -57,8 +57,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { format, addDays, addWeeks, isToday, isTomorrow, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { format, addDays, addWeeks, isToday, isTomorrow, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, isAfter, isBefore } from "date-fns";
 import { de } from "date-fns/locale";
+import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 
 // Placeholder images for fallback
@@ -168,7 +169,7 @@ const Listings = () => {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Filter states
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
   const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
@@ -243,7 +244,7 @@ const Listings = () => {
     // Single select - toggle off if already selected, otherwise select new one
     setSelectedTimeFilter((prev) => prev === filterId ? null : filterId);
     // Clear specific date when using time filters
-    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
   };
 
   // Fetch events from Supabase with pagination
@@ -335,9 +336,12 @@ const Listings = () => {
     };
   }, [hasMore, loadingMore, loading, fetchEvents]);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    setShowCalendar(false);
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setSelectedDateRange(range);
+    // Keep dialog open until both dates selected, or close if cleared
+    if (!range || (range.from && range.to)) {
+      setShowCalendar(false);
+    }
   };
 
   const toggleQuickFilter = (filterId: string) => {
@@ -559,10 +563,16 @@ const Listings = () => {
       }
     }
     
-    // Date filter - specific date
-    if (selectedDate && event.start_date) {
+    // Date range filter
+    if (selectedDateRange?.from && event.start_date) {
       const eventDate = parseISO(event.start_date);
-      if (!isSameDay(eventDate, selectedDate)) return false;
+      if (selectedDateRange.to) {
+        // Range selected - check if event is within range
+        if (isBefore(eventDate, selectedDateRange.from) || isAfter(eventDate, selectedDateRange.to)) return false;
+      } else {
+        // Only "from" selected - match that specific day
+        if (!isSameDay(eventDate, selectedDateRange.from)) return false;
+      }
     }
     
     // Time filter (single-select)
@@ -734,7 +744,7 @@ const Listings = () => {
   });
 
   const clearFilters = () => {
-    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
     setSelectedTimeFilter(null);
     setSelectedQuickFilters([]);
     setSelectedPriceTier(null);
@@ -750,7 +760,7 @@ const Listings = () => {
   };
 
   const hasActiveFilters = 
-    selectedDate !== undefined ||
+    selectedDateRange !== undefined ||
     selectedTimeFilter !== null ||
     selectedQuickFilters.length > 0 ||
     selectedPriceTier !== null ||
@@ -825,7 +835,11 @@ const Listings = () => {
         >
           <CalendarIcon size={18} />
           <span className="text-sm">
-            {selectedDate ? format(selectedDate, "d. MMMM yyyy", { locale: de }) : "Datum wählen"}
+            {selectedDateRange?.from 
+              ? selectedDateRange.to 
+                ? `${format(selectedDateRange.from, "d. MMM", { locale: de })} - ${format(selectedDateRange.to, "d. MMM", { locale: de })}`
+                : format(selectedDateRange.from, "d. MMMM yyyy", { locale: de })
+              : "Zeitraum wählen"}
           </span>
         </button>
         
@@ -1565,17 +1579,18 @@ const Listings = () => {
           </DialogHeader>
           <div className="flex justify-center py-4">
             <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
+              mode="range"
+              selected={selectedDateRange}
+              onSelect={handleDateRangeSelect}
               className="pointer-events-auto rounded-2xl"
               locale={de}
+              numberOfMonths={1}
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => {
-                setSelectedDate(undefined);
+                setSelectedDateRange(undefined);
                 setShowCalendar(false);
               }}
               className="flex-1 py-3 bg-neutral-100 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-200 transition-colors"
