@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client"; // Der offizielle Weg
+import { externalSupabase } from "@/integrations/supabase/externalClient";
 
 // Typen definieren
 interface Event {
@@ -81,13 +81,13 @@ export default function SpeedTagging() {
       // 2. Wir laden ALLES (ohne .eq Filter) und sortieren 'admin_verified' aufsteigend
       // ------------------------------------------------------------------
       const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
-        (supabase as any)
+        (externalSupabase as any)
           .from("events")
           .select("*")
           .order("admin_verified", { ascending: true }) // Unbearbeitete (null/false) zuerst
           .limit(50),
-        (supabase as any).from("taxonomy").select("*"),
-        (supabase as any).from("tags").select("name, icon").order("name"),
+        (externalSupabase as any).from("taxonomy").select("*"),
+        (externalSupabase as any).from("tags").select("name, icon").order("name"),
       ]);
 
       if (eventsRes.data) {
@@ -124,7 +124,7 @@ export default function SpeedTagging() {
   async function saveAndNext() {
     if (!currentEvent) return;
 
-    const { error } = await (supabase as any)
+    const { error } = await (externalSupabase as any)
       .from("events")
       .update({
         category_main_id: selectedMainCat,
