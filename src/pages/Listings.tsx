@@ -29,7 +29,8 @@ import {
   Gift,
   Snowflake,
   Sun,
-  CalendarDays
+  CalendarDays,
+  Dog
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -57,6 +58,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { format, addDays, addWeeks, isToday, isTomorrow, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, isAfter, isBefore } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
@@ -183,6 +185,7 @@ const Listings = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
   const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
+  const [dogFriendly, setDogFriendly] = useState(false);
   
   // Current month for availability filtering
   const currentMonth = new Date().getMonth() + 1; // 1-12
@@ -229,13 +232,11 @@ const Listings = () => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [taxonomy, selectedCategoryId]);
 
-  // Time filter definitions
+  // Time filter definitions - simplified for new layout
   const timeFilters = [
-    { id: "now", label: "Jetzt" },
     { id: "today", label: "Heute" },
     { id: "tomorrow", label: "Morgen" },
-    { id: "thisWeek", label: "Diese Woche" },
-    { id: "nextWeek", label: "Nächste Woche" },
+    { id: "thisWeek", label: "Wochenende" },
   ];
   
   // Check if "Top Stars" filter is active (overrides radius)
@@ -627,12 +628,13 @@ const Listings = () => {
         case "tomorrow":
           matchesTimeFilter = isTomorrow(eventDate);
           break;
-        case "thisWeek":
-          matchesTimeFilter = isWithinInterval(eventDate, {
-            start: startOfWeek(now, { weekStartsOn: 1 }),
-            end: endOfWeek(now, { weekStartsOn: 1 })
-          });
+        case "thisWeek": {
+          // Weekend = Saturday and Sunday of current week
+          const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+          const saturday = addDays(weekEnd, -1);
+          matchesTimeFilter = isSameDay(eventDate, saturday) || isSameDay(eventDate, weekEnd);
           break;
+        }
         case "nextWeek":
           const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
           const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
@@ -762,6 +764,11 @@ const Listings = () => {
           break;
       }
     }
+    // Dog-friendly filter - based on tag
+    if (dogFriendly) {
+      const eventTags = event.tags || [];
+      if (!eventTags.includes("hunde-erlaubt")) return false;
+    }
     
     return true;
   });
@@ -781,6 +788,7 @@ const Listings = () => {
     setSelectedFamilyAgeFilter(null);
     setSelectedIndoorFilter(null);
     setSelectedAvailability(null);
+    setDogFriendly(false);
   };
 
   const hasActiveFilters = 
@@ -795,7 +803,8 @@ const Listings = () => {
     selectedSubcategoryId !== null ||
     selectedSource !== null ||
     searchQuery.trim() !== "" ||
-    selectedAvailability !== null;
+    selectedAvailability !== null ||
+    dogFriendly;
 
   const formatEventDate = (dateString?: string, externalId?: string) => {
     // MySwitzerland events (permanent attractions) have null dates
@@ -816,7 +825,7 @@ const Listings = () => {
   };
 
   const filterContent = (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Reset button */}
       {hasActiveFilters && (
         <button
@@ -827,273 +836,7 @@ const Listings = () => {
         </button>
       )}
 
-      {/* Search Bar */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Suche</h3>
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Künstler, Event, Stichwort..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-gray-200"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Datum (Date) */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
-        
-        {/* Datum wählen button - single date */}
-        <button 
-          onClick={openSingleDateCalendar}
-          className={cn(
-            "w-full px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 font-medium border",
-            selectedDate
-              ? "bg-blue-600 text-white border-blue-600"
-              : "bg-white text-gray-800 hover:bg-gray-50 border-gray-200"
-          )}
-        >
-          <CalendarIcon size={18} />
-          <span className="text-sm">
-            {selectedDate ? format(selectedDate, "d. MMMM yyyy", { locale: de }) : "Datum wählen"}
-          </span>
-        </button>
-        
-        {/* Time filter buttons - single-select, uniform size */}
-        <div className="grid grid-cols-2 gap-2">
-          {timeFilters.map((filter) => {
-            const isActive = selectedTimeFilter === filter.id;
-            const isNow = filter.id === "now";
-            return (
-              <button
-                key={filter.id}
-                onClick={() => selectTimeFilter(filter.id)}
-                className={cn(
-                  "h-11 px-4 rounded-xl text-sm font-medium transition-all text-center whitespace-nowrap flex items-center justify-center gap-1.5",
-                  isActive && isNow
-                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30"
-                    : isActive
-                    ? "bg-blue-600 text-white"
-                    : isNow
-                    ? "bg-white text-gray-800 hover:bg-orange-50 border border-gray-200 hover:border-orange-300"
-                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                )}
-              >
-                {isNow && <Zap size={14} className={isActive ? "animate-pulse" : ""} />}
-                {filter.label}
-              </button>
-            );
-          })}
-          {/* Zeitraum wählen button - opens calendar for range */}
-          <button 
-            onClick={openRangeCalendar}
-            className={cn(
-              "h-11 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 col-span-2",
-              selectedDateRange?.from
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-            )}
-          >
-            <CalendarIcon size={16} />
-            <span>
-              {selectedDateRange?.from 
-                ? selectedDateRange.to 
-                  ? `${format(selectedDateRange.from, "d. MMM", { locale: de })} - ${format(selectedDateRange.to, "d. MMM", { locale: de })}`
-                  : format(selectedDateRange.from, "d. MMM yyyy", { locale: de })
-                : "Zeitraum wählen"}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Schnellfilter (Quick Filters) */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
-        <TooltipProvider>
-          {(() => {
-            // Group quick filters into rows of 3
-            const rows: typeof quickFilters[] = [];
-            for (let i = 0; i < quickFilters.length; i += 3) {
-              rows.push(quickFilters.slice(i, i + 3));
-            }
-            
-            // Find which row contains "mit-kind" (to show drawer below it)
-            const familyRowIndex = rows.findIndex(row => row.some(f => f.id === "mit-kind"));
-            // Find which row contains "mistwetter" (to show drawer below it)
-            const mistwetterRowIndex = rows.findIndex(row => row.some(f => f.id === "mistwetter"));
-            
-            return (
-              <div className="space-y-2">
-                {rows.map((row, rowIndex) => (
-                  <div key={rowIndex}>
-                    {/* Row of 3 quick filter buttons */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {row.map((filter) => {
-                        const Icon = filter.icon;
-                        const isActive = selectedQuickFilters.includes(filter.id);
-                        const isTopStars = filter.id === "top-stars";
-                        const isMitKind = filter.id === "mit-kind";
-                        const isMistwetter = filter.id === "mistwetter";
-                        
-                        const buttonElement = (
-                          <button
-                            key={filter.id}
-                            onClick={() => toggleQuickFilter(filter.id)}
-                            className={cn(
-                              "aspect-square flex flex-col items-center justify-center rounded-xl transition-all",
-                              isActive && isTopStars
-                                ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30"
-                                : isActive && isMitKind
-                                ? "bg-gradient-to-br from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/30"
-                                : isActive && isMistwetter
-                                ? "bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30"
-                                : isActive
-                                ? "bg-blue-600 text-white"
-                                : isTopStars
-                                ? "bg-white text-gray-800 hover:bg-amber-50 border border-gray-200 hover:border-amber-300"
-                                : isMitKind
-                                ? "bg-white text-gray-800 hover:bg-pink-50 border border-gray-200 hover:border-pink-300"
-                                : isMistwetter
-                                ? "bg-white text-gray-800 hover:bg-sky-50 border border-gray-200 hover:border-sky-300"
-                                : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                            )}
-                          >
-                            <Icon 
-                              size={20} 
-                              strokeWidth={1.8} 
-                              className={cn("mb-1", (isActive && isTopStars) && "fill-white")}
-                            />
-                            <span className="text-xs font-medium leading-tight text-center">{filter.label}</span>
-                          </button>
-                        );
-                        
-                        if (isTopStars) {
-                          return (
-                            <Tooltip key={filter.id}>
-                              <TooltipTrigger asChild>
-                                {buttonElement}
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-[180px]">
-                                <p className="text-center">Grosse Events schweizweit – ohne lokale Einschränkung</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        }
-                        
-                        return buttonElement;
-                      })}
-                    </div>
-                    
-                    {/* Inline Drawer for "Mistwetter" - appears below the row containing it */}
-                    {rowIndex === mistwetterRowIndex && isMistwetterFilterActive && (
-                      <div className="mt-2 p-3 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="flex flex-col gap-2">
-                          {indoorFilters.map((indoorFilter) => {
-                            const isIndoorActive = selectedIndoorFilter === indoorFilter.id;
-                            return (
-                              <button
-                                key={indoorFilter.id}
-                                onClick={() => setSelectedIndoorFilter(indoorFilter.id)}
-                                className={cn(
-                                  "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left",
-                                  isIndoorActive
-                                    ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white"
-                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
-                                )}
-                              >
-                                {indoorFilter.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Inline Drawer for "Mit Kind" - appears below the row containing it */}
-                    {rowIndex === familyRowIndex && isFamilyFilterActive && (
-                      <div className="mt-2 p-3 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="flex flex-col gap-2">
-                          {familyAgeFilters.map((ageFilter) => {
-                            const isAgeActive = selectedFamilyAgeFilter === ageFilter.id;
-                            return (
-                              <button
-                                key={ageFilter.id}
-                                onClick={() => setSelectedFamilyAgeFilter(ageFilter.id)}
-                                className={cn(
-                                  "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left",
-                                  isAgeActive
-                                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
-                                )}
-                              >
-                                {ageFilter.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </TooltipProvider>
-      </div>
-
-      {/* Budget - Preisstufen */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
-        
-        {/* Price tier pills - single select */}
-        <TooltipProvider>
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { id: "gratis", label: "Gratis", tooltip: "Kostenlose Events" },
-              { id: "$", label: "$", tooltip: "Budget (ca. bis 50 CHF)" },
-              { id: "$$", label: "$$", tooltip: "Standard (ca. 50 - 120 CHF)" },
-              { id: "$$$", label: "$$$", tooltip: "Premium (ab ca. 120 CHF)" },
-            ].map((tier) => {
-              const isActive = selectedPriceTier === tier.id;
-              return (
-                <Tooltip key={tier.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        setSelectedPriceTier(isActive ? null : tier.id);
-                      }}
-                      className={cn(
-                        "h-11 px-3 rounded-xl text-sm font-semibold transition-all text-center",
-                        isActive
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                      )}
-                    >
-                      {tier.label}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{tier.tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-        </TooltipProvider>
-      </div>
-
-      {/* Stadt und Radius */}
+      {/* 1. WO / ORT - Location (TOP) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wo?</h3>
@@ -1105,7 +848,7 @@ const Listings = () => {
           )}
         </div>
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Stadt eingeben..."
@@ -1129,19 +872,19 @@ const Listings = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={cn("pt-2 px-1", isTopStarsActive && "opacity-50 cursor-not-allowed")}>
+              <div className={cn("pt-1 px-1", isTopStarsActive && "opacity-50 cursor-not-allowed")}>
                 <Slider
                   value={radius}
                   onValueChange={isTopStarsActive ? undefined : setRadius}
-                  max={100}
+                  max={50}
                   step={5}
                   className="w-full"
                   disabled={isTopStarsActive}
                 />
-                <div className="flex justify-between items-center mt-2">
+                <div className="flex justify-between items-center mt-1.5">
                   <span className="text-xs text-gray-400 font-medium">Umkreis</span>
                   <span className={cn(
-                    "text-sm font-semibold tabular-nums px-2.5 py-1 rounded-lg border",
+                    "text-sm font-semibold tabular-nums px-2 py-0.5 rounded-lg border",
                     isTopStarsActive 
                       ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
                       : "bg-white text-gray-800 border-gray-200"
@@ -1160,174 +903,323 @@ const Listings = () => {
         </TooltipProvider>
       </div>
 
-      {/* Verfügbarkeit (Availability) */}
+      {/* 2. STIMMUNG - Quick Filters (3x3 grid, compact) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Verfügbarkeit</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {availabilityFilters.map((filter) => {
-            const Icon = filter.icon;
-            const isActive = selectedAvailability === filter.id;
-            const isNowFilter = filter.id === "now";
-            const isWinterFilter = filter.id === "winter";
-            const isSummerFilter = filter.id === "summer";
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
+        <TooltipProvider>
+          {(() => {
+            const rows: typeof quickFilters[] = [];
+            for (let i = 0; i < quickFilters.length; i += 3) {
+              rows.push(quickFilters.slice(i, i + 3));
+            }
             
+            const familyRowIndex = rows.findIndex(row => row.some(f => f.id === "mit-kind"));
+            const mistwetterRowIndex = rows.findIndex(row => row.some(f => f.id === "mistwetter"));
+            
+            return (
+              <div className="space-y-2">
+                {rows.map((row, rowIndex) => (
+                  <div key={rowIndex}>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {row.map((filter) => {
+                        const Icon = filter.icon;
+                        const isActive = selectedQuickFilters.includes(filter.id);
+                        const isTopStars = filter.id === "top-stars";
+                        
+                        return (
+                          <Tooltip key={filter.id}>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => toggleQuickFilter(filter.id)}
+                                className={cn(
+                                  "aspect-square flex flex-col items-center justify-center rounded-xl transition-all p-1.5",
+                                  isActive && isTopStars
+                                    ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30"
+                                    : isActive
+                                    ? "bg-blue-600 text-white shadow-md"
+                                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                                )}
+                              >
+                                <Icon size={18} strokeWidth={1.8} />
+                                <span className="text-[10px] font-medium leading-tight mt-0.5">{filter.label}</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>{filter.label}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Mistwetter drawer */}
+                    {rowIndex === mistwetterRowIndex && isMistwetterFilterActive && (
+                      <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-col gap-1.5">
+                          {indoorFilters.map((indoorFilter) => {
+                            const isIndoorActive = selectedIndoorFilter === indoorFilter.id;
+                            return (
+                              <button
+                                key={indoorFilter.id}
+                                onClick={() => setSelectedIndoorFilter(indoorFilter.id)}
+                                className={cn(
+                                  "w-full py-2 px-3 rounded-lg text-xs font-medium transition-all text-left",
+                                  isIndoorActive
+                                    ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white"
+                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+                                )}
+                              >
+                                {indoorFilter.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Mit Kind drawer */}
+                    {rowIndex === familyRowIndex && isFamilyFilterActive && (
+                      <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-col gap-1.5">
+                          {familyAgeFilters.map((ageFilter) => {
+                            const isAgeActive = selectedFamilyAgeFilter === ageFilter.id;
+                            return (
+                              <button
+                                key={ageFilter.id}
+                                onClick={() => setSelectedFamilyAgeFilter(ageFilter.id)}
+                                className={cn(
+                                  "w-full py-2 px-3 rounded-lg text-xs font-medium transition-all text-left",
+                                  isAgeActive
+                                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
+                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+                                )}
+                              >
+                                {ageFilter.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </TooltipProvider>
+      </div>
+
+      {/* 3. KATEGORIE - Small chips/pills */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => {
+              setSelectedCategoryId(null);
+              setSelectedSubcategoryId(null);
+            }}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              selectedCategoryId === null
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+            )}
+          >
+            Alle
+          </button>
+          {mainCategories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                if (selectedCategoryId === cat.id) {
+                  setSelectedCategoryId(null);
+                  setSelectedSubcategoryId(null);
+                } else {
+                  setSelectedCategoryId(cat.id);
+                  setSelectedSubcategoryId(null);
+                }
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                selectedCategoryId === cat.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+              )}
+            >
+              {cat.name.split(' & ')[0]}
+            </button>
+          ))}
+        </div>
+        {/* Subcategory chips */}
+        {selectedCategoryId !== null && subCategories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <button
+              onClick={() => setSelectedSubcategoryId(null)}
+              className={cn(
+                "px-2.5 py-1 rounded-full text-[11px] font-medium transition-all",
+                selectedSubcategoryId === null
+                  ? "bg-blue-500 text-white"
+                  : "bg-neutral-800 text-gray-300 hover:bg-neutral-700 border border-neutral-700"
+              )}
+            >
+              Alle
+            </button>
+            {subCategories.map((sub) => (
+              <button
+                key={sub.id}
+                onClick={() => setSelectedSubcategoryId(selectedSubcategoryId === sub.id ? null : sub.id)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-[11px] font-medium transition-all",
+                  selectedSubcategoryId === sub.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-neutral-800 text-gray-300 hover:bg-neutral-700 border border-neutral-700"
+                )}
+              >
+                {sub.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 4. ZEITRAUM - Time filters */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
+        
+        {/* Row 1: Prominent "JETZT" button */}
+        <button
+          onClick={() => selectTimeFilter("now")}
+          className={cn(
+            "w-full h-11 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2",
+            selectedTimeFilter === "now"
+              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30"
+              : "bg-white text-gray-800 hover:bg-orange-50 border border-gray-200 hover:border-orange-300"
+          )}
+        >
+          <Zap size={16} className={selectedTimeFilter === "now" ? "animate-pulse" : ""} />
+          ⚡️ JETZT
+        </button>
+        
+        {/* Row 2: Heute, Morgen, Wochenende chips */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {timeFilters.map((filter) => {
+            const isActive = selectedTimeFilter === filter.id;
             return (
               <button
                 key={filter.id}
-                onClick={() => setSelectedAvailability(isActive ? null : filter.id)}
+                onClick={() => selectTimeFilter(filter.id)}
                 className={cn(
-                  "h-11 px-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5",
-                  isActive && isNowFilter
-                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30"
-                    : isActive && isWinterFilter
-                    ? "bg-gradient-to-r from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/30"
-                    : isActive && isSummerFilter
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30"
-                    : isActive
+                  "h-9 px-2 rounded-lg text-xs font-medium transition-all text-center whitespace-nowrap",
+                  isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
                 )}
               >
-                <Icon size={14} />
                 {filter.label}
               </button>
             );
           })}
         </div>
-      </div>
-
-      {/* Kategorie - Inline Drawer Pattern */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
         
-        {/* Category grid with inline drawer for subcategories */}
-        {(() => {
-          const orderedCategories = ['Musik & Party', 'Kunst & Kultur', 'Kulinarik & Genuss', 'Freizeit & Aktivitäten', 'Märkte & Lokales'];
-          
-          const getCategoryIcon = (name: string) => {
-            const lower = name.toLowerCase();
-            if (lower.includes('musik')) return Music;
-            if (lower.includes('kunst')) return Palette;
-            if (lower.includes('kulinarik')) return UtensilsCrossed;
-            if (lower.includes('freizeit')) return Sparkles;
-            if (lower.includes('märkte')) return Gift;
-            return Sparkles;
-          };
-          
-          // Build array with categories + "Alle" at the end
-          const allItems = [
-            ...orderedCategories.map(catName => {
-              const cat = mainCategories.find(c => c.name === catName);
-              return cat ? { id: cat.id, name: cat.name, icon: getCategoryIcon(cat.name) } : null;
-            }).filter(Boolean) as { id: number; name: string; icon: typeof Music }[],
-            { id: null, name: 'Alle Kategorien', icon: LayoutGrid },
-          ];
-          
-          // Group items into rows of 2
-          const rows: typeof allItems[] = [];
-          for (let i = 0; i < allItems.length; i += 2) {
-            rows.push(allItems.slice(i, i + 2));
-          }
-          
-          // Find which row contains the selected category (to show drawer below it)
-          const selectedRowIndex = selectedCategoryId !== null 
-            ? rows.findIndex(row => row.some(item => item.id === selectedCategoryId))
-            : -1;
-          
-          return (
-            <div className="space-y-2">
-              {rows.map((row, rowIndex) => (
-                <div key={rowIndex}>
-                  {/* Row of 2 category cards */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {row.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = item.id === null 
-                        ? selectedCategoryId === null 
-                        : selectedCategoryId === item.id;
-                      
-                      return (
-                        <button
-                          key={item.id ?? 'alle'}
-                          onClick={() => {
-                            if (item.id === null) {
-                              setSelectedCategoryId(null);
-                              setSelectedSubcategoryId(null);
-                            } else {
-                              // Toggle: if clicking same category, deselect
-                              if (selectedCategoryId === item.id) {
-                                setSelectedCategoryId(null);
-                                setSelectedSubcategoryId(null);
-                              } else {
-                                setSelectedCategoryId(item.id);
-                                setSelectedSubcategoryId(null);
-                              }
-                            }
-                          }}
-                          className={cn(
-                            "h-20 flex flex-col items-center justify-center rounded-xl transition-all",
-                            isActive
-                              ? "bg-blue-600 text-white shadow-md"
-                              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                          )}
-                        >
-                          <Icon 
-                            size={20} 
-                            strokeWidth={1.8} 
-                            className="mb-1"
-                          />
-                          <span className="text-xs font-medium leading-tight text-center">{item.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Inline Drawer - appears below the row containing the selected category */}
-                  {rowIndex === selectedRowIndex && selectedCategoryId !== null && subCategories.length > 0 && (
-                    <div className="mt-2 p-3 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {/* Single column - full width pills stacked */}
-                      <div className="flex flex-col gap-2">
-                        {/* "Alle" chip */}
-                        <button
-                          onClick={() => setSelectedSubcategoryId(null)}
-                          className={cn(
-                            "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left",
-                            selectedSubcategoryId === null
-                              ? "bg-blue-600 text-white"
-                              : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
-                          )}
-                        >
-                          Alle
-                        </button>
-                        {/* Subcategory chips - allow text wrapping */}
-                        {subCategories.map((sub) => (
-                          <button
-                            key={sub.id}
-                            onClick={() => setSelectedSubcategoryId(selectedSubcategoryId === sub.id ? null : sub.id)}
-                            className={cn(
-                              "w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-all text-left leading-snug",
-                              selectedSubcategoryId === sub.id
-                                ? "bg-blue-600 text-white"
-                                : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
-                            )}
-                          >
-                            {sub.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          );
-        })()}
+        {/* Row 3: Date-Range-Picker */}
+        <button 
+          onClick={openRangeCalendar}
+          className={cn(
+            "w-full h-10 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
+            selectedDateRange?.from
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+          )}
+        >
+          <CalendarIcon size={14} />
+          <span>
+            {selectedDateRange?.from 
+              ? selectedDateRange.to 
+                ? `${format(selectedDateRange.from, "d. MMM", { locale: de })} - ${format(selectedDateRange.to, "d. MMM", { locale: de })}`
+                : format(selectedDateRange.from, "d. MMM yyyy", { locale: de })
+              : "Zeitraum wählen"}
+          </span>
+        </button>
       </div>
 
-      {/* Quelle (Source) - at bottom */}
-      <div className="space-y-3 pt-4 border-t border-neutral-700">
+      {/* 5. BUDGET - Price tier buttons */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
+        <TooltipProvider>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { id: "gratis", label: "Gratis", tooltip: "Kostenlose Events" },
+              { id: "$", label: "$", tooltip: "Budget (ca. bis 50 CHF)" },
+              { id: "$$", label: "$$", tooltip: "Standard (ca. 50 - 120 CHF)" },
+              { id: "$$$", label: "$$$", tooltip: "Premium (ab ca. 120 CHF)" },
+            ].map((tier) => {
+              const isActive = selectedPriceTier === tier.id;
+              return (
+                <Tooltip key={tier.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setSelectedPriceTier(isActive ? null : tier.id)}
+                      className={cn(
+                        "h-10 px-2 rounded-xl text-xs font-semibold transition-all text-center",
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                      )}
+                    >
+                      {tier.label}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{tier.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
+      </div>
+
+      {/* 6. MIT HUND - Toggle Switch */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between py-2 px-1">
+          <div className="flex items-center gap-2">
+            <Dog size={16} className="text-gray-400" />
+            <span className="text-sm font-medium text-gray-300">Mit Hund erlaubt?</span>
+          </div>
+          <Switch
+            checked={dogFriendly}
+            onCheckedChange={setDogFriendly}
+          />
+        </div>
+      </div>
+
+      {/* 7. SUCHE - Text search (BOTTOM) */}
+      <div className="space-y-3 pt-3 border-t border-neutral-700">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Suche</h3>
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Künstler, Event, Stichwort..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-gray-200"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Datenquelle - hidden at very bottom */}
+      <div className="space-y-3 pt-3 border-t border-neutral-700">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Datenquelle</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {[
             { id: "ticketmaster", label: "Ticketmaster" },
             { id: "myswitzerland", label: "MySwitzerland" },
@@ -1338,7 +1230,7 @@ const Listings = () => {
                 key={source.id}
                 onClick={() => setSelectedSource(isActive ? null : source.id)}
                 className={cn(
-                  "h-11 px-4 rounded-xl text-sm font-medium transition-all text-center",
+                  "h-9 px-3 rounded-lg text-xs font-medium transition-all text-center",
                   isActive
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
