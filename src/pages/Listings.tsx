@@ -234,7 +234,6 @@ const Listings = () => {
     { id: "tomorrow", label: "Morgen" },
     { id: "thisWeek", label: "Diese Woche" },
     { id: "nextWeek", label: "Nächste Woche" },
-    { id: "thisMonth", label: "Dieser Monat" },
   ];
   
   // Check if "Top Stars" filter is active (overrides radius)
