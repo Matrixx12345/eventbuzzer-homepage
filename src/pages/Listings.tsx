@@ -931,7 +931,7 @@ const Listings = () => {
                                 )}
                               >
                                 <Icon size={18} strokeWidth={1.8} />
-                                <span className="text-sm font-medium leading-tight mt-0.5">{filter.label}</span>
+                                <span className="text-[13px] font-medium leading-tight mt-0.5">{filter.label}</span>
                               </button>
                             </TooltipTrigger>
                             <TooltipContent side="top">
