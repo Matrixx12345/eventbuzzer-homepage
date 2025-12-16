@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button"; // Falls du shadcn nutzt, sonst native button
 
-// Typen definieren
 interface Event {
   id: number;
   title: string;
@@ -23,36 +21,27 @@ interface TaxonomyItem {
   parent_id: number | null;
 }
 
-interface TagItem {
-  name: string;
-  icon: string | null;
-}
-
 export default function SpeedTagging() {
   const [events, setEvents] = useState<Event[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
-  const [availableTags, setAvailableTags] = useState<TagItem[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Auswahl-States
   const [selectedMainCat, setSelectedMainCat] = useState<number | null>(null);
   const [selectedSubCat, setSelectedSubCat] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
 
   const currentEvent = events[currentIndex];
 
-  // 1. Daten laden beim Start
+  // Load initial data
   useEffect(() => {
     loadData();
   }, []);
 
-  // 2. Tastatur-Shortcuts
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorieren, wenn man gerade in einem Input-Feld tippt (falls es welche gäbe)
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
       if (e.key === "ArrowRight" || e.key === "Enter") {
         e.preventDefault();
         saveAndNext();
@@ -66,12 +55,11 @@ export default function SpeedTagging() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentEvent, selectedMainCat, selectedSubCat, selectedTags]);
 
-  // 3. Wenn Event wechselt -> Auswahl zurücksetzen bzw. vorausfüllen
+  // Load selections when event changes
   useEffect(() => {
     if (currentEvent) {
       setSelectedMainCat(currentEvent.category_main_id);
       setSelectedSubCat(currentEvent.category_sub_id);
-      // Bestehende Tags in das Set laden
       setSelectedTags(new Set(currentEvent.tags || []));
     }
   }, [currentEvent]);
@@ -80,28 +68,39 @@ export default function SpeedTagging() {
     setLoading(true);
 
     const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
-      // Nur unverifizierte Events laden
       supabase
         .from("events")
         .select("*")
         .eq("admin_verified", false)
         .order("created_at", { ascending: false })
-        .limit(50), // Limit, damit es schneller lädt
+        .limit(100),
       supabase.from("taxonomy").select("*"),
-      supabase.from("tags").select("name, icon").order("name"),
+      supabase.from("tags").select("name"),
     ]);
 
     if (eventsRes.data) setEvents(eventsRes.data);
     if (taxonomyRes.data) setTaxonomy(taxonomyRes.data);
 
-    // Tags mit Icons laden
-    if (tagsRes.data) {
-      setAvailableTags(
-        tagsRes.data.map((t: any) => ({
-          name: t.name,
-          icon: t.icon,
-        })),
-      );
+    // Enhanced tag loading with debugging
+    if (tagsRes.data && tagsRes.data.length > 0) {
+      const tagNames = tagsRes.data.map((t: any) => t.name).filter(Boolean);
+      console.log("✅ Loaded tags from DB:", tagNames);
+      setAvailableTags(tagNames);
+    } else {
+      console.warn("⚠️ No tags found in database, using fallback tags");
+      // Fallback: Use common tags if DB is empty
+      setAvailableTags([
+        "mistwetter",
+        "natur",
+        "romantik",
+        "nightlife",
+        "wellness",
+        "foto-spots",
+        "geburtstag",
+        "kind-klein",
+        "kind-schulkind",
+        "kind-teen",
+      ]);
     }
 
     setLoading(false);
@@ -110,28 +109,26 @@ export default function SpeedTagging() {
   async function saveAndNext() {
     if (!currentEvent) return;
 
-    // Speichern in Supabase
     const { error } = await supabase
       .from("events")
       .update({
         category_main_id: selectedMainCat,
         category_sub_id: selectedSubCat,
-        tags: Array.from(selectedTags), // Set zu Array konvertieren
-        admin_verified: true, // Markieren als erledigt
+        tags: Array.from(selectedTags),
+        admin_verified: true,
       })
       .eq("id", currentEvent.id);
 
     if (error) {
-      console.error("Fehler beim Speichern:", error);
-      alert("Fehler: " + error.message);
+      alert("Fehler beim Speichern: " + error.message);
       return;
     }
 
-    // Event aus der lokalen Liste entfernen
+    // Remove from list
     const newEvents = events.filter((e) => e.id !== currentEvent.id);
     setEvents(newEvents);
 
-    // Index anpassen (falls wir am Ende waren)
+    // Move to next (or stay at same index if it's the last one)
     if (newEvents.length > 0) {
       setCurrentIndex(Math.min(currentIndex, newEvents.length - 1));
     }
@@ -143,30 +140,28 @@ export default function SpeedTagging() {
     }
   }
 
-  function toggleTag(tagName: string) {
+  function toggleTag(tag: string) {
     const newTags = new Set(selectedTags);
-    if (newTags.has(tagName)) {
-      newTags.delete(tagName);
+    if (newTags.has(tag)) {
+      newTags.delete(tag);
     } else {
-      newTags.add(tagName);
+      newTags.add(tag);
     }
     setSelectedTags(newTags);
   }
 
-  // Kategorien filtern
   const mainCategories = taxonomy.filter((t) => t.type === "main");
   const subCategories = taxonomy.filter((t) => t.type === "sub" && t.parent_id === selectedMainCat);
 
-  // Berechnungen für UI
-  const progress = 100; // Platzhalter, da wir nur 50 laden. Alternativ: events.length bezogen auf total count.
-  const remaining = events.length;
+  const progress = events.length > 0 ? (currentIndex / events.length) * 100 : 0;
+  const remaining = events.length - currentIndex;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">🌀</div>
-          <p className="text-slate-600">Lade Events & Tags...</p>
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Lade Events...</p>
         </div>
       </div>
     );
@@ -174,175 +169,154 @@ export default function SpeedTagging() {
 
   if (events.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-green-50">
-        <div className="text-center p-8 bg-white rounded-2xl shadow-xl">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-3xl font-bold mb-2 text-green-800">Alles erledigt!</h2>
-          <p className="text-slate-600">Keine offenen Events mehr zum Prüfen.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Neu laden (falls neue Events da sind)
-          </button>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700">
+        <div className="bg-white rounded-2xl p-12 text-center max-w-md shadow-2xl">
+          <h2 className="text-3xl font-bold mb-3">🎉 Alles erledigt!</h2>
+          <p className="text-gray-600">Alle Events wurden überprüft.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* HEADER & INFO (Volle Breite) */}
-        <div className="lg:col-span-12 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">⚡ Speed Tagging Cockpit</h1>
-            <p className="text-sm text-slate-500">
-              Noch <span className="font-bold text-blue-600">{remaining}</span> Events in dieser Session
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 p-6">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+          <h1 className="text-2xl font-bold mb-3">🚀 Admin Speed-Tagging Cockpit</h1>
+
+          {/* Progress Bar */}
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full bg-gradient-to-r from-purple-600 to-indigo-700 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
-          <div className="text-right text-xs text-slate-400">
-            Shortcuts:
-            <br />→ (Speichern) | ← (Skip)
-          </div>
-        </div>
 
-        {/* LINKE SPALTE: EVENT BILD & INFO */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-200 sticky top-4">
-            {/* Bild */}
-            <div className="relative h-64 w-full bg-slate-200">
-              {currentEvent.image_url ? (
-                <img src={currentEvent.image_url} alt={currentEvent.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="flex items-center justify-center h-full text-slate-400">Kein Bild</div>
-              )}
-              {/* ID Badge */}
-              <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                ID: {currentEvent.id}
-              </div>
-            </div>
-
-            {/* Text Content */}
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 leading-tight">{currentEvent.title}</h2>
-
-              {/* Scrollbare Beschreibung - HIER VERGRÖSSERT */}
-              <div className="prose prose-sm text-slate-600 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                <p>{currentEvent.description}</p>
-              </div>
-            </div>
+          {/* Stats */}
+          <div className="flex gap-6 text-sm text-gray-600">
+            <span>
+              <strong className="text-gray-900">{remaining}</strong> Events offen
+            </span>
+            <span>
+              <strong className="text-gray-900">{currentIndex}</strong> verarbeitet
+            </span>
+            <span>
+              <strong className="text-gray-900">{Math.round(progress)}%</strong> fertig
+            </span>
           </div>
         </div>
 
-        {/* RECHTE SPALTE: KATEGORIEN & TAGS */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-            {/* 1. Hauptkategorie */}
-            <div className="mb-8">
-              <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">1. Hauptkategorie</h3>
-              <div className="flex flex-wrap gap-2">
-                {mainCategories.map((cat) => (
+        {/* Main Card */}
+        <div className="bg-white rounded-2xl p-10 shadow-2xl">
+          {/* Event Image */}
+          <img
+            src={currentEvent.image_url || "https://via.placeholder.com/1200x400"}
+            alt={currentEvent.title}
+            className="w-full h-80 object-cover rounded-xl mb-8"
+          />
+
+          {/* Event Title & Description */}
+          <h2 className="text-4xl font-bold mb-4 text-gray-900">{currentEvent.title}</h2>
+          {/* ✅ FIX: Mehr Platz für Description (max-h-48 statt max-h-24) */}
+          <p className="text-gray-600 mb-8 leading-relaxed max-h-48 overflow-y-auto">
+            {currentEvent.description || "Keine Beschreibung"}
+          </p>
+
+          {/* Main Category */}
+          <div className="mb-8">
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-3">Hauptkategorie</h3>
+            <div className="flex flex-wrap gap-3">
+              {mainCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedMainCat(cat.id);
+                    setSelectedSubCat(null); // Reset subcategory
+                  }}
+                  className={`px-6 py-3 rounded-full border-2 font-medium transition-all ${
+                    selectedMainCat === cat.id
+                      ? "bg-gradient-to-r from-purple-600 to-indigo-700 text-white border-transparent shadow-lg"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-purple-500 hover:-translate-y-0.5"
+                  }`}
+                >
+                  {cat.icon} {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sub Category */}
+          <div className="mb-8">
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-3">Unterkategorie</h3>
+            {subCategories.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
+                {subCategories.map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => {
-                      setSelectedMainCat(cat.id);
-                      setSelectedSubCat(null); // Reset Sub
-                    }}
-                    className={`
-                      flex items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200
-                      ${
-                        selectedMainCat === cat.id
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-105"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-slate-50"
-                      }
-                    `}
+                    onClick={() => setSelectedSubCat(cat.id)}
+                    className={`px-6 py-3 rounded-full border-2 font-medium transition-all ${
+                      selectedSubCat === cat.id
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-700 text-white border-transparent shadow-lg"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-purple-500 hover:-translate-y-0.5"
+                    }`}
                   >
-                    <span className="text-lg">{cat.icon}</span>
-                    <span className="font-medium">{cat.name}</span>
+                    {cat.icon} {cat.name}
                   </button>
                 ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-400 italic">Wähle zuerst eine Hauptkategorie</p>
+            )}
+          </div>
 
-            {/* 2. Unterkategorie */}
-            <div className="mb-8">
-              <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">2. Unterkategorie</h3>
-              {selectedMainCat ? (
-                <div className="flex flex-wrap gap-2">
-                  {subCategories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedSubCat(cat.id)}
-                      className={`
-                        flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 text-sm
-                        ${
-                          selectedSubCat === cat.id
-                            ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                        }
-                      `}
-                    >
-                      {/* Subkategorien haben oft keine Icons im Prompt gehabt, falls doch, hier anzeigen: */}
-                      {cat.icon && <span>{cat.icon}</span>}
-                      <span>{cat.name}</span>
-                    </button>
-                  ))}
-                  {subCategories.length === 0 && (
-                    <p className="text-slate-400 text-sm italic">Keine Unterkategorien definiert.</p>
-                  )}
-                </div>
-              ) : (
-                <div className="p-4 bg-slate-50 rounded-lg text-slate-400 text-sm text-center border border-dashed border-slate-200">
-                  Wähle zuerst eine Hauptkategorie 👆
-                </div>
-              )}
-            </div>
-
-            {/* 3. Tags */}
-            <div className="mb-8">
-              <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3 flex justify-between">
-                <span>3. Tags (Mehrfachwahl)</span>
-                <span className="text-blue-600">{selectedTags.size} gewählt</span>
-              </h3>
-              <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-1">
+          {/* Tags */}
+          <div className="mb-10">
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-3">
+              Tags (Multi-Select) - {availableTags.length} verfügbar
+            </h3>
+            {availableTags.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
                 {availableTags.map((tag) => (
                   <button
-                    key={tag.name}
-                    onClick={() => toggleTag(tag.name)}
-                    className={`
-                      flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all duration-150
-                      ${
-                        selectedTags.has(tag.name)
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-medium ring-1 ring-emerald-300"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50"
-                      }
-                    `}
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`px-5 py-2.5 rounded-full border-2 font-medium text-sm transition-all ${
+                      selectedTags.has(tag)
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-700 text-white border-transparent shadow-lg"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-purple-500 hover:-translate-y-0.5"
+                    }`}
                   >
-                    {tag.icon && <span>{tag.icon}</span>}
-                    <span>{tag.name}</span>
+                    {tag}
                   </button>
                 ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-red-500">⚠️ Keine Tags gefunden - bitte Tags-Tabelle befüllen</p>
+            )}
+          </div>
 
-            {/* ACTION BUTTONS */}
-            <div className="flex gap-4 pt-4 border-t border-slate-100">
-              <button
-                onClick={skipEvent}
-                className="px-6 py-4 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition-colors flex-1"
-              >
-                Überspringen (←)
-              </button>
-              <button
-                onClick={saveAndNext}
-                className="px-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex-[2]"
-              >
-                Speichern & Weiter (→)
-              </button>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={skipEvent}
+              className="flex-1 px-8 py-4 rounded-xl border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 font-semibold text-gray-700 transition-all"
+            >
+              ⏭️ Überspringen
+            </button>
+            <button
+              onClick={saveAndNext}
+              className="flex-1 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-700 hover:shadow-2xl hover:-translate-y-1 text-white font-semibold transition-all"
+            >
+              💾 Speichern & Weiter →
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Keyboard Hints */}
+      <div className="fixed bottom-6 right-6 bg-black bg-opacity-80 backdrop-blur-sm text-white px-5 py-3 rounded-lg text-sm">
+        Tastatur: → Weiter | ← Zurück | Enter Speichern
       </div>
     </div>
   );
