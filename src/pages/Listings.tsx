@@ -829,20 +829,6 @@ const Listings = () => {
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
         
-        <button 
-          onClick={() => setShowCalendar(true)}
-          className="w-full px-5 py-2.5 bg-white hover:bg-gray-50 rounded-xl text-gray-800 transition-all flex items-center justify-center gap-2 font-medium border border-gray-200"
-        >
-          <CalendarIcon size={18} />
-          <span className="text-sm">
-            {selectedDateRange?.from 
-              ? selectedDateRange.to 
-                ? `${format(selectedDateRange.from, "d. MMM", { locale: de })} - ${format(selectedDateRange.to, "d. MMM", { locale: de })}`
-                : format(selectedDateRange.from, "d. MMMM yyyy", { locale: de })
-              : "Zeitraum wählen"}
-          </span>
-        </button>
-        
         {/* Time filter buttons - single-select, uniform size */}
         <div className="grid grid-cols-2 gap-2">
           {timeFilters.map((filter) => {
@@ -868,6 +854,25 @@ const Listings = () => {
               </button>
             );
           })}
+          {/* Zeitraum wählen button - opens calendar */}
+          <button 
+            onClick={() => setShowCalendar(true)}
+            className={cn(
+              "h-11 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 col-span-2",
+              selectedDateRange?.from
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+            )}
+          >
+            <CalendarIcon size={16} />
+            <span>
+              {selectedDateRange?.from 
+                ? selectedDateRange.to 
+                  ? `${format(selectedDateRange.from, "d. MMM", { locale: de })} - ${format(selectedDateRange.to, "d. MMM", { locale: de })}`
+                  : format(selectedDateRange.from, "d. MMM yyyy", { locale: de })
+                : "Zeitraum wählen"}
+            </span>
+          </button>
         </div>
       </div>
 
