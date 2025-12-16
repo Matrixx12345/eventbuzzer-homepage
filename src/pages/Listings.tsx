@@ -826,16 +826,6 @@ const Listings = () => {
 
   const filterContent = (
     <div className="space-y-5">
-      {/* Reset button */}
-      {hasActiveFilters && (
-        <button
-          onClick={clearFilters}
-          className="w-full py-3 text-base font-medium text-slate-600 hover:text-slate-900 hover:bg-white rounded-xl transition-all border border-transparent hover:border-stone-200"
-        >
-          ✕ Filter zurücksetzen
-        </button>
-      )}
-
       {/* 1. WO / ORT - Location (TOP) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -929,10 +919,10 @@ const Listings = () => {
                         return (
                           <Tooltip key={filter.id}>
                             <TooltipTrigger asChild>
-                              <button
+                                <button
                                 onClick={() => toggleQuickFilter(filter.id)}
                                 className={cn(
-                                  "aspect-square flex flex-col items-center justify-center rounded-xl transition-all p-1.5",
+                                  "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5",
                                   isActive && isTopStars
                                     ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30"
                                     : isActive
@@ -1046,7 +1036,7 @@ const Listings = () => {
                   : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
               )}
             >
-              {cat.name.split(' & ')[0]}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -1216,32 +1206,15 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Datenquelle - hidden at very bottom */}
-      <div className="space-y-3 pt-3 border-t border-neutral-700">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Datenquelle</h3>
-        <div className="grid grid-cols-2 gap-1.5">
-          {[
-            { id: "ticketmaster", label: "Ticketmaster" },
-            { id: "myswitzerland", label: "MySwitzerland" },
-          ].map((source) => {
-            const isActive = selectedSource === source.id;
-            return (
-              <button
-                key={source.id}
-                onClick={() => setSelectedSource(isActive ? null : source.id)}
-                className={cn(
-                  "h-9 px-3 rounded-lg text-xs font-medium transition-all text-center",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                )}
-              >
-                {source.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Reset button - at very bottom */}
+      {hasActiveFilters && (
+        <button
+          onClick={clearFilters}
+          className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600 transition-all"
+        >
+          ✕ Filter zurücksetzen
+        </button>
+      )}
     </div>
   );
 
