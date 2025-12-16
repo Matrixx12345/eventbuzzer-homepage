@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+// ---------------------------------------------------------
+// 🔥 HIER IST DER FIX: DIREKTE VERBINDUNG ZUR ECHTEN DB
+// ---------------------------------------------------------
+const SUPABASE_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
+const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1MDM0NDQsImV4cCI6MjA1MDA3OTQ0NH0.Hm2cDbIZ8SczNF1iKAy5sME0xfqVYUc79vy0AqzBmcg";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ---------------------------------------------------------
 
 // Typen definieren
 interface Event {
@@ -79,33 +89,37 @@ export default function SpeedTagging() {
     setLoading(true);
 
     try {
-      // FIX: Wir nutzen (supabase as any), um TypeScript-Fehler zu vermeiden, falls Typen fehlen
-      const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
-        // HIER IST DER FILTER WIEDER AKTIV: Nur unerledigte Events laden!
-        (supabase as any)
-          .from("events")
-          .select("*")
-          .eq("admin_verified", false)
-          .order("created_at", { ascending: false })
-          .limit(50),
-        (supabase as any).from("taxonomy").select("*"),
-        (supabase as any).from("tags").select("name, icon").order("name"),
-      ]);
+      // PROFI-MODUS: Wir filtern nach 'admin_verified' ist FALSE
+      const { data: eventsData, error: eventsError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("admin_verified", false)
+        .order("created_at", { ascending: false })
+        .limit(50);
 
-      if (eventsRes.data) setEvents(eventsRes.data);
-      if (taxonomyRes.data) setTaxonomy(taxonomyRes.data);
+      const { data: taxData } = await supabase.from("taxonomy").select("*");
+      const { data: tagsData } = await supabase.from("tags").select("name, icon").order("name");
+
+      if (eventsError) {
+        console.error("Fehler beim Laden:", eventsError);
+        alert("Fehler: " + eventsError.message);
+      }
+
+      if (eventsData) setEvents(eventsData);
+      if (taxData) setTaxonomy(taxData);
 
       // Tags mit Icons laden
-      if (tagsRes.data) {
+      if (tagsData) {
         setAvailableTags(
-          tagsRes.data.map((t: any) => ({
+          tagsData.map((t: any) => ({
             name: t.name,
             icon: t.icon,
           })),
         );
       }
-    } catch (error) {
-      console.error("Fehler beim Laden:", error);
+    } catch (error: any) {
+      console.error("Kritischer Fehler:", error);
+      alert("Kritischer Fehler: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -115,7 +129,7 @@ export default function SpeedTagging() {
     if (!currentEvent) return;
 
     // Speichern in Supabase
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("events")
       .update({
         category_main_id: selectedMainCat,
