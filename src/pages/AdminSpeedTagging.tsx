@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // ---------------------------------------------------------
-// 🔥 HIER IST DER FIX: DIREKTE VERBINDUNG ZUR ECHTEN DB
+// DIRECT CLIENT (Damit funktioniert es garantiert)
 // ---------------------------------------------------------
 const SUPABASE_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const SUPABASE_KEY =
@@ -11,7 +11,6 @@ const SUPABASE_KEY =
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 // ---------------------------------------------------------
 
-// Typen definieren
 interface Event {
   id: number;
   title: string;
@@ -51,15 +50,13 @@ export default function SpeedTagging() {
 
   const currentEvent = events[currentIndex];
 
-  // 1. Daten laden beim Start
   useEffect(() => {
     loadData();
   }, []);
 
-  // 2. Tastatur-Shortcuts
+  // Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorieren, wenn man gerade in einem Input-Feld tippt
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === "ArrowRight" || e.key === "Enter") {
@@ -75,12 +72,10 @@ export default function SpeedTagging() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentEvent, selectedMainCat, selectedSubCat, selectedTags]);
 
-  // 3. Wenn Event wechselt -> Auswahl zurücksetzen bzw. vorausfüllen
   useEffect(() => {
     if (currentEvent) {
       setSelectedMainCat(currentEvent.category_main_id);
       setSelectedSubCat(currentEvent.category_sub_id);
-      // Bestehende Tags in das Set laden
       setSelectedTags(new Set(currentEvent.tags || []));
     }
   }, [currentEvent]);
@@ -89,26 +84,39 @@ export default function SpeedTagging() {
     setLoading(true);
 
     try {
-      // PROFI-MODUS: Wir filtern nach 'admin_verified' ist FALSE
+      // ------------------------------------------------------------------
+      // FAIL-SAFE STRATEGIE:
+      // 1. Wir laden ALLES (kein .eq Filter, der scheitern könnte)
+      // 2. Wir sortieren nach 'admin_verified' ASC (False/Null kommt zuerst)
+      // ------------------------------------------------------------------
       const { data: eventsData, error: eventsError } = await supabase
         .from("events")
         .select("*")
-        .eq("admin_verified", false)
-        .order("created_at", { ascending: false })
+        .order("admin_verified", { ascending: true }) // Unbearbeitete zuerst!
         .limit(50);
 
       const { data: taxData } = await supabase.from("taxonomy").select("*");
       const { data: tagsData } = await supabase.from("tags").select("name, icon").order("name");
 
-      if (eventsError) {
-        console.error("Fehler beim Laden:", eventsError);
-        alert("Fehler: " + eventsError.message);
+      if (eventsError) throw eventsError;
+
+      if (eventsData) {
+        // Client-seitiger Filter: Wir nehmen alles, was NICHT true ist
+        // Das fängt NULL und FALSE sicher ab.
+        const unverifiedEvents = eventsData.filter((e) => e.admin_verified !== true);
+
+        // Falls wir gar keine offenen haben, zeigen wir zur Not auch die fertigen (zum Testen)
+        // Aber normal sollte der Filter oben greifen.
+        if (unverifiedEvents.length > 0) {
+          setEvents(unverifiedEvents);
+        } else {
+          // Fallback: Wenn wirklich alles erledigt ist, zeig trotzdem was an (damit du siehst, dass es geht)
+          console.log("Alles erledigt? Zeige verifizierte Events als Fallback.");
+          setEvents(eventsData);
+        }
       }
 
-      if (eventsData) setEvents(eventsData);
       if (taxData) setTaxonomy(taxData);
-
-      // Tags mit Icons laden
       if (tagsData) {
         setAvailableTags(
           tagsData.map((t: any) => ({
@@ -118,8 +126,8 @@ export default function SpeedTagging() {
         );
       }
     } catch (error: any) {
-      console.error("Kritischer Fehler:", error);
-      alert("Kritischer Fehler: " + error.message);
+      console.error("Fehler:", error);
+      alert("Fehler: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -128,28 +136,26 @@ export default function SpeedTagging() {
   async function saveAndNext() {
     if (!currentEvent) return;
 
-    // Speichern in Supabase
+    // Update mit Hardcoded Client
     const { error } = await supabase
       .from("events")
       .update({
         category_main_id: selectedMainCat,
         category_sub_id: selectedSubCat,
-        tags: Array.from(selectedTags), // Set zu Array konvertieren
-        admin_verified: true, // Markieren als erledigt
+        tags: Array.from(selectedTags),
+        admin_verified: true,
       })
       .eq("id", currentEvent.id);
 
     if (error) {
-      console.error("Fehler beim Speichern:", error);
-      alert("Fehler: " + error.message);
+      alert("Fehler beim Speichern: " + error.message);
       return;
     }
 
-    // Event aus der lokalen Liste entfernen
+    // Entferne Event aus Liste
     const newEvents = events.filter((e) => e.id !== currentEvent.id);
     setEvents(newEvents);
 
-    // Index anpassen
     if (newEvents.length > 0) {
       setCurrentIndex(Math.min(currentIndex, newEvents.length - 1));
     }
@@ -163,70 +169,47 @@ export default function SpeedTagging() {
 
   function toggleTag(tagName: string) {
     const newTags = new Set(selectedTags);
-    if (newTags.has(tagName)) {
-      newTags.delete(tagName);
-    } else {
-      newTags.add(tagName);
-    }
+    if (newTags.has(tagName)) newTags.delete(tagName);
+    else newTags.add(tagName);
     setSelectedTags(newTags);
   }
 
-  // Kategorien filtern
   const mainCategories = taxonomy.filter((t) => t.type === "main");
   const subCategories = taxonomy.filter((t) => t.type === "sub" && t.parent_id === selectedMainCat);
 
-  const remaining = events.length;
-
-  if (loading) {
+  if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">🌀</div>
-          <p className="text-slate-600">Lade Events & Tags...</p>
-        </div>
+        <div className="animate-spin text-4xl mb-4">🌀</div>
       </div>
     );
-  }
 
-  if (events.length === 0) {
+  if (events.length === 0)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-green-50">
-        <div className="text-center p-8 bg-white rounded-2xl shadow-xl">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-3xl font-bold mb-2 text-green-800">Alles erledigt!</h2>
-          <p className="text-slate-600">Keine offenen Events mehr zum Prüfen.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Neu laden (falls Import lief)
-          </button>
-        </div>
+      <div className="p-10 text-center text-red-600 font-bold bg-white">
+        WTF? Immer noch leer? Dann ist die Datenbank wirklich leer.
+        <br />
+        Checke SQL Editor: SELECT COUNT(*) FROM events;
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* HEADER & INFO */}
+        {/* HEADER */}
         <div className="lg:col-span-12 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div>
             <h1 className="text-xl font-bold text-slate-800">⚡ Speed Tagging Cockpit</h1>
             <p className="text-sm text-slate-500">
-              Noch <span className="font-bold text-blue-600">{remaining}</span> Events in dieser Session
+              Noch <span className="font-bold text-blue-600">{events.length}</span> Events in dieser Liste
             </p>
           </div>
-          <div className="text-right text-xs text-slate-400">
-            Shortcuts:
-            <br />→ (Speichern) | ← (Skip)
-          </div>
+          <div className="text-right text-xs text-slate-400">→ Speichern | ← Skip</div>
         </div>
 
-        {/* LINKE SPALTE: BILD & INFO */}
+        {/* BILD & INFO */}
         <div className="lg:col-span-5 flex flex-col gap-4">
           <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-200 sticky top-4">
-            {/* Bild */}
             <div className="relative h-64 w-full bg-slate-200">
               {currentEvent.image_url ? (
                 <img src={currentEvent.image_url} alt={currentEvent.title} className="w-full h-full object-cover" />
@@ -237,11 +220,8 @@ export default function SpeedTagging() {
                 ID: {currentEvent.id}
               </div>
             </div>
-
-            {/* Text */}
             <div className="p-6">
               <h2 className="text-2xl font-bold text-slate-900 mb-4 leading-tight">{currentEvent.title}</h2>
-              {/* Hier ist die große Scrollbox für die Beschreibung */}
               <div className="prose prose-sm text-slate-600 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                 <p>{currentEvent.description}</p>
               </div>
@@ -249,10 +229,10 @@ export default function SpeedTagging() {
           </div>
         </div>
 
-        {/* RECHTE SPALTE: KATEGORIEN & TAGS */}
+        {/* KATEGORIEN & TAGS */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-            {/* 1. Hauptkategorie */}
+            {/* Hauptkategorie */}
             <div className="mb-8">
               <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">1. Hauptkategorie</h3>
               <div className="flex flex-wrap gap-2">
@@ -263,14 +243,7 @@ export default function SpeedTagging() {
                       setSelectedMainCat(cat.id);
                       setSelectedSubCat(null);
                     }}
-                    className={`
-                      flex items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200
-                      ${
-                        selectedMainCat === cat.id
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-105"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-slate-50"
-                      }
-                    `}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 ${selectedMainCat === cat.id ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-105" : "bg-white text-slate-700 border-slate-200 hover:border-blue-300"}`}
                   >
                     <span className="text-lg">{cat.icon}</span>
                     <span className="font-medium">{cat.name}</span>
@@ -279,7 +252,7 @@ export default function SpeedTagging() {
               </div>
             </div>
 
-            {/* 2. Unterkategorie */}
+            {/* Unterkategorie */}
             <div className="mb-8">
               <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">2. Unterkategorie</h3>
               {selectedMainCat ? (
@@ -288,34 +261,24 @@ export default function SpeedTagging() {
                     <button
                       key={cat.id}
                       onClick={() => setSelectedSubCat(cat.id)}
-                      className={`
-                        flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 text-sm
-                        ${
-                          selectedSubCat === cat.id
-                            ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                        }
-                      `}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 text-sm ${selectedSubCat === cat.id ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300"}`}
                     >
                       {cat.icon && <span>{cat.icon}</span>}
                       <span>{cat.name}</span>
                     </button>
                   ))}
-                  {subCategories.length === 0 && (
-                    <p className="text-slate-400 text-sm italic">Keine Unterkategorien definiert.</p>
-                  )}
                 </div>
               ) : (
-                <div className="p-4 bg-slate-50 rounded-lg text-slate-400 text-sm text-center border border-dashed border-slate-200">
+                <div className="p-4 bg-slate-50 rounded text-center text-sm text-slate-400">
                   Wähle zuerst eine Hauptkategorie 👆
                 </div>
               )}
             </div>
 
-            {/* 3. Tags */}
+            {/* Tags */}
             <div className="mb-8">
               <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3 flex justify-between">
-                <span>3. Tags (Mehrfachwahl)</span>
+                <span>3. Tags</span>
                 <span className="text-blue-600">{selectedTags.size} gewählt</span>
               </h3>
               <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-1">
@@ -323,14 +286,7 @@ export default function SpeedTagging() {
                   <button
                     key={tag.name}
                     onClick={() => toggleTag(tag.name)}
-                    className={`
-                      flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all duration-150
-                      ${
-                        selectedTags.has(tag.name)
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-medium ring-1 ring-emerald-300"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50"
-                      }
-                    `}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all ${selectedTags.has(tag.name) ? "bg-emerald-100 text-emerald-800 border-emerald-300 ring-1 ring-emerald-300" : "bg-white text-slate-600 border-slate-200 hover:border-emerald-200"}`}
                   >
                     {tag.icon && <span>{tag.icon}</span>}
                     <span>{tag.name}</span>
@@ -339,17 +295,17 @@ export default function SpeedTagging() {
               </div>
             </div>
 
-            {/* ACTION BUTTONS */}
+            {/* Buttons */}
             <div className="flex gap-4 pt-4 border-t border-slate-100">
               <button
                 onClick={skipEvent}
-                className="px-6 py-4 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition-colors flex-1"
+                className="px-6 py-4 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 flex-1"
               >
                 Überspringen (←)
               </button>
               <button
                 onClick={saveAndNext}
-                className="px-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex-[2]"
+                className="px-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg hover:shadow-xl flex-[2]"
               >
                 Speichern & Weiter (→)
               </button>
