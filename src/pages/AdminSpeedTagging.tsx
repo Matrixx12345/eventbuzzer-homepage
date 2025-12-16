@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button"; // Falls du shadcn nutzt, sonst native button
+// HIER WURDE DER PROBLEMATISCHE IMPORT GELÖSCHT
 
 // Typen definieren
 interface Event {
@@ -50,7 +50,7 @@ export default function SpeedTagging() {
   // 2. Tastatur-Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorieren, wenn man gerade in einem Input-Feld tippt (falls es welche gäbe)
+      // Ignorieren, wenn man gerade in einem Input-Feld tippt
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === "ArrowRight" || e.key === "Enter") {
@@ -79,32 +79,36 @@ export default function SpeedTagging() {
   async function loadData() {
     setLoading(true);
 
-    const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
-      // Nur unverifizierte Events laden
-      supabase
-        .from("events")
-        .select("*")
-        .eq("admin_verified", false)
-        .order("created_at", { ascending: false })
-        .limit(50), // Limit, damit es schneller lädt
-      supabase.from("taxonomy").select("*"),
-      supabase.from("tags").select("name, icon").order("name"),
-    ]);
+    try {
+      const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
+        // Nur unverifizierte Events laden
+        supabase
+          .from("events")
+          .select("*")
+          .eq("admin_verified", false)
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase.from("taxonomy").select("*"),
+        supabase.from("tags").select("name, icon").order("name"),
+      ]);
 
-    if (eventsRes.data) setEvents(eventsRes.data);
-    if (taxonomyRes.data) setTaxonomy(taxonomyRes.data);
+      if (eventsRes.data) setEvents(eventsRes.data);
+      if (taxonomyRes.data) setTaxonomy(taxonomyRes.data);
 
-    // Tags mit Icons laden
-    if (tagsRes.data) {
-      setAvailableTags(
-        tagsRes.data.map((t: any) => ({
-          name: t.name,
-          icon: t.icon,
-        })),
-      );
+      // Tags mit Icons laden
+      if (tagsRes.data) {
+        setAvailableTags(
+          tagsRes.data.map((t: any) => ({
+            name: t.name,
+            icon: t.icon,
+          })),
+        );
+      }
+    } catch (error) {
+      console.error("Fehler beim Laden:", error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function saveAndNext() {
@@ -131,7 +135,7 @@ export default function SpeedTagging() {
     const newEvents = events.filter((e) => e.id !== currentEvent.id);
     setEvents(newEvents);
 
-    // Index anpassen (falls wir am Ende waren)
+    // Index anpassen
     if (newEvents.length > 0) {
       setCurrentIndex(Math.min(currentIndex, newEvents.length - 1));
     }
@@ -157,8 +161,6 @@ export default function SpeedTagging() {
   const mainCategories = taxonomy.filter((t) => t.type === "main");
   const subCategories = taxonomy.filter((t) => t.type === "sub" && t.parent_id === selectedMainCat);
 
-  // Berechnungen für UI
-  const progress = 100; // Platzhalter, da wir nur 50 laden. Alternativ: events.length bezogen auf total count.
   const remaining = events.length;
 
   if (loading) {
@@ -183,7 +185,7 @@ export default function SpeedTagging() {
             onClick={() => window.location.reload()}
             className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            Neu laden (falls neue Events da sind)
+            Neu laden
           </button>
         </div>
       </div>
@@ -193,7 +195,7 @@ export default function SpeedTagging() {
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* HEADER & INFO (Volle Breite) */}
+        {/* HEADER & INFO */}
         <div className="lg:col-span-12 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div>
             <h1 className="text-xl font-bold text-slate-800">⚡ Speed Tagging Cockpit</h1>
@@ -207,7 +209,7 @@ export default function SpeedTagging() {
           </div>
         </div>
 
-        {/* LINKE SPALTE: EVENT BILD & INFO */}
+        {/* LINKE SPALTE: BILD & INFO */}
         <div className="lg:col-span-5 flex flex-col gap-4">
           <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-200 sticky top-4">
             {/* Bild */}
@@ -217,17 +219,14 @@ export default function SpeedTagging() {
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-400">Kein Bild</div>
               )}
-              {/* ID Badge */}
               <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                 ID: {currentEvent.id}
               </div>
             </div>
 
-            {/* Text Content */}
+            {/* Text */}
             <div className="p-6">
               <h2 className="text-2xl font-bold text-slate-900 mb-4 leading-tight">{currentEvent.title}</h2>
-
-              {/* Scrollbare Beschreibung - HIER VERGRÖSSERT */}
               <div className="prose prose-sm text-slate-600 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                 <p>{currentEvent.description}</p>
               </div>
@@ -247,7 +246,7 @@ export default function SpeedTagging() {
                     key={cat.id}
                     onClick={() => {
                       setSelectedMainCat(cat.id);
-                      setSelectedSubCat(null); // Reset Sub
+                      setSelectedSubCat(null);
                     }}
                     className={`
                       flex items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200
@@ -283,7 +282,6 @@ export default function SpeedTagging() {
                         }
                       `}
                     >
-                      {/* Subkategorien haben oft keine Icons im Prompt gehabt, falls doch, hier anzeigen: */}
                       {cat.icon && <span>{cat.icon}</span>}
                       <span>{cat.name}</span>
                     </button>
