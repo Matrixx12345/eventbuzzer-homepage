@@ -1060,7 +1060,7 @@ const Listings = () => {
                           )}
                         >
                           <IconComponent size={24} className="mb-2" />
-                          <span className="text-xs font-medium text-center leading-tight">{cat.name}</span>
+                          <span className="text-[13px] font-medium text-center leading-tight">{cat.name}</span>
                         </button>
                       );
                     })}
@@ -1073,7 +1073,7 @@ const Listings = () => {
                         <button
                           onClick={() => setSelectedSubcategoryId(null)}
                           className={cn(
-                            "w-full px-3 py-2 rounded-full text-xs font-medium transition-all text-left",
+                            "w-full px-3 py-2 rounded-full text-[13px] font-medium transition-all text-left",
                             selectedSubcategoryId === null
                               ? "bg-blue-600 text-white"
                               : "bg-white text-gray-800 hover:bg-gray-100"
@@ -1086,7 +1086,7 @@ const Listings = () => {
                             key={sub.id}
                             onClick={() => setSelectedSubcategoryId(selectedSubcategoryId === sub.id ? null : sub.id)}
                             className={cn(
-                              "w-full px-3 py-2 rounded-full text-xs font-medium transition-all text-left",
+                              "w-full px-3 py-2 rounded-full text-[13px] font-medium transition-all text-left",
                               selectedSubcategoryId === sub.id
                                 ? "bg-blue-600 text-white"
                                 : "bg-white text-gray-800 hover:bg-gray-100"
