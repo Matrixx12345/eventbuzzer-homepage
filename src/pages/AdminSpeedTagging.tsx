@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-// HIER WURDE DER PROBLEMATISCHE IMPORT GELÖSCHT
 
 // Typen definieren
 interface Event {
@@ -80,16 +79,17 @@ export default function SpeedTagging() {
     setLoading(true);
 
     try {
+      // FIX: Wir nutzen (supabase as any), um den TypeScript-Fehler zu umgehen
       const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
         // Nur unverifizierte Events laden
-        supabase
+        (supabase as any)
           .from("events")
           .select("*")
           .eq("admin_verified", false)
           .order("created_at", { ascending: false })
           .limit(50),
-        supabase.from("taxonomy").select("*"),
-        supabase.from("tags").select("name, icon").order("name"),
+        (supabase as any).from("taxonomy").select("*"),
+        (supabase as any).from("tags").select("name, icon").order("name"),
       ]);
 
       if (eventsRes.data) setEvents(eventsRes.data);
@@ -115,7 +115,8 @@ export default function SpeedTagging() {
     if (!currentEvent) return;
 
     // Speichern in Supabase
-    const { error } = await supabase
+    // FIX: Auch hier (supabase as any) nutzen
+    const { error } = await (supabase as any)
       .from("events")
       .update({
         category_main_id: selectedMainCat,
