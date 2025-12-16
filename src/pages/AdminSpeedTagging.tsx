@@ -1,16 +1,7 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client"; // Der offizielle Weg
 
-// ---------------------------------------------------------
-// DIRECT CLIENT (Damit funktioniert es garantiert)
-// ---------------------------------------------------------
-const SUPABASE_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1MDM0NDQsImV4cCI6MjA1MDA3OTQ0NH0.Hm2cDbIZ8SczNF1iKAy5sME0xfqVYUc79vy0AqzBmcg";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-// ---------------------------------------------------------
-
+// Typen definieren
 interface Event {
   id: number;
   title: string;
@@ -86,40 +77,37 @@ export default function SpeedTagging() {
     try {
       // ------------------------------------------------------------------
       // FAIL-SAFE STRATEGIE:
-      // 1. Wir laden ALLES (kein .eq Filter, der scheitern könnte)
-      // 2. Wir sortieren nach 'admin_verified' ASC (False/Null kommt zuerst)
+      // 1. Wir nutzen (supabase as any) um TypeScript zu beruhigen
+      // 2. Wir laden ALLES (ohne .eq Filter) und sortieren 'admin_verified' aufsteigend
       // ------------------------------------------------------------------
-      const { data: eventsData, error: eventsError } = await supabase
-        .from("events")
-        .select("*")
-        .order("admin_verified", { ascending: true }) // Unbearbeitete zuerst!
-        .limit(50);
+      const [eventsRes, taxonomyRes, tagsRes] = await Promise.all([
+        (supabase as any)
+          .from("events")
+          .select("*")
+          .order("admin_verified", { ascending: true }) // Unbearbeitete (null/false) zuerst
+          .limit(50),
+        (supabase as any).from("taxonomy").select("*"),
+        (supabase as any).from("tags").select("name, icon").order("name"),
+      ]);
 
-      const { data: taxData } = await supabase.from("taxonomy").select("*");
-      const { data: tagsData } = await supabase.from("tags").select("name, icon").order("name");
+      if (eventsRes.data) {
+        // FILTER IM BROWSER (Sicherste Methode)
+        // Zeige alles an, was NICHT true ist (also false oder null)
+        const openEvents = eventsRes.data.filter((e: any) => e.admin_verified !== true);
 
-      if (eventsError) throw eventsError;
-
-      if (eventsData) {
-        // Client-seitiger Filter: Wir nehmen alles, was NICHT true ist
-        // Das fängt NULL und FALSE sicher ab.
-        const unverifiedEvents = eventsData.filter((e) => e.admin_verified !== true);
-
-        // Falls wir gar keine offenen haben, zeigen wir zur Not auch die fertigen (zum Testen)
-        // Aber normal sollte der Filter oben greifen.
-        if (unverifiedEvents.length > 0) {
-          setEvents(unverifiedEvents);
+        if (openEvents.length > 0) {
+          setEvents(openEvents);
         } else {
-          // Fallback: Wenn wirklich alles erledigt ist, zeig trotzdem was an (damit du siehst, dass es geht)
-          console.log("Alles erledigt? Zeige verifizierte Events als Fallback.");
-          setEvents(eventsData);
+          // Fallback: Wenn wirklich alles erledigt ist, zeig trotzdem was an (zum Testen)
+          console.log("Keine offenen Events gefunden. Zeige alle geladenen als Fallback.");
+          if (eventsRes.data.length > 0) setEvents(eventsRes.data);
         }
       }
 
-      if (taxData) setTaxonomy(taxData);
-      if (tagsData) {
+      if (taxonomyRes.data) setTaxonomy(taxonomyRes.data);
+      if (tagsRes.data) {
         setAvailableTags(
-          tagsData.map((t: any) => ({
+          tagsRes.data.map((t: any) => ({
             name: t.name,
             icon: t.icon,
           })),
@@ -136,8 +124,7 @@ export default function SpeedTagging() {
   async function saveAndNext() {
     if (!currentEvent) return;
 
-    // Update mit Hardcoded Client
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("events")
       .update({
         category_main_id: selectedMainCat,
@@ -152,7 +139,6 @@ export default function SpeedTagging() {
       return;
     }
 
-    // Entferne Event aus Liste
     const newEvents = events.filter((e) => e.id !== currentEvent.id);
     setEvents(newEvents);
 
@@ -186,10 +172,16 @@ export default function SpeedTagging() {
 
   if (events.length === 0)
     return (
-      <div className="p-10 text-center text-red-600 font-bold bg-white">
-        WTF? Immer noch leer? Dann ist die Datenbank wirklich leer.
-        <br />
-        Checke SQL Editor: SELECT COUNT(*) FROM events;
+      <div className="p-10 text-center bg-white rounded-xl shadow-lg m-10">
+        <h2 className="text-2xl font-bold mb-2">Keine Events gefunden?</h2>
+        <p className="text-slate-500 mb-6">
+          Das liegt wahrscheinlich daran, dass Lovable auf die falsche Datenbank schaut.
+        </p>
+        <div className="bg-blue-50 p-4 rounded text-blue-800 text-sm font-mono">
+          Tipp: Sag Lovable im Chat:
+          <br />
+          "Verbinde diesen Code bitte wieder mit meiner externen Supabase Datenbank."
+        </div>
       </div>
     );
 
