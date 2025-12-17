@@ -250,7 +250,79 @@ const Listings = () => {
     setSelectedDate(undefined);
   };
 
-  // Fetch events from Supabase with pagination
+  // City coordinates for server-side radius filter
+  const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(() => ({
+    "zürich": { lat: 47.3769, lng: 8.5417 },
+    "bern": { lat: 46.9480, lng: 7.4474 },
+    "basel": { lat: 47.5596, lng: 7.5886 },
+    "luzern": { lat: 47.0502, lng: 8.3093 },
+    "genf": { lat: 46.2044, lng: 6.1432 },
+    "baden": { lat: 47.4734, lng: 8.3063 },
+    "winterthur": { lat: 47.4984, lng: 8.7246 },
+    "st. gallen": { lat: 47.4245, lng: 9.3767 },
+  }), []);
+
+  // Build filter object for server
+  const buildFilters = useCallback(() => {
+    const filters: Record<string, any> = {};
+    
+    if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
+    if (selectedCategoryId !== null && !isTopStarsActive) filters.categoryId = selectedCategoryId;
+    if (selectedSubcategoryId !== null && !isTopStarsActive) filters.subcategoryId = selectedSubcategoryId;
+    if (selectedPriceTier) filters.priceTier = selectedPriceTier;
+    if (selectedSource) filters.source = selectedSource;
+    if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
+    if (selectedAvailability) filters.availability = selectedAvailability;
+    
+    // Date filters
+    if (selectedDate) filters.singleDate = selectedDate.toISOString();
+    if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
+    if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
+    
+    // City and radius
+    if (selectedCity && !isTopStarsActive) {
+      filters.city = selectedCity;
+      if (radius[0] > 0) {
+        filters.radius = radius[0];
+        const cityKey = selectedCity.toLowerCase().trim();
+        const coords = CITY_COORDINATES[cityKey];
+        if (coords) {
+          filters.cityLat = coords.lat;
+          filters.cityLng = coords.lng;
+        }
+      }
+    }
+    
+    // Tags from quick filters
+    const tags: string[] = [];
+    if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
+    if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
+    if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
+    if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
+    if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
+    if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
+    if (selectedQuickFilters.includes("mistwetter")) {
+      const indoorFilter = indoorFilters.find(f => f.id === selectedIndoorFilter) || indoorFilters[0];
+      tags.push(...indoorFilter.tags);
+    }
+    if (selectedQuickFilters.includes("mit-kind")) {
+      const ageTag = selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter;
+      tags.push(ageTag);
+    }
+    if (tags.length > 0) filters.tags = tags;
+    
+    // VIP Artists filter (Top Stars)
+    if (isTopStarsActive && vipArtists.length > 0) {
+      filters.vipArtistsFilter = vipArtists;
+    }
+    
+    return filters;
+  }, [searchQuery, selectedCategoryId, selectedSubcategoryId, selectedPriceTier, selectedSource, 
+      selectedTimeFilter, selectedAvailability, selectedDate, selectedDateRange, selectedCity, 
+      radius, selectedQuickFilters, selectedFamilyAgeFilter, selectedIndoorFilter, isTopStarsActive, 
+      vipArtists, CITY_COORDINATES, indoorFilters]);
+
+  // Fetch events from Supabase with pagination and filters
   const fetchEvents = useCallback(async (isInitial: boolean = true) => {
     try {
       if (isInitial) {
@@ -262,12 +334,16 @@ const Listings = () => {
       }
 
       const offset = isInitial ? 0 : nextOffset;
+      const filters = buildFilters();
+      
+      console.log('Fetching with filters:', filters);
       
       const { data, error: fetchError } = await supabase.functions.invoke('get-external-events', {
         body: { 
           offset,
           limit: 50,
-          initialLoad: isInitial
+          initialLoad: isInitial,
+          filters
         }
       });
 
@@ -313,6 +389,15 @@ const Listings = () => {
   useEffect(() => {
     fetchEvents(true);
   }, []);
+
+  // Refetch when filters change
+  useEffect(() => {
+    // Skip on initial mount (handled by initial load above)
+    if (taxonomy.length === 0) return;
+    fetchEvents(true);
+  }, [searchQuery, selectedCategoryId, selectedSubcategoryId, selectedPriceTier, selectedSource, 
+      selectedTimeFilter, selectedAvailability, selectedDate, selectedDateRange, selectedCity, 
+      radius, selectedQuickFilters, selectedFamilyAgeFilter, selectedIndoorFilter, dogFriendly]);
 
   // Infinite scroll with IntersectionObserver
   useEffect(() => {
@@ -464,33 +549,19 @@ const Listings = () => {
     return match;
   };
 
-  // City coordinates for radius filter
-  const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(() => ({
-    "zürich": { lat: 47.3769, lng: 8.5417 },
-    "bern": { lat: 46.9480, lng: 7.4474 },
-    "basel": { lat: 47.5596, lng: 7.5886 },
-    "luzern": { lat: 47.0502, lng: 8.3093 },
-    "genf": { lat: 46.2044, lng: 6.1432 },
-    "baden": { lat: 47.4734, lng: 8.3063 },
-    "winterthur": { lat: 47.4984, lng: 8.7246 },
-    "st. gallen": { lat: 47.4245, lng: 9.3767 },
-  }), []);
-
-  // Find city coordinates (case-insensitive, partial match)
+  // Find city coordinates (case-insensitive, partial match) - used for map display
   const findCityCoords = (cityName: string) => {
     const normalized = cityName.toLowerCase().trim();
-    // Direct match first
     if (CITY_COORDINATES[normalized]) return CITY_COORDINATES[normalized];
-    // Partial match
     for (const [key, coords] of Object.entries(CITY_COORDINATES)) {
       if (normalized.includes(key) || key.includes(normalized)) return coords;
     }
     return null;
   };
 
-  // Haversine formula to calculate distance between two points
+  // Calculate distance for UI display
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = 
@@ -501,277 +572,8 @@ const Listings = () => {
     return R * c;
   };
 
-  // Filter events
-  const filteredEvents = events.filter((event) => {
-    // Search filter - matches title, venue, location, description
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      const searchableText = [
-        event.title,
-        event.venue_name,
-        event.address_city,
-        event.location,
-        event.short_description,
-      ].filter(Boolean).join(" ").toLowerCase();
-      
-      if (!searchableText.includes(query)) return false;
-    }
-    
-    // Strict price tier filter - price_label takes PRIORITY over price_from
-    if (selectedPriceTier) {
-      const price = event.price_from;
-      const priceLabel = event.price_label || "";
-      const hasPriceLabel = priceLabel === "$" || priceLabel === "$$" || priceLabel === "$$$";
-      
-      if (selectedPriceTier === "gratis") {
-        // Gratis: price_from === 0 OR has gratis/kostenlos in label
-        // If event has a price label ($, $$, $$$), it's NOT free
-        if (hasPriceLabel) return false;
-        const hasPrice = price !== null && price !== undefined;
-        const isFree = hasPrice && price === 0;
-        const hasFreeLabel = priceLabel.toLowerCase().includes("kostenlos") || priceLabel.toLowerCase().includes("gratis");
-        if (!isFree && !hasFreeLabel) return false;
-      } else if (selectedPriceTier === "$") {
-        // Budget: If price_label exists, it MUST be "$"
-        if (hasPriceLabel) {
-          if (priceLabel !== "$") return false;
-        } else {
-          // No label: fall back to price_from range
-          if (price === null || price === undefined || price <= 0 || price > 50) return false;
-        }
-      } else if (selectedPriceTier === "$$") {
-        // Standard: If price_label exists, it MUST be "$$"
-        if (hasPriceLabel) {
-          if (priceLabel !== "$$") return false;
-        } else {
-          // No label: fall back to price_from range
-          if (price === null || price === undefined || price <= 50 || price > 120) return false;
-        }
-      } else if (selectedPriceTier === "$$$") {
-        // Premium: If price_label exists, it MUST be "$$$"
-        if (hasPriceLabel) {
-          if (priceLabel !== "$$$") return false;
-        } else {
-          // No label: fall back to price_from range
-          if (price === null || price === undefined || price <= 120) return false;
-        }
-      }
-    }
-    
-    // City filter (text-based) - SKIP if "Top Stars" is active (national mode)
-    if (selectedCity && radius[0] === 0 && !isTopStarsActive) {
-      const eventCity = event.address_city || event.location || "";
-      if (!eventCity.toLowerCase().includes(selectedCity.toLowerCase())) return false;
-    }
-    
-    // Radius filter (geo-based) - SKIP if "Top Stars" is active (national mode)
-    if (selectedCity && radius[0] > 0 && !isTopStarsActive) {
-      const cityCoords = findCityCoords(selectedCity);
-      if (cityCoords && event.latitude && event.longitude) {
-        const distance = calculateDistance(
-          cityCoords.lat, cityCoords.lng,
-          event.latitude, event.longitude
-        );
-        console.log(`Event "${event.title}": distance from ${selectedCity} = ${distance.toFixed(1)}km, radius = ${radius[0]}km`);
-        if (distance > radius[0]) return false;
-      } else if (!event.latitude || !event.longitude) {
-        // If event has no geo data, fall back to city name matching
-        const eventCity = event.address_city || event.location || "";
-        if (!eventCity.toLowerCase().includes(selectedCity.toLowerCase())) return false;
-      }
-    }
-    
-    // Single date filter
-    if (selectedDate && event.start_date) {
-      const eventDate = parseISO(event.start_date);
-      if (!isSameDay(eventDate, selectedDate)) return false;
-    }
-
-    // Date range filter
-    if (selectedDateRange?.from && event.start_date) {
-      const eventDate = parseISO(event.start_date);
-      if (selectedDateRange.to) {
-        // Range selected - check if event is within range
-        if (isBefore(eventDate, selectedDateRange.from) || isAfter(eventDate, selectedDateRange.to)) return false;
-      } else {
-        // Only "from" selected - match that specific day
-        if (!isSameDay(eventDate, selectedDateRange.from)) return false;
-      }
-    }
-    
-    // Time filter (single-select)
-    if (selectedTimeFilter) {
-      // Events without start_date should be EXCLUDED from specific time filters
-      // (they can't match "today", "tomorrow", etc. since they have no date)
-      if (!event.start_date) {
-        return false;
-      }
-      
-      const eventDate = parseISO(event.start_date);
-      const now = new Date();
-      
-      let matchesTimeFilter = false;
-      switch (selectedTimeFilter) {
-        case "now": {
-          // Events starting within the next 4 hours (regardless of day)
-          const eventTime = eventDate.getTime();
-          const currentTime = now.getTime();
-          const fourHoursFromNow = currentTime + (4 * 60 * 60 * 1000);
-          // Event already started today OR starts within 4 hours
-          matchesTimeFilter = (isToday(eventDate) && eventTime <= currentTime) || 
-                              (eventTime >= currentTime && eventTime <= fourHoursFromNow);
-          break;
-        }
-        case "today":
-          matchesTimeFilter = isToday(eventDate);
-          break;
-        case "tomorrow":
-          matchesTimeFilter = isTomorrow(eventDate);
-          break;
-        case "thisWeek": {
-          // Weekend = Saturday and Sunday of current week
-          const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
-          const saturday = addDays(weekEnd, -1);
-          matchesTimeFilter = isSameDay(eventDate, saturday) || isSameDay(eventDate, weekEnd);
-          break;
-        }
-        case "nextWeek":
-          const nextWeekStart = startOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
-          const nextWeekEnd = endOfWeek(addWeeks(now, 1), { weekStartsOn: 1 });
-          matchesTimeFilter = isWithinInterval(eventDate, { start: nextWeekStart, end: nextWeekEnd });
-          break;
-        case "thisMonth":
-          matchesTimeFilter = isWithinInterval(eventDate, {
-            start: startOfMonth(now),
-            end: endOfMonth(now)
-          });
-          break;
-        default:
-          matchesTimeFilter = true;
-      }
-      
-      if (!matchesTimeFilter) return false;
-    }
-    
-    // Quick filters - Romantik (tag-based + keyword fallback)
-    if (selectedQuickFilters.includes("romantik")) {
-      const eventTags = event.tags || [];
-      const hasRomanticTag = eventTags.includes("romantisch-date");
-      // Fallback to keyword matching if no tag
-      if (!hasRomanticTag && !isRomanticEvent(event)) return false;
-    }
-    
-    // Quick filters - Top Stars (filter by VIP artists, radius already disabled above)
-    if (selectedQuickFilters.includes("top-stars")) {
-      console.log(`Top Stars filter active. VIP Artists count: ${vipArtists.length}, CategoryId: ${selectedCategoryId}, SubcategoryId: ${selectedSubcategoryId}`);
-      if (!isTopStarsEvent(event)) return false;
-    }
-    
-    // Quick filters - Mit Kind (filter by family/age tags)
-    if (selectedQuickFilters.includes("mit-kind")) {
-      const eventTags = event.tags || [];
-      // Determine which tag to filter by based on selected age filter
-      const tagToMatch = selectedFamilyAgeFilter === "alle" || selectedFamilyAgeFilter === null
-        ? "familie-kinder"
-        : selectedFamilyAgeFilter;
-      
-      if (!eventTags.includes(tagToMatch)) return false;
-    }
-    
-    // Quick filters - Mistwetter / Indoor (filter by indoor/wellness tags)
-    if (selectedQuickFilters.includes("mistwetter")) {
-      const eventTags = event.tags || [];
-      const currentFilter = indoorFilters.find(f => f.id === selectedIndoorFilter) || indoorFilters[0];
-      
-      // Event must have ALL tags required by the filter
-      const hasAllTags = currentFilter.tags.every(tag => eventTags.includes(tag));
-      if (!hasAllTags) return false;
-    }
-    
-    // Quick filters - Wellness (tag-based)
-    if (selectedQuickFilters.includes("wellness")) {
-      const eventTags = event.tags || [];
-      if (!eventTags.includes("wellness-selfcare")) return false;
-    }
-    
-    // Quick filters - Natur & Outdoor (tag-based)
-    if (selectedQuickFilters.includes("natur")) {
-      const eventTags = event.tags || [];
-      if (!eventTags.includes("natur-erlebnisse")) return false;
-    }
-    
-    // Quick filters - Foto-Spots (tag-based)
-    if (selectedQuickFilters.includes("foto-spots")) {
-      const eventTags = event.tags || [];
-      if (!eventTags.includes("fotospots")) return false;
-    }
-    
-    // Quick filters - Nightlife (OR logic: any of the tags)
-    if (selectedQuickFilters.includes("nightlife")) {
-      const eventTags = event.tags || [];
-      const nightlifeTags = ["nightlife-party", "afterwork", "rooftop-aussicht"];
-      const hasAnyTag = nightlifeTags.some(tag => eventTags.includes(tag));
-      if (!hasAnyTag) return false;
-    }
-    
-    // Quick filters - Geburtstag & Gruppen (OR logic: any of the tags)
-    if (selectedQuickFilters.includes("geburtstag")) {
-      const eventTags = event.tags || [];
-      const birthdayTags = ["besondere-anlaesse", "freunde-gruppen"];
-      const hasAnyTag = birthdayTags.some(tag => eventTags.includes(tag));
-      if (!hasAnyTag) return false;
-    }
-    
-    // Source filter (based on external_id prefix)
-    if (selectedSource) {
-      const externalId = event.external_id || "";
-      if (selectedSource === "ticketmaster" && !externalId.startsWith("tm_")) return false;
-      if (selectedSource === "myswitzerland" && !externalId.startsWith("mys_")) return false;
-    }
-    
-    // Category filter - by category_main_id (SKIP if Top Stars is active)
-    if (selectedCategoryId !== null && !selectedQuickFilters.includes("top-stars")) {
-      if (event.category_main_id !== selectedCategoryId) return false;
-    }
-    
-    // Subcategory filter - by category_sub_id (SKIP if Top Stars is active)
-    if (selectedSubcategoryId !== null && !selectedQuickFilters.includes("top-stars")) {
-      if (event.category_sub_id !== selectedSubcategoryId) return false;
-    }
-    
-    // Availability filter - based on available_months
-    if (selectedAvailability) {
-      const months = event.available_months || [];
-      const winterMonths = [11, 12, 1, 2, 3];
-      const summerMonths = [4, 5, 6, 7, 8, 9, 10];
-      
-      switch (selectedAvailability) {
-        case "now":
-          // Must include current month
-          if (!months.includes(currentMonth)) return false;
-          break;
-        case "winter":
-          // Must include at least one winter month
-          if (!winterMonths.some(m => months.includes(m))) return false;
-          break;
-        case "summer":
-          // Must include at least one summer month
-          if (!summerMonths.some(m => months.includes(m))) return false;
-          break;
-        case "year-round":
-          // Must be available all 12 months
-          if (months.length !== 12) return false;
-          break;
-      }
-    }
-    // Dog-friendly filter - based on tag
-    if (dogFriendly) {
-      const eventTags = event.tags || [];
-      if (!eventTags.includes("hunde-erlaubt")) return false;
-    }
-    
-    return true;
-  });
+  // Events are filtered server-side, just use them directly
+  const filteredEvents = events;
 
   const clearFilters = () => {
     setSelectedDate(undefined);
