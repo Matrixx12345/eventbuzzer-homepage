@@ -71,7 +71,7 @@ const EventCard = ({
       </div>
 
       <div className="p-4 flex flex-col flex-grow gap-2">
-        {/* TITEL: Fixiert auf 2 Zeilen - Das MUSS jetzt anders aussehen als in deinem Screenshot */}
+        {/* Event Title */}
         <h3 className="text-[15px] font-bold text-card-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
           {title}
         </h3>
