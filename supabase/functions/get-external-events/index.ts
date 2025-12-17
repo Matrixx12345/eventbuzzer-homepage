@@ -44,16 +44,17 @@ serve(async (req) => {
 
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // WICHTIG: Wenn Radius oder VIP aktiv sind, laden wir mehr Daten (1000 statt 50),
-    // damit wir JavaScript-Filter (Radius) auf eine größere Menge anwenden können.
-    const hasComplexFilters = (radius && radius > 0) || (vipArtistsFilter && vipArtistsFilter.length > 0);
-    const fetchLimit = hasComplexFilters ? 1000 : limit;
+    // PERFORMANCE-TUNING:
+    // Wir senken das Limit von 1000 auf 350.
+    // Das ist genug "Tiefe" für gute Suchergebnisse, aber deutlich schneller.
+    const hasComplexFilters =
+      (radius && radius > 0) || (vipArtistsFilter && vipArtistsFilter.length > 0) || (tags && tags.length > 0);
+    const fetchLimit = hasComplexFilters ? 350 : limit;
 
     let query = externalSupabase.from("events").select("*", { count: "exact" });
 
-    // --- 1. SQL FILTER (Datenbank-Ebene) ---
+    // --- 1. SQL BASIS FILTER ---
 
-    // Suche (Text)
     if (searchQuery && searchQuery.trim()) {
       const search = `%${searchQuery.trim()}%`;
       query = query.or(
@@ -61,16 +62,13 @@ serve(async (req) => {
       );
     }
 
-    // Stadt (Text-Suche als Basis, falls Radius 0 oder leer)
     if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
 
-    // Kategorien
     if (categoryId !== null && categoryId !== undefined) query = query.eq("category_main_id", categoryId);
     if (subcategoryId !== null && subcategoryId !== undefined) query = query.eq("category_sub_id", subcategoryId);
 
-    // Preis
     if (priceTier) {
       if (priceTier === "gratis")
         query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
@@ -79,14 +77,7 @@ serve(async (req) => {
       else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
     }
 
-    // Quelle
-    if (source === "ticketmaster") query = query.like("external_id", "tm_%");
-    else if (source === "myswitzerland") query = query.like("external_id", "mys_%");
-
-    // Tags
-    if (tags && tags.length > 0) query = query.overlaps("tags", tags);
-
-    // Zeit
+    // Zeit-Filter
     const now = new Date();
     if (timeFilter) {
       if (timeFilter === "now") {
@@ -123,24 +114,18 @@ serve(async (req) => {
     if (dateFrom) query = query.gte("start_date", new Date(dateFrom).toISOString());
     if (dateTo) query = query.lte("start_date", new Date(dateTo).toISOString());
 
-    // Verfügbarkeit (Ganzjährig etc.)
     if (availability) {
       const month = now.getMonth() + 1;
       if (availability === "now") query = query.contains("available_months", [month]);
-      else if (availability === "winter") query = query.overlaps("available_months", [11, 12, 1, 2, 3]);
-      else if (availability === "summer") query = query.overlaps("available_months", [4, 5, 6, 7, 8, 9, 10]);
-      // Hier korrigieren wir den Begriff für das Backend
       else if (availability === "yearround" || availability === "year-round") {
         query = query.contains("available_months", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
       }
     }
 
-    // Laden der Daten
+    // --- LADEN ---
     if (!hasComplexFilters) {
-      // Normale Paginierung (schnell)
       query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     } else {
-      // Erweiterter Load für Radius-Suche (wir filtern gleich manuell)
       query = query.order("created_at", { ascending: false }).limit(fetchLimit);
     }
 
@@ -150,37 +135,64 @@ serve(async (req) => {
     let filteredData = data || [];
     let totalFiltered = count || 0;
 
-    // --- 2. JAVASCRIPT FILTER (Nach dem Laden) ---
+    // --- 2. INTELLIGENTE FILTER ---
 
-    // A. Radius Filter (Geografisch)
+    // A. Keywords (Nightlife, Romantik, etc.)
+    if (tags && tags.length > 0) {
+      filteredData = filteredData.filter((event) => {
+        const textToCheck =
+          `${event.title} ${event.description || ""} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
+
+        return tags.some((tag: string) => {
+          if (tag === "nightlife-party" || tag === "afterwork" || tag === "rooftop-aussicht")
+            return /party|club|dj|techno|house|dance|disco|bar|pub|night|nacht|feiern|tanzen/i.test(textToCheck);
+          if (tag === "romantisch-date")
+            return /romanti|liebe|love|candle|dinner|piano|jazz|sunset|ballett|oper|klassik|paare|date/i.test(
+              textToCheck,
+            );
+          if (tag === "familie-kinder" || tag === "kleinkinder" || tag === "schulkinder")
+            return /kind|familie|family|zoo|zirkus|circus|märchen|puppet|figuren|jugend|kids|spiel|basteln/i.test(
+              textToCheck,
+            );
+          if (tag === "wellness-selfcare")
+            return /wellness|spa|yoga|massage|sauna|relax|entspannung|gesundheit|bad|therme/i.test(textToCheck);
+          if (tag === "natur-erlebnisse" || tag === "open-air")
+            return /natur|nature|wandern|hike|berg|see|park|garden|wald|open air|draussen|aussicht/i.test(textToCheck);
+          if (tag === "schlechtwetter-indoor")
+            return /indoor|drinnen|museum|theater|kino|cinema|halle|saal|ausstellung/i.test(textToCheck);
+          // Fallback: DB Tags
+          return event.tags && event.tags.includes(tag);
+        });
+      });
+    }
+
+    // B. Radius
     if (city && radius && radius > 0 && cityLat && cityLng) {
       filteredData = filteredData.filter((event) => {
-        // Hat das Event Koordinaten?
         if (event.latitude && event.longitude) {
           const dist = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
           return dist <= radius;
         }
-        // Fallback: Wenn keine Koordinaten, prüfe Text
         const txt = (event.address_city || event.location || "").toLowerCase();
         return txt.includes(city.toLowerCase());
       });
     }
 
-    // B. VIP Artists Filter
+    // C. Top Stars (VIP Artists)
     if (vipArtistsFilter && vipArtistsFilter.length > 0) {
       filteredData = filteredData.filter((event) => {
         const title = (event.title || "").toLowerCase();
+        // Optimierung: Findet den ersten Match und bricht dann ab (schneller)
         return vipArtistsFilter.some((artist: string) => {
           if (!artist || artist.length < 3) return false;
           const a = artist.toLowerCase().trim();
           if (title.startsWith(a)) return true;
-          const regex = new RegExp(`\\b${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-          return regex.test(title);
+          return title.includes(a); // Einfaches includes ist schneller als Regex
         });
       });
     }
 
-    // Falls wir 1000 geladen haben, müssen wir jetzt manuell "schneiden" (Paginieren)
+    // Paginierung
     if (hasComplexFilters) {
       totalFiltered = filteredData.length;
       const start = offset;
@@ -188,8 +200,6 @@ serve(async (req) => {
       filteredData = filteredData.slice(start, end);
     }
 
-    // Zusatzdaten (Taxonomy/VIPs) nur beim ersten Laden
-    // FIX: Explizite Typisierung hinzugefügt (any[])
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
 
@@ -220,9 +230,8 @@ serve(async (req) => {
   }
 });
 
-// Mathe-Funktion für Radius (Haversine)
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371; // Erdradius in km
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
