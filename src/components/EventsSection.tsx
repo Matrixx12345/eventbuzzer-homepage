@@ -72,6 +72,7 @@ const EventsSection = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {events.map((event, index) => (
             <div key={event.id} className="opacity-0 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+              {/* {...event} schickt jetzt automatisch latitude/longitude an die Card */}
               <EventCard {...event} />
             </div>
           ))}
