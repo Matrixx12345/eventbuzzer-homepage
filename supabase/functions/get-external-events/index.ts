@@ -39,10 +39,10 @@ serve(async (req) => {
 
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // Strategie: Wir laden etwas mehr (400), um Dubletten rausfiltern zu können,
-    // bevor wir die endgültigen 50 zurückgeben.
+    // Wir laden mehr Events (400), um sie danach zu gruppieren.
+    // Erst nach dem Gruppieren schneiden wir auf 'limit' (50) zu.
     const hasComplexFilters = (radius && radius > 0) || vipArtistsFilter?.length > 0 || tags?.length > 0;
-    const fetchLimit = hasComplexFilters ? 400 : 150;
+    const fetchLimit = hasComplexFilters ? 400 : 200;
 
     let query = externalSupabase.from("events").select("*", { count: "exact" });
 
@@ -116,7 +116,8 @@ serve(async (req) => {
     // A. Keywords
     if (tags?.length > 0) {
       filteredData = filteredData.filter((event) => {
-        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
+        const txt =
+          `${event.title} ${event.description || ""} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
         return tags.some((tag: string) => {
           if (tag.includes("nightlife") || tag.includes("party"))
             return /party|club|dj|disco|bar|nacht|techno|dance/i.test(txt);
@@ -149,22 +150,23 @@ serve(async (req) => {
         vipArtistsFilter.some((artist: string) => {
           const t = event.title?.toLowerCase() || "";
           const a = artist.toLowerCase();
-          return t.includes(a); // Einfaches 'includes' reicht oft und ist schneller
+          return t.includes(a);
         }),
       );
     }
 
-    // --- D. GROUPING (DUBLETTEN KILLER) ---
+    // --- D. GROUPING (ZUSAMMENFASSEN) ---
+    // Hier passiert die Magie: Gleiche Events werden zu einem "Von-Bis" Event verschmolzen
     const groupedMap = new Map();
     filteredData.forEach((event) => {
-      // Key: Titel + Stadt (ohne Leerzeichen, lowercase)
+      // Key: Titel + Stadt (ohne Leerzeichen, lowercase) als eindeutige ID
       const key = `${event.title}-${event.address_city || "CH"}`.toLowerCase().replace(/\s/g, "");
 
       if (!groupedMap.has(key)) {
         // Erstes Event dieser Art speichern
         groupedMap.set(key, { ...event, allDates: [event.start_date] });
       } else {
-        // Dublette gefunden -> Datum hinzufügen
+        // Dublette gefunden -> Datum zur Liste hinzufügen
         const existing = groupedMap.get(key);
         existing.allDates.push(event.start_date);
 
@@ -173,7 +175,7 @@ serve(async (req) => {
         if (sortedDates.length > 1) {
           existing.start_date = sortedDates[0];
           existing.end_date = sortedDates[sortedDates.length - 1];
-          existing.is_range = true; // Flag für Frontend
+          existing.is_range = true; // Signal für das Frontend
         }
       }
     });
@@ -182,11 +184,10 @@ serve(async (req) => {
     const totalFiltered = finalEvents.length;
 
     // --- 3. PAGINIERUNG (SLICE) ---
-    // Wir schneiden erst NACH dem Filtern & Gruppieren das Stück raus, das der User sehen soll
+    // Erst jetzt schneiden wir die 50 Stück raus
     finalEvents = finalEvents.slice(offset, offset + limit);
 
     // Initial Load Zusatzinfos
-    // HIER IST DER FIX: Typisierung hinzugefügt
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
 
