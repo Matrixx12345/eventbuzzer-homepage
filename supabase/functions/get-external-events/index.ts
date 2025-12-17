@@ -7,17 +7,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const body = await req.json().catch(() => ({}));
-    const offset = body.offset || 0;
-    const limit = body.limit || 50;
-    const initialLoad = body.initialLoad ?? true;
-
-    const filters = body.filters || {};
+    const { offset = 0, limit = 50, initialLoad = true, filters = {} } = body;
     const {
       searchQuery,
       categoryId,
@@ -28,197 +22,113 @@ serve(async (req) => {
       cityLat,
       cityLng,
       timeFilter,
-      dateFrom,
-      dateTo,
-      singleDate,
-      source,
       tags,
-      availability,
       vipArtistsFilter,
     } = filters;
 
-    const externalUrl = Deno.env.get("Supabase_URL");
-    const externalKey = Deno.env.get("Supabase_ANON_KEY");
+    const externalSupabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    if (!externalUrl || !externalKey) throw new Error("Missing secrets");
-
-    const externalSupabase = createClient(externalUrl, externalKey);
-
-    // PERFORMANCE-TUNING:
-    // Wir senken das Limit von 1000 auf 350.
-    // Das ist genug "Tiefe" für gute Suchergebnisse, aber deutlich schneller.
-    const hasComplexFilters =
-      (radius && radius > 0) || (vipArtistsFilter && vipArtistsFilter.length > 0) || (tags && tags.length > 0);
-    const fetchLimit = hasComplexFilters ? 350 : limit;
+    // Wir laden 400 Events als Puffer für das Grouping
+    const hasComplexFilters = radius > 0 || vipArtistsFilter?.length > 0 || tags?.length > 0;
+    const fetchLimit = hasComplexFilters ? 400 : 100;
 
     let query = externalSupabase.from("events").select("*", { count: "exact" });
 
-    // --- 1. SQL BASIS FILTER ---
-
-    if (searchQuery && searchQuery.trim()) {
-      const search = `%${searchQuery.trim()}%`;
-      query = query.or(
-        `title.ilike.${search},venue_name.ilike.${search},address_city.ilike.${search},location.ilike.${search}`,
-      );
+    // --- SQL FILTER ---
+    if (searchQuery?.trim()) {
+      const s = `%${searchQuery.trim()}%`;
+      query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
-
     if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
+    if (categoryId) query = query.eq("category_main_id", categoryId);
 
-    if (categoryId !== null && categoryId !== undefined) query = query.eq("category_main_id", categoryId);
-    if (subcategoryId !== null && subcategoryId !== undefined) query = query.eq("category_sub_id", subcategoryId);
-
-    if (priceTier) {
-      if (priceTier === "gratis")
-        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
-      else if (priceTier === "$") query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
-      else if (priceTier === "$$") query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
-      else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
-    }
-
-    // Zeit-Filter
-    const now = new Date();
-    if (timeFilter) {
-      if (timeFilter === "now") {
-        const fourHoursLater = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString();
-        query = query.gte("start_date", now.toISOString()).lte("start_date", fourHoursLater);
-      } else if (timeFilter === "today") {
-        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
-        query = query.gte("start_date", now.toISOString()).lte("start_date", todayEnd);
-      } else if (timeFilter === "tomorrow") {
-        const tmr = new Date(now);
-        tmr.setDate(tmr.getDate() + 1);
-        const tmrStart = new Date(tmr.getFullYear(), tmr.getMonth(), tmr.getDate()).toISOString();
-        const tmrEnd = new Date(tmr.getFullYear(), tmr.getMonth(), tmr.getDate(), 23, 59, 59).toISOString();
-        query = query.gte("start_date", tmrStart).lte("start_date", tmrEnd);
-      } else if (timeFilter === "thisWeek") {
-        const day = now.getDay();
-        const dist = (6 - day + 7) % 7 || 7;
-        const sat = new Date(now);
-        sat.setDate(now.getDate() + dist);
-        const satStart = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate()).toISOString();
-        const sun = new Date(sat);
-        sun.setDate(sat.getDate() + 1);
-        const sunEnd = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate(), 23, 59, 59).toISOString();
-        query = query.gte("start_date", satStart).lte("start_date", sunEnd);
-      }
-    }
-
-    if (singleDate) {
-      const d = new Date(singleDate);
-      const s = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-      const e = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59).toISOString();
-      query = query.gte("start_date", s).lte("start_date", e);
-    }
-    if (dateFrom) query = query.gte("start_date", new Date(dateFrom).toISOString());
-    if (dateTo) query = query.lte("start_date", new Date(dateTo).toISOString());
-
-    if (availability) {
-      const month = now.getMonth() + 1;
-      if (availability === "now") query = query.contains("available_months", [month]);
-      else if (availability === "yearround" || availability === "year-round") {
-        query = query.contains("available_months", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-      }
-    }
-
-    // --- LADEN ---
-    if (!hasComplexFilters) {
-      query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
-    } else {
-      query = query.order("created_at", { ascending: false }).limit(fetchLimit);
-    }
-
-    const { data, error: queryError, count } = await query;
-    if (queryError) throw new Error(queryError.message);
+    // Sortierung: Neueste zuerst
+    query = query.order("start_date", { ascending: true });
+    const { data, error: queryError, count } = await query.limit(fetchLimit);
+    if (queryError) throw queryError;
 
     let filteredData = data || [];
-    let totalFiltered = count || 0;
 
-    // --- 2. INTELLIGENTE FILTER ---
-
-    // A. Keywords (Nightlife, Romantik, etc.)
-    if (tags && tags.length > 0) {
+    // --- JAVASCRIPT LOGIK: Radius & Keywords ---
+    if (tags?.length > 0) {
       filteredData = filteredData.filter((event) => {
-        const textToCheck =
-          `${event.title} ${event.description || ""} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
-
+        const txt = `${event.title} ${event.short_description || ""}`.toLowerCase();
         return tags.some((tag: string) => {
-          if (tag === "nightlife-party" || tag === "afterwork" || tag === "rooftop-aussicht")
-            return /party|club|dj|techno|house|dance|disco|bar|pub|night|nacht|feiern|tanzen/i.test(textToCheck);
-          if (tag === "romantisch-date")
-            return /romanti|liebe|love|candle|dinner|piano|jazz|sunset|ballett|oper|klassik|paare|date/i.test(
-              textToCheck,
-            );
-          if (tag === "familie-kinder" || tag === "kleinkinder" || tag === "schulkinder")
-            return /kind|familie|family|zoo|zirkus|circus|märchen|puppet|figuren|jugend|kids|spiel|basteln/i.test(
-              textToCheck,
-            );
-          if (tag === "wellness-selfcare")
-            return /wellness|spa|yoga|massage|sauna|relax|entspannung|gesundheit|bad|therme/i.test(textToCheck);
-          if (tag === "natur-erlebnisse" || tag === "open-air")
-            return /natur|nature|wandern|hike|berg|see|park|garden|wald|open air|draussen|aussicht/i.test(textToCheck);
-          if (tag === "schlechtwetter-indoor")
-            return /indoor|drinnen|museum|theater|kino|cinema|halle|saal|ausstellung/i.test(textToCheck);
-          // Fallback: DB Tags
-          return event.tags && event.tags.includes(tag);
+          if (tag.includes("nightlife")) return /party|club|dj|disco|bar|nacht/i.test(txt);
+          if (tag.includes("romantisch")) return /romant|liebe|love|date|candle|dinner/i.test(txt);
+          if (tag.includes("familie")) return /kind|familie|zoo|kids|märchen|spiel/i.test(txt);
+          return event.tags?.includes(tag);
         });
       });
     }
 
-    // B. Radius
-    if (city && radius && radius > 0 && cityLat && cityLng) {
+    if (city && radius > 0 && cityLat && cityLng) {
       filteredData = filteredData.filter((event) => {
         if (event.latitude && event.longitude) {
-          const dist = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
+          const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
+          const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos((cityLat * Math.PI) / 180) * Math.cos((event.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+          const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
           return dist <= radius;
         }
-        const txt = (event.address_city || event.location || "").toLowerCase();
-        return txt.includes(city.toLowerCase());
+        return (event.address_city || "").toLowerCase().includes(city.toLowerCase());
       });
     }
 
-    // C. Top Stars (VIP Artists)
-    if (vipArtistsFilter && vipArtistsFilter.length > 0) {
-      filteredData = filteredData.filter((event) => {
-        const title = (event.title || "").toLowerCase();
-        // Optimierung: Findet den ersten Match und bricht dann ab (schneller)
-        return vipArtistsFilter.some((artist: string) => {
-          if (!artist || artist.length < 3) return false;
-          const a = artist.toLowerCase().trim();
-          if (title.startsWith(a)) return true;
-          return title.includes(a); // Einfaches includes ist schneller als Regex
-        });
-      });
+    if (vipArtistsFilter?.length > 0) {
+      filteredData = filteredData.filter((event) =>
+        vipArtistsFilter.some((artist: string) => event.title?.toLowerCase().includes(artist.toLowerCase())),
+      );
     }
 
-    // Paginierung
-    if (hasComplexFilters) {
-      totalFiltered = filteredData.length;
-      const start = offset;
-      const end = offset + limit;
-      filteredData = filteredData.slice(start, end);
-    }
+    // --- NEU: DUBLETTEN ZUSAMMENFASSEN (GROUPING) ---
+    const groupedMap = new Map();
+    filteredData.forEach((event) => {
+      // Wir gruppieren nach Name + Stadt (damit Basel und Zürich getrennt bleiben)
+      const key = `${event.title}-${event.address_city || "CH"}`.toLowerCase().replace(/\s/g, "");
 
-    let taxonomy: any[] = [];
-    let vipArtists: any[] = [];
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, { ...event, allDates: [event.start_date] });
+      } else {
+        const existing = groupedMap.get(key);
+        existing.allDates.push(event.start_date);
+        // Datum updaten auf Zeitraum
+        const sortedDates = existing.allDates.filter(Boolean).sort();
+        if (sortedDates.length > 1) {
+          existing.start_date = sortedDates[0];
+          existing.end_date = sortedDates[sortedDates.length - 1];
+          // Markierung für das Frontend, dass dies ein Zeitraum ist
+          existing.is_range = true;
+        }
+      }
+    });
 
+    let finalEvents = Array.from(groupedMap.values());
+    const totalFiltered = finalEvents.length;
+
+    // Paginierung (Slice)
+    finalEvents = finalEvents.slice(offset, offset + limit);
+
+    // Initial Load Zusatzinfos
+    let taxonomy = [],
+      vipArtists = [];
     if (initialLoad) {
-      const { data: tax } = await externalSupabase.from("taxonomy").select("id, name, type, parent_id").order("name");
+      const { data: tax } = await externalSupabase.from("taxonomy").select("id, name, type, parent_id");
       taxonomy = tax || [];
       const { data: vips } = await externalSupabase.from("vip_artists").select("artists_name");
       vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
     }
 
-    const hasMore = offset + filteredData.length < totalFiltered;
-    const nextOffset = offset + filteredData.length;
-
     return new Response(
       JSON.stringify({
-        events: filteredData,
+        events: finalEvents,
         taxonomy,
         vipArtists,
-        pagination: { offset, limit, fetched: filteredData.length, total: totalFiltered, hasMore, nextOffset },
+        pagination: { offset, limit, total: totalFiltered, hasMore: offset + limit < totalFiltered },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -229,14 +139,3 @@ serve(async (req) => {
     });
   }
 });
-
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
