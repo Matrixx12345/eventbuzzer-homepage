@@ -6,12 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Radikale Normalisierung: Entfernt ALLES außer Buchstaben und Zahlen
-function superClean(text: string): string {
+// Hilfsfunktion für den Vergleich (Entfernt ALLES außer Buchstaben/Zahlen)
+function createCleanKey(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, "") // Löscht Sonderzeichen, Leerzeichen, Bindestriche
+    .replace(/[^a-z0-9]/g, "")
     .trim();
 }
 
@@ -21,35 +21,28 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const { offset = 0, limit = 50, initialLoad = true, filters = {} } = body;
-    const { searchQuery, categoryId, subcategoryId, city, radius, cityLat, cityLng, timeFilter, tags } = filters;
+    const { searchQuery, categoryId, city, radius, cityLat, cityLng } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // Wir laden 1000 Events, um wirklich alle Duplikate zu erwischen
-    let query = supabase.from("events").select("*", { count: "exact" });
+    // Wir laden 1000 Stück (deckt alle TMs + Puffer ab)
+    let query = supabase.from("events").select("*");
 
-    // Filter anwenden
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
-    if (city && (!radius || radius === 0)) {
-      query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
-    }
-    if (categoryId) query = query.eq("category_main_id", categoryId);
 
-    // Sortierung nach Datum für die Basisliste
-    query = query.order("start_date", { ascending: true }).limit(1000);
-
-    const { data, error } = await query;
+    // Basis-Sortierung nach Startdatum
+    const { data, error } = await query.order("start_date", { ascending: true }).limit(1000);
     if (error) throw error;
 
     const rawEvents = data || [];
-    const finalEvents: any[] = [];
-    const tmGroupMap = new Map();
+    const processedEvents: any[] = [];
+    const tmBundleMap = new Map(); // Speicher für Ticketmaster Gruppen
 
     rawEvents.forEach((event) => {
-      // Radius Filter (falls aktiv)
+      // Radius-Filter (beibehalten)
       if (city && radius > 0 && cityLat && cityLng && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -63,34 +56,46 @@ serve(async (req) => {
       const isTM = event.external_id?.startsWith("tm");
 
       if (!isTM) {
-        finalEvents.push(event);
+        // MY SWITZERLAND: 1:1 übernehmen
+        processedEvents.push(event);
       } else {
-        // Ticketmaster Gruppierung mit radikalem Key
-        const key = `${superClean(event.title)}_${superClean(event.address_city || "ch")}`;
+        // TICKETMASTER: Bündeln
+        // Wir bündeln nach gereinigtem Titel + Stadt
+        const key = `${createCleanKey(event.title)}_${createCleanKey(event.address_city || "ch")}`;
 
-        if (!tmGroupMap.has(key)) {
-          tmGroupMap.set(key, { ...event, all_dates: [event.start_date] });
+        if (!tmBundleMap.has(key)) {
+          // Erstes Event dieser Gruppe
+          tmBundleMap.set(key, { ...event, all_dates: [event.start_date] });
         } else {
-          const existing = tmGroupMap.get(key);
-          existing.all_dates.push(event.start_date);
+          // Duplikat gefunden -> Bündeln
+          const existing = tmBundleMap.get(key);
+          if (event.start_date) existing.all_dates.push(event.start_date);
+
           const sorted = existing.all_dates.sort();
           existing.start_date = sorted[0];
           existing.end_date = sorted[sorted.length - 1];
-          existing.is_range = true; // Flag für das Frontend
+          existing.is_range = true;
+
+          // Bild behalten, falls vorhanden
+          if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
         }
       }
     });
 
-    const combined = [...finalEvents, ...Array.from(tmGroupMap.values())];
-    combined.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+    // TM Gruppen auflösen und mit dem Rest mischen
+    let finalEvents = [...processedEvents, ...Array.from(tmBundleMap.values())];
 
-    const result = combined.slice(offset, offset + limit);
+    // Final für den User nach Datum sortieren
+    finalEvents.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+
+    // Die ersten 50 (limit) zurückgeben
+    const result = finalEvents.slice(offset, offset + limit);
 
     return new Response(
       JSON.stringify({
         events: result,
-        taxonomy: [], // Gekürzt für Speed
-        pagination: { offset, limit, total: combined.length, hasMore: offset + limit < combined.length },
+        taxonomy: [],
+        pagination: { offset, limit, total: finalEvents.length, hasMore: offset + limit < finalEvents.length },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
