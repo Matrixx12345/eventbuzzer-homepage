@@ -44,14 +44,16 @@ serve(async (req) => {
 
     const externalSupabase = createClient(externalUrl, externalKey);
 
-    // WICHTIG: Wenn Radius oder VIP aktiv sind, laden wir mehr Daten (1000 statt 50)
+    // WICHTIG: Wenn Radius oder VIP aktiv sind, laden wir mehr Daten (1000 statt 50),
+    // damit wir JavaScript-Filter (Radius) auf eine größere Menge anwenden können.
     const hasComplexFilters = (radius && radius > 0) || (vipArtistsFilter && vipArtistsFilter.length > 0);
     const fetchLimit = hasComplexFilters ? 1000 : limit;
 
     let query = externalSupabase.from("events").select("*", { count: "exact" });
 
-    // --- 1. SQL FILTER ---
+    // --- 1. SQL FILTER (Datenbank-Ebene) ---
 
+    // Suche (Text)
     if (searchQuery && searchQuery.trim()) {
       const search = `%${searchQuery.trim()}%`;
       query = query.or(
@@ -59,13 +61,16 @@ serve(async (req) => {
       );
     }
 
+    // Stadt (Text-Suche als Basis, falls Radius 0 oder leer)
     if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
 
+    // Kategorien
     if (categoryId !== null && categoryId !== undefined) query = query.eq("category_main_id", categoryId);
     if (subcategoryId !== null && subcategoryId !== undefined) query = query.eq("category_sub_id", subcategoryId);
 
+    // Preis
     if (priceTier) {
       if (priceTier === "gratis")
         query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
@@ -74,11 +79,14 @@ serve(async (req) => {
       else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
     }
 
+    // Quelle
     if (source === "ticketmaster") query = query.like("external_id", "tm_%");
     else if (source === "myswitzerland") query = query.like("external_id", "mys_%");
 
+    // Tags
     if (tags && tags.length > 0) query = query.overlaps("tags", tags);
 
+    // Zeit
     const now = new Date();
     if (timeFilter) {
       if (timeFilter === "now") {
@@ -115,20 +123,24 @@ serve(async (req) => {
     if (dateFrom) query = query.gte("start_date", new Date(dateFrom).toISOString());
     if (dateTo) query = query.lte("start_date", new Date(dateTo).toISOString());
 
+    // Verfügbarkeit (Ganzjährig etc.)
     if (availability) {
       const month = now.getMonth() + 1;
       if (availability === "now") query = query.contains("available_months", [month]);
       else if (availability === "winter") query = query.overlaps("available_months", [11, 12, 1, 2, 3]);
       else if (availability === "summer") query = query.overlaps("available_months", [4, 5, 6, 7, 8, 9, 10]);
+      // Hier korrigieren wir den Begriff für das Backend
       else if (availability === "yearround" || availability === "year-round") {
         query = query.contains("available_months", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
       }
     }
 
-    // Load Data
+    // Laden der Daten
     if (!hasComplexFilters) {
+      // Normale Paginierung (schnell)
       query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     } else {
+      // Erweiterter Load für Radius-Suche (wir filtern gleich manuell)
       query = query.order("created_at", { ascending: false }).limit(fetchLimit);
     }
 
@@ -138,19 +150,23 @@ serve(async (req) => {
     let filteredData = data || [];
     let totalFiltered = count || 0;
 
-    // --- 2. JAVASCRIPT FILTER ---
+    // --- 2. JAVASCRIPT FILTER (Nach dem Laden) ---
 
+    // A. Radius Filter (Geografisch)
     if (city && radius && radius > 0 && cityLat && cityLng) {
       filteredData = filteredData.filter((event) => {
+        // Hat das Event Koordinaten?
         if (event.latitude && event.longitude) {
           const dist = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
           return dist <= radius;
         }
+        // Fallback: Wenn keine Koordinaten, prüfe Text
         const txt = (event.address_city || event.location || "").toLowerCase();
         return txt.includes(city.toLowerCase());
       });
     }
 
+    // B. VIP Artists Filter
     if (vipArtistsFilter && vipArtistsFilter.length > 0) {
       filteredData = filteredData.filter((event) => {
         const title = (event.title || "").toLowerCase();
@@ -164,6 +180,7 @@ serve(async (req) => {
       });
     }
 
+    // Falls wir 1000 geladen haben, müssen wir jetzt manuell "schneiden" (Paginieren)
     if (hasComplexFilters) {
       totalFiltered = filteredData.length;
       const start = offset;
@@ -171,7 +188,8 @@ serve(async (req) => {
       filteredData = filteredData.slice(start, end);
     }
 
-    // HIER WAR DER FEHLER: Wir definieren jetzt den Typ "any[]"
+    // Zusatzdaten (Taxonomy/VIPs) nur beim ersten Laden
+    // FIX: Explizite Typisierung hinzugefügt (any[])
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
 
@@ -202,8 +220,9 @@ serve(async (req) => {
   }
 });
 
+// Mathe-Funktion für Radius (Haversine)
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
+  const R = 6371; // Erdradius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
