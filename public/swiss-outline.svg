@@ -1,18 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140">
-  <!-- Simplified Switzerland shape -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+  <!-- Realistic Switzerland outline -->
   <path 
-    fill="#e2e8f0" 
-    stroke="#94a3b8" 
-    stroke-width="1"
-    d="M30,70 
-       L35,55 L45,50 L55,45 L60,35 L75,30 L90,25 L105,28 L115,22 L130,25 L145,30 L155,28 L165,35 L175,45 L178,55 
-       L175,65 L170,75 L165,85 L155,95 L145,100 L130,105 L115,108 L100,110 L85,108 L70,105 L55,100 L45,95 L35,85 L30,75 
-       Z"
+    fill="#f1f5f9" 
+    stroke="#cbd5e1" 
+    stroke-width="1.5"
+    d="M45,95 L50,85 L55,80 L62,78 L68,72 L75,68 L82,62 L90,55 L100,50 L110,45 L120,42 L130,38 L140,35 L150,32 L160,30 L170,28 L180,30 L190,35 L200,40 L210,45 L220,50 L230,55 L240,58 L250,62 L258,68 L262,75 L265,82 L268,90 L270,100 L268,110 L265,118 L260,125 L252,132 L245,138 L235,142 L225,148 L215,152 L205,155 L195,158 L185,160 L175,162 L165,163 L155,162 L145,160 L135,158 L125,155 L115,150 L105,145 L95,140 L85,135 L75,128 L65,120 L55,112 L48,105 L45,95 Z"
   />
-  <!-- Lake Geneva -->
-  <ellipse cx="45" cy="95" rx="12" ry="6" fill="#bfdbfe" opacity="0.6"/>
-  <!-- Lake Zurich -->
-  <ellipse cx="145" cy="55" rx="8" ry="4" fill="#bfdbfe" opacity="0.6"/>
-  <!-- Lake Constance partial -->
-  <ellipse cx="170" cy="35" rx="10" ry="5" fill="#bfdbfe" opacity="0.6"/>
+  
+  <!-- Lake Geneva (Genfersee) -->
+  <ellipse cx="75" cy="145" rx="25" ry="8" fill="#93c5fd" opacity="0.7"/>
+  
+  <!-- Lake Neuchâtel -->
+  <ellipse cx="110" cy="120" rx="12" ry="5" fill="#93c5fd" opacity="0.6"/>
+  
+  <!-- Lake Zurich (Zürichsee) -->
+  <ellipse cx="210" cy="75" rx="15" ry="5" fill="#93c5fd" opacity="0.7"/>
+  
+  <!-- Lake Lucerne (Vierwaldstättersee) -->
+  <path d="M165,95 Q175,90 180,95 Q185,100 175,105 Q165,100 165,95" fill="#93c5fd" opacity="0.6"/>
+  
+  <!-- Lake Constance (Bodensee) partial -->
+  <ellipse cx="250" cy="45" rx="18" ry="8" fill="#93c5fd" opacity="0.7"/>
+  
+  <!-- Alps indication (subtle) -->
+  <path 
+    d="M100,130 L115,115 L130,125 L145,110 L160,120 L175,105 L190,115 L205,100 L220,110 L235,95 L250,105"
+    fill="none"
+    stroke="#cbd5e1"
+    stroke-width="1"
+    stroke-dasharray="2,2"
+    opacity="0.5"
+  />
+  
+  <!-- City markers -->
+  <!-- Genf -->
+  <circle cx="58" cy="148" r="4" fill="#64748b"/>
+  <text x="58" y="162" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Genf</text>
+  
+  <!-- Bern -->
+  <circle cx="130" cy="105" r="4" fill="#64748b"/>
+  <text x="130" y="119" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Bern</text>
+  
+  <!-- Zürich -->
+  <circle cx="200" cy="70" r="4" fill="#64748b"/>
+  <text x="200" y="62" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Zürich</text>
+  
+  <!-- Basel -->
+  <circle cx="135" cy="45" r="4" fill="#64748b"/>
+  <text x="135" y="38" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Basel</text>
+  
+  <!-- Luzern -->
+  <circle cx="175" cy="95" r="3" fill="#94a3b8"/>
+  <text x="175" y="88" font-size="8" fill="#94a3b8" text-anchor="middle" font-family="system-ui">Luzern</text>
 </svg>

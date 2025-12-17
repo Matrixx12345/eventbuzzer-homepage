@@ -1449,25 +1449,27 @@ const Listings = () => {
 
                                 {/* Swiss Map Tooltip - Only on Hover */}
                                 <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                                  <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-40 h-28 overflow-hidden">
-                                    <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                                  <div className="bg-white p-3 rounded-xl shadow-2xl border border-gray-200 w-48 overflow-hidden">
+                                    <div className="relative w-full h-32 bg-slate-50 rounded-lg overflow-hidden">
                                       <img 
                                         src="/swiss-outline.svg" 
-                                        className="w-full h-full object-contain opacity-40 p-1" 
+                                        className="w-full h-full object-contain" 
                                         alt="CH" 
                                       />
                                       {event.latitude && event.longitude && (
                                         <div
-                                          className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-md"
+                                          className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                           style={{
-                                            left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
-                                            top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG viewBox (300x200)
+                                            // SVG shape spans roughly x: 45-270 (75% width), y: 28-163 (67% height)
+                                            left: `${15 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 75}%`,
+                                            top: `${14 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 67}%`,
                                           }}
                                         />
                                       )}
                                     </div>
                                   </div>
-                                  <div className="w-2.5 h-2.5 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 ml-3" />
+                                  <div className="w-2.5 h-2.5 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4" />
                                 </div>
                               </div>
                             );
