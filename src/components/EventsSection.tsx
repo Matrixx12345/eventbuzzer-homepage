@@ -13,8 +13,10 @@ const events = [
     image: eventAbbey,
     title: "Photo Spot Einsiedeln Abbey",
     venue: "Leonard House",
-    location: "Einsiedeln • CH",
+    location: "Einsiedeln (SZ)",
     isPopular: true,
+    latitude: 47.1267, // Koordinaten für Einsiedeln
+    longitude: 8.7511,
   },
   {
     id: "nordportal",
@@ -22,8 +24,10 @@ const events = [
     image: eventVenue,
     title: "Nordportal",
     venue: "Leonard House",
-    location: "Baden • CH",
+    location: "Baden (AG)",
     isPopular: true,
+    latitude: 47.4733, // Koordinaten für Baden
+    longitude: 8.3081,
   },
   {
     id: "kulturbetrieb-royal",
@@ -31,8 +35,10 @@ const events = [
     image: eventConcert,
     title: "Kulturbetrieb Royal",
     venue: "Leonard House",
-    location: "Baden • CH",
+    location: "Baden (AG)",
     isPopular: true,
+    latitude: 47.4733,
+    longitude: 8.3081,
   },
   {
     id: "zurich-tonhalle",
@@ -40,8 +46,10 @@ const events = [
     image: eventSymphony,
     title: "Zurich Tonhalle",
     venue: "Tonhalle Orchestra",
-    location: "Zürich • CH",
+    location: "Zürich (ZH)",
     isPopular: true,
+    latitude: 47.3769, // Koordinaten für Zürich
+    longitude: 8.5417,
   },
 ];
 
@@ -59,19 +67,14 @@ const EventsSection = () => {
         {/* Subheading */}
         <div className="flex items-center gap-2 mb-6">
           <Zap size={20} className="text-primary" />
-          <span className="text-sm font-semibold text-foreground">
-            Right now in your area
-          </span>
+          <span className="text-sm font-semibold text-foreground">Right now in your area</span>
         </div>
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {events.map((event, index) => (
-            <div
-              key={event.id}
-              className="opacity-0 animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
+            <div key={event.id} className="opacity-0 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+              {/* Durch {...event} werden latitude und longitude jetzt automatisch mitgeschickt! */}
               <EventCard {...event} />
             </div>
           ))}
