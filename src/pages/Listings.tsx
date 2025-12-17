@@ -1461,9 +1461,10 @@ const Listings = () => {
                                         <div
                                           className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                           style={{
-                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG (400x280)
-                                            left: `${10 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 80}%`,
-                                            top: `${8 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 84}%`,
+                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG viewBox 1346.967x863.698
+                                            // The map has padding, actual CH area roughly at x:140-1260, y:50-780
+                                            left: `${10 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 83}%`,
+                                            top: `${6 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 88}%`,
                                           }}
                                         />
                                       )}
