@@ -1404,10 +1404,36 @@ const Listings = () => {
                           <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
                             {event.title}
                           </h3>
-                          <p className="text-sm text-neutral-400 mt-1.5 flex items-center gap-1.5">
-                            <MapPin size={12} />
-                            {getEventLocation(event)}
-                          </p>
+                          {/* Location with Mini-Map Hover */}
+                          <div className="group/map relative inline-flex items-center gap-1.5 text-sm text-neutral-400 mt-1.5 cursor-help w-fit">
+                            <span className="text-red-500 animate-pulse">📍</span>
+                            <span className="border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
+                              {getEventLocation(event)}
+                            </span>
+
+                            {/* Mini-Map Tooltip */}
+                            <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                              <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
+                                <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                                  <img 
+                                    src="/swiss-outline.svg" 
+                                    className="w-full h-full object-contain opacity-30 p-2" 
+                                    alt="Switzerland Map" 
+                                  />
+                                  {event.latitude && event.longitude && (
+                                    <div
+                                      className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
+                                      style={{
+                                        left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                                        top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+                            </div>
+                          </div>
                           {/* Price Display */}
                           {(event.price_label || event.price_from) && (
                             <p className="text-sm font-medium text-neutral-900 mt-2">
