@@ -820,11 +820,48 @@ const Listings = () => {
     }
   };
 
+  // Find nearest city from coordinates
+  const findNearestCityFromCoords = (lat: number, lng: number): string | null => {
+    const cities = [
+      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+      { name: "Bern", lat: 46.948, lng: 7.4474 },
+      { name: "Basel", lat: 47.5596, lng: 7.5886 },
+      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+      { name: "Genf", lat: 46.2044, lng: 6.1432 },
+      { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+      { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+      { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+      { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+      { name: "Chur", lat: 46.8509, lng: 9.5320 },
+    ];
+    
+    let nearestCity = null;
+    let minDistance = Infinity;
+    
+    for (const city of cities) {
+      const distance = calculateDistance(lat, lng, city.lat, city.lng);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestCity = city.name;
+      }
+    }
+    
+    // Only return if within reasonable distance (< 100km)
+    return minDistance < 100 ? nearestCity : null;
+  };
+
   const getEventLocation = (event: ExternalEvent) => {
-    // Prioritize address_city, then venue_name, then location (skip if equals title)
-    if (event.address_city && event.address_city.trim()) return event.address_city;
+    // Prioritize address_city, then venue_name, then location (skip if equals title or "Schweiz")
+    if (event.address_city && event.address_city.trim() && event.address_city !== "Schweiz") return event.address_city;
     if (event.venue_name && event.venue_name.trim() && event.venue_name !== event.title) return event.venue_name;
-    if (event.location && event.location.trim() && event.location !== event.title) return event.location;
+    if (event.location && event.location.trim() && event.location !== event.title && event.location !== "Schweiz") return event.location;
+    
+    // Fallback: find nearest city from coordinates
+    if (event.latitude && event.longitude) {
+      const nearestCity = findNearestCityFromCoords(event.latitude, event.longitude);
+      if (nearestCity) return nearestCity;
+    }
+    
     return "Schweiz";
   };
 
