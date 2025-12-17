@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // CORS Preflight
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -24,85 +25,155 @@ serve(async (req) => {
       timeFilter,
       tags,
       vipArtistsFilter,
+      dateFrom,
+      dateTo,
+      singleDate,
+      availability,
+      source,
     } = filters;
 
-    const externalSupabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
+    const externalUrl = Deno.env.get("Supabase_URL");
+    const externalKey = Deno.env.get("Supabase_ANON_KEY");
 
-    // Wir laden 400 Events als Puffer für das Grouping
-    const hasComplexFilters = radius > 0 || vipArtistsFilter?.length > 0 || tags?.length > 0;
-    const fetchLimit = hasComplexFilters ? 400 : 100;
+    if (!externalUrl || !externalKey) throw new Error("Missing secrets");
+
+    const externalSupabase = createClient(externalUrl, externalKey);
+
+    // Strategie: Wir laden etwas mehr (400), um Dubletten rausfiltern zu können,
+    // bevor wir die endgültigen 50 zurückgeben.
+    const hasComplexFilters = (radius && radius > 0) || vipArtistsFilter?.length > 0 || tags?.length > 0;
+    const fetchLimit = hasComplexFilters ? 400 : 150;
 
     let query = externalSupabase.from("events").select("*", { count: "exact" });
 
-    // --- SQL FILTER ---
+    // --- 1. SQL VOR-FILTERUNG ---
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
+    // Stadt-Filter nur, wenn Radius 0 ist (sonst macht das JS)
     if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
     if (categoryId) query = query.eq("category_main_id", categoryId);
+    if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
 
-    // Sortierung: Neueste zuerst
-    query = query.order("start_date", { ascending: true });
-    const { data, error: queryError, count } = await query.limit(fetchLimit);
+    if (priceTier) {
+      if (priceTier === "gratis")
+        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
+      else if (priceTier === "$") query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
+      else if (priceTier === "$$") query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
+      else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
+    }
+
+    // Zeit-Logik
+    const now = new Date();
+    if (timeFilter) {
+      if (timeFilter === "now")
+        query = query
+          .gte("start_date", now.toISOString())
+          .lte("start_date", new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString());
+      else if (timeFilter === "today")
+        query = query
+          .gte("start_date", now.toISOString())
+          .lte("start_date", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString());
+      else if (timeFilter === "tomorrow") {
+        const tmr = new Date(now);
+        tmr.setDate(tmr.getDate() + 1);
+        query = query
+          .gte("start_date", new Date(tmr.setHours(0, 0, 0, 0)).toISOString())
+          .lte("start_date", new Date(tmr.setHours(23, 59, 59, 999)).toISOString());
+      } else if (timeFilter === "thisWeek") {
+        // Wochenende
+        const day = now.getDay();
+        const dist = (6 - day + 7) % 7 || 7;
+        const sat = new Date(now);
+        sat.setDate(now.getDate() + dist);
+        const sun = new Date(sat);
+        sun.setDate(sat.getDate() + 1);
+        query = query
+          .gte("start_date", new Date(sat.setHours(0, 0, 0, 0)).toISOString())
+          .lte("start_date", new Date(sun.setHours(23, 59, 59, 999)).toISOString());
+      }
+    }
+    if (singleDate) {
+      const d = new Date(singleDate);
+      query = query
+        .gte("start_date", new Date(d.setHours(0, 0, 0, 0)).toISOString())
+        .lte("start_date", new Date(d.setHours(23, 59, 59, 999)).toISOString());
+    }
+
+    // Sortierung & Limit
+    query = query.order("start_date", { ascending: true }).limit(fetchLimit);
+
+    const { data, error: queryError } = await query;
     if (queryError) throw queryError;
 
     let filteredData = data || [];
 
-    // --- JAVASCRIPT LOGIK: Radius & Keywords ---
+    // --- 2. JAVASCRIPT LOGIK (Radius, Keywords, Grouping) ---
+
+    // A. Keywords
     if (tags?.length > 0) {
       filteredData = filteredData.filter((event) => {
-        const txt = `${event.title} ${event.short_description || ""}`.toLowerCase();
+        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
         return tags.some((tag: string) => {
-          if (tag.includes("nightlife")) return /party|club|dj|disco|bar|nacht/i.test(txt);
-          if (tag.includes("romantisch")) return /romant|liebe|love|date|candle|dinner/i.test(txt);
-          if (tag.includes("familie")) return /kind|familie|zoo|kids|märchen|spiel/i.test(txt);
+          if (tag.includes("nightlife") || tag.includes("party"))
+            return /party|club|dj|disco|bar|nacht|techno|dance/i.test(txt);
+          if (tag.includes("romantisch")) return /romant|liebe|love|date|candle|dinner|piano|jazz/i.test(txt);
+          if (tag.includes("familie") || tag.includes("kind"))
+            return /kind|familie|zoo|kids|märchen|spiel|zirkus/i.test(txt);
+          if (tag.includes("wellness")) return /wellness|spa|sauna|bad|relax|yoga/i.test(txt);
+          if (tag.includes("natur")) return /natur|wandern|see|berg|park|aussicht|open air/i.test(txt);
+          if (tag.includes("schlechtwetter")) return /indoor|museum|kino|theater|drinnen|halle/i.test(txt);
           return event.tags?.includes(tag);
         });
       });
     }
 
+    // B. Radius
     if (city && radius > 0 && cityLat && cityLng) {
       filteredData = filteredData.filter((event) => {
         if (event.latitude && event.longitude) {
-          const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
-          const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
-          const a =
-            Math.sin(dLat / 2) ** 2 +
-            Math.cos((cityLat * Math.PI) / 180) * Math.cos((event.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-          const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          return dist <= radius;
+          const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
+          return d <= radius;
         }
+        // Fallback: Textsuche, falls keine Koordinaten
         return (event.address_city || "").toLowerCase().includes(city.toLowerCase());
       });
     }
 
+    // C. Top Stars
     if (vipArtistsFilter?.length > 0) {
       filteredData = filteredData.filter((event) =>
-        vipArtistsFilter.some((artist: string) => event.title?.toLowerCase().includes(artist.toLowerCase())),
+        vipArtistsFilter.some((artist: string) => {
+          const t = event.title?.toLowerCase() || "";
+          const a = artist.toLowerCase();
+          return t.includes(a); // Einfaches 'includes' reicht oft und ist schneller
+        }),
       );
     }
 
-    // --- NEU: DUBLETTEN ZUSAMMENFASSEN (GROUPING) ---
+    // --- D. GROUPING (DUBLETTEN KILLER) ---
     const groupedMap = new Map();
     filteredData.forEach((event) => {
-      // Wir gruppieren nach Name + Stadt (damit Basel und Zürich getrennt bleiben)
+      // Key: Titel + Stadt (ohne Leerzeichen, lowercase)
       const key = `${event.title}-${event.address_city || "CH"}`.toLowerCase().replace(/\s/g, "");
 
       if (!groupedMap.has(key)) {
+        // Erstes Event dieser Art speichern
         groupedMap.set(key, { ...event, allDates: [event.start_date] });
       } else {
+        // Dublette gefunden -> Datum hinzufügen
         const existing = groupedMap.get(key);
         existing.allDates.push(event.start_date);
-        // Datum updaten auf Zeitraum
+
+        // Start/Ende des Zeitraums berechnen
         const sortedDates = existing.allDates.filter(Boolean).sort();
         if (sortedDates.length > 1) {
           existing.start_date = sortedDates[0];
           existing.end_date = sortedDates[sortedDates.length - 1];
-          // Markierung für das Frontend, dass dies ein Zeitraum ist
-          existing.is_range = true;
+          existing.is_range = true; // Flag für Frontend
         }
       }
     });
@@ -110,14 +181,17 @@ serve(async (req) => {
     let finalEvents = Array.from(groupedMap.values());
     const totalFiltered = finalEvents.length;
 
-    // Paginierung (Slice)
+    // --- 3. PAGINIERUNG (SLICE) ---
+    // Wir schneiden erst NACH dem Filtern & Gruppieren das Stück raus, das der User sehen soll
     finalEvents = finalEvents.slice(offset, offset + limit);
 
     // Initial Load Zusatzinfos
-    let taxonomy = [],
-      vipArtists = [];
+    // HIER IST DER FIX: Typisierung hinzugefügt
+    let taxonomy: any[] = [];
+    let vipArtists: any[] = [];
+
     if (initialLoad) {
-      const { data: tax } = await externalSupabase.from("taxonomy").select("id, name, type, parent_id");
+      const { data: tax } = await externalSupabase.from("taxonomy").select("id, name, type, parent_id").order("name");
       taxonomy = tax || [];
       const { data: vips } = await externalSupabase.from("vip_artists").select("artists_name");
       vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
@@ -128,7 +202,13 @@ serve(async (req) => {
         events: finalEvents,
         taxonomy,
         vipArtists,
-        pagination: { offset, limit, total: totalFiltered, hasMore: offset + limit < totalFiltered },
+        pagination: {
+          offset,
+          limit,
+          total: totalFiltered,
+          hasMore: offset + limit < totalFiltered,
+          fetched: finalEvents.length,
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -139,3 +219,15 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper: Haversine
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
