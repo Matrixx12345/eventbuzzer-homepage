@@ -821,9 +821,10 @@ const Listings = () => {
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    // Prioritize address_city, skip location if it equals title (bad data)
-    if (event.address_city) return event.address_city;
-    if (event.location && event.location !== event.title) return event.location;
+    // Prioritize address_city, then venue_name, then location (skip if equals title)
+    if (event.address_city && event.address_city.trim()) return event.address_city;
+    if (event.venue_name && event.venue_name.trim() && event.venue_name !== event.title) return event.venue_name;
+    if (event.location && event.location.trim() && event.location !== event.title) return event.location;
     return "Schweiz";
   };
 
@@ -1460,10 +1461,10 @@ const Listings = () => {
                                         <div
                                           className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                           style={{
-                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG viewBox (300x200)
-                                            // SVG shape spans roughly x: 45-270 (75% width), y: 28-163 (67% height)
-                                            left: `${15 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 75}%`,
-                                            top: `${14 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 67}%`,
+                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to new SVG viewBox (400x280)
+                                            // Shape spans x: 65-380 (~79%), y: 38-268 (~82%)
+                                            left: `${16 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 79}%`,
+                                            top: `${14 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 82}%`,
                                           }}
                                         />
                                       )}
