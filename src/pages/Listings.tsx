@@ -196,6 +196,26 @@ const Listings = () => {
   const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
   const isTopStarsActive = selectedQuickFilters.includes("top-stars");
 
+  // --- HIER IST DIE FUNKTION JETZT GANZ OBEN, DAMIT SIE GARANTIERT GEFUNDEN WIRD ---
+  const toggleQuickFilter = (filterId: string) => {
+    const isCurrentlyActive = selectedQuickFilters.includes(filterId);
+    if (isCurrentlyActive) {
+      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
+      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
+      setSelectedQuickFilters([]);
+      return;
+    }
+    if (selectedQuickFilters.includes("mit-kind") && filterId !== "mit-kind") setSelectedFamilyAgeFilter(null);
+    if (selectedQuickFilters.includes("mistwetter") && filterId !== "mistwetter") setSelectedIndoorFilter(null);
+    if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
+    if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
+    if (filterId === "top-stars") {
+      setSelectedCategoryId(null);
+      setSelectedSubcategoryId(null);
+    }
+    setSelectedQuickFilters([filterId]);
+  };
+
   const mainCategories = useMemo(
     () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
     [taxonomy],
@@ -247,6 +267,7 @@ const Listings = () => {
     const filters: Record<string, any> = {};
     if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
 
+    // Top Stars Override
     if (isTopStarsActive) {
       if (vipArtists.length > 0) filters.vipArtistsFilter = vipArtists;
     } else {
@@ -266,6 +287,7 @@ const Listings = () => {
     if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
     if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
 
+    // Radius nur wenn nicht Top Stars
     if (selectedCity && !isTopStarsActive) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
@@ -421,26 +443,6 @@ const Listings = () => {
     setShowCalendar(true);
   };
 
-  // HIER IST DIE FUNKTION, DIE GEFEHLT HATTE:
-  const toggleQuickFilter = (filterId: string) => {
-    const isCurrentlyActive = selectedQuickFilters.includes(filterId);
-    if (isCurrentlyActive) {
-      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
-      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
-      setSelectedQuickFilters([]);
-      return;
-    }
-    if (selectedQuickFilters.includes("mit-kind") && filterId !== "mit-kind") setSelectedFamilyAgeFilter(null);
-    if (selectedQuickFilters.includes("mistwetter") && filterId !== "mistwetter") setSelectedIndoorFilter(null);
-    if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
-    if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
-    if (filterId === "top-stars") {
-      setSelectedCategoryId(null);
-      setSelectedSubcategoryId(null);
-    }
-    setSelectedQuickFilters([filterId]);
-  };
-
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -506,31 +508,6 @@ const Listings = () => {
     } catch {
       return "Datum TBA";
     }
-  };
-
-  const findNearestCityFromCoords = (lat: number, lng: number): string | null => {
-    const cities = [
-      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
-      { name: "Bern", lat: 46.948, lng: 7.4474 },
-      { name: "Basel", lat: 47.5596, lng: 7.5886 },
-      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
-      { name: "Genf", lat: 46.2044, lng: 6.1432 },
-      { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
-      { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
-      { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
-      { name: "Lugano", lat: 46.0037, lng: 8.9511 },
-      { name: "Chur", lat: 46.8509, lng: 9.532 },
-    ];
-    let nearestCity = null;
-    let minDistance = Infinity;
-    for (const city of cities) {
-      const distance = calculateDistance(lat, lng, city.lat, city.lng);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestCity = city.name;
-      }
-    }
-    return minDistance < 100 ? nearestCity : null;
   };
 
   const getEventLocation = (event: ExternalEvent) => {
