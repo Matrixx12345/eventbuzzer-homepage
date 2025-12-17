@@ -1461,10 +1461,9 @@ const Listings = () => {
                                         <div
                                           className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                           style={{
-                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG (400x300)
-                                            // Based on real geographic Switzerland outline
-                                            left: `${8 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 84}%`,
-                                            top: `${12 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 76}%`,
+                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG (400x280)
+                                            left: `${10 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 80}%`,
+                                            top: `${8 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 84}%`,
                                           }}
                                         />
                                       )}
