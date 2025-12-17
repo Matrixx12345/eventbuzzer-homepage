@@ -1497,30 +1497,13 @@ const Listings = () => {
                                       {event.latitude && event.longitude && (
                                         <div
                                           className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
-                                          style={(() => {
-                                            // Calibrated city reference points (manually positioned on SVG)
-                                            const refs = [
-                                              { lat: 46.2044, lng: 6.1432, x: 11, y: 79 },   // Genf
-                                              { lat: 46.5197, lng: 6.6323, x: 18, y: 70 },   // Lausanne
-                                              { lat: 46.948, lng: 7.4474, x: 38, y: 52 },    // Bern
-                                              { lat: 47.5596, lng: 7.5886, x: 44, y: 15 },   // Basel
-                                              { lat: 47.3769, lng: 8.5417, x: 60, y: 28 },   // Zürich
-                                              { lat: 47.0502, lng: 8.3093, x: 55, y: 42 },   // Luzern
-                                              { lat: 47.4245, lng: 9.3767, x: 76, y: 24 },   // St. Gallen
-                                              { lat: 46.8509, lng: 9.532, x: 80, y: 56 },    // Chur
-                                              { lat: 46.0037, lng: 8.9511, x: 70, y: 88 },   // Lugano
-                                              { lat: 46.4908, lng: 9.8355, x: 88, y: 72 },   // St. Moritz
-                                            ];
-                                            // Find 3 nearest reference points and interpolate
-                                            const dists = refs.map(r => ({
-                                              ...r,
-                                              d: Math.sqrt(Math.pow(event.latitude! - r.lat, 2) + Math.pow(event.longitude! - r.lng, 2))
-                                            })).sort((a, b) => a.d - b.d).slice(0, 3);
-                                            const totalW = dists.reduce((s, r) => s + (1 / (r.d + 0.001)), 0);
-                                            const x = dists.reduce((s, r) => s + r.x * (1 / (r.d + 0.001)), 0) / totalW;
-                                            const y = dists.reduce((s, r) => s + r.y * (1 / (r.d + 0.001)), 0) / totalW;
-                                            return { left: `${x}%`, top: `${y}%` };
-                                          })()}
+                                          style={{
+                                            // Simple linear mapping calibrated to SVG bounds
+                                            // CH bounds: lng 5.96-10.49, lat 45.82-47.81
+                                            // SVG visible area: ~12%-88% horizontal, ~10%-90% vertical
+                                            left: `${12 + ((event.longitude - 5.96) / 4.53) * 76}%`,
+                                            top: `${10 + (1 - (event.latitude - 45.82) / 1.99) * 80}%`,
+                                          }}
                                         />
                                       )}
                                     </div>
