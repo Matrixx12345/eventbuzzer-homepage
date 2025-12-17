@@ -244,12 +244,11 @@ const Listings = () => {
     return null;
   };
 
-  // HIER IST DIE MAGIE: Der Filter-Builder
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
     if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
 
-    // Top Stars Logik: Wenn aktiv, ignorieren wir Stadt & Kategorien
+    // Top Stars Logik
     if (isTopStarsActive) {
       if (vipArtists.length > 0) filters.vipArtistsFilter = vipArtists;
     } else {
@@ -261,7 +260,7 @@ const Listings = () => {
     if (selectedSource) filters.source = selectedSource;
     if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
 
-    // Fix: Frontend "year-round" zu Backend "yearround"
+    // Backend erwartet "yearround"
     if (selectedAvailability) {
       filters.availability = selectedAvailability === "year-round" ? "yearround" : selectedAvailability;
     }
@@ -270,7 +269,7 @@ const Listings = () => {
     if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
     if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
 
-    // Stadt und Radius nur senden, wenn NICHT Top Stars
+    // City and radius
     if (selectedCity && !isTopStarsActive) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
@@ -537,6 +536,10 @@ const Listings = () => {
     }
     return "Schweiz";
   };
+
+  // Events are filtered server-side, just use them directly
+  // DAS HIER WAR DER FEHLENDE TEIL:
+  const filteredEvents = events;
 
   const filterContent = (
     <div className="space-y-5">
@@ -1071,7 +1074,6 @@ const Listings = () => {
                                     <div
                                       className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                       style={{
-                                        // Kalibrierung für NordNordWest Karte
                                         left: `${((event.longitude - 5.95) / (10.5 - 5.95)) * 100}%`,
                                         top: `${(1 - (event.latitude - 45.8) / (47.82 - 45.8)) * 100}%`,
                                       }}
