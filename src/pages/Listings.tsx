@@ -1418,11 +1418,6 @@ const Listings = () => {
                                   : `ab CHF ${event.price_from}`}
                             </p>
                           )}
-                          {event.short_description && (
-                            <p className="text-xs text-neutral-500 mt-2 line-clamp-2">
-                              {event.short_description}
-                            </p>
-                          )}
                         </div>
                       </article>
                     </Link>
