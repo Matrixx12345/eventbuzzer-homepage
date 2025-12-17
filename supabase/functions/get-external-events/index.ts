@@ -7,70 +7,289 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
+    // Parse request body for pagination and filter parameters
     const body = await req.json().catch(() => ({}));
-    const { offset = 0, limit = 50, filters = {} } = body;
-    const { searchQuery, city, radius, cityLat, cityLng } = filters;
+    const offset = body.offset || 0;
+    const limit = body.limit || 50;
+    const initialLoad = body.initialLoad ?? true;
+    
+    // Filter parameters
+    const filters = body.filters || {};
+    const {
+      searchQuery,
+      categoryId,
+      subcategoryId,
+      priceTier,
+      city,
+      radius,
+      cityLat,
+      cityLng,
+      timeFilter,
+      dateFrom,
+      dateTo,
+      singleDate,
+      source,
+      tags,
+      availability,
+      vipArtistsFilter,
+    } = filters;
 
-    const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
+    // Use the external Supabase credentials from secrets
+    const externalUrl = Deno.env.get("Supabase_URL");
+    const externalKey = Deno.env.get("Supabase_ANON_KEY");
 
-    // Holen 1000 Events, um sicher alles zum Bündeln zu finden
-    let query = supabase.from("events").select("*");
-    if (searchQuery?.trim()) query = query.ilike("title", `%${searchQuery.trim()}%`);
+    console.log("External URL configured:", !!externalUrl);
+    console.log("External Key configured:", !!externalKey);
+    console.log(`Pagination: offset=${offset}, limit=${limit}`);
+    console.log("Filters:", JSON.stringify(filters));
 
-    const { data: rawEvents, error } = await query.order("start_date", { ascending: true }).limit(1000);
-    if (error) throw error;
+    if (!externalUrl || !externalKey) {
+      const missing = [];
+      if (!externalUrl) missing.push("Supabase_URL");
+      if (!externalKey) missing.push("Supabase_ANON_KEY");
+      throw new Error(`Missing secrets: ${missing.join(", ")}`);
+    }
 
-    const processed: any[] = [];
-    const tmMap = new Map();
+    // Create client for external Supabase
+    const externalSupabase = createClient(externalUrl, externalKey);
 
-    (rawEvents || []).forEach((event) => {
-      // Radius Filter Logik
-      if (city && radius > 0 && cityLat && cityLng && event.latitude && event.longitude) {
-        const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
-        const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos((cityLat * Math.PI) / 180) * Math.cos((event.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-        const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        if (dist > radius) return;
+    // Build query with filters
+    let query = externalSupabase
+      .from("events")
+      .select("*", { count: "exact" });
+
+    // Search filter
+    if (searchQuery && searchQuery.trim()) {
+      const search = `%${searchQuery.trim()}%`;
+      query = query.or(`title.ilike.${search},venue_name.ilike.${search},address_city.ilike.${search},location.ilike.${search},short_description.ilike.${search}`);
+    }
+
+    // Category filter
+    if (categoryId !== null && categoryId !== undefined) {
+      query = query.eq("category_main_id", categoryId);
+    }
+
+    // Subcategory filter
+    if (subcategoryId !== null && subcategoryId !== undefined) {
+      query = query.eq("category_sub_id", subcategoryId);
+    }
+
+    // Price tier filter
+    if (priceTier) {
+      if (priceTier === "gratis") {
+        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
+      } else if (priceTier === "$") {
+        query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
+      } else if (priceTier === "$$") {
+        query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
+      } else if (priceTier === "$$$") {
+        query = query.or("price_label.eq.$$$,price_from.gt.120");
       }
+    }
 
-      const isTM = event.external_id?.startsWith("tm");
+    // Source filter
+    if (source === "ticketmaster") {
+      query = query.like("external_id", "tm_%");
+    } else if (source === "myswitzerland") {
+      query = query.like("external_id", "mys_%");
+    }
 
-      if (!isTM) {
-        processed.push(event); // MySwitzerland direkt rein
-      } else {
-        // TICKETMASTER: Bündeln nach Titel (alle Leerzeichen/Sonderzeichen weg)
-        const cleanTitle = event.title.toLowerCase().replace(/[^a-z0-9]/g, "");
-        const bundleKey = `${cleanTitle}_${(event.address_city || "ch").toLowerCase()}`;
+    // Tags filter (array contains)
+    if (tags && tags.length > 0) {
+      // Use overlaps for OR logic (any of the tags)
+      query = query.overlaps("tags", tags);
+    }
 
-        if (!tmMap.has(bundleKey)) {
-          tmMap.set(bundleKey, { ...event, all_dates: [event.start_date] });
-        } else {
-          const existing = tmMap.get(bundleKey);
-          existing.all_dates.push(event.start_date);
-          const sorted = existing.all_dates.sort();
-          existing.start_date = sorted[0];
-          existing.end_date = sorted[sorted.length - 1];
-          if (existing.start_date !== existing.end_date) existing.is_range = true;
+    // Time filter
+    const now = new Date();
+    if (timeFilter) {
+      if (timeFilter === "today") {
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
+        query = query.gte("start_date", todayStart).lte("start_date", todayEnd);
+      } else if (timeFilter === "tomorrow") {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStart = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).toISOString();
+        const tomorrowEnd = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59).toISOString();
+        query = query.gte("start_date", tomorrowStart).lte("start_date", tomorrowEnd);
+      } else if (timeFilter === "thisWeek") {
+        // This weekend (Saturday + Sunday)
+        const dayOfWeek = now.getDay();
+        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+        const saturday = new Date(now);
+        saturday.setDate(now.getDate() + daysUntilSaturday);
+        const saturdayStart = new Date(saturday.getFullYear(), saturday.getMonth(), saturday.getDate()).toISOString();
+        const sunday = new Date(saturday);
+        sunday.setDate(saturday.getDate() + 1);
+        const sundayEnd = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59).toISOString();
+        query = query.gte("start_date", saturdayStart).lte("start_date", sundayEnd);
+      } else if (timeFilter === "nextWeek") {
+        const nextWeekStart = new Date(now);
+        nextWeekStart.setDate(now.getDate() + (8 - now.getDay()));
+        const nextWeekEnd = new Date(nextWeekStart);
+        nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
+        query = query.gte("start_date", nextWeekStart.toISOString()).lte("start_date", nextWeekEnd.toISOString());
+      } else if (timeFilter === "thisMonth") {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+        query = query.gte("start_date", monthStart).lte("start_date", monthEnd);
+      } else if (timeFilter === "now") {
+        // Events starting within 4 hours
+        const fourHoursLater = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString();
+        query = query.gte("start_date", now.toISOString()).lte("start_date", fourHoursLater);
+      }
+    }
+
+    // Single date filter
+    if (singleDate) {
+      const date = new Date(singleDate);
+      const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+      const dateEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59).toISOString();
+      query = query.gte("start_date", dateStart).lte("start_date", dateEnd);
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      query = query.gte("start_date", new Date(dateFrom).toISOString());
+    }
+    if (dateTo) {
+      query = query.lte("start_date", new Date(dateTo).toISOString());
+    }
+
+    // Availability filter
+    if (availability) {
+      const currentMonth = now.getMonth() + 1;
+      if (availability === "now") {
+        query = query.contains("available_months", [currentMonth]);
+      } else if (availability === "winter") {
+        query = query.overlaps("available_months", [11, 12, 1, 2, 3]);
+      } else if (availability === "summer") {
+        query = query.overlaps("available_months", [4, 5, 6, 7, 8, 9, 10]);
+      } else if (availability === "yearround") {
+        query = query.contains("available_months", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+      }
+    }
+
+    // City filter (exact match or partial)
+    if (city && !radius) {
+      query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
+    }
+
+    // Order and paginate
+    query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+
+    const { data, error: queryError, count: totalFiltered } = await query;
+
+    if (queryError) {
+      console.error("Events query error:", JSON.stringify(queryError));
+      throw new Error(`Query failed: ${queryError.message}`);
+    }
+
+    console.log(`Fetched ${data?.length || 0} events (offset: ${offset}, total filtered: ${totalFiltered})`);
+
+    // Radius filter (post-query since Supabase doesn't have native geo)
+    let filteredData = data || [];
+    if (city && radius && radius > 0 && cityLat && cityLng) {
+      filteredData = filteredData.filter(event => {
+        if (event.latitude && event.longitude) {
+          const distance = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
+          return distance <= radius;
         }
+        // Fallback: city name match
+        const eventCity = event.address_city || event.location || "";
+        return eventCity.toLowerCase().includes(city.toLowerCase());
+      });
+    }
+
+    // VIP Artists filter (post-query for now)
+    if (vipArtistsFilter && vipArtistsFilter.length > 0) {
+      filteredData = filteredData.filter(event => {
+        const titleLower = (event.title || "").toLowerCase();
+        return vipArtistsFilter.some((artist: string) => {
+          if (!artist || artist.length < 3) return false;
+          const artistLower = artist.toLowerCase().trim();
+          if (titleLower.startsWith(artistLower)) return true;
+          const regex = new RegExp(`\\b${artistLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          return regex.test(event.title || "");
+        });
+      });
+    }
+
+    // Only fetch taxonomy and VIP artists on initial load
+    let taxonomy: any[] = [];
+    let vipArtists: string[] = [];
+
+    if (initialLoad) {
+      const { data: taxonomyData, error: taxonomyError } = await externalSupabase
+        .from("taxonomy")
+        .select("id, name, type, parent_id")
+        .order("name");
+
+      if (taxonomyError) {
+        console.error("Taxonomy query error:", JSON.stringify(taxonomyError));
       }
+      taxonomy = taxonomyData || [];
+
+      const { data: vipData, error: vipArtistsError } = await externalSupabase
+        .from("vip_artists")
+        .select("artists_name");
+
+      if (vipArtistsError) {
+        console.error("VIP Artists query error:", JSON.stringify(vipArtistsError));
+      } else {
+        console.log(`VIP Artists: ${vipData?.length || 0} loaded`);
+      }
+      vipArtists = vipData?.map(a => a.artists_name).filter(Boolean) || [];
+    }
+
+    const hasMore = offset + filteredData.length < (totalFiltered || 0);
+    const nextOffset = offset + filteredData.length;
+
+    return new Response(JSON.stringify({ 
+      events: filteredData, 
+      taxonomy,
+      vipArtists,
+      pagination: {
+        offset,
+        limit,
+        fetched: filteredData.length,
+        total: totalFiltered || 0,
+        hasMore,
+        nextOffset
+      }
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
     });
-
-    const final = [...processed, ...Array.from(tmMap.values())];
-    final.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
-
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error fetching events:", errorMessage);
     return new Response(
-      JSON.stringify({
-        events: final.slice(offset, offset + limit),
-        pagination: { total: final.length, hasMore: offset + limit < final.length },
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
   }
 });
+
+// Haversine distance calculation
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
