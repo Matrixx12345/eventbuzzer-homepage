@@ -17,9 +17,22 @@ interface RainyCardProps {
   location: string;
   isLarge?: boolean;
   slug: string;
+  latitude?: number;
+  longitude?: number;
 }
 
-const RainyCard = ({ id, image, title, description, venue, location, isLarge = false, slug }: RainyCardProps) => {
+const RainyCard = ({
+  id,
+  image,
+  title,
+  description,
+  venue,
+  location,
+  isLarge = false,
+  slug,
+  latitude,
+  longitude,
+}: RainyCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const isCurrentlyFavorite = isFavorite(id);
 
@@ -45,32 +58,52 @@ const RainyCard = ({ id, image, title, description, venue, location, isLarge = f
           className="absolute top-4 right-4 p-2 rounded-full bg-card/20 backdrop-blur-sm hover:bg-card/40 transition-colors z-10"
           aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
         >
-          <Heart
-            size={20}
-            className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-card-foreground"}
-          />
+          <Heart size={20} className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-card-foreground"} />
         </button>
 
         {/* Content */}
         <div className="relative h-full flex flex-col justify-end p-5">
-          <span className="text-primary text-xs font-semibold tracking-wider mb-2">
-            PREMIUM TYPOGRAPHY
-          </span>
-          <h3 className="font-serif text-card-foreground text-xl lg:text-2xl font-semibold leading-tight mb-2">
+          <span className="text-primary text-[10px] font-semibold tracking-wider mb-2 uppercase">Indoor Highlight</span>
+          <h3 className="font-serif text-card-foreground text-xl lg:text-2xl font-semibold leading-tight mb-2 line-clamp-2">
             {title}
           </h3>
-          {description && isLarge && (
-            <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
-              {description}
-            </p>
-          )}
+
+          {description && isLarge && <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{description}</p>}
+
           <div className="mb-4">
-            <p className="text-muted-foreground text-sm">{venue}</p>
-            <p className="text-muted-foreground text-sm">{location}</p>
+            <p className="text-muted-foreground text-sm truncate">{venue}</p>
+
+            {/* Location mit Mini-Map Hover */}
+            <div className="group/map relative inline-flex items-center gap-1 text-muted-foreground text-sm cursor-help">
+              <span className="text-red-500">📍</span>
+              <span className="border-b border-dotted border-muted-foreground/50 hover:text-white transition-colors">
+                {location}
+              </span>
+
+              {/* MINI-MAP TOOLTIP */}
+              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-40 h-28 overflow-hidden flex items-center justify-center">
+                  <div className="relative w-full h-full">
+                    <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
+                    {latitude && longitude && (
+                      <div
+                        className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm"
+                        style={{
+                          left: `${((longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                          top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+              </div>
+            </div>
           </div>
+
           {isLarge && (
-            <span className="w-fit bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2.5 rounded-md transition-colors">
-              Book Now
+            <span className="w-fit border border-primary text-primary hover:bg-primary hover:text-white font-semibold px-6 py-2 rounded-md transition-all text-sm">
+              Details ansehen
             </span>
           )}
         </div>
@@ -85,27 +118,33 @@ const rainyEvents = {
       id: "rainy-kunsthaus",
       image: rainyKunsthaus,
       title: "Kunsthaus Zürich",
-      description: "Discover world-class art collections spanning from medieval times to contemporary masterpieces in one of Switzerland's most prestigious galleries.",
+      description: "Weltklasse-Kunstsammlungen vom Mittelalter bis zur Gegenwart.",
       venue: "Kunsthaus Zürich",
-      location: "Zürich • CH",
+      location: "Zürich (ZH)",
       slug: "kunsthaus-zurich",
+      latitude: 47.3703,
+      longitude: 8.5481,
     },
     small: [
       {
         id: "rainy-spa",
         image: rainySpa,
-        title: "Hürlimann Spa",
+        title: "Hürlimann Thermalbad & Spa",
         venue: "Thermalbad & Spa",
-        location: "Zürich • CH",
+        location: "Zürich (ZH)",
         slug: "hurlimann-spa",
+        latitude: 47.3631,
+        longitude: 8.5285,
       },
       {
         id: "rainy-cinema",
         image: rainyCinema,
         title: "Kosmos Cinema",
         venue: "Kosmos Kulturhaus",
-        location: "Zürich • CH",
+        location: "Zürich (ZH)",
         slug: "kosmos-cinema",
+        latitude: 47.3792,
+        longitude: 8.5297,
       },
     ],
   },
@@ -114,19 +153,23 @@ const rainyEvents = {
       id: "rainy-chocolate",
       image: rainyChocolate,
       title: "Lindt Home of Chocolate",
-      description: "Experience the world's largest chocolate fountain and explore interactive exhibits showcasing the art of Swiss chocolate making.",
+      description: "Erlebe den größten Schokoladenbrunnen der Welt.",
       venue: "Lindt Museum",
-      location: "Kilchberg • CH",
+      location: "Kilchberg (ZH)",
       slug: "lindt-chocolate",
+      latitude: 47.3223,
+      longitude: 8.5518,
     },
     {
       id: "rainy-fifa",
       image: rainyFifa,
       title: "FIFA Museum",
-      description: "Immerse yourself in the history of football with interactive exhibits, memorabilia, and the iconic World Cup trophy.",
+      description: "Tauche ein in die Geschichte des Fußballs.",
       venue: "FIFA World Museum",
-      location: "Zürich • CH",
+      location: "Zürich (ZH)",
       slug: "fifa-museum",
+      latitude: 47.3631,
+      longitude: 8.5311,
     },
   ],
 };
@@ -135,19 +178,15 @@ const RainyDaySection = () => {
   return (
     <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 italic">
           Save the Rainy Day
         </h2>
 
-        {/* Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-auto">
-          {/* Row 1 - Left: Large Card */}
           <div className="h-[500px] lg:h-[520px]">
             <RainyCard {...rainyEvents.row1.large} isLarge />
           </div>
 
-          {/* Row 1 - Right: Two Stacked Cards */}
           <div className="flex flex-col gap-6 h-[500px] lg:h-[520px]">
             {rainyEvents.row1.small.map((event, index) => (
               <div key={index} className="flex-1">
@@ -156,7 +195,6 @@ const RainyDaySection = () => {
             ))}
           </div>
 
-          {/* Row 2 - Two Large Cards */}
           <div className="h-[400px]">
             <RainyCard {...rainyEvents.row2[0]} isLarge />
           </div>
