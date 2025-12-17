@@ -1497,13 +1497,30 @@ const Listings = () => {
                                       {event.latitude && event.longitude && (
                                         <div
                                           className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
-                                          style={{
-                                            // Simple linear mapping calibrated to SVG bounds
-                                            // CH bounds: lng 5.96-10.49, lat 45.82-47.81
-                                            // SVG visible area: ~12%-88% horizontal, ~10%-90% vertical
-                                            left: `${12 + ((event.longitude - 5.96) / 4.53) * 76}%`,
-                                            top: `${10 + (1 - (event.latitude - 45.82) / 1.99) * 80}%`,
-                                          }}
+                                          style={(() => {
+                                            // Calibrated reference points from user's marked positions
+                                            const refs = [
+                                              { lat: 46.0037, lng: 8.9511, x: 58, y: 88 },   // Lugano
+                                              { lat: 47.4245, lng: 9.3767, x: 72, y: 22 },   // St. Gallen
+                                              { lat: 46.8509, lng: 9.532, x: 75, y: 48 },    // Chur
+                                              { lat: 47.4984, lng: 8.7246, x: 58, y: 18 },   // Winterthur
+                                              { lat: 46.948, lng: 7.4474, x: 35, y: 45 },    // Bern
+                                              { lat: 47.0502, lng: 8.3093, x: 52, y: 45 },   // Luzern
+                                              { lat: 47.3769, lng: 8.5417, x: 55, y: 28 },   // Zürich
+                                              { lat: 46.5197, lng: 6.6323, x: 15, y: 62 },   // Lausanne
+                                              { lat: 46.4312, lng: 6.9107, x: 20, y: 68 },   // Montreux
+                                              { lat: 46.2044, lng: 6.1432, x: 8, y: 72 },    // Genf
+                                            ];
+                                            // Inverse distance weighted interpolation
+                                            const dists = refs.map(r => ({
+                                              ...r,
+                                              d: Math.sqrt(Math.pow(event.latitude! - r.lat, 2) + Math.pow(event.longitude! - r.lng, 2))
+                                            })).sort((a, b) => a.d - b.d).slice(0, 3);
+                                            const totalW = dists.reduce((s, r) => s + (1 / (r.d + 0.001)), 0);
+                                            const x = dists.reduce((s, r) => s + r.x * (1 / (r.d + 0.001)), 0) / totalW;
+                                            const y = dists.reduce((s, r) => s + r.y * (1 / (r.d + 0.001)), 0) / totalW;
+                                            return { left: `${x}%`, top: `${y}%` };
+                                          })()}
                                         />
                                       )}
                                     </div>
