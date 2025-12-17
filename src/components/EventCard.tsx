@@ -14,8 +14,8 @@ interface EventCardProps {
   isPopular?: boolean;
   availableMonths?: number[];
   external_id?: string;
-  latitude?: number; // Neu für die Karte
-  longitude?: number; // Neu für die Karte
+  latitude?: number; // Wichtig für den Pin
+  longitude?: number; // Wichtig für den Pin
 }
 
 const EventCard = ({
@@ -81,27 +81,26 @@ const EventCard = ({
 
       {/* Content */}
       <div className="p-4 flex flex-col gap-1">
-        {/* Titel: Fixiert auf 2 Zeilen für ein sauberes Grid */}
+        {/* TITEL: Fixiert auf 2 Zeilen (line-clamp-2) */}
         <h3 className="text-[15px] font-bold text-card-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
           {title}
         </h3>
 
         <p className="text-[13px] text-muted-foreground truncate">{venue}</p>
 
-        {/* Location mit Mini-Map Hover Effekt */}
+        {/* LOCATION: Mit Mini-Map Hover Effekt */}
         <div className="group/map relative inline-flex items-center gap-1 text-[13px] text-muted-foreground cursor-help w-fit">
           <span className="text-red-500 text-xs">📍</span>
           <span className="border-b border-dotted border-muted-foreground/50 hover:text-red-600 transition-colors">
             {location || "Schweiz"}
           </span>
 
-          {/* DAS MINI-MAP TOOLTIP */}
+          {/* DAS MINI-MAP TOOLTIP (Erscheint nur beim Drüberfahren) */}
           <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
             <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-40 h-28 overflow-hidden flex items-center justify-center">
               <div className="relative w-full h-full">
-                {/* Die Schweiz Silhouette */}
                 <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
-                {/* Der Rote Pin (Dynamisch berechnet) */}
+                {/* Roter Pin: Erscheint nur wenn Koordinaten da sind */}
                 {latitude && longitude && (
                   <div
                     className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm shadow-black/50"
@@ -113,7 +112,6 @@ const EventCard = ({
                 )}
               </div>
             </div>
-            {/* Kleiner Tooltip-Pfeil */}
             <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
           </div>
         </div>
