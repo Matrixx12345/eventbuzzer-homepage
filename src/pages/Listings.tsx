@@ -46,11 +46,41 @@ import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 
+// Assets
 import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
 import eventConcert from "@/assets/event-concert.jpg";
+import eventSymphony from "@/assets/event-symphony.jpg";
+import swissZurich from "@/assets/swiss-zurich.jpg";
+import swissBern from "@/assets/swiss-bern.jpg";
+import swissLucerne from "@/assets/swiss-lucerne.jpg";
+import swissGeneva from "@/assets/swiss-geneva.jpg";
+import weekendJazz from "@/assets/weekend-jazz.jpg";
+import weekendOpera from "@/assets/weekend-opera.jpg";
+import festivalCrowd from "@/assets/festival-crowd.jpg";
+import festivalSinger from "@/assets/festival-singer.jpg";
+import festivalStage from "@/assets/festival-stage.jpg";
+import festivalFriends from "@/assets/festival-friends.jpg";
+import festivalChoir from "@/assets/festival-choir.jpg";
 
-const placeholderImages = [eventAbbey, eventVenue, eventConcert];
+const placeholderImages = [
+  eventAbbey,
+  eventVenue,
+  eventConcert,
+  eventSymphony,
+  swissZurich,
+  swissBern,
+  swissLucerne,
+  swissGeneva,
+  weekendJazz,
+  weekendOpera,
+  festivalCrowd,
+  festivalSinger,
+  festivalStage,
+  festivalFriends,
+  festivalChoir,
+];
+
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
 
 interface ExternalEvent {
@@ -86,15 +116,25 @@ interface TaxonomyItem {
 }
 
 const quickFilters = [
-  { id: "geburtstag", label: "Geburtstag", icon: Cake },
-  { id: "mistwetter", label: "Mistwetter", icon: CloudRain },
-  { id: "top-stars", label: "Top Stars", icon: Star },
-  { id: "foto-spots", label: "Foto-Spots", icon: Camera },
-  { id: "romantik", label: "Romantik", icon: HeartIcon },
-  { id: "mit-kind", label: "Mit Kind", icon: Smile },
-  { id: "nightlife", label: "Nightlife", icon: PartyPopper },
-  { id: "wellness", label: "Wellness", icon: Waves },
-  { id: "natur", label: "Natur", icon: Mountain },
+  { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
+  { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
+  { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
+  { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["foto-spot"] },
+  { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
+  {
+    id: "mit-kind",
+    label: "Mit Kind",
+    icon: Smile,
+    tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"],
+  },
+  {
+    id: "nightlife",
+    label: "Nightlife",
+    icon: PartyPopper,
+    tags: ["nightlife-party", "afterwork", "rooftop-aussicht"],
+  },
+  { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
+  { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
 ];
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
@@ -131,8 +171,8 @@ const Listings = () => {
   const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
   const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
   const [dogFriendly, setDogFriendly] = useState(false);
-  const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
 
+  const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
   const indoorFilters = [
     { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
     { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
@@ -149,7 +189,7 @@ const Listings = () => {
   const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
   const isTopStarsActive = selectedQuickFilters.includes("top-stars");
 
-  // Toggle Funktion
+  // Toggle Function
   const toggleQuickFilter = (filterId: string) => {
     const isCurrentlyActive = selectedQuickFilters.includes(filterId);
     if (isCurrentlyActive) {
@@ -343,9 +383,8 @@ const Listings = () => {
     fetchEvents(true);
   }, []);
 
-  // Filter Change Load - OHNE LOOP (events nicht in dependencies)
+  // Filter Change Load (Debounced to prevent loops)
   useEffect(() => {
-    // Wenn gerade geladen wird, nichts tun (außer es ist der erste Load)
     if (loading && events.length === 0) return;
 
     const timeoutId = setTimeout(() => {
@@ -414,7 +453,6 @@ const Listings = () => {
     if (!range || (range.from && range.to)) setShowCalendar(false);
   };
 
-  // DATUMSANZEIGE (yyyy statt yy)
   const formatEventDate = (startString?: string, endString?: string, externalId?: string) => {
     if (!startString) {
       const isMySwitzerland = externalId?.startsWith("mys_");
@@ -444,7 +482,24 @@ const Listings = () => {
     return "Schweiz";
   };
 
+  // Variable für Anzeige
   const filteredEvents = events;
+
+  // HIER IST DIE FEHLENDE VARIABLE:
+  const hasActiveFilters =
+    selectedDate !== undefined ||
+    selectedDateRange !== undefined ||
+    selectedTimeFilter !== null ||
+    selectedQuickFilters.length > 0 ||
+    selectedPriceTier !== null ||
+    selectedCity !== "" ||
+    radius[0] > 0 ||
+    selectedCategoryId !== null ||
+    selectedSubcategoryId !== null ||
+    selectedSource !== null ||
+    searchQuery.trim() !== "" ||
+    selectedAvailability !== null ||
+    dogFriendly;
 
   const filterContent = (
     <div className="space-y-5">
@@ -467,7 +522,7 @@ const Listings = () => {
             list="cities"
             disabled={isTopStarsActive}
             className={cn(
-              "w-full pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium border",
+              "w-full pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border",
               isTopStarsActive
                 ? "bg-neutral-800 text-gray-500 border-neutral-700"
                 : "bg-white text-gray-800 border-gray-200",
@@ -522,6 +577,28 @@ const Listings = () => {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div className="space-y-3 pt-3 border-t border-neutral-700">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Suche</h3>
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Künstler, Event, Stichwort..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-gray-200"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
 
