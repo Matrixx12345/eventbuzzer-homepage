@@ -6,24 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Hilfsfunktion: Bereinigt Ticketmaster-Titel für besseres Grouping
-function cleanEventTitle(title: string): string {
-  if (!title) return "";
-  let clean = title.toLowerCase();
-
-  // Entferne alles nach typischen Trennzeichen wie " - ", " | ", "(", ":"
-  // Beispiel: "Festival Name - Freitag" -> "Festival Name"
-  clean = clean.split(/ [-|:(]/)[0];
-
-  // Entferne Jahreszahlen, wenn sie stören (optional, hier lassen wir sie mal drin)
-  // clean = clean.replace(/\d{4}/g, '');
-
-  // Entferne Sonderzeichen und Leerzeichen für den Vergleich
-  clean = clean.replace(/[^a-z0-9]/g, "");
-
-  return clean;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -42,23 +24,20 @@ serve(async (req) => {
       timeFilter,
       tags,
       vipArtistsFilter,
+      singleDate,
       dateFrom,
       dateTo,
-      singleDate,
       availability,
-      source,
     } = filters;
 
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
-
     if (!externalUrl || !externalKey) throw new Error("Missing secrets");
 
     const supabase = createClient(externalUrl, externalKey);
 
-    // Wir laden genug Events für das Grouping
-    const fetchLimit = 600;
-
+    // 1. WICHTIG: Wir laden wieder '*' (ALLES), damit Descriptions und Bilder da sind!
+    // Wir laden 600 Stück, um genug Material für das Grouping zu haben.
     let query = supabase.from("events").select("*", { count: "exact" });
 
     // --- SQL FILTER ---
@@ -66,12 +45,9 @@ serve(async (req) => {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
-
-    // Einfache Stadt-Suche im SQL (Radius machen wir präzise im JS)
     if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
-
     if (categoryId) query = query.eq("category_main_id", categoryId);
     if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
 
@@ -101,84 +77,101 @@ serve(async (req) => {
         .lte("start_date", new Date(sun.setHours(23, 59, 59)).toISOString());
     }
 
-    // Sortieren und Laden
-    query = query.order("start_date", { ascending: true }).limit(fetchLimit);
+    // Sortierung nach Datum
+    query = query.order("start_date", { ascending: true }).limit(600);
 
     const { data, error } = await query;
     if (error) throw error;
 
-    let filteredData = data || [];
+    let rawData = data || [];
 
-    // --- JAVASCRIPT LOGIK ---
+    // --- DIE WEICHE: Ticketmaster vs. MySwitzerland ---
 
-    // 1. Grouping (Das Wichtigste für Ticketmaster!)
-    const groupedMap = new Map();
+    const mysEvents: any[] = [];
+    const tmGroupMap = new Map();
 
-    filteredData.forEach((event) => {
-      // Titel bereinigen ("Rock Country - Freitag" -> "rockcountry")
-      const rawTitle = event.title || "";
-      const cleanTitle = cleanEventTitle(rawTitle);
-      const cleanCity = (event.address_city || "ch").toLowerCase().trim();
+    rawData.forEach((event) => {
+      // Zuerst: Checken ob das Event überhaupt den Filter-Kriterien (Radius/Tags) entspricht
+      let keep = true;
 
-      // Der Schlüssel ist jetzt der bereinigte Titel + Stadt
-      const key = `${cleanTitle}_${cleanCity}`;
-
-      if (!groupedMap.has(key)) {
-        // Neues Event
-        groupedMap.set(key, { ...event, allDates: [event.start_date] });
-      } else {
-        // Existierendes Event -> Wir fügen das Datum hinzu
-        const existing = groupedMap.get(key);
-        existing.allDates.push(event.start_date);
-
-        // Wir nehmen das Bild vom neuen Event, falls das alte keins hat
-        if (!existing.image_url && event.image_url) {
-          existing.image_url = event.image_url;
+      // Radius Check (JS)
+      if (city && radius > 0 && cityLat && cityLng) {
+        if (event.latitude && event.longitude) {
+          const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
+          if (d > radius) keep = false;
+        } else {
+          if (!(event.address_city || "").toLowerCase().includes(city.toLowerCase())) keep = false;
         }
+      }
 
-        // Datum updaten (Zeitraum bilden)
-        const sortedDates = existing.allDates.sort();
-        existing.start_date = sortedDates[0];
-        existing.end_date = sortedDates[sortedDates.length - 1];
-        existing.is_range = true; // Wichtig für Frontend
+      // Keyword Check
+      if (keep && tags && tags.length > 0) {
+        const txt = (
+          event.title +
+          " " +
+          (event.description || "") +
+          " " +
+          (event.tags ? event.tags.join(" ") : "")
+        ).toLowerCase();
+        const matches = tags.some((tag: string) => {
+          if (tag.includes("nightlife")) return /party|club|dj|dance|feiern/i.test(txt);
+          if (tag.includes("romantisch")) return /romant|love|dinner|candle/i.test(txt);
+          if (tag.includes("familie")) return /kind|familie|zirkus/i.test(txt);
+          return event.tags?.includes(tag);
+        });
+        if (!matches) keep = false;
+      }
+
+      if (!keep) return; // Event fliegt raus
+
+      // --- HIER IST DIE LOGIK FÜR SARAH CONNOR ---
+      const isTicketmaster = event.external_id && event.external_id.startsWith("tm_");
+
+      if (!isTicketmaster) {
+        // MySwitzerland & Co: SOFORT ÜBERNEHMEN (Kein Grouping)
+        mysEvents.push(event);
+      } else {
+        // Ticketmaster: GRUPPIEREN
+        // Wir gruppieren nur exakt gleichen Titel in gleicher Stadt
+        const key = `${event.title.trim().toLowerCase()}_${(event.address_city || "").trim().toLowerCase()}`;
+
+        if (!tmGroupMap.has(key)) {
+          // Das erste Mal, dass wir Sarah Connor sehen
+          tmGroupMap.set(key, {
+            ...event,
+            date_list: [event.start_date],
+          });
+        } else {
+          // Das zweite Mal (anderer Tag): Wir updaten nur das Datum
+          const existing = tmGroupMap.get(key);
+          existing.date_list.push(event.start_date);
+
+          // Wir nehmen das Bild vom neuen Event, falls das alte keins hat
+          if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
+
+          // Datum sortieren (Erstes bis Letztes)
+          const dates = existing.date_list.sort();
+          existing.start_date = dates[0];
+          existing.end_date = dates[dates.length - 1];
+
+          // Nur wenn Start != Ende ist es eine Range
+          if (existing.start_date !== existing.end_date) {
+            existing.is_range = true;
+          }
+        }
       }
     });
 
-    // Zurück in Array wandeln
-    let finalEvents = Array.from(groupedMap.values());
+    // Ticketmaster Map auflösen
+    const tmEvents = Array.from(tmGroupMap.values());
 
-    // 2. Radius Filter (Exakt)
-    if (city && radius > 0 && cityLat && cityLng) {
-      finalEvents = finalEvents.filter((event) => {
-        // Wenn Koordinaten fehlen, nehmen wir Textsuche als Fallback
-        if (!event.latitude || !event.longitude) {
-          return (event.address_city || "").toLowerCase().includes(city.toLowerCase());
-        }
-        const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
-        return d <= radius;
-      });
-    }
+    // Beide Listen zusammenfügen
+    let finalEvents = [...mysEvents, ...tmEvents];
 
-    // 3. Keywords & VIPs
-    if (tags && tags.length > 0) {
-      finalEvents = finalEvents.filter((e) => {
-        const txt = (e.title + " " + (e.venue_name || "")).toLowerCase();
-        return tags.some((tag: string) => {
-          if (tag.includes("nightlife")) return /party|club|dj|dance/i.test(txt);
-          if (tag.includes("romantisch")) return /romant|love|dinner/i.test(txt);
-          if (tag.includes("familie")) return /kind|familie|zirkus/i.test(txt);
-          return e.tags?.includes(tag);
-        });
-      });
-    }
+    // Nochmal final nach Datum sortieren
+    finalEvents.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-    if (vipArtistsFilter && vipArtistsFilter.length > 0) {
-      finalEvents = finalEvents.filter((e) =>
-        vipArtistsFilter.some((a: string) => e.title?.toLowerCase().includes(a.toLowerCase())),
-      );
-    }
-
-    // Pagination
+    // Paginierung: Jetzt schneiden wir die 50 Stück ab
     const total = finalEvents.length;
     finalEvents = finalEvents.slice(offset, offset + limit);
 
@@ -188,7 +181,7 @@ serve(async (req) => {
     if (initialLoad) {
       const { data: tax } = await supabase.from("taxonomy").select("id, name, type, parent_id");
       taxonomy = tax || [];
-      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(200);
+      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(100);
       vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
     }
 
