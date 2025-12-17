@@ -458,7 +458,12 @@ const EventDetail = () => {
   if (isStaticEvent) {
     event = eventsData[slug!];
   } else if (dynamicEvent) {
-    const addressParts = [dynamicEvent.address_street, dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean);
+    // Build full address: street, PLZ + city, country
+    const addressParts = [
+      dynamicEvent.address_street,
+      [dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean).join(" "),
+      "Schweiz"
+    ].filter(Boolean);
     // Use real image if available, otherwise fallback to placeholder
     const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';
     
@@ -482,8 +487,8 @@ const EventDetail = () => {
       image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
       title: dynamicEvent.title,
       venue: dynamicEvent.venue_name || dynamicEvent.location || dynamicEvent.address_city || "Veranstaltungsort",
-      location: dynamicEvent.address_city || dynamicEvent.location || "Schweiz",
-      address: addressParts.length > 0 ? addressParts.join(" ") : "",
+      location: dynamicEvent.address_city || (dynamicEvent.location !== dynamicEvent.title ? dynamicEvent.location : null) || "Schweiz",
+      address: addressParts.length > 0 ? addressParts.join(", ") : "",
       date: dateDisplay,
       time: timeDisplay,
       distance: "",
