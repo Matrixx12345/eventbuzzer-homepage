@@ -1411,10 +1411,11 @@ const Listings = () => {
                               {getEventLocation(event)}
                             </span>
 
-                            {/* Mini-Map Tooltip */}
+                            {/* Mini-Map Tooltip with Address & Distance */}
                             <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                              <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
-                                <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                              <div className="bg-white p-3 rounded-xl shadow-2xl border border-gray-200 w-52 overflow-hidden">
+                                {/* Swiss Map with Pin */}
+                                <div className="relative w-full h-28 bg-slate-50 rounded-lg overflow-hidden mb-2">
                                   <img 
                                     src="/swiss-outline.svg" 
                                     className="w-full h-full object-contain opacity-30 p-2" 
@@ -1429,6 +1430,38 @@ const Listings = () => {
                                       }}
                                     />
                                   )}
+                                </div>
+                                
+                                {/* Address Info */}
+                                <div className="text-xs space-y-1">
+                                  <p className="font-medium text-neutral-800 truncate">{event.venue_name || getEventLocation(event)}</p>
+                                  <p className="text-neutral-500 truncate">{event.address_city || event.location}</p>
+                                  
+                                  {/* Distance & Direction from nearest major city */}
+                                  {event.latitude && event.longitude && (() => {
+                                    const cities = [
+                                      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+                                      { name: "Bern", lat: 46.948, lng: 7.4474 },
+                                      { name: "Basel", lat: 47.5596, lng: 7.5886 },
+                                      { name: "Genf", lat: 46.2044, lng: 6.1432 },
+                                      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+                                    ];
+                                    let nearest = cities[0], minDist = Infinity;
+                                    cities.forEach(c => {
+                                      const d = Math.sqrt(Math.pow((event.latitude! - c.lat) * 111, 2) + Math.pow((event.longitude! - c.lng) * 85, 2));
+                                      if (d < minDist) { minDist = d; nearest = c; }
+                                    });
+                                    const dLat = event.latitude! - nearest.lat;
+                                    const dLng = event.longitude! - nearest.lng;
+                                    const dir = dLat > 0.05 ? (dLng > 0.05 ? "NO" : dLng < -0.05 ? "NW" : "N") 
+                                              : dLat < -0.05 ? (dLng > 0.05 ? "SO" : dLng < -0.05 ? "SW" : "S")
+                                              : (dLng > 0.05 ? "O" : dLng < -0.05 ? "W" : "");
+                                    return minDist > 2 ? (
+                                      <p className="text-neutral-400">
+                                        ~{Math.round(minDist)} km {dir} von {nearest.name}
+                                      </p>
+                                    ) : null;
+                                  })()}
                                 </div>
                               </div>
                               <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
