@@ -196,7 +196,7 @@ const Listings = () => {
   const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
   const isTopStarsActive = selectedQuickFilters.includes("top-stars");
 
-  // --- HIER IST DIE FUNKTION JETZT GANZ OBEN, DAMIT SIE GARANTIERT GEFUNDEN WIRD ---
+  // Toggle Funktion (jetzt sicher hier oben)
   const toggleQuickFilter = (filterId: string) => {
     const isCurrentlyActive = selectedQuickFilters.includes(filterId);
     if (isCurrentlyActive) {
@@ -287,7 +287,6 @@ const Listings = () => {
     if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
     if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
 
-    // Radius nur wenn nicht Top Stars
     if (selectedCity && !isTopStarsActive) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
@@ -508,6 +507,32 @@ const Listings = () => {
     } catch {
       return "Datum TBA";
     }
+  };
+
+  // --- DIE VERMISSTE FUNKTION IST WIEDER DA! ---
+  const findNearestCityFromCoords = (lat: number, lng: number): string | null => {
+    const cities = [
+      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+      { name: "Bern", lat: 46.948, lng: 7.4474 },
+      { name: "Basel", lat: 47.5596, lng: 7.5886 },
+      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+      { name: "Genf", lat: 46.2044, lng: 6.1432 },
+      { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+      { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+      { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+      { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+      { name: "Chur", lat: 46.8509, lng: 9.532 },
+    ];
+    let nearestCity = null;
+    let minDistance = Infinity;
+    for (const city of cities) {
+      const distance = calculateDistance(lat, lng, city.lat, city.lng);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestCity = city.name;
+      }
+    }
+    return minDistance < 100 ? nearestCity : null;
   };
 
   const getEventLocation = (event: ExternalEvent) => {
