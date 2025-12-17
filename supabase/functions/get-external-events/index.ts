@@ -6,6 +6,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Hilfsfunktion: Bereinigt Ticketmaster-Titel für besseres Grouping
+function cleanEventTitle(title: string): string {
+  if (!title) return "";
+  let clean = title.toLowerCase();
+
+  // Entferne alles nach typischen Trennzeichen wie " - ", " | ", "(", ":"
+  // Beispiel: "Festival Name - Freitag" -> "Festival Name"
+  clean = clean.split(/ [-|:(]/)[0];
+
+  // Entferne Jahreszahlen, wenn sie stören (optional, hier lassen wir sie mal drin)
+  // clean = clean.replace(/\d{4}/g, '');
+
+  // Entferne Sonderzeichen und Leerzeichen für den Vergleich
+  clean = clean.replace(/[^a-z0-9]/g, "");
+
+  return clean;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -24,52 +42,40 @@ serve(async (req) => {
       timeFilter,
       tags,
       vipArtistsFilter,
-      singleDate,
       dateFrom,
       dateTo,
+      singleDate,
       availability,
       source,
     } = filters;
 
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
+
     if (!externalUrl || !externalKey) throw new Error("Missing secrets");
 
     const supabase = createClient(externalUrl, externalKey);
 
-    // SPEED-FIX: Wir laden nur die Spalten, die wir für die Kacheln brauchen.
-    // Keine 'description' oder 'content', das verstopft die Leitung!
-    let query = supabase
-      .from("events")
-      .select(
-        "id, title, start_date, end_date, venue_name, address_city, image_url, price_from, price_to, price_label, latitude, longitude, tags, category_main_id, category_sub_id, external_id, available_months",
-        { count: "exact" },
-      );
+    // Wir laden genug Events für das Grouping
+    const fetchLimit = 600;
 
-    // --- 1. SQL FILTER (Datenbank macht die Arbeit) ---
+    let query = supabase.from("events").select("*", { count: "exact" });
+
+    // --- SQL FILTER ---
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
 
-    // Radius-Vorbereitung: Wenn Radius an ist, suchen wir grob in der Datenbank vor
-    if (city && radius > 0 && cityLat && cityLng) {
-      // Grobe "Box" Suche in der DB (schneller als exakte Berechnung)
-      // ca. 1 Grad ~ 111km. Wir nehmen einen Puffer.
-      const degreeDelta = (radius + 20) / 111;
-      query = query
-        .gte("latitude", cityLat - degreeDelta)
-        .lte("latitude", cityLat + degreeDelta)
-        .gte("longitude", cityLng - degreeDelta)
-        .lte("longitude", cityLng + degreeDelta);
-    } else if (city) {
+    // Einfache Stadt-Suche im SQL (Radius machen wir präzise im JS)
+    if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
 
     if (categoryId) query = query.eq("category_main_id", categoryId);
     if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
 
-    // Zeit-Filter (SQL)
+    // Zeit-Filter
     const now = new Date();
     if (timeFilter === "now")
       query = query
@@ -95,53 +101,57 @@ serve(async (req) => {
         .lte("start_date", new Date(sun.setHours(23, 59, 59)).toISOString());
     }
 
-    // Wir laden max 250 Events für die Nachbearbeitung (schneller als 400)
-    query = query.order("start_date", { ascending: true }).limit(250);
+    // Sortieren und Laden
+    query = query.order("start_date", { ascending: true }).limit(fetchLimit);
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
     if (error) throw error;
 
     let filteredData = data || [];
 
-    // --- 2. JAVASCRIPT FEIN-TUNING ---
+    // --- JAVASCRIPT LOGIK ---
 
-    // A. Strenges Grouping (Zusammenfassen)
+    // 1. Grouping (Das Wichtigste für Ticketmaster!)
     const groupedMap = new Map();
 
     filteredData.forEach((event) => {
-      if (!event.title) return;
-
-      // Wir bereinigen den Titel extrem, um Varianten zu finden
-      // "Taylor Swift | Eras Tour" -> "taylorswift"
-      // "Zirkus Knie - Nachmittag" -> "zirkusknie"
-      const cleanTitle = event.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "")
-        .substring(0, 15);
+      // Titel bereinigen ("Rock Country - Freitag" -> "rockcountry")
+      const rawTitle = event.title || "";
+      const cleanTitle = cleanEventTitle(rawTitle);
       const cleanCity = (event.address_city || "ch").toLowerCase().trim();
+
+      // Der Schlüssel ist jetzt der bereinigte Titel + Stadt
       const key = `${cleanTitle}_${cleanCity}`;
 
       if (!groupedMap.has(key)) {
+        // Neues Event
         groupedMap.set(key, { ...event, allDates: [event.start_date] });
       } else {
+        // Existierendes Event -> Wir fügen das Datum hinzu
         const existing = groupedMap.get(key);
         existing.allDates.push(event.start_date);
 
-        // Zeitraum updaten
-        const sorted = existing.allDates.sort();
-        existing.start_date = sorted[0];
-        existing.end_date = sorted[sorted.length - 1];
-        existing.is_range = true;
+        // Wir nehmen das Bild vom neuen Event, falls das alte keins hat
+        if (!existing.image_url && event.image_url) {
+          existing.image_url = event.image_url;
+        }
+
+        // Datum updaten (Zeitraum bilden)
+        const sortedDates = existing.allDates.sort();
+        existing.start_date = sortedDates[0];
+        existing.end_date = sortedDates[sortedDates.length - 1];
+        existing.is_range = true; // Wichtig für Frontend
       }
     });
 
+    // Zurück in Array wandeln
     let finalEvents = Array.from(groupedMap.values());
 
-    // B. Exakter Radius Check (nur für die übrig gebliebenen)
+    // 2. Radius Filter (Exakt)
     if (city && radius > 0 && cityLat && cityLng) {
       finalEvents = finalEvents.filter((event) => {
+        // Wenn Koordinaten fehlen, nehmen wir Textsuche als Fallback
         if (!event.latitude || !event.longitude) {
-          // RETTUNG: Wenn keine Koords da sind, aber die Stadt stimmt -> behalten!
           return (event.address_city || "").toLowerCase().includes(city.toLowerCase());
         }
         const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
@@ -149,30 +159,36 @@ serve(async (req) => {
       });
     }
 
-    // C. Keywords (Tagging)
+    // 3. Keywords & VIPs
     if (tags && tags.length > 0) {
-      finalEvents = finalEvents.filter((event) => {
-        const txt = (event.title + " " + (event.venue_name || "")).toLowerCase();
+      finalEvents = finalEvents.filter((e) => {
+        const txt = (e.title + " " + (e.venue_name || "")).toLowerCase();
         return tags.some((tag: string) => {
           if (tag.includes("nightlife")) return /party|club|dj|dance/i.test(txt);
           if (tag.includes("romantisch")) return /romant|love|dinner/i.test(txt);
           if (tag.includes("familie")) return /kind|familie|zirkus/i.test(txt);
-          return event.tags?.includes(tag);
+          return e.tags?.includes(tag);
         });
       });
+    }
+
+    if (vipArtistsFilter && vipArtistsFilter.length > 0) {
+      finalEvents = finalEvents.filter((e) =>
+        vipArtistsFilter.some((a: string) => e.title?.toLowerCase().includes(a.toLowerCase())),
+      );
     }
 
     // Pagination
     const total = finalEvents.length;
     finalEvents = finalEvents.slice(offset, offset + limit);
 
-    // Initial Load Extras
+    // Extras laden
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
     if (initialLoad) {
       const { data: tax } = await supabase.from("taxonomy").select("id, name, type, parent_id");
       taxonomy = tax || [];
-      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(100);
+      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(200);
       vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
     }
 
