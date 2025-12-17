@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
-import { 
-  Heart, 
-  SlidersHorizontal, 
-  X, 
-  MapPin, 
-  Calendar as CalendarIcon, 
-  Cake, 
-  CloudRain, 
+import {
+  Heart,
+  SlidersHorizontal,
+  X,
+  MapPin,
+  Calendar as CalendarIcon,
+  Cake,
+  CloudRain,
   Star,
   Camera,
   Heart as HeartIcon,
@@ -30,7 +30,7 @@ import {
   Snowflake,
   Sun,
   CalendarDays,
-  Dog
+  Dog,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -38,33 +38,17 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
-import { format, addDays, addWeeks, isToday, isTomorrow, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, isAfter, isBefore } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 
-// Placeholder images for fallback
+// Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
 import eventConcert from "@/assets/event-concert.jpg";
@@ -81,7 +65,6 @@ import festivalStage from "@/assets/festival-stage.jpg";
 import festivalFriends from "@/assets/festival-friends.jpg";
 import festivalChoir from "@/assets/festival-choir.jpg";
 
-// Rotating placeholder images
 const placeholderImages = [
   eventAbbey,
   eventVenue,
@@ -100,9 +83,7 @@ const placeholderImages = [
   festivalChoir,
 ];
 
-const getPlaceholderImage = (index: number) => {
-  return placeholderImages[index % placeholderImages.length];
-};
+const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
 
 interface ExternalEvent {
   id: string;
@@ -131,19 +112,28 @@ interface ExternalEvent {
 interface TaxonomyItem {
   id: number;
   name: string;
-  type: 'main' | 'sub';
+  type: "main" | "sub";
   parent_id: number | null;
 }
 
-// Quick filters with icons - using exact tag strings from backend
 const quickFilters = [
   { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
   { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
   { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
   { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["foto-spot"] },
   { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
-  { id: "mit-kind", label: "Mit Kind", icon: Smile, tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"] },
-  { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
+  {
+    id: "mit-kind",
+    label: "Mit Kind",
+    icon: Smile,
+    tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"],
+  },
+  {
+    id: "nightlife",
+    label: "Nightlife",
+    icon: PartyPopper,
+    tags: ["nightlife-party", "afterwork", "rooftop-aussicht"],
+  },
   { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
   { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
 ];
@@ -155,8 +145,7 @@ const Listings = () => {
   const { sendLike } = useLikeOnFavorite();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  
-  // Events state
+
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
   const [vipArtists, setVipArtists] = useState<string[]>([]);
@@ -166,11 +155,8 @@ const Listings = () => {
   const [hasMore, setHasMore] = useState(true);
   const [nextOffset, setNextOffset] = useState(0);
   const [totalEvents, setTotalEvents] = useState(0);
-  
-  // Infinite scroll ref
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  
-  // Filter states
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
@@ -186,114 +172,118 @@ const Listings = () => {
   const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
   const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
   const [dogFriendly, setDogFriendly] = useState(false);
-  
-  // Current month for availability filtering
-  const currentMonth = new Date().getMonth() + 1; // 1-12
-  const isWinterSeason = [11, 12, 1, 2, 3].includes(currentMonth);
-  
-  // Availability filter options
+
   const availabilityFilters = [
     { id: "now", label: "Jetzt verfügbar", icon: Zap },
     { id: "winter", label: "Winter", icon: Snowflake },
     { id: "summer", label: "Sommer", icon: Sun },
     { id: "year-round", label: "Ganzjährig", icon: CalendarDays },
   ];
-  
-  // Family age filter options
+
   const familyAgeFilters = [
     { id: "alle", label: "Alle Altersgruppen", tag: "familie-kinder" },
     { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
     { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
     { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
   ];
-  
-  // Mistwetter / Indoor filter options
+
   const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
   const indoorFilters = [
     { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
     { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
   ];
-  
-  // Check if "Mit Kind" filter is active (opens inline drawer)
-  const isFamilyFilterActive = selectedQuickFilters.includes("mit-kind");
-  
-  // Check if "Mistwetter" filter is active (opens inline drawer)
-  const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
 
-  // Derive categories from taxonomy
-  const mainCategories = useMemo(() => 
-    taxonomy.filter(t => t.type === 'main').sort((a, b) => a.name.localeCompare(b.name)),
-    [taxonomy]
+  const isFamilyFilterActive = selectedQuickFilters.includes("mit-kind");
+  const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
+  const isTopStarsActive = selectedQuickFilters.includes("top-stars");
+
+  const mainCategories = useMemo(
+    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
+    [taxonomy],
   );
 
   const subCategories = useMemo(() => {
     if (!selectedCategoryId) return [];
-    return taxonomy.filter(t => t.type === 'sub' && t.parent_id === selectedCategoryId)
+    return taxonomy
+      .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [taxonomy, selectedCategoryId]);
 
-  // Time filter definitions - simplified for new layout
   const timeFilters = [
     { id: "today", label: "Heute" },
     { id: "tomorrow", label: "Morgen" },
     { id: "thisWeek", label: "Wochenende" },
   ];
-  
-  // Check if "Top Stars" filter is active (overrides radius)
-  const isTopStarsActive = selectedQuickFilters.includes("top-stars");
 
   const selectTimeFilter = (filterId: string) => {
-    // Single select - toggle off if already selected, otherwise select new one
-    setSelectedTimeFilter((prev) => prev === filterId ? null : filterId);
-    // Clear specific date when using time filters
+    setSelectedTimeFilter((prev) => (prev === filterId ? null : filterId));
     setSelectedDateRange(undefined);
     setSelectedDate(undefined);
   };
 
-  // City coordinates for server-side radius filter
-  const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(() => ({
-    "zürich": { lat: 47.3769, lng: 8.5417 },
-    "bern": { lat: 46.9480, lng: 7.4474 },
-    "basel": { lat: 47.5596, lng: 7.5886 },
-    "luzern": { lat: 47.0502, lng: 8.3093 },
-    "genf": { lat: 46.2044, lng: 6.1432 },
-    "baden": { lat: 47.4734, lng: 8.3063 },
-    "winterthur": { lat: 47.4984, lng: 8.7246 },
-    "st. gallen": { lat: 47.4245, lng: 9.3767 },
-  }), []);
+  const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
+    () => ({
+      zürich: { lat: 47.3769, lng: 8.5417 },
+      bern: { lat: 46.948, lng: 7.4474 },
+      basel: { lat: 47.5596, lng: 7.5886 },
+      luzern: { lat: 47.0502, lng: 8.3093 },
+      genf: { lat: 46.2044, lng: 6.1432 },
+      baden: { lat: 47.4734, lng: 8.3063 },
+      winterthur: { lat: 47.4984, lng: 8.7246 },
+      "st. gallen": { lat: 47.4245, lng: 9.3767 },
+    }),
+    [],
+  );
 
-  // Build filter object for server
+  const findCityCoords = (cityName: string) => {
+    const normalized = cityName.toLowerCase().trim();
+    if (CITY_COORDINATES[normalized]) return CITY_COORDINATES[normalized];
+    for (const [key, coords] of Object.entries(CITY_COORDINATES)) {
+      if (normalized.includes(key) || key.includes(normalized)) return coords;
+    }
+    return null;
+  };
+
+  // HIER IST DIE MAGIE: Der Filter-Builder
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
-    
     if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
-    if (selectedCategoryId !== null && !isTopStarsActive) filters.categoryId = selectedCategoryId;
-    if (selectedSubcategoryId !== null && !isTopStarsActive) filters.subcategoryId = selectedSubcategoryId;
+
+    // Top Stars Logik: Wenn aktiv, ignorieren wir Stadt & Kategorien
+    if (isTopStarsActive) {
+      if (vipArtists.length > 0) filters.vipArtistsFilter = vipArtists;
+    } else {
+      if (selectedCategoryId !== null) filters.categoryId = selectedCategoryId;
+      if (selectedSubcategoryId !== null) filters.subcategoryId = selectedSubcategoryId;
+    }
+
     if (selectedPriceTier) filters.priceTier = selectedPriceTier;
     if (selectedSource) filters.source = selectedSource;
     if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
-    if (selectedAvailability) filters.availability = selectedAvailability;
-    
-    // Date filters
+
+    // Fix: Frontend "year-round" zu Backend "yearround"
+    if (selectedAvailability) {
+      filters.availability = selectedAvailability === "year-round" ? "yearround" : selectedAvailability;
+    }
+
     if (selectedDate) filters.singleDate = selectedDate.toISOString();
     if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
     if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
-    
-    // City and radius
+
+    // Stadt und Radius nur senden, wenn NICHT Top Stars
     if (selectedCity && !isTopStarsActive) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
         filters.radius = radius[0];
         const cityKey = selectedCity.toLowerCase().trim();
-        const coords = CITY_COORDINATES[cityKey];
+        const coords = CITY_COORDINATES[cityKey] || findCityCoords(selectedCity);
         if (coords) {
           filters.cityLat = coords.lat;
           filters.cityLng = coords.lng;
         }
       }
     }
-    
-    // Tags from quick filters
+
     const tags: string[] = [];
     if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
     if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
@@ -301,126 +291,123 @@ const Listings = () => {
     if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
     if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
     if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
+
     if (selectedQuickFilters.includes("mistwetter")) {
-      const indoorFilter = indoorFilters.find(f => f.id === selectedIndoorFilter) || indoorFilters[0];
+      const indoorFilter = indoorFilters.find((f) => f.id === selectedIndoorFilter) || indoorFilters[0];
       tags.push(...indoorFilter.tags);
     }
     if (selectedQuickFilters.includes("mit-kind")) {
-      const ageTag = selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter;
+      const ageTag =
+        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter;
       tags.push(ageTag);
     }
     if (tags.length > 0) filters.tags = tags;
-    
-    // VIP Artists filter (Top Stars)
-    if (isTopStarsActive && vipArtists.length > 0) {
-      filters.vipArtistsFilter = vipArtists;
-    }
-    
+
     return filters;
-  }, [searchQuery, selectedCategoryId, selectedSubcategoryId, selectedPriceTier, selectedSource, 
-      selectedTimeFilter, selectedAvailability, selectedDate, selectedDateRange, selectedCity, 
-      radius, selectedQuickFilters, selectedFamilyAgeFilter, selectedIndoorFilter, isTopStarsActive, 
-      vipArtists, CITY_COORDINATES, indoorFilters]);
+  }, [
+    searchQuery,
+    selectedCategoryId,
+    selectedSubcategoryId,
+    selectedPriceTier,
+    selectedSource,
+    selectedTimeFilter,
+    selectedAvailability,
+    selectedDate,
+    selectedDateRange,
+    selectedCity,
+    radius,
+    selectedQuickFilters,
+    selectedFamilyAgeFilter,
+    selectedIndoorFilter,
+    isTopStarsActive,
+    vipArtists,
+    CITY_COORDINATES,
+    indoorFilters,
+  ]);
 
-  // Fetch events from Supabase with pagination and filters
-  const fetchEvents = useCallback(async (isInitial: boolean = true) => {
-    try {
-      if (isInitial) {
-        setLoading(true);
-        setEvents([]);
-        setNextOffset(0);
-      } else {
-        setLoadingMore(true);
-      }
-
-      const offset = isInitial ? 0 : nextOffset;
-      const filters = buildFilters();
-      
-      console.log('Fetching with filters:', filters);
-      
-      const { data, error: fetchError } = await supabase.functions.invoke('get-external-events', {
-        body: { 
-          offset,
-          limit: 50,
-          initialLoad: isInitial,
-          filters
-        }
-      });
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      if (data?.events) {
+  const fetchEvents = useCallback(
+    async (isInitial: boolean = true) => {
+      try {
         if (isInitial) {
-          setEvents(data.events);
+          setLoading(true);
+          setEvents([]);
+          setNextOffset(0);
         } else {
-          setEvents(prev => [...prev, ...data.events]);
+          setLoadingMore(true);
         }
-      }
-      
-      if (data?.pagination) {
-        setHasMore(data.pagination.hasMore);
-        setNextOffset(data.pagination.nextOffset);
-        setTotalEvents(data.pagination.total);
-        console.log(`Loaded ${data.events?.length} events. Total: ${data.pagination.total}, HasMore: ${data.pagination.hasMore}`);
-      }
 
-      if (isInitial) {
-        if (data?.taxonomy) {
-          setTaxonomy(data.taxonomy);
-          console.log('Taxonomy loaded:', data.taxonomy.length, 'categories');
-        }
-        if (data?.vipArtists) {
-          setVipArtists(data.vipArtists);
-          console.log('VIP Artists loaded:', data.vipArtists.length, 'artists');
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching events:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load events');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [nextOffset]);
+        const offset = isInitial ? 0 : nextOffset;
+        const filters = buildFilters();
 
-  // Initial load
+        const { data, error: fetchError } = await supabase.functions.invoke("get-external-events", {
+          body: { offset, limit: 50, initialLoad: isInitial, filters },
+        });
+
+        if (fetchError) throw new Error(fetchError.message);
+
+        if (data?.events) {
+          if (isInitial) setEvents(data.events);
+          else setEvents((prev) => [...prev, ...data.events]);
+        }
+
+        if (data?.pagination) {
+          setHasMore(data.pagination.hasMore);
+          setNextOffset(data.pagination.nextOffset);
+          setTotalEvents(data.pagination.total);
+        }
+
+        if (isInitial) {
+          if (data?.taxonomy) setTaxonomy(data.taxonomy);
+          if (data?.vipArtists) setVipArtists(data.vipArtists);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load events");
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [nextOffset, buildFilters],
+  );
+
   useEffect(() => {
     fetchEvents(true);
   }, []);
 
-  // Refetch when filters change
   useEffect(() => {
-    // Skip on initial mount (handled by initial load above)
     if (taxonomy.length === 0) return;
     fetchEvents(true);
-  }, [searchQuery, selectedCategoryId, selectedSubcategoryId, selectedPriceTier, selectedSource, 
-      selectedTimeFilter, selectedAvailability, selectedDate, selectedDateRange, selectedCity, 
-      radius, selectedQuickFilters, selectedFamilyAgeFilter, selectedIndoorFilter, dogFriendly]);
+  }, [
+    searchQuery,
+    selectedCategoryId,
+    selectedSubcategoryId,
+    selectedPriceTier,
+    selectedSource,
+    selectedTimeFilter,
+    selectedAvailability,
+    selectedDate,
+    selectedDateRange,
+    selectedCity,
+    radius,
+    selectedQuickFilters,
+    selectedFamilyAgeFilter,
+    selectedIndoorFilter,
+    dogFriendly,
+    isTopStarsActive,
+  ]);
 
-  // Infinite scroll with IntersectionObserver
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0];
-        if (first.isIntersecting && hasMore && !loadingMore && !loading) {
-          console.log('Loading more events...');
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
           fetchEvents(false);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
-
-    const currentRef = loadMoreRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      if (loadMoreRef.current) observer.unobserve(loadMoreRef.current);
     };
   }, [hasMore, loadingMore, loading, fetchEvents]);
 
@@ -431,15 +418,7 @@ const Listings = () => {
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     setSelectedDateRange(range);
-    // Keep dialog open until both dates selected, or close if cleared
-    if (!range || (range.from && range.to)) {
-      setShowCalendar(false);
-    }
-  };
-
-  const openSingleDateCalendar = () => {
-    setCalendarMode("single");
-    setShowCalendar(true);
+    if (!range || (range.from && range.to)) setShowCalendar(false);
   };
 
   const openRangeCalendar = () => {
@@ -449,131 +428,33 @@ const Listings = () => {
 
   const toggleQuickFilter = (filterId: string) => {
     const isCurrentlyActive = selectedQuickFilters.includes(filterId);
-    
-    // If deselecting the current filter
     if (isCurrentlyActive) {
-      if (filterId === "mit-kind") {
-        setSelectedFamilyAgeFilter(null);
-      }
-      if (filterId === "mistwetter") {
-        setSelectedIndoorFilter(null);
-      }
+      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
+      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
       setSelectedQuickFilters([]);
       return;
     }
-    
-    // If selecting a new filter (single-select: replace all others)
-    // Reset family age filter if switching away from "mit-kind"
-    if (selectedQuickFilters.includes("mit-kind") && filterId !== "mit-kind") {
-      setSelectedFamilyAgeFilter(null);
-    }
-    
-    // Reset indoor filter if switching away from "mistwetter"
-    if (selectedQuickFilters.includes("mistwetter") && filterId !== "mistwetter") {
-      setSelectedIndoorFilter(null);
-    }
-    
-    // If activating "mit-kind", set default age filter
-    if (filterId === "mit-kind") {
-      setSelectedFamilyAgeFilter("alle");
-    }
-    
-    // If activating "mistwetter", set default indoor filter
-    if (filterId === "mistwetter") {
-      setSelectedIndoorFilter("alles-indoor");
-    }
-    
-    // If activating "top-stars", reset category and subcategory to "Alle"
+    if (selectedQuickFilters.includes("mit-kind") && filterId !== "mit-kind") setSelectedFamilyAgeFilter(null);
+    if (selectedQuickFilters.includes("mistwetter") && filterId !== "mistwetter") setSelectedIndoorFilter(null);
+    if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
+    if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
     if (filterId === "top-stars") {
       setSelectedCategoryId(null);
       setSelectedSubcategoryId(null);
     }
-    
-    setSelectedQuickFilters([filterId]); // Single-select: only this filter is active
+    setSelectedQuickFilters([filterId]);
   };
 
-  const selectSubcategory = (subId: number) => {
-    setSelectedSubcategoryId((prev) => prev === subId ? null : subId);
-  };
-
-  // Romantic keywords for filtering (same as backend)
-  const ROMANTIC_KEYWORDS = [
-    "romantisch", "romantic", "date", "liebe", "love", "candlelight", "kerzenlicht",
-    "kerzenschein", "dinner", "gala", "piano", "klavier", "ballett", "ballet",
-    "valentinstag", "valentine", "champagner", "champagne", "sunset", "sonnenuntergang",
-    "couples", "paare", "jazz", "soul", "acoustic", "oper", "opera", "klassik", "classical"
-  ];
-
-  // Check if event matches romantic criteria
-  const isRomanticEvent = (event: ExternalEvent) => {
-    const textToCheck = [
-      event.title,
-      event.short_description,
-      event.venue_name,
-    ].filter(Boolean).join(" ").toLowerCase();
-    
-    return ROMANTIC_KEYWORDS.some(keyword => textToCheck.includes(keyword));
-  };
-
-  // Check if event matches VIP artist (for "Top Stars" filter)
-  // Uses word-boundary matching to avoid false positives like "YES" matching "YES: Spuren..."
-  const isTopStarsEvent = (event: ExternalEvent) => {
-    if (vipArtists.length === 0) {
-      console.log('No VIP artists loaded!');
-      return false;
-    }
-    
-    const titleLower = (event.title || "").toLowerCase();
-    
-    // Check if any VIP artist name matches the event title
-    const match = vipArtists.some(artist => {
-      if (!artist || artist.length < 3) return false; // Skip very short names
-      const artistLower = artist.toLowerCase().trim();
-      
-      // Check if the title STARTS with the artist name (most common pattern)
-      // e.g., "Taylor Swift: The Eras Tour" starts with "Taylor Swift"
-      if (titleLower.startsWith(artistLower)) return true;
-      
-      // Check for artist name as a distinct segment (with word boundaries)
-      // This prevents "YES" from matching "YES: Spuren spüren" (which is theater, not the band YES)
-      const regex = new RegExp(`\\b${artistLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      if (regex.test(event.title || "")) return true;
-      
-      return false;
-    });
-    
-    if (match) {
-      console.log(`TOP STAR MATCH: "${event.title}"`);
-    }
-    
-    return match;
-  };
-
-  // Find city coordinates (case-insensitive, partial match) - used for map display
-  const findCityCoords = (cityName: string) => {
-    const normalized = cityName.toLowerCase().trim();
-    if (CITY_COORDINATES[normalized]) return CITY_COORDINATES[normalized];
-    for (const [key, coords] of Object.entries(CITY_COORDINATES)) {
-      if (normalized.includes(key) || key.includes(normalized)) return coords;
-    }
-    return null;
-  };
-
-  // Calculate distance for UI display
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = 
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
-
-  // Events are filtered server-side, just use them directly
-  const filteredEvents = events;
 
   const clearFilters = () => {
     setSelectedDate(undefined);
@@ -593,7 +474,7 @@ const Listings = () => {
     setDogFriendly(false);
   };
 
-  const hasActiveFilters = 
+  const hasActiveFilters =
     selectedDate !== undefined ||
     selectedDateRange !== undefined ||
     selectedTimeFilter !== null ||
@@ -609,20 +490,17 @@ const Listings = () => {
     dogFriendly;
 
   const formatEventDate = (dateString?: string, externalId?: string) => {
-    // MySwitzerland events (permanent attractions) have null dates
     if (!dateString) {
-      const isMySwitzerland = externalId?.startsWith('mys_');
+      const isMySwitzerland = externalId?.startsWith("mys_");
       return isMySwitzerland ? "Jederzeit" : "Datum TBA";
     }
     try {
-      const date = parseISO(dateString);
-      return format(date, "d. MMM yyyy", { locale: de });
+      return format(parseISO(dateString), "d. MMM yyyy", { locale: de });
     } catch {
       return "Datum TBA";
     }
   };
 
-  // Find nearest city from coordinates
   const findNearestCityFromCoords = (lat: number, lng: number): string | null => {
     const cities = [
       { name: "Zürich", lat: 47.3769, lng: 8.5417 },
@@ -634,12 +512,10 @@ const Listings = () => {
       { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
       { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
       { name: "Lugano", lat: 46.0037, lng: 8.9511 },
-      { name: "Chur", lat: 46.8509, lng: 9.5320 },
+      { name: "Chur", lat: 46.8509, lng: 9.532 },
     ];
-    
     let nearestCity = null;
     let minDistance = Infinity;
-    
     for (const city of cities) {
       const distance = calculateDistance(lat, lng, city.lat, city.lng);
       if (distance < minDistance) {
@@ -647,36 +523,29 @@ const Listings = () => {
         nearestCity = city.name;
       }
     }
-    
-    // Only return if within reasonable distance (< 100km)
     return minDistance < 100 ? nearestCity : null;
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    // Prioritize address_city, then venue_name, then location (skip if equals title or "Schweiz")
     if (event.address_city && event.address_city.trim() && event.address_city !== "Schweiz") return event.address_city;
     if (event.venue_name && event.venue_name.trim() && event.venue_name !== event.title) return event.venue_name;
-    if (event.location && event.location.trim() && event.location !== event.title && event.location !== "Schweiz") return event.location;
-    
-    // Fallback: find nearest city from coordinates
+    if (event.location && event.location.trim() && event.location !== event.title && event.location !== "Schweiz")
+      return event.location;
     if (event.latitude && event.longitude) {
       const nearestCity = findNearestCityFromCoords(event.latitude, event.longitude);
       if (nearestCity) return nearestCity;
     }
-    
     return "Schweiz";
   };
 
   const filterContent = (
     <div className="space-y-5">
-      {/* 1. WO / ORT - Location (TOP) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">WO / ORT</h3>
           {isTopStarsActive && (
             <span className="text-xs font-medium text-amber-400 flex items-center gap-1">
-              <Star size={12} className="fill-amber-400" />
-              National
+              <Star size={12} className="fill-amber-400" /> National
             </span>
           )}
         </div>
@@ -691,9 +560,9 @@ const Listings = () => {
             disabled={isTopStarsActive}
             className={cn(
               "w-full pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all border",
-              isTopStarsActive 
+              isTopStarsActive
                 ? "bg-neutral-800 text-gray-500 border-neutral-700 cursor-not-allowed"
-                : "bg-white text-gray-800 border-gray-200"
+                : "bg-white text-gray-800 border-gray-200",
             )}
           />
           <datalist id="cities">
@@ -716,12 +585,14 @@ const Listings = () => {
                 />
                 <div className="flex justify-between items-center mt-1.5">
                   <span className="text-xs text-gray-400 font-medium">Umkreis</span>
-                  <span className={cn(
-                    "text-sm font-semibold tabular-nums px-2 py-0.5 rounded-lg border",
-                    isTopStarsActive 
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
-                      : "bg-white text-gray-800 border-gray-200"
-                  )}>
+                  <span
+                    className={cn(
+                      "text-sm font-semibold tabular-nums px-2 py-0.5 rounded-lg border",
+                      isTopStarsActive
+                        ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                        : "bg-white text-gray-800 border-gray-200",
+                    )}
+                  >
                     {isTopStarsActive ? "∞" : `${radius[0]} km`}
                   </span>
                 </div>
@@ -736,19 +607,14 @@ const Listings = () => {
         </TooltipProvider>
       </div>
 
-      {/* 2. STIMMUNG - Quick Filters (3x3 grid, compact) */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
         <TooltipProvider>
           {(() => {
-            const rows: typeof quickFilters[] = [];
-            for (let i = 0; i < quickFilters.length; i += 3) {
-              rows.push(quickFilters.slice(i, i + 3));
-            }
-            
-            const familyRowIndex = rows.findIndex(row => row.some(f => f.id === "mit-kind"));
-            const mistwetterRowIndex = rows.findIndex(row => row.some(f => f.id === "mistwetter"));
-            
+            const rows = [];
+            for (let i = 0; i < quickFilters.length; i += 3) rows.push(quickFilters.slice(i, i + 3));
+            const familyRowIndex = rows.findIndex((row) => row.some((f) => f.id === "mit-kind"));
+            const mistwetterRowIndex = rows.findIndex((row) => row.some((f) => f.id === "mistwetter"));
             return (
               <div className="space-y-2">
                 {rows.map((row, rowIndex) => (
@@ -758,19 +624,18 @@ const Listings = () => {
                         const Icon = filter.icon;
                         const isActive = selectedQuickFilters.includes(filter.id);
                         const isTopStars = filter.id === "top-stars";
-                        
                         return (
                           <Tooltip key={filter.id}>
                             <TooltipTrigger asChild>
-                                <button
+                              <button
                                 onClick={() => toggleQuickFilter(filter.id)}
                                 className={cn(
                                   "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5",
                                   isActive && isTopStars
-                                    ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30"
+                                    ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg"
                                     : isActive
-                                    ? "bg-blue-600 text-white shadow-md"
-                                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                                      ? "bg-blue-600 text-white shadow-md"
+                                      : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200",
                                 )}
                               >
                                 <Icon size={18} strokeWidth={1.8} />
@@ -784,8 +649,6 @@ const Listings = () => {
                         );
                       })}
                     </div>
-                    
-                    {/* Mistwetter drawer */}
                     {rowIndex === mistwetterRowIndex && isMistwetterFilterActive && (
                       <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="flex flex-col gap-1.5">
@@ -799,7 +662,7 @@ const Listings = () => {
                                   "w-full py-2 px-3 rounded-lg text-xs font-medium transition-all text-left",
                                   isIndoorActive
                                     ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white"
-                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200",
                                 )}
                               >
                                 {indoorFilter.label}
@@ -809,8 +672,6 @@ const Listings = () => {
                         </div>
                       </div>
                     )}
-                    
-                    {/* Mit Kind drawer */}
                     {rowIndex === familyRowIndex && isFamilyFilterActive && (
                       <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="flex flex-col gap-1.5">
@@ -824,7 +685,7 @@ const Listings = () => {
                                   "w-full py-2 px-3 rounded-lg text-xs font-medium transition-all text-left",
                                   isAgeActive
                                     ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200"
+                                    : "bg-white text-gray-800 hover:bg-gray-100 border border-gray-200",
                                 )}
                               >
                                 {ageFilter.label}
@@ -842,52 +703,42 @@ const Listings = () => {
         </TooltipProvider>
       </div>
 
-      {/* 3. KATEGORIE - 2-column grid with icons */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
         <div className="space-y-2">
-          {/* Category tiles rendered row by row */}
           {(() => {
             const allCategories = [
               { id: null, name: "Alle Kategorien", icon: LayoutGrid },
-              ...mainCategories.map(cat => ({
+              ...mainCategories.map((cat) => ({
                 id: cat.id,
                 name: cat.name,
-                icon: cat.name.includes("Musik") ? Music : 
-                      cat.name.includes("Kunst") ? Palette : 
-                      cat.name.includes("Kulinarik") || cat.name.includes("Genuss") ? UtensilsCrossed : 
-                      cat.name.includes("Freizeit") ? Sparkles :
-                      cat.name.includes("Märkte") ? Gift : LayoutGrid
-              }))
+                icon: cat.name.includes("Musik")
+                  ? Music
+                  : cat.name.includes("Kunst")
+                    ? Palette
+                    : cat.name.includes("Kulinarik")
+                      ? UtensilsCrossed
+                      : cat.name.includes("Märkte")
+                        ? Gift
+                        : LayoutGrid,
+              })),
             ];
-            
-            // Group into pairs (rows)
-            const rows: typeof allCategories[] = [];
-            for (let i = 0; i < allCategories.length; i += 2) {
-              rows.push(allCategories.slice(i, i + 2));
-            }
-            
+            const rows = [];
+            for (let i = 0; i < allCategories.length; i += 2) rows.push(allCategories.slice(i, i + 2));
             return rows.map((row, rowIndex) => {
-              // Check if any category in this row is selected
-              const selectedInRow = row.find(cat => selectedCategoryId === cat.id && cat.id !== null);
+              const selectedInRow = row.find((cat) => selectedCategoryId === cat.id && cat.id !== null);
               const relevantSubs = selectedInRow ? subCategories : [];
-              
               return (
                 <div key={rowIndex}>
-                  {/* Row of 2 category tiles */}
                   <div className="grid grid-cols-2 gap-2">
                     {row.map((cat) => {
                       const isActive = selectedCategoryId === cat.id;
                       const IconComponent = cat.icon;
-                      
                       return (
                         <button
-                          key={cat.id ?? 'all'}
+                          key={cat.id ?? "all"}
                           onClick={() => {
-                            if (cat.id === null) {
-                              setSelectedCategoryId(null);
-                              setSelectedSubcategoryId(null);
-                            } else if (selectedCategoryId === cat.id) {
+                            if (cat.id === null || selectedCategoryId === cat.id) {
                               setSelectedCategoryId(null);
                               setSelectedSubcategoryId(null);
                             } else {
@@ -899,7 +750,7 @@ const Listings = () => {
                             "flex flex-col items-center justify-center py-4 px-2 rounded-xl transition-all",
                             isActive
                               ? "bg-blue-600 text-white"
-                              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+                              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200",
                           )}
                         >
                           <IconComponent size={24} className="mb-2" />
@@ -908,8 +759,6 @@ const Listings = () => {
                       );
                     })}
                   </div>
-                  
-                  {/* Subcategory drawer - appears below the row */}
                   {selectedInRow && relevantSubs.length > 0 && (
                     <div className="mt-2 bg-neutral-900 rounded-xl p-3 border border-neutral-700 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="flex flex-col gap-1.5">
@@ -919,7 +768,7 @@ const Listings = () => {
                             "w-full px-3 py-2 rounded-full text-[13px] font-medium transition-all text-left",
                             selectedSubcategoryId === null
                               ? "bg-blue-600 text-white"
-                              : "bg-white text-gray-800 hover:bg-gray-100"
+                              : "bg-white text-gray-800 hover:bg-gray-100",
                           )}
                         >
                           Alle
@@ -932,7 +781,7 @@ const Listings = () => {
                               "w-full px-3 py-2 rounded-full text-[13px] font-medium transition-all text-left",
                               selectedSubcategoryId === sub.id
                                 ? "bg-blue-600 text-white"
-                                : "bg-white text-gray-800 hover:bg-gray-100"
+                                : "bg-white text-gray-800 hover:bg-gray-100",
                             )}
                           >
                             {sub.name}
@@ -948,59 +797,48 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* 4. ZEITRAUM - Time filters */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
-        
-        {/* Row 1: Prominent "JETZT" button */}
         <button
           onClick={() => selectTimeFilter("now")}
           className={cn(
             "w-full h-11 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2",
             selectedTimeFilter === "now"
-              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30"
-              : "bg-white text-gray-800 hover:bg-orange-50 border border-gray-200 hover:border-orange-300"
+              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+              : "bg-white text-gray-800 hover:bg-orange-50 border border-gray-200",
           )}
         >
-          <Zap size={16} className={selectedTimeFilter === "now" ? "animate-pulse" : ""} />
-          ⚡️ JETZT
+          <Zap size={16} className={selectedTimeFilter === "now" ? "animate-pulse" : ""} /> ⚡️ JETZT
         </button>
-        
-        {/* Row 2: Heute, Morgen, Wochenende chips */}
         <div className="grid grid-cols-3 gap-1.5">
-          {timeFilters.map((filter) => {
-            const isActive = selectedTimeFilter === filter.id;
-            return (
-              <button
-                key={filter.id}
-                onClick={() => selectTimeFilter(filter.id)}
-                className={cn(
-                  "h-9 px-2 rounded-lg text-xs font-medium transition-all text-center whitespace-nowrap",
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                )}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
+          {timeFilters.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => selectTimeFilter(filter.id)}
+              className={cn(
+                "h-9 px-2 rounded-lg text-xs font-medium transition-all text-center whitespace-nowrap",
+                selectedTimeFilter === filter.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200",
+              )}
+            >
+              {filter.label}
+            </button>
+          ))}
         </div>
-        
-        {/* Row 3: Date-Range-Picker */}
-        <button 
+        <button
           onClick={openRangeCalendar}
           className={cn(
             "w-full h-10 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
             selectedDateRange?.from
               ? "bg-blue-600 text-white"
-              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
+              : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200",
           )}
         >
           <CalendarIcon size={14} />
           <span>
-            {selectedDateRange?.from 
-              ? selectedDateRange.to 
+            {selectedDateRange?.from
+              ? selectedDateRange.to
                 ? `${format(selectedDateRange.from, "d. MMM", { locale: de })} - ${format(selectedDateRange.to, "d. MMM", { locale: de })}`
                 : format(selectedDateRange.from, "d. MMM yyyy", { locale: de })
               : "Zeitraum wählen"}
@@ -1008,7 +846,6 @@ const Listings = () => {
         </button>
       </div>
 
-      {/* 5. BUDGET - Price tier buttons */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
         <TooltipProvider>
@@ -1018,48 +855,40 @@ const Listings = () => {
               { id: "$", label: "$", tooltip: "Budget (ca. bis 50 CHF)" },
               { id: "$$", label: "$$", tooltip: "Standard (ca. 50 - 120 CHF)" },
               { id: "$$$", label: "$$$", tooltip: "Premium (ab ca. 120 CHF)" },
-            ].map((tier) => {
-              const isActive = selectedPriceTier === tier.id;
-              return (
-                <Tooltip key={tier.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setSelectedPriceTier(isActive ? null : tier.id)}
-                      className={cn(
-                        "h-10 px-2 rounded-xl text-xs font-semibold transition-all text-center",
-                        isActive
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200"
-                      )}
-                    >
-                      {tier.label}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{tier.tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
+            ].map((tier) => (
+              <Tooltip key={tier.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setSelectedPriceTier(selectedPriceTier === tier.id ? null : tier.id)}
+                    className={cn(
+                      "h-10 px-2 rounded-xl text-xs font-semibold transition-all text-center",
+                      selectedPriceTier === tier.id
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-gray-800 hover:bg-gray-50 border border-gray-200",
+                    )}
+                  >
+                    {tier.label}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tier.tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
         </TooltipProvider>
       </div>
 
-      {/* 6. MIT HUND - Toggle Switch */}
       <div className="space-y-3">
         <div className="flex items-center justify-between py-2 px-1">
           <div className="flex items-center gap-2">
             <Dog size={16} className="text-gray-400" />
             <span className="text-sm font-medium text-gray-300">Mit Hund erlaubt?</span>
           </div>
-          <Switch
-            checked={dogFriendly}
-            onCheckedChange={setDogFriendly}
-          />
+          <Switch checked={dogFriendly} onCheckedChange={setDogFriendly} />
         </div>
       </div>
 
-      {/* 7. SUCHE - Text search (BOTTOM) */}
       <div className="space-y-3 pt-3 border-t border-neutral-700">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Suche</h3>
         <div className="relative">
@@ -1082,7 +911,6 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Reset button - at very bottom */}
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
@@ -1097,32 +925,30 @@ const Listings = () => {
   return (
     <div className="min-h-screen bg-stone-50">
       <Navbar />
-
-
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
-          {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-[340px] flex-shrink-0 -mt-2">
-            <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">
-              {filterContent}
-            </div>
-            {/* Event Counter - below filter */}
+            <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">{filterContent}</div>
             <div className="mt-4 px-2 text-xs text-neutral-500">
-              {loading ? "Lädt..." : (
+              {loading ? (
+                "Lädt..."
+              ) : (
                 <>
-                  <p>{filteredEvents.length} von {totalEvents} Events</p>
+                  <p>
+                    {filteredEvents.length} von {totalEvents} Events
+                  </p>
                   <p className="text-neutral-400 mt-0.5">
                     {(() => {
-                      const tm = filteredEvents.filter(e => e.external_id?.startsWith('tm_')).length;
-                      const mys = filteredEvents.filter(e => e.external_id?.startsWith('mys_')).length;
-                      const basel = filteredEvents.filter(e => e.external_id?.startsWith('basel_')).length;
+                      const tm = filteredEvents.filter((e) => e.external_id?.startsWith("tm_")).length;
+                      const mys = filteredEvents.filter((e) => e.external_id?.startsWith("mys_")).length;
+                      const basel = filteredEvents.filter((e) => e.external_id?.startsWith("basel_")).length;
                       const other = filteredEvents.length - tm - mys - basel;
                       const parts = [];
                       if (tm > 0) parts.push(`TM: ${tm}`);
                       if (mys > 0) parts.push(`MySW: ${mys}`);
                       if (basel > 0) parts.push(`Basel: ${basel}`);
                       if (other > 0) parts.push(`Andere: ${other}`);
-                      return parts.join(' | ');
+                      return parts.join(" | ");
                     })()}
                   </p>
                 </>
@@ -1130,32 +956,31 @@ const Listings = () => {
             </div>
           </aside>
 
-          {/* Main Content */}
           <main className="flex-1 min-w-0">
-            {/* Mobile Filter Button */}
             <div className="lg:hidden mb-6">
               <button
                 onClick={() => setShowMobileFilters(true)}
                 className="flex items-center gap-2.5 px-5 py-3 bg-white shadow-sm shadow-neutral-900/5 rounded-full text-sm font-medium text-neutral-700 hover:shadow-md transition-all"
               >
-                <SlidersHorizontal size={16} />
-                Filter
+                <SlidersHorizontal size={16} /> Filter
                 {hasActiveFilters && (
                   <span className="w-5 h-5 bg-neutral-900 text-white rounded-full text-xs flex items-center justify-center">
-                    {(selectedTimeFilter ? 1 : 0) + selectedQuickFilters.length + (selectedPriceTier ? 1 : 0) + (selectedCategoryId ? 1 : 0) + (selectedSubcategoryId ? 1 : 0)}
+                    {(selectedTimeFilter ? 1 : 0) +
+                      selectedQuickFilters.length +
+                      (selectedPriceTier ? 1 : 0) +
+                      (selectedCategoryId ? 1 : 0) +
+                      (selectedSubcategoryId ? 1 : 0)}
                   </span>
                 )}
               </button>
             </div>
 
-            {/* Loading State */}
             {loading && (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
               </div>
             )}
 
-            {/* Error State */}
             {error && !loading && (
               <div className="text-center py-20">
                 <p className="text-red-500 mb-4">{error}</p>
@@ -1168,21 +993,13 @@ const Listings = () => {
               </div>
             )}
 
-            {/* Uniform Grid */}
             {!loading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredEvents.map((event, index) => {
-                  // Use real image for debugging - fallback to placeholder if missing
                   const eventImage = event.image_url || getPlaceholderImage(index);
-                  // Use the database ID (not external_id) for routing - matches how EventDetail fetches
                   const eventSlug = event.id;
-
                   return (
-                    <Link
-                      key={event.id}
-                      to={`/event/${eventSlug}`}
-                      className="block group"
-                    >
+                    <Link key={event.id} to={`/event/${eventSlug}`} className="block group">
                       <article className="bg-white rounded-3xl overflow-hidden shadow-sm shadow-neutral-900/5 hover:shadow-2xl hover:shadow-neutral-900/15 hover:-translate-y-2 transition-all duration-500 ease-out">
                         <div className="relative overflow-hidden">
                           <img
@@ -1190,8 +1007,6 @@ const Listings = () => {
                             alt={event.title}
                             className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-
-                          {/* Favorite Button - top right */}
                           <button
                             onClick={(e) => {
                               e.preventDefault();
@@ -1206,33 +1021,28 @@ const Listings = () => {
                                 image: eventImage,
                                 date: formatEventDate(event.start_date, event.external_id),
                               });
-                              // Send like when adding to favorites
-                              if (wasNotFavorite) {
-                                sendLike(event.id);
-                              }
+                              if (wasNotFavorite) sendLike(event.id);
                             }}
                             className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-sm transition-all hover:scale-110"
-                            aria-label={isFavorite(event.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
                           >
                             <Heart
                               size={16}
                               className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
                             />
                           </button>
-
-                          {/* Source Badge */}
                           {event.external_id && (
                             <div className="absolute bottom-2 left-2 bg-black/70 text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
-                              {event.external_id.startsWith('tm_') ? 'TM' : 
-                               event.external_id.startsWith('mys_') ? 'MySW' :
-                               event.external_id.startsWith('basel_') ? 'BS' :
-                               event.external_id.split('_')[0]?.toUpperCase() || '?'}
+                              {event.external_id.startsWith("tm_")
+                                ? "TM"
+                                : event.external_id.startsWith("mys_")
+                                  ? "MySW"
+                                  : event.external_id.startsWith("basel_")
+                                    ? "BS"
+                                    : event.external_id.split("_")[0]?.toUpperCase() || "?"}
                             </div>
                           )}
                         </div>
-
                         <div className="p-5">
-                          {/* Date and Rating row */}
                           <div className="flex items-center justify-between mb-1.5">
                             <p className="text-xs text-neutral-400 font-medium flex items-center gap-2">
                               <span>{formatEventDate(event.start_date, event.external_id)}</span>
@@ -1247,88 +1057,43 @@ const Listings = () => {
                           <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
                             {event.title}
                           </h3>
-                          {/* Location with Distance - VISIBLE on card */}
-                          {(() => {
-                            // Calculate distance to nearest city
-                            let distanceInfo = "";
-                            if (event.latitude && event.longitude) {
-                              const cities = [
-                                { name: "Zürich", lat: 47.3769, lng: 8.5417 },
-                                { name: "Bern", lat: 46.948, lng: 7.4474 },
-                                { name: "Basel", lat: 47.5596, lng: 7.5886 },
-                                { name: "Genf", lat: 46.2044, lng: 6.1432 },
-                                { name: "Luzern", lat: 47.0502, lng: 8.3093 },
-                              ];
-                              let nearest = cities[0], minDist = Infinity;
-                              cities.forEach(c => {
-                                const d = Math.sqrt(Math.pow((event.latitude! - c.lat) * 111, 2) + Math.pow((event.longitude! - c.lng) * 85, 2));
-                                if (d < minDist) { minDist = d; nearest = c; }
-                              });
-                              const dLat = event.latitude - nearest.lat;
-                              const dLng = event.longitude - nearest.lng;
-                              const dir = dLat > 0.05 ? (dLng > 0.05 ? "NO" : dLng < -0.05 ? "NW" : "N") 
-                                        : dLat < -0.05 ? (dLng > 0.05 ? "SO" : dLng < -0.05 ? "SW" : "S")
-                                        : (dLng > 0.05 ? "O" : dLng < -0.05 ? "W" : "");
-                              if (minDist > 3) {
-                                distanceInfo = `~${Math.round(minDist)} km ${dir} von ${nearest.name}`;
-                              } else if (minDist > 0.5) {
-                                distanceInfo = `bei ${nearest.name}`;
-                              }
-                            }
-                            
-                            return (
-                              <div className="group/map relative mt-1.5 cursor-help">
-                                {/* Main Location Line - Always Visible */}
-                                <div className="flex items-center gap-1.5 text-sm text-neutral-500">
-                                  <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                                  <span className="truncate">{getEventLocation(event)}</span>
-                                  {distanceInfo && (
-                                    <span className="text-neutral-400 text-xs whitespace-nowrap">• {distanceInfo}</span>
+
+                          <div className="group/map relative mt-1.5 cursor-help">
+                            <div className="flex items-center gap-1.5 text-sm text-neutral-500">
+                              <MapPin size={14} className="text-red-500 flex-shrink-0" />
+                              <span className="truncate">{getEventLocation(event)}</span>
+                            </div>
+                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                              <div className="bg-white p-3 rounded-xl shadow-2xl border border-gray-200 w-48 overflow-hidden">
+                                <div className="relative w-full h-32 bg-slate-50 rounded-lg overflow-hidden">
+                                  <img src="/swiss-outline.svg" className="w-full h-full object-contain" alt="CH" />
+                                  {event.latitude && event.longitude && (
+                                    <div
+                                      className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
+                                      style={{
+                                        // Kalibrierung für NordNordWest Karte
+                                        left: `${((event.longitude - 5.95) / (10.5 - 5.95)) * 100}%`,
+                                        top: `${(1 - (event.latitude - 45.8) / (47.82 - 45.8)) * 100}%`,
+                                      }}
+                                    />
                                   )}
                                 </div>
-
-                                {/* Swiss Map Tooltip - Only on Hover */}
-                                <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                                  <div className="bg-white p-3 rounded-xl shadow-2xl border border-gray-200 w-48 overflow-hidden">
-                                    <div className="relative w-full h-32 bg-slate-50 rounded-lg overflow-hidden">
-                                      <img 
-                                        src="/swiss-outline.svg" 
-                                        className="w-full h-full object-contain" 
-                                        alt="CH" 
-                                      />
-                                      {event.latitude && event.longitude && (
-                                        <div
-                                          className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
-                                          style={{
-                                            // Calibrated mapping using reference cities:
-                                            // Geneva (6.14, 46.20) → ~13%, Zürich (8.54, 47.38) → ~62%
-                                            // Adjusted bounds: lng 5.85-10.55, lat 45.75-47.85
-                                            left: `${6 + ((event.longitude - 5.85) / (10.55 - 5.85)) * 88}%`,
-                                            top: `${3 + (1 - (event.latitude - 45.75) / (47.85 - 45.75)) * 94}%`,
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="w-2.5 h-2.5 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4" />
-                                </div>
                               </div>
-                            );
-                          })()}
-                          {/* Price Display */}
+                              <div className="w-2.5 h-2.5 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4" />
+                            </div>
+                          </div>
+
                           {(event.price_label || event.price_from) && (
                             <p className="text-sm font-medium text-neutral-900 mt-2">
-                              {event.price_label 
-                                ? event.price_label 
+                              {event.price_label
+                                ? event.price_label
                                 : event.price_to && event.price_to !== event.price_from
                                   ? `CHF ${event.price_from} – ${event.price_to}`
                                   : `ab CHF ${event.price_from}`}
                             </p>
                           )}
                           {event.short_description && (
-                            <p className="text-xs text-neutral-500 mt-2 line-clamp-2">
-                              {event.short_description}
-                            </p>
+                            <p className="text-xs text-neutral-500 mt-2 line-clamp-2">{event.short_description}</p>
                           )}
                         </div>
                       </article>
@@ -1338,7 +1103,6 @@ const Listings = () => {
               </div>
             )}
 
-            {/* Infinite Scroll Trigger */}
             {!loading && !error && filteredEvents.length > 0 && (
               <div ref={loadMoreRef} className="py-10 flex flex-col items-center justify-center">
                 {loadingMore ? (
@@ -1377,13 +1141,9 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Mobile Filter Drawer */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setShowMobileFilters(false)}
-          />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
           <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] p-6 max-h-[90vh] overflow-y-auto animate-slide-up">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -1399,9 +1159,7 @@ const Listings = () => {
                 <X size={20} className="text-neutral-500" />
               </button>
             </div>
-
             {filterContent}
-
             <div className="sticky bottom-0 bg-white pt-6 mt-6 border-t border-neutral-100">
               <div className="flex gap-3">
                 <button
@@ -1422,7 +1180,6 @@ const Listings = () => {
         </div>
       )}
 
-      {/* Calendar Dialog - switches between single and range mode */}
       <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
         <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-xl border-0 shadow-2xl rounded-3xl">
           <DialogHeader>
@@ -1453,11 +1210,8 @@ const Listings = () => {
           <div className="flex gap-2">
             <button
               onClick={() => {
-                if (calendarMode === "single") {
-                  setSelectedDate(undefined);
-                } else {
-                  setSelectedDateRange(undefined);
-                }
+                if (calendarMode === "single") setSelectedDate(undefined);
+                else setSelectedDateRange(undefined);
                 setShowCalendar(false);
               }}
               className="flex-1 py-3 bg-neutral-100 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-200 transition-colors"
