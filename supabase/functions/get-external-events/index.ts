@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // CORS Preflight
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -25,176 +24,155 @@ serve(async (req) => {
       timeFilter,
       tags,
       vipArtistsFilter,
+      singleDate,
       dateFrom,
       dateTo,
-      singleDate,
       availability,
       source,
     } = filters;
 
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
-
     if (!externalUrl || !externalKey) throw new Error("Missing secrets");
 
-    const externalSupabase = createClient(externalUrl, externalKey);
+    const supabase = createClient(externalUrl, externalKey);
 
-    // Wir laden mehr Events (400), um sie danach zu gruppieren.
-    // Erst nach dem Gruppieren schneiden wir auf 'limit' (50) zu.
-    const hasComplexFilters = (radius && radius > 0) || vipArtistsFilter?.length > 0 || tags?.length > 0;
-    const fetchLimit = hasComplexFilters ? 400 : 200;
+    // SPEED-FIX: Wir laden nur die Spalten, die wir für die Kacheln brauchen.
+    // Keine 'description' oder 'content', das verstopft die Leitung!
+    let query = supabase
+      .from("events")
+      .select(
+        "id, title, start_date, end_date, venue_name, address_city, image_url, price_from, price_to, price_label, latitude, longitude, tags, category_main_id, category_sub_id, external_id, available_months",
+        { count: "exact" },
+      );
 
-    let query = externalSupabase.from("events").select("*", { count: "exact" });
-
-    // --- 1. SQL VOR-FILTERUNG ---
+    // --- 1. SQL FILTER (Datenbank macht die Arbeit) ---
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
-    // Stadt-Filter nur, wenn Radius 0 ist (sonst macht das JS)
-    if (city && (!radius || radius === 0)) {
+
+    // Radius-Vorbereitung: Wenn Radius an ist, suchen wir grob in der Datenbank vor
+    if (city && radius > 0 && cityLat && cityLng) {
+      // Grobe "Box" Suche in der DB (schneller als exakte Berechnung)
+      // ca. 1 Grad ~ 111km. Wir nehmen einen Puffer.
+      const degreeDelta = (radius + 20) / 111;
+      query = query
+        .gte("latitude", cityLat - degreeDelta)
+        .lte("latitude", cityLat + degreeDelta)
+        .gte("longitude", cityLng - degreeDelta)
+        .lte("longitude", cityLng + degreeDelta);
+    } else if (city) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
+
     if (categoryId) query = query.eq("category_main_id", categoryId);
     if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
 
-    if (priceTier) {
-      if (priceTier === "gratis")
-        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
-      else if (priceTier === "$") query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
-      else if (priceTier === "$$") query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
-      else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
-    }
-
-    // Zeit-Logik
+    // Zeit-Filter (SQL)
     const now = new Date();
-    if (timeFilter) {
-      if (timeFilter === "now")
-        query = query
-          .gte("start_date", now.toISOString())
-          .lte("start_date", new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString());
-      else if (timeFilter === "today")
-        query = query
-          .gte("start_date", now.toISOString())
-          .lte("start_date", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString());
-      else if (timeFilter === "tomorrow") {
-        const tmr = new Date(now);
-        tmr.setDate(tmr.getDate() + 1);
-        query = query
-          .gte("start_date", new Date(tmr.setHours(0, 0, 0, 0)).toISOString())
-          .lte("start_date", new Date(tmr.setHours(23, 59, 59, 999)).toISOString());
-      } else if (timeFilter === "thisWeek") {
-        // Wochenende
-        const day = now.getDay();
-        const dist = (6 - day + 7) % 7 || 7;
-        const sat = new Date(now);
-        sat.setDate(now.getDate() + dist);
-        const sun = new Date(sat);
-        sun.setDate(sat.getDate() + 1);
-        query = query
-          .gte("start_date", new Date(sat.setHours(0, 0, 0, 0)).toISOString())
-          .lte("start_date", new Date(sun.setHours(23, 59, 59, 999)).toISOString());
-      }
-    }
-    if (singleDate) {
-      const d = new Date(singleDate);
+    if (timeFilter === "now")
       query = query
-        .gte("start_date", new Date(d.setHours(0, 0, 0, 0)).toISOString())
-        .lte("start_date", new Date(d.setHours(23, 59, 59, 999)).toISOString());
+        .gte("start_date", now.toISOString())
+        .lte("start_date", new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString());
+    else if (timeFilter === "today")
+      query = query
+        .gte("start_date", now.toISOString())
+        .lte("start_date", new Date(now.setHours(23, 59, 59)).toISOString());
+    else if (timeFilter === "tomorrow") {
+      const tmr = new Date();
+      tmr.setDate(tmr.getDate() + 1);
+      query = query
+        .gte("start_date", new Date(tmr.setHours(0, 0, 0, 0)).toISOString())
+        .lte("start_date", new Date(tmr.setHours(23, 59, 59)).toISOString());
+    } else if (timeFilter === "thisWeek") {
+      const sat = new Date();
+      sat.setDate(sat.getDate() + ((6 - sat.getDay() + 7) % 7));
+      const sun = new Date(sat);
+      sun.setDate(sat.getDate() + 1);
+      query = query
+        .gte("start_date", new Date(sat.setHours(0, 0, 0, 0)).toISOString())
+        .lte("start_date", new Date(sun.setHours(23, 59, 59)).toISOString());
     }
 
-    // Sortierung & Limit
-    query = query.order("start_date", { ascending: true }).limit(fetchLimit);
+    // Wir laden max 250 Events für die Nachbearbeitung (schneller als 400)
+    query = query.order("start_date", { ascending: true }).limit(250);
 
-    const { data, error: queryError } = await query;
-    if (queryError) throw queryError;
+    const { data, error, count } = await query;
+    if (error) throw error;
 
     let filteredData = data || [];
 
-    // --- 2. JAVASCRIPT LOGIK (Radius, Keywords, Grouping) ---
+    // --- 2. JAVASCRIPT FEIN-TUNING ---
 
-    // A. Keywords
-    if (tags?.length > 0) {
-      filteredData = filteredData.filter((event) => {
-        const txt =
-          `${event.title} ${event.description || ""} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
+    // A. Strenges Grouping (Zusammenfassen)
+    const groupedMap = new Map();
+
+    filteredData.forEach((event) => {
+      if (!event.title) return;
+
+      // Wir bereinigen den Titel extrem, um Varianten zu finden
+      // "Taylor Swift | Eras Tour" -> "taylorswift"
+      // "Zirkus Knie - Nachmittag" -> "zirkusknie"
+      const cleanTitle = event.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 15);
+      const cleanCity = (event.address_city || "ch").toLowerCase().trim();
+      const key = `${cleanTitle}_${cleanCity}`;
+
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, { ...event, allDates: [event.start_date] });
+      } else {
+        const existing = groupedMap.get(key);
+        existing.allDates.push(event.start_date);
+
+        // Zeitraum updaten
+        const sorted = existing.allDates.sort();
+        existing.start_date = sorted[0];
+        existing.end_date = sorted[sorted.length - 1];
+        existing.is_range = true;
+      }
+    });
+
+    let finalEvents = Array.from(groupedMap.values());
+
+    // B. Exakter Radius Check (nur für die übrig gebliebenen)
+    if (city && radius > 0 && cityLat && cityLng) {
+      finalEvents = finalEvents.filter((event) => {
+        if (!event.latitude || !event.longitude) {
+          // RETTUNG: Wenn keine Koords da sind, aber die Stadt stimmt -> behalten!
+          return (event.address_city || "").toLowerCase().includes(city.toLowerCase());
+        }
+        const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
+        return d <= radius;
+      });
+    }
+
+    // C. Keywords (Tagging)
+    if (tags && tags.length > 0) {
+      finalEvents = finalEvents.filter((event) => {
+        const txt = (event.title + " " + (event.venue_name || "")).toLowerCase();
         return tags.some((tag: string) => {
-          if (tag.includes("nightlife") || tag.includes("party"))
-            return /party|club|dj|disco|bar|nacht|techno|dance/i.test(txt);
-          if (tag.includes("romantisch")) return /romant|liebe|love|date|candle|dinner|piano|jazz/i.test(txt);
-          if (tag.includes("familie") || tag.includes("kind"))
-            return /kind|familie|zoo|kids|märchen|spiel|zirkus/i.test(txt);
-          if (tag.includes("wellness")) return /wellness|spa|sauna|bad|relax|yoga/i.test(txt);
-          if (tag.includes("natur")) return /natur|wandern|see|berg|park|aussicht|open air/i.test(txt);
-          if (tag.includes("schlechtwetter")) return /indoor|museum|kino|theater|drinnen|halle/i.test(txt);
+          if (tag.includes("nightlife")) return /party|club|dj|dance/i.test(txt);
+          if (tag.includes("romantisch")) return /romant|love|dinner/i.test(txt);
+          if (tag.includes("familie")) return /kind|familie|zirkus/i.test(txt);
           return event.tags?.includes(tag);
         });
       });
     }
 
-    // B. Radius
-    if (city && radius > 0 && cityLat && cityLng) {
-      filteredData = filteredData.filter((event) => {
-        if (event.latitude && event.longitude) {
-          const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
-          return d <= radius;
-        }
-        // Fallback: Textsuche, falls keine Koordinaten
-        return (event.address_city || "").toLowerCase().includes(city.toLowerCase());
-      });
-    }
-
-    // C. Top Stars
-    if (vipArtistsFilter?.length > 0) {
-      filteredData = filteredData.filter((event) =>
-        vipArtistsFilter.some((artist: string) => {
-          const t = event.title?.toLowerCase() || "";
-          const a = artist.toLowerCase();
-          return t.includes(a);
-        }),
-      );
-    }
-
-    // --- D. GROUPING (ZUSAMMENFASSEN) ---
-    // Hier passiert die Magie: Gleiche Events werden zu einem "Von-Bis" Event verschmolzen
-    const groupedMap = new Map();
-    filteredData.forEach((event) => {
-      // Key: Titel + Stadt (ohne Leerzeichen, lowercase) als eindeutige ID
-      const key = `${event.title}-${event.address_city || "CH"}`.toLowerCase().replace(/\s/g, "");
-
-      if (!groupedMap.has(key)) {
-        // Erstes Event dieser Art speichern
-        groupedMap.set(key, { ...event, allDates: [event.start_date] });
-      } else {
-        // Dublette gefunden -> Datum zur Liste hinzufügen
-        const existing = groupedMap.get(key);
-        existing.allDates.push(event.start_date);
-
-        // Start/Ende des Zeitraums berechnen
-        const sortedDates = existing.allDates.filter(Boolean).sort();
-        if (sortedDates.length > 1) {
-          existing.start_date = sortedDates[0];
-          existing.end_date = sortedDates[sortedDates.length - 1];
-          existing.is_range = true; // Signal für das Frontend
-        }
-      }
-    });
-
-    let finalEvents = Array.from(groupedMap.values());
-    const totalFiltered = finalEvents.length;
-
-    // --- 3. PAGINIERUNG (SLICE) ---
-    // Erst jetzt schneiden wir die 50 Stück raus
+    // Pagination
+    const total = finalEvents.length;
     finalEvents = finalEvents.slice(offset, offset + limit);
 
-    // Initial Load Zusatzinfos
+    // Initial Load Extras
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
-
     if (initialLoad) {
-      const { data: tax } = await externalSupabase.from("taxonomy").select("id, name, type, parent_id").order("name");
+      const { data: tax } = await supabase.from("taxonomy").select("id, name, type, parent_id");
       taxonomy = tax || [];
-      const { data: vips } = await externalSupabase.from("vip_artists").select("artists_name");
+      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(100);
       vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
     }
 
@@ -203,13 +181,7 @@ serve(async (req) => {
         events: finalEvents,
         taxonomy,
         vipArtists,
-        pagination: {
-          offset,
-          limit,
-          total: totalFiltered,
-          hasMore: offset + limit < totalFiltered,
-          fetched: finalEvents.length,
-        },
+        pagination: { offset, limit, total, hasMore: offset + limit < total },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -221,7 +193,6 @@ serve(async (req) => {
   }
 });
 
-// Helper: Haversine
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
