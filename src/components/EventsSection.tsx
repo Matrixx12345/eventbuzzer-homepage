@@ -17,6 +17,7 @@ const events = [
     isPopular: true,
     latitude: 47.1267,
     longitude: 8.7511,
+    a,
   },
   {
     id: "nordportal",
