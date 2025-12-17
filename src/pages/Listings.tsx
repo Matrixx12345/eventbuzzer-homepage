@@ -821,7 +821,10 @@ const Listings = () => {
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    return event.address_city || event.location || event.venue_name || "Schweiz";
+    // Prioritize address_city, skip location if it equals title (bad data)
+    if (event.address_city) return event.address_city;
+    if (event.location && event.location !== event.title) return event.location;
+    return "Schweiz";
   };
 
   const filterContent = (
