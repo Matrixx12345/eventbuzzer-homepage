@@ -6,6 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Hilfsfunktion: Macht Titel extrem vergleichbar (entfernt ALLES außer Buchstaben/Zahlen)
+// "Mamma Mia! - Das Musical" -> "mammamiadasmusical"
+function getNormalizationKey(text: string): string {
+  if (!text) return "";
+  return text.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -29,41 +36,23 @@ serve(async (req) => {
 
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
-
     if (!externalUrl || !externalKey) throw new Error("Missing secrets");
 
     const supabase = createClient(externalUrl, externalKey);
 
-    // 1. DATEN LADEN
-    // Wir laden 800 Events (statt 50), damit wir Duplikate finden können, die zeitlich auseinander liegen.
-    // Wir laden "*" (ALLES), damit Bilder und AI-Beschreibungen da sind.
+    // 1. DATEN LADEN (800 Stück für ausreichend "Futter" zum Gruppieren)
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // --- 2. SQL FILTER (Die Basis-Filterung in der Datenbank) ---
-
-    // Suche
+    // SQL Filter
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
-
-    // Stadt (Grob-Filter, Feinheit macht JS)
     if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
-
-    // Kategorien
     if (categoryId) query = query.eq("category_main_id", categoryId);
     if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
-
-    // Preis-Filter (WICHTIG: War im Original drin, muss hier auch rein)
-    if (priceTier) {
-      if (priceTier === "gratis")
-        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
-      else if (priceTier === "$") query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
-      else if (priceTier === "$$") query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
-      else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
-    }
 
     // Zeit-Filter
     const now = new Date();
@@ -74,32 +63,24 @@ serve(async (req) => {
     } else if (timeFilter === "today") {
       query = query
         .gte("start_date", now.toISOString())
-        .lte("start_date", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString());
+        .lte("start_date", new Date(now.setHours(23, 59, 59)).toISOString());
     } else if (timeFilter === "tomorrow") {
-      const tmr = new Date(now);
+      const tmr = new Date();
       tmr.setDate(tmr.getDate() + 1);
       query = query
         .gte("start_date", new Date(tmr.setHours(0, 0, 0, 0)).toISOString())
-        .lte("start_date", new Date(tmr.setHours(23, 59, 59, 999)).toISOString());
+        .lte("start_date", new Date(tmr.setHours(23, 59, 59)).toISOString());
     } else if (timeFilter === "thisWeek") {
-      const day = now.getDay();
-      const dist = (6 - day + 7) % 7 || 7;
-      const sat = new Date(now);
-      sat.setDate(now.getDate() + dist);
+      const sat = new Date();
+      sat.setDate(sat.getDate() + ((6 - sat.getDay() + 7) % 7));
       const sun = new Date(sat);
       sun.setDate(sat.getDate() + 1);
       query = query
         .gte("start_date", new Date(sat.setHours(0, 0, 0, 0)).toISOString())
-        .lte("start_date", new Date(sun.setHours(23, 59, 59, 999)).toISOString());
-    }
-    if (singleDate) {
-      const d = new Date(singleDate);
-      query = query
-        .gte("start_date", new Date(d.setHours(0, 0, 0, 0)).toISOString())
-        .lte("start_date", new Date(d.setHours(23, 59, 59, 999)).toISOString());
+        .lte("start_date", new Date(sun.setHours(23, 59, 59)).toISOString());
     }
 
-    // Sortierung und Limit
+    // Sortierung
     query = query.order("start_date", { ascending: true }).limit(800);
 
     const { data, error } = await query;
@@ -107,93 +88,67 @@ serve(async (req) => {
 
     let rawEvents = data || [];
 
-    // --- 3. JAVASCRIPT LOGIK (Grouping & Fein-Filter) ---
+    // --- 2. DIE WEICHE (LOGIK) ---
 
     const finalEvents: any[] = [];
-    const tmGroupMap = new Map(); // Speicher für Ticketmaster-Gruppen
+    const tmGroupMap = new Map();
 
     for (const event of rawEvents) {
-      // A. Radius Check
+      // Radius Check
       if (city && radius > 0 && cityLat && cityLng && event.latitude && event.longitude) {
         const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
-        if (d > radius) continue; // Überspringen wenn zu weit weg
+        if (d > radius) continue;
       }
 
-      // B. Keyword/Tag Check
-      if (tags && tags.length > 0) {
-        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
-        const matches = tags.some((tag: string) => {
-          if (tag.includes("nightlife")) return /party|club|dj|disco|bar|nacht/i.test(txt);
-          if (tag.includes("romantisch")) return /romant|liebe|love|date|candle|dinner/i.test(txt);
-          if (tag.includes("familie")) return /kind|familie|zoo|kids|märchen|spiel/i.test(txt);
-          return event.tags?.includes(tag);
-        });
-        if (!matches) continue;
-      }
-
-      // C. VIP Artists Check
-      if (vipArtistsFilter?.length > 0) {
-        const isVip = vipArtistsFilter.some((artist: string) =>
-          event.title?.toLowerCase().includes(artist.toLowerCase()),
-        );
-        if (!isVip) continue;
-      }
-
-      // D. DIE WEICHE (GROUPING)
-      const isTicketmaster = event.external_id && event.external_id.startsWith("tm_");
+      // Check: Ist es Ticketmaster? (Checkt auf 'tm' am Anfang, um 'tm_' und 'tm-' zu fangen)
+      const isTicketmaster = event.external_id && event.external_id.startsWith("tm");
 
       if (!isTicketmaster) {
-        // MySwitzerland & Co: SOFORT ÜBERNEHMEN (Kein Grouping, keine Veränderung)
+        // MySwitzerland & Co: SOFORT ÜBERNEHMEN
         finalEvents.push(event);
       } else {
-        // Ticketmaster: PRÜFEN OB DOPPELT
-        // Wir nutzen Titel + Stadt (lowercase) als Schlüssel
-        const key = `${(event.title || "").trim().toLowerCase()}_${(event.address_city || "").trim().toLowerCase()}`;
+        // Ticketmaster: GRUPPIEREN
+        // Wir nutzen den "gereinigten" Titel + Stadt als Schlüssel
+        const titleKey = getNormalizationKey(event.title || "");
+        const cityKey = getNormalizationKey(event.address_city || "");
+        const key = `${titleKey}_${cityKey}`;
 
         if (!tmGroupMap.has(key)) {
-          // Neues Ticketmaster Event gefunden -> Merken
-          // Wir speichern eine temporäre Liste aller Datumswerte (_all_dates)
+          // Neues Ticketmaster Event -> Merken
           tmGroupMap.set(key, {
             ...event,
             _all_dates: [event.start_date],
           });
         } else {
-          // Duplikat gefunden! (Gleicher Titel, gleiche Stadt)
+          // Duplikat gefunden!
           const existing = tmGroupMap.get(key);
-
-          // Datum zur Liste hinzufügen
           existing._all_dates.push(event.start_date);
 
-          // Sortieren
+          // Datum sortieren & Range setzen
           existing._all_dates.sort();
-
-          // Startdatum bleibt das allererste, Enddatum wird das allerletzte
           existing.start_date = existing._all_dates[0];
           existing.end_date = existing._all_dates[existing._all_dates.length - 1];
-
-          // Markierung setzen
           existing.is_range = true;
 
-          // Falls das neue Event ein Bild hat und das alte nicht, Bild übernehmen
+          // Besseres Bild behalten
           if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
         }
       }
     }
 
-    // Ticketmaster Gruppen auflösen und zur Liste hinzufügen
+    // Ticketmaster Gruppen auflösen
     const groupedTM = Array.from(tmGroupMap.values());
-    // Hilfsfeld _all_dates löschen vor dem Senden
-    groupedTM.forEach((e) => delete e._all_dates);
+    groupedTM.forEach((e) => delete e._all_dates); // Aufräumen
 
     // Alles zusammenfügen
     const allCombined = [...finalEvents, ...groupedTM];
 
-    // 4. SORTIEREN & PAGINIEREN
-    // Nach Datum sortieren
+    // 3. SORTIEREN & PAGINIEREN
+    // WICHTIG: Nach Datum sortieren, damit die Liste chronologisch stimmt
     allCombined.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
     const totalCount = allCombined.length;
-    // Hier schneiden wir die 50 Stück für den Browser ab
+    // 50 Stück abschneiden
     const paginatedEvents = allCombined.slice(offset, offset + limit);
 
     // Extras laden
@@ -228,7 +183,6 @@ serve(async (req) => {
   }
 });
 
-// Helper: Distanz
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
