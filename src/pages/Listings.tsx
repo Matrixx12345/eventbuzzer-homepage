@@ -1498,10 +1498,11 @@ const Listings = () => {
                                         <div
                                           className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                           style={{
-                                            // Map CH coords (lng: 5.95-10.49, lat: 45.82-47.81) to SVG viewBox 1346.967x863.698
-                                            // The map has padding, actual CH area roughly at x:140-1260, y:50-780
-                                            left: `${10 + ((event.longitude - 5.95) / (10.49 - 5.95)) * 83}%`,
-                                            top: `${6 + (1 - (event.latitude - 45.82) / (47.81 - 45.82)) * 88}%`,
+                                            // Calibrated mapping using reference cities:
+                                            // Geneva (6.14, 46.20) → ~13%, Zürich (8.54, 47.38) → ~62%
+                                            // Adjusted bounds: lng 5.85-10.55, lat 45.75-47.85
+                                            left: `${6 + ((event.longitude - 5.85) / (10.55 - 5.85)) * 88}%`,
+                                            top: `${3 + (1 - (event.latitude - 45.75) / (47.85 - 45.75)) * 94}%`,
                                           }}
                                         />
                                       )}
