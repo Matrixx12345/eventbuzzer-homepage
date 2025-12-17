@@ -1,55 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
-  <!-- Realistic Switzerland outline -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
+  <!-- Realistic Switzerland outline based on actual borders -->
   <path 
     fill="#f1f5f9" 
-    stroke="#cbd5e1" 
-    stroke-width="1.5"
-    d="M45,95 L50,85 L55,80 L62,78 L68,72 L75,68 L82,62 L90,55 L100,50 L110,45 L120,42 L130,38 L140,35 L150,32 L160,30 L170,28 L180,30 L190,35 L200,40 L210,45 L220,50 L230,55 L240,58 L250,62 L258,68 L262,75 L265,82 L268,90 L270,100 L268,110 L265,118 L260,125 L252,132 L245,138 L235,142 L225,148 L215,152 L205,155 L195,158 L185,160 L175,162 L165,163 L155,162 L145,160 L135,158 L125,155 L115,150 L105,145 L95,140 L85,135 L75,128 L65,120 L55,112 L48,105 L45,95 Z"
+    stroke="#94a3b8" 
+    stroke-width="2"
+    d="M95,85 L105,75 L120,70 L135,60 L150,55 L165,50 L180,48 L195,50 L210,45 L225,40 L240,38 L255,42 L270,48 L285,55 L300,65 L310,75 L318,85 L325,95 L330,108 L332,120 L330,135 L325,150 L318,165 L308,178 L295,188 L280,195 L265,200 L250,205 L235,210 L220,215 L205,218 L190,220 L175,218 L160,215 L145,210 L130,205 L115,198 L100,188 L88,175 L78,160 L72,145 L68,130 L65,115 L68,100 L75,90 L85,85 Z"
+  />
+  
+  <!-- Graubünden extension (east) -->
+  <path 
+    fill="#f1f5f9" 
+    stroke="#94a3b8" 
+    stroke-width="2"
+    d="M330,108 L345,100 L360,95 L372,100 L380,112 L378,128 L370,145 L358,160 L342,172 L325,180 L308,178 L318,165 L325,150 L330,135 L332,120 L330,108 Z"
+  />
+  
+  <!-- Ticino extension (south) -->
+  <path 
+    fill="#f1f5f9" 
+    stroke="#94a3b8" 
+    stroke-width="2"
+    d="M220,215 L235,225 L248,240 L255,255 L250,265 L235,268 L220,262 L208,250 L200,235 L205,218 L220,215 Z"
   />
   
   <!-- Lake Geneva (Genfersee) -->
-  <ellipse cx="75" cy="145" rx="25" ry="8" fill="#93c5fd" opacity="0.7"/>
+  <ellipse cx="95" cy="200" rx="30" ry="10" fill="#93c5fd" opacity="0.8"/>
   
   <!-- Lake Neuchâtel -->
-  <ellipse cx="110" cy="120" rx="12" ry="5" fill="#93c5fd" opacity="0.6"/>
+  <ellipse cx="135" cy="165" rx="15" ry="6" fill="#93c5fd" opacity="0.7"/>
   
-  <!-- Lake Zurich (Zürichsee) -->
-  <ellipse cx="210" cy="75" rx="15" ry="5" fill="#93c5fd" opacity="0.7"/>
+  <!-- Lake Zurich -->
+  <ellipse cx="285" cy="105" rx="18" ry="6" fill="#93c5fd" opacity="0.8"/>
   
-  <!-- Lake Lucerne (Vierwaldstättersee) -->
-  <path d="M165,95 Q175,90 180,95 Q185,100 175,105 Q165,100 165,95" fill="#93c5fd" opacity="0.6"/>
+  <!-- Lake Lucerne -->
+  <path d="M225,130 Q240,125 250,132 Q255,140 245,148 Q230,145 225,135 Z" fill="#93c5fd" opacity="0.7"/>
   
-  <!-- Lake Constance (Bodensee) partial -->
-  <ellipse cx="250" cy="45" rx="18" ry="8" fill="#93c5fd" opacity="0.7"/>
+  <!-- Lake Constance (partial) -->
+  <ellipse cx="335" cy="62" rx="22" ry="10" fill="#93c5fd" opacity="0.8"/>
   
-  <!-- Alps indication (subtle) -->
-  <path 
-    d="M100,130 L115,115 L130,125 L145,110 L160,120 L175,105 L190,115 L205,100 L220,110 L235,95 L250,105"
-    fill="none"
-    stroke="#cbd5e1"
-    stroke-width="1"
-    stroke-dasharray="2,2"
-    opacity="0.5"
-  />
+  <!-- Lago Maggiore (partial) -->
+  <ellipse cx="230" cy="255" rx="8" ry="15" fill="#93c5fd" opacity="0.7"/>
   
   <!-- City markers -->
-  <!-- Genf -->
-  <circle cx="58" cy="148" r="4" fill="#64748b"/>
-  <text x="58" y="162" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Genf</text>
+  <circle cx="75" cy="195" r="5" fill="#475569"/>
+  <text x="75" y="212" font-size="11" fill="#475569" text-anchor="middle" font-family="system-ui" font-weight="500">Genf</text>
   
-  <!-- Bern -->
-  <circle cx="130" cy="105" r="4" fill="#64748b"/>
-  <text x="130" y="119" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Bern</text>
+  <circle cx="165" cy="145" r="5" fill="#475569"/>
+  <text x="165" y="162" font-size="11" fill="#475569" text-anchor="middle" font-family="system-ui" font-weight="500">Bern</text>
   
-  <!-- Zürich -->
-  <circle cx="200" cy="70" r="4" fill="#64748b"/>
-  <text x="200" y="62" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Zürich</text>
+  <circle cx="275" cy="95" r="5" fill="#475569"/>
+  <text x="275" y="85" font-size="11" fill="#475569" text-anchor="middle" font-family="system-ui" font-weight="500">Zürich</text>
   
-  <!-- Basel -->
-  <circle cx="135" cy="45" r="4" fill="#64748b"/>
-  <text x="135" y="38" font-size="9" fill="#64748b" text-anchor="middle" font-family="system-ui">Basel</text>
+  <circle cx="195" cy="55" r="5" fill="#475569"/>
+  <text x="195" y="48" font-size="11" fill="#475569" text-anchor="middle" font-family="system-ui" font-weight="500">Basel</text>
   
-  <!-- Luzern -->
-  <circle cx="175" cy="95" r="3" fill="#94a3b8"/>
-  <text x="175" y="88" font-size="8" fill="#94a3b8" text-anchor="middle" font-family="system-ui">Luzern</text>
+  <circle cx="240" cy="130" r="4" fill="#64748b"/>
+  <text x="240" y="122" font-size="10" fill="#64748b" text-anchor="middle" font-family="system-ui">Luzern</text>
 </svg>
