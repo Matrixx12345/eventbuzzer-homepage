@@ -7,20 +7,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Parse request body for pagination and filter parameters
     const body = await req.json().catch(() => ({}));
-    const offset = body.offset || 0;
-    const limit = body.limit || 50;
-    const initialLoad = body.initialLoad ?? true;
-    
-    // Filter parameters
-    const filters = body.filters || {};
+    const { offset = 0, limit = 50, initialLoad = true, filters = {} } = body;
     const {
       searchQuery,
       categoryId,
@@ -31,265 +22,220 @@ serve(async (req) => {
       cityLat,
       cityLng,
       timeFilter,
-      dateFrom,
-      dateTo,
-      singleDate,
-      source,
       tags,
-      availability,
       vipArtistsFilter,
+      singleDate,
     } = filters;
 
-    // Use the external Supabase credentials from secrets
     const externalUrl = Deno.env.get("Supabase_URL");
     const externalKey = Deno.env.get("Supabase_ANON_KEY");
 
-    console.log("External URL configured:", !!externalUrl);
-    console.log("External Key configured:", !!externalKey);
-    console.log(`Pagination: offset=${offset}, limit=${limit}`);
-    console.log("Filters:", JSON.stringify(filters));
+    if (!externalUrl || !externalKey) throw new Error("Missing secrets");
 
-    if (!externalUrl || !externalKey) {
-      const missing = [];
-      if (!externalUrl) missing.push("Supabase_URL");
-      if (!externalKey) missing.push("Supabase_ANON_KEY");
-      throw new Error(`Missing secrets: ${missing.join(", ")}`);
+    const supabase = createClient(externalUrl, externalKey);
+
+    // 1. DATEN LADEN
+    // Wir laden 800 Events (statt 50), damit wir Duplikate finden können, die zeitlich auseinander liegen.
+    // Wir laden "*" (ALLES), damit Bilder und AI-Beschreibungen da sind.
+    let query = supabase.from("events").select("*", { count: "exact" });
+
+    // --- 2. SQL FILTER (Die Basis-Filterung in der Datenbank) ---
+
+    // Suche
+    if (searchQuery?.trim()) {
+      const s = `%${searchQuery.trim()}%`;
+      query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
 
-    // Create client for external Supabase
-    const externalSupabase = createClient(externalUrl, externalKey);
-
-    // Build query with filters
-    let query = externalSupabase
-      .from("events")
-      .select("*", { count: "exact" });
-
-    // Search filter
-    if (searchQuery && searchQuery.trim()) {
-      const search = `%${searchQuery.trim()}%`;
-      query = query.or(`title.ilike.${search},venue_name.ilike.${search},address_city.ilike.${search},location.ilike.${search},short_description.ilike.${search}`);
-    }
-
-    // Category filter
-    if (categoryId !== null && categoryId !== undefined) {
-      query = query.eq("category_main_id", categoryId);
-    }
-
-    // Subcategory filter
-    if (subcategoryId !== null && subcategoryId !== undefined) {
-      query = query.eq("category_sub_id", subcategoryId);
-    }
-
-    // Price tier filter
-    if (priceTier) {
-      if (priceTier === "gratis") {
-        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
-      } else if (priceTier === "$") {
-        query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
-      } else if (priceTier === "$$") {
-        query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
-      } else if (priceTier === "$$$") {
-        query = query.or("price_label.eq.$$$,price_from.gt.120");
-      }
-    }
-
-    // Source filter
-    if (source === "ticketmaster") {
-      query = query.like("external_id", "tm_%");
-    } else if (source === "myswitzerland") {
-      query = query.like("external_id", "mys_%");
-    }
-
-    // Tags filter (array contains)
-    if (tags && tags.length > 0) {
-      // Use overlaps for OR logic (any of the tags)
-      query = query.overlaps("tags", tags);
-    }
-
-    // Time filter
-    const now = new Date();
-    if (timeFilter) {
-      if (timeFilter === "today") {
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-        const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
-        query = query.gte("start_date", todayStart).lte("start_date", todayEnd);
-      } else if (timeFilter === "tomorrow") {
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStart = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).toISOString();
-        const tomorrowEnd = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59).toISOString();
-        query = query.gte("start_date", tomorrowStart).lte("start_date", tomorrowEnd);
-      } else if (timeFilter === "thisWeek") {
-        // This weekend (Saturday + Sunday)
-        const dayOfWeek = now.getDay();
-        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
-        const saturday = new Date(now);
-        saturday.setDate(now.getDate() + daysUntilSaturday);
-        const saturdayStart = new Date(saturday.getFullYear(), saturday.getMonth(), saturday.getDate()).toISOString();
-        const sunday = new Date(saturday);
-        sunday.setDate(saturday.getDate() + 1);
-        const sundayEnd = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59).toISOString();
-        query = query.gte("start_date", saturdayStart).lte("start_date", sundayEnd);
-      } else if (timeFilter === "nextWeek") {
-        const nextWeekStart = new Date(now);
-        nextWeekStart.setDate(now.getDate() + (8 - now.getDay()));
-        const nextWeekEnd = new Date(nextWeekStart);
-        nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
-        query = query.gte("start_date", nextWeekStart.toISOString()).lte("start_date", nextWeekEnd.toISOString());
-      } else if (timeFilter === "thisMonth") {
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-        query = query.gte("start_date", monthStart).lte("start_date", monthEnd);
-      } else if (timeFilter === "now") {
-        // Events starting within 4 hours
-        const fourHoursLater = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString();
-        query = query.gte("start_date", now.toISOString()).lte("start_date", fourHoursLater);
-      }
-    }
-
-    // Single date filter
-    if (singleDate) {
-      const date = new Date(singleDate);
-      const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
-      const dateEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59).toISOString();
-      query = query.gte("start_date", dateStart).lte("start_date", dateEnd);
-    }
-
-    // Date range filter
-    if (dateFrom) {
-      query = query.gte("start_date", new Date(dateFrom).toISOString());
-    }
-    if (dateTo) {
-      query = query.lte("start_date", new Date(dateTo).toISOString());
-    }
-
-    // Availability filter
-    if (availability) {
-      const currentMonth = now.getMonth() + 1;
-      if (availability === "now") {
-        query = query.contains("available_months", [currentMonth]);
-      } else if (availability === "winter") {
-        query = query.overlaps("available_months", [11, 12, 1, 2, 3]);
-      } else if (availability === "summer") {
-        query = query.overlaps("available_months", [4, 5, 6, 7, 8, 9, 10]);
-      } else if (availability === "yearround") {
-        query = query.contains("available_months", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-      }
-    }
-
-    // City filter (exact match or partial)
-    if (city && !radius) {
+    // Stadt (Grob-Filter, Feinheit macht JS)
+    if (city && (!radius || radius === 0)) {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
 
-    // Order and paginate
-    query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+    // Kategorien
+    if (categoryId) query = query.eq("category_main_id", categoryId);
+    if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
 
-    const { data, error: queryError, count: totalFiltered } = await query;
-
-    if (queryError) {
-      console.error("Events query error:", JSON.stringify(queryError));
-      throw new Error(`Query failed: ${queryError.message}`);
+    // Preis-Filter (WICHTIG: War im Original drin, muss hier auch rein)
+    if (priceTier) {
+      if (priceTier === "gratis")
+        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
+      else if (priceTier === "$") query = query.or("price_label.eq.$,and(price_from.gt.0,price_from.lte.50)");
+      else if (priceTier === "$$") query = query.or("price_label.eq.$$,and(price_from.gt.50,price_from.lte.120)");
+      else if (priceTier === "$$$") query = query.or("price_label.eq.$$$,price_from.gt.120");
     }
 
-    console.log(`Fetched ${data?.length || 0} events (offset: ${offset}, total filtered: ${totalFiltered})`);
-
-    // Radius filter (post-query since Supabase doesn't have native geo)
-    let filteredData = data || [];
-    if (city && radius && radius > 0 && cityLat && cityLng) {
-      filteredData = filteredData.filter(event => {
-        if (event.latitude && event.longitude) {
-          const distance = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
-          return distance <= radius;
-        }
-        // Fallback: city name match
-        const eventCity = event.address_city || event.location || "";
-        return eventCity.toLowerCase().includes(city.toLowerCase());
-      });
+    // Zeit-Filter
+    const now = new Date();
+    if (timeFilter === "now") {
+      query = query
+        .gte("start_date", now.toISOString())
+        .lte("start_date", new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString());
+    } else if (timeFilter === "today") {
+      query = query
+        .gte("start_date", now.toISOString())
+        .lte("start_date", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString());
+    } else if (timeFilter === "tomorrow") {
+      const tmr = new Date(now);
+      tmr.setDate(tmr.getDate() + 1);
+      query = query
+        .gte("start_date", new Date(tmr.setHours(0, 0, 0, 0)).toISOString())
+        .lte("start_date", new Date(tmr.setHours(23, 59, 59, 999)).toISOString());
+    } else if (timeFilter === "thisWeek") {
+      const day = now.getDay();
+      const dist = (6 - day + 7) % 7 || 7;
+      const sat = new Date(now);
+      sat.setDate(now.getDate() + dist);
+      const sun = new Date(sat);
+      sun.setDate(sat.getDate() + 1);
+      query = query
+        .gte("start_date", new Date(sat.setHours(0, 0, 0, 0)).toISOString())
+        .lte("start_date", new Date(sun.setHours(23, 59, 59, 999)).toISOString());
+    }
+    if (singleDate) {
+      const d = new Date(singleDate);
+      query = query
+        .gte("start_date", new Date(d.setHours(0, 0, 0, 0)).toISOString())
+        .lte("start_date", new Date(d.setHours(23, 59, 59, 999)).toISOString());
     }
 
-    // VIP Artists filter (post-query for now)
-    if (vipArtistsFilter && vipArtistsFilter.length > 0) {
-      filteredData = filteredData.filter(event => {
-        const titleLower = (event.title || "").toLowerCase();
-        return vipArtistsFilter.some((artist: string) => {
-          if (!artist || artist.length < 3) return false;
-          const artistLower = artist.toLowerCase().trim();
-          if (titleLower.startsWith(artistLower)) return true;
-          const regex = new RegExp(`\\b${artistLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-          return regex.test(event.title || "");
+    // Sortierung und Limit
+    query = query.order("start_date", { ascending: true }).limit(800);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let rawEvents = data || [];
+
+    // --- 3. JAVASCRIPT LOGIK (Grouping & Fein-Filter) ---
+
+    const finalEvents: any[] = [];
+    const tmGroupMap = new Map(); // Speicher für Ticketmaster-Gruppen
+
+    for (const event of rawEvents) {
+      // A. Radius Check
+      if (city && radius > 0 && cityLat && cityLng && event.latitude && event.longitude) {
+        const d = haversineDistance(cityLat, cityLng, event.latitude, event.longitude);
+        if (d > radius) continue; // Überspringen wenn zu weit weg
+      }
+
+      // B. Keyword/Tag Check
+      if (tags && tags.length > 0) {
+        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
+        const matches = tags.some((tag: string) => {
+          if (tag.includes("nightlife")) return /party|club|dj|disco|bar|nacht/i.test(txt);
+          if (tag.includes("romantisch")) return /romant|liebe|love|date|candle|dinner/i.test(txt);
+          if (tag.includes("familie")) return /kind|familie|zoo|kids|märchen|spiel/i.test(txt);
+          return event.tags?.includes(tag);
         });
-      });
-    }
-
-    // Only fetch taxonomy and VIP artists on initial load
-    let taxonomy: any[] = [];
-    let vipArtists: string[] = [];
-
-    if (initialLoad) {
-      const { data: taxonomyData, error: taxonomyError } = await externalSupabase
-        .from("taxonomy")
-        .select("id, name, type, parent_id")
-        .order("name");
-
-      if (taxonomyError) {
-        console.error("Taxonomy query error:", JSON.stringify(taxonomyError));
+        if (!matches) continue;
       }
-      taxonomy = taxonomyData || [];
 
-      const { data: vipData, error: vipArtistsError } = await externalSupabase
-        .from("vip_artists")
-        .select("artists_name");
+      // C. VIP Artists Check
+      if (vipArtistsFilter?.length > 0) {
+        const isVip = vipArtistsFilter.some((artist: string) =>
+          event.title?.toLowerCase().includes(artist.toLowerCase()),
+        );
+        if (!isVip) continue;
+      }
 
-      if (vipArtistsError) {
-        console.error("VIP Artists query error:", JSON.stringify(vipArtistsError));
+      // D. DIE WEICHE (GROUPING)
+      const isTicketmaster = event.external_id && event.external_id.startsWith("tm_");
+
+      if (!isTicketmaster) {
+        // MySwitzerland & Co: SOFORT ÜBERNEHMEN (Kein Grouping, keine Veränderung)
+        finalEvents.push(event);
       } else {
-        console.log(`VIP Artists: ${vipData?.length || 0} loaded`);
+        // Ticketmaster: PRÜFEN OB DOPPELT
+        // Wir nutzen Titel + Stadt (lowercase) als Schlüssel
+        const key = `${(event.title || "").trim().toLowerCase()}_${(event.address_city || "").trim().toLowerCase()}`;
+
+        if (!tmGroupMap.has(key)) {
+          // Neues Ticketmaster Event gefunden -> Merken
+          // Wir speichern eine temporäre Liste aller Datumswerte (_all_dates)
+          tmGroupMap.set(key, {
+            ...event,
+            _all_dates: [event.start_date],
+          });
+        } else {
+          // Duplikat gefunden! (Gleicher Titel, gleiche Stadt)
+          const existing = tmGroupMap.get(key);
+
+          // Datum zur Liste hinzufügen
+          existing._all_dates.push(event.start_date);
+
+          // Sortieren
+          existing._all_dates.sort();
+
+          // Startdatum bleibt das allererste, Enddatum wird das allerletzte
+          existing.start_date = existing._all_dates[0];
+          existing.end_date = existing._all_dates[existing._all_dates.length - 1];
+
+          // Markierung setzen
+          existing.is_range = true;
+
+          // Falls das neue Event ein Bild hat und das alte nicht, Bild übernehmen
+          if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
+        }
       }
-      vipArtists = vipData?.map(a => a.artists_name).filter(Boolean) || [];
     }
 
-    const hasMore = offset + filteredData.length < (totalFiltered || 0);
-    const nextOffset = offset + filteredData.length;
+    // Ticketmaster Gruppen auflösen und zur Liste hinzufügen
+    const groupedTM = Array.from(tmGroupMap.values());
+    // Hilfsfeld _all_dates löschen vor dem Senden
+    groupedTM.forEach((e) => delete e._all_dates);
 
-    return new Response(JSON.stringify({ 
-      events: filteredData, 
-      taxonomy,
-      vipArtists,
-      pagination: {
-        offset,
-        limit,
-        fetched: filteredData.length,
-        total: totalFiltered || 0,
-        hasMore,
-        nextOffset
-      }
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error fetching events:", errorMessage);
+    // Alles zusammenfügen
+    const allCombined = [...finalEvents, ...groupedTM];
+
+    // 4. SORTIEREN & PAGINIEREN
+    // Nach Datum sortieren
+    allCombined.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+
+    const totalCount = allCombined.length;
+    // Hier schneiden wir die 50 Stück für den Browser ab
+    const paginatedEvents = allCombined.slice(offset, offset + limit);
+
+    // Extras laden
+    let taxonomy: any[] = [];
+    let vipArtists: any[] = [];
+    if (initialLoad) {
+      const { data: tax } = await supabase.from("taxonomy").select("id, name, type, parent_id");
+      taxonomy = tax || [];
+      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(100);
+      vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
+    }
+
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      JSON.stringify({
+        events: paginatedEvents,
+        taxonomy,
+        vipArtists,
+        pagination: {
+          offset,
+          limit,
+          total: totalCount,
+          hasMore: offset + limit < totalCount,
+        },
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
 
-// Haversine distance calculation
+// Helper: Distanz
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
