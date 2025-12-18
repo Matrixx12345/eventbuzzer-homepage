@@ -6,14 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Hilfsfunktion für den radikalen Abgleich (Ticketmaster-Doubletten Fix)
 function superClean(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
     .trim()
-    .substring(0, 15); // Vergleicht nur den Anfang des Titels
+    .substring(0, 15);
 }
 
 serve(async (req) => {
@@ -21,36 +20,51 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    // Sicherheits-Limit auf 30 gesetzt
+    // Wir nutzen das stabile Limit von 30
     const { offset = 0, limit = 30, initialLoad = true, filters = {} } = body;
     const { searchQuery, categoryId, tags, cityLat, cityLng, radius } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // 1. BASIS-DATEN LADEN
-    let query = supabase.from("events").select("*", { count: "exact" });
-
-    if (searchQuery?.trim()) {
-      const s = `%${searchQuery.trim()}%`;
-      query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
-    }
-    if (categoryId) query = query.eq("category_main_id", categoryId);
-
-    const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(1000);
-    if (dbError) throw dbError;
-
-    // 2. DYNAMISCHE KEYWORDS LADEN (Falls ein Mood-Tag aktiv ist)
+    // 1. DYNAMISCHE KEYWORDS LADEN
     let activeKeywords: string[] = [];
     if (tags && tags.length > 0) {
       const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", tags);
       activeKeywords = kwData?.map((k) => k.keyword.toLowerCase()) || [];
     }
 
+    // 2. BASIS-QUERY ERSTELLEN
+    let query = supabase.from("events").select("*", { count: "exact" });
+
+    // Wenn Mood-Keywords da sind, lassen wir die DB direkt danach suchen (SQL Vollsuche)
+    if (activeKeywords.length > 0) {
+      // Wir nehmen die ersten 5 Keywords für die schnelle SQL-Vorsuche
+      const sqlSearch = activeKeywords
+        .slice(0, 5)
+        .map((kw) => `title.ilike.%${kw}%`)
+        .join(",");
+      query = query.or(sqlSearch);
+    }
+
+    if (searchQuery?.trim()) {
+      const s = `%${searchQuery.trim()}%`;
+      query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
+    }
+
+    if (categoryId) query = query.eq("category_main_id", categoryId);
+
+    // Wir laden genug Futter für das Grouping
+    const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(1000);
+    if (dbError) throw dbError;
+
     const processed: any[] = [];
     const tmMap = new Map<string, any>();
 
+    // Regex für "Ganze Wörter": Verhindert, dass 'spa' in 'spass' gefunden wird
+    const keywordRegex = activeKeywords.length > 0 ? new RegExp(`\\b(${activeKeywords.join("|")})\\b`, "i") : null;
+
     (rawEvents || []).forEach((event) => {
-      // A. Umkreis-Filter
+      // A. Radius Check
       if (cityLat && cityLng && radius > 0 && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -61,11 +75,10 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // B. Dynamischer Mood-Filter (Romantik, Wellness, etc.)
-      if (activeKeywords.length > 0) {
-        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
-        const matches = activeKeywords.some((key) => txt.includes(key));
-        if (!matches) return;
+      // B. PRÄZISIONS-MOOD-FILTER (Ganze Wörter)
+      if (keywordRegex) {
+        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`;
+        if (!keywordRegex.test(txt)) return;
       }
 
       // C. Ticketmaster Bündelung
@@ -83,7 +96,6 @@ serve(async (req) => {
           existing.start_date = sorted[0];
           existing.end_date = sorted[sorted.length - 1];
           existing.is_range = true;
-          if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
         }
       }
     });
@@ -91,10 +103,9 @@ serve(async (req) => {
     const final = [...processed, ...Array.from(tmMap.values())];
     final.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-    // Paginierung mit dem neuen Limit 30
+    // Rückgabe mit dem stabilen Limit
     const result = final.slice(offset, offset + limit);
 
-    // InitialLoad Extras (Taxonomy & VIPs)
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
     if (initialLoad) {
