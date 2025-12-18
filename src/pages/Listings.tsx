@@ -46,7 +46,8 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-//import { supabase } from "@/integrations/supabase/client";
+// DIREKT-VERBINDUNG zu deinem externen Projekt
+import { supabase } from "@/integrations/supabase/client";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -119,6 +120,7 @@ const Listings = () => {
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalEvents, setTotalEvents] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -254,40 +256,21 @@ const Listings = () => {
           setLoading(true);
           setEvents([]);
           setNextOffset(0);
-        } else {
-          setLoadingMore(true);
-        }
-
+        } else setLoadingMore(true);
         const offset = isInitial ? 0 : nextOffset;
-
-        // Wir rufen deine Edge Function mit festem Limit 30 auf
-        const { data, error: fetchError } = await supabase.functions.invoke("get-external-events", {
-          body: {
-            offset,
-            limit: 30, // FIX: Stabiles Limit gegen Browser-Fehler
-            initialLoad: isInitial,
-            filters: buildFilters(),
-          },
+        const { data, error } = await supabase.functions.invoke("get-external-events", {
+          body: { offset, limit: 30, initialLoad: isInitial, filters: buildFilters() },
         });
-
-        if (fetchError) throw fetchError;
-
-        if (data?.events) {
-          setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
-        }
-
+        if (error) throw error;
+        if (data?.events) setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
         if (data?.pagination) {
           setHasMore(data.pagination.hasMore);
           setNextOffset(data.pagination.nextOffset || offset + 30);
           setTotalEvents(data.pagination.total);
         }
-
-        if (isInitial && data?.taxonomy) {
-          setTaxonomy(data.taxonomy);
-        }
+        if (isInitial && data?.taxonomy) setTaxonomy(data.taxonomy);
       } catch (err) {
-        console.error("Fehler beim Laden:", err);
-        setError(err instanceof Error ? err.message : "Fehler beim Laden der Events");
+        console.error(err);
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -337,8 +320,6 @@ const Listings = () => {
     }
   };
 
-  const getEventLocation = (event: ExternalEvent) =>
-    event.address_city || event.venue_name || event.location || "Schweiz";
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
     try {
@@ -361,53 +342,7 @@ const Listings = () => {
       .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [taxonomy, selectedCategoryId]);
-  const getDistanceInfo = (lat: number, lng: number) => {
-    const centers = [
-      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
-      { name: "Bern", lat: 46.948, lng: 7.4474 },
-      { name: "Basel", lat: 47.5596, lng: 7.5886 },
-      { name: "Genf", lat: 46.2044, lng: 6.1432 },
-      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
-    ];
-    let nearest = centers[0],
-      minDist = Infinity;
-    centers.forEach((c) => {
-      const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
-      if (d < minDist) {
-        minDist = d;
-        nearest = c;
-      }
-    });
-    const dLat = lat - nearest.lat,
-      dLng = lng - nearest.lng;
-    const dir =
-      dLat > 0.05
-        ? dLng > 0.05
-          ? "NO"
-          : dLng < -0.05
-            ? "NW"
-            : "N"
-        : dLat < -0.05
-          ? dLng > 0.05
-            ? "SO"
-            : dLng < -0.05
-              ? "SW"
-              : "S"
-          : dLng > 0.05
-            ? "O"
-            : dLng < -0.05
-              ? "W"
-              : "";
-    return minDist > 1 ? `~${Math.round(minDist)} km ${dir} von ${nearest.name}` : `in ${nearest.name}`;
-  };
 
-  const getEventLocation = (event: ExternalEvent) => {
-    const city = event.address_city?.trim();
-    if (city && city !== "Schweiz" && !event.title.toLowerCase().includes(city.toLowerCase())) return city;
-    const venue = event.venue_name?.trim();
-    if (venue && venue !== event.title) return venue;
-    return event.location?.trim() !== "Schweiz" ? event.location : "Schweiz";
-  };
   const filterContent = (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -747,9 +682,7 @@ const Listings = () => {
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
                             <span className="truncate">{getEventLocation(event)}</span>
                             {event.latitude && (
-                              <span className="text-neutral-400 text-xs whitespace-nowrap">
-                                • {getDistanceInfo(event.latitude, event.longitude)}
-                              </span>
+                              <span className="text-neutral-400 text-xs whitespace-nowrap">• Karte</span>
                             )}
                           </div>
                           {event.latitude && event.longitude && (
