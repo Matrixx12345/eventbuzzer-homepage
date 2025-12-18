@@ -126,6 +126,10 @@ interface ExternalEvent {
   longitude?: number;
   tags?: string[];
   available_months?: number[];
+  // Consolidated event fields (when multiple shows grouped)
+  date_range_start?: string;
+  date_range_end?: string;
+  show_count?: number;
 }
 
 interface TaxonomyItem {
@@ -608,13 +612,19 @@ const Listings = () => {
     selectedAvailability !== null ||
     dogFriendly;
 
-  const formatEventDate = (dateString?: string, externalId?: string) => {
+  const formatEventDate = (dateString?: string, externalId?: string, dateRangeStart?: string, dateRangeEnd?: string, showCount?: number) => {
     // MySwitzerland events (permanent attractions) have null dates
     if (!dateString) {
       const isMySwitzerland = externalId?.startsWith('mys_');
       return isMySwitzerland ? "Jederzeit" : "Datum TBA";
     }
     try {
+      // If this is a consolidated event with date range
+      if (dateRangeStart && dateRangeEnd && showCount && showCount > 1) {
+        const startDate = parseISO(dateRangeStart);
+        const endDate = parseISO(dateRangeEnd);
+        return `${format(startDate, "d. MMM", { locale: de })} – ${format(endDate, "d. MMM yyyy", { locale: de })} (${showCount} Shows)`;
+      }
       const date = parseISO(dateString);
       return format(date, "d. MMM yyyy", { locale: de });
     } catch {
@@ -1204,7 +1214,7 @@ const Listings = () => {
                                 venue: event.venue_name || "",
                                 location: getEventLocation(event),
                                 image: eventImage,
-                                date: formatEventDate(event.start_date, event.external_id),
+                                date: formatEventDate(event.start_date, event.external_id, event.date_range_start, event.date_range_end, event.show_count),
                               });
                               // Send like when adding to favorites
                               if (wasNotFavorite) {
@@ -1235,7 +1245,7 @@ const Listings = () => {
                           {/* Date and Rating row */}
                           <div className="flex items-center justify-between mb-1.5">
                             <p className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                              <span>{formatEventDate(event.start_date, event.external_id)}</span>
+                              <span>{formatEventDate(event.start_date, event.external_id, event.date_range_start, event.date_range_end, event.show_count)}</span>
                               {event.external_id?.startsWith("mys_") && event.available_months?.length === 12 && (
                                 <span className="text-[11px] text-amber-600/80 font-medium tracking-wide">
                                   Ganzjährig

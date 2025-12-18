@@ -222,6 +222,61 @@ serve(async (req) => {
       });
     }
 
+    // CONSOLIDATE DUPLICATE EVENTS (same title + venue → show date range)
+    const consolidateEvents = (events: any[]) => {
+      const grouped = new Map<string, any[]>();
+      
+      events.forEach(event => {
+        // Key by title + venue (normalized)
+        const key = `${(event.title || '').toLowerCase().trim()}|${(event.venue_name || event.location || '').toLowerCase().trim()}`;
+        if (!grouped.has(key)) {
+          grouped.set(key, []);
+        }
+        grouped.get(key)!.push(event);
+      });
+
+      const consolidated: any[] = [];
+      grouped.forEach((group) => {
+        if (group.length === 1) {
+          consolidated.push(group[0]);
+        } else {
+          // Multiple events with same title/venue → consolidate
+          // Sort by start_date
+          group.sort((a, b) => {
+            const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+            const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+            return dateA - dateB;
+          });
+          
+          // Use first event as base, add date_range info
+          const base = { ...group[0] };
+          const firstDate = group[0].start_date;
+          const lastDate = group[group.length - 1].start_date;
+          
+          if (firstDate && lastDate && firstDate !== lastDate) {
+            base.date_range_start = firstDate;
+            base.date_range_end = lastDate;
+            base.show_count = group.length;
+          }
+          
+          // Take best data from all events (prefer non-null values)
+          group.forEach(e => {
+            if (!base.latitude && e.latitude) base.latitude = e.latitude;
+            if (!base.longitude && e.longitude) base.longitude = e.longitude;
+            if (!base.short_description && e.short_description) base.short_description = e.short_description;
+            if (!base.image_url && e.image_url) base.image_url = e.image_url;
+          });
+          
+          consolidated.push(base);
+        }
+      });
+      
+      return consolidated;
+    };
+
+    filteredData = consolidateEvents(filteredData);
+    console.log(`After consolidation: ${filteredData.length} unique events`);
+
     // Only fetch taxonomy and VIP artists on initial load
     let taxonomy: any[] = [];
     let vipArtists: string[] = [];
