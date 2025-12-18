@@ -6,14 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Hilfsfunktion für den radikalen Abgleich (Linkin Park Fix)
+// Hilfsfunktion für den radikalen Abgleich (Ticketmaster-Doubletten Fix)
 function superClean(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, "") // Entfernt alles außer Buchstaben/Zahlen
+    .replace(/[^a-z0-9]/g, "")
     .trim()
-    .substring(0, 15); // Vergleicht nur die ersten 15 Zeichen
+    .substring(0, 15); // Vergleicht nur den Anfang des Titels
 }
 
 serve(async (req) => {
@@ -21,15 +21,15 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { offset = 0, limit = 50, initialLoad = true, filters = {} } = body;
-    const { searchQuery, categoryId, subcategoryId, priceTier, tags, cityLat, cityLng, radius } = filters;
+    // Sicherheits-Limit auf 30 gesetzt
+    const { offset = 0, limit = 30, initialLoad = true, filters = {} } = body;
+    const { searchQuery, categoryId, tags, cityLat, cityLng, radius } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // Wir laden 1000 Events für das Grouping
+    // 1. BASIS-DATEN LADEN
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // SQL-Vorfilterung (Suche & Kategorie)
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
@@ -39,11 +39,18 @@ serve(async (req) => {
     const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(1000);
     if (dbError) throw dbError;
 
+    // 2. DYNAMISCHE KEYWORDS LADEN (Falls ein Mood-Tag aktiv ist)
+    let activeKeywords: string[] = [];
+    if (tags && tags.length > 0) {
+      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", tags);
+      activeKeywords = kwData?.map((k) => k.keyword.toLowerCase()) || [];
+    }
+
     const processed: any[] = [];
     const tmMap = new Map<string, any>();
 
     (rawEvents || []).forEach((event) => {
-      // 1. RADIUS CHECK
+      // A. Umkreis-Filter
       if (cityLat && cityLng && radius > 0 && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -54,114 +61,18 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // 2. ROMANTIK-FILTER (DIE MEGA-LISTE)
-      if (tags && tags.includes("romantisch-date")) {
+      // B. Dynamischer Mood-Filter (Romantik, Wellness, etc.)
+      if (activeKeywords.length > 0) {
         const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
-        const romantikKeywords = [
-          // Vibe & Klassik
-          "romant",
-          "date",
-          "love",
-          "liebe",
-          "liebi",
-          "herz",
-          "heart",
-          "kiss",
-          "kuss",
-          "sweetheart",
-          "soulmate",
-          "zweisam",
-          "together",
-          "candle",
-          "kerzen",
-          "valentinstag",
-          "valentine",
-          "sternenhimmel",
-          "stargazing",
-          "moonlight",
-          "mondschein",
-          "kamin",
-          "lagerfeuer",
-          "fire",
-          "rosen",
-          // Kulinarik
-          "dinner",
-          "nachtässe",
-          "gänge",
-          "menü",
-          "menu",
-          "gourmet",
-          "champagner",
-          "champagne",
-          "prosecco",
-          "weinprobe",
-          "wine",
-          "dine",
-          "degustation",
-          "schokolade",
-          "chocolate",
-          "pralinen",
-          "picknick",
-          "brunch",
-          "rooftop",
-          "sunset",
-          "sonnenuntergang",
-          "aphrodisiac",
-          "austern",
-          "trüffel",
-          "kaviar",
-          "gala",
-          // Kultur & Musik (JAZZ!)
-          "jazz",
-          "piano",
-          "klavier",
-          "chanson",
-          "serenade",
-          "ballade",
-          "oper",
-          "ballett",
-          "klassik",
-          "schloss",
-          "castle",
-          "burg",
-          "kutsche",
-          "carriage",
-          "gondel",
-          "schiff",
-          "cruise",
-          "boot",
-          "sommernachtskino",
-          "openairkino",
-          "sommerkino",
-          "sternwarte",
-          // Wellness & Schweizerdeutsch
-          "massage",
-          "spa",
-          "jacuzzi",
-          "whirlpool",
-          "wellness",
-          "hamam",
-          "schmüsele",
-          "kuscheln",
-          "chuschle",
-          "schätzli",
-          "gnüsse",
-          "gnuss",
-          "zäme",
-          "usflug",
-          "schmusen",
-        ];
-
-        const isRomantisch = romantikKeywords.some((key) => txt.includes(key));
-        if (!isRomantisch) return;
+        const matches = activeKeywords.some((key) => txt.includes(key));
+        if (!matches) return;
       }
 
-      // 3. TICKETMASTER BÜNDELUNG (MIT AGGRESSIVEM KEY)
+      // C. Ticketmaster Bündelung
       const isTM = event.external_id?.toLowerCase().startsWith("tm");
       if (!isTM) {
-        processed.push(event); // MySwitzerland & Rest unverändert
+        processed.push(event);
       } else {
-        // Schlüssel aus den ersten 15 Zeichen + Stadt
         const key = `${superClean(event.title)}_${(event.address_city || "ch").toLowerCase()}`;
         if (!tmMap.has(key)) {
           tmMap.set(key, { ...event, all_dates: [event.start_date] });
@@ -172,7 +83,6 @@ serve(async (req) => {
           existing.start_date = sorted[0];
           existing.end_date = sorted[sorted.length - 1];
           existing.is_range = true;
-          // Bild-Fallback
           if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
         }
       }
@@ -181,16 +91,17 @@ serve(async (req) => {
     const final = [...processed, ...Array.from(tmMap.values())];
     final.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-    // Rückgabe auf 50 begrenzen
+    // Paginierung mit dem neuen Limit 30
     const result = final.slice(offset, offset + limit);
 
+    // InitialLoad Extras (Taxonomy & VIPs)
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
     if (initialLoad) {
       const { data: tax } = await supabase.from("taxonomy").select("id, name, type, parent_id");
       taxonomy = tax || [];
-      const { data: vips } = await supabase.from("vip_artists").select("artists_name").limit(100);
-      vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
+      const { data: vips } = await supabase.from("vip_artists").select("artist_name");
+      vipArtists = vips?.map((a) => a.artist_name).filter(Boolean) || [];
     }
 
     return new Response(
