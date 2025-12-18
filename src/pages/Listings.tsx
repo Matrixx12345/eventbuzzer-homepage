@@ -368,7 +368,21 @@ const Listings = () => {
         nearest = c;
       }
     });
-    return `~${Math.round(minDist)} km von ${nearest.name}`;
+
+    const dLat = lat - nearest.lat;
+    const dLng = lng - nearest.lng;
+    const angle = (Math.atan2(dLat, dLng) * 180) / Math.PI;
+    let dir = "Östlich";
+    if (angle > -22.5 && angle <= 22.5) dir = "Östlich";
+    else if (angle > 22.5 && angle <= 67.5) dir = "NO";
+    else if (angle > 67.5 && angle <= 112.5) dir = "Nördlich";
+    else if (angle > 112.5 && angle <= 157.5) dir = "NW";
+    else if (angle > 157.5 || angle <= -157.5) dir = "Westlich";
+    else if (angle > -157.5 && angle <= -112.5) dir = "SW";
+    else if (angle > -112.5 && angle <= -67.5) dir = "Südlich";
+    else if (angle > -67.5 && angle <= -22.5) dir = "SO";
+
+    return `~${Math.round(minDist)} km ${dir} von ${nearest.name}`;
   };
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
