@@ -323,8 +323,39 @@ const Listings = () => {
     }
   };
 
-  const getEventLocation = (event: ExternalEvent) =>
-    event.address_city || event.venue_name || event.location || "Schweiz";
+  const getEventLocation = (event: ExternalEvent) => {
+    if (event.address_city && event.address_city.trim().length > 0) return event.address_city;
+    if (event.venue_name && event.venue_name.trim() !== event.title.trim()) return event.venue_name;
+    return "";
+  };
+
+  const getDistanceInfo = (lat: number, lng: number) => {
+    const centers = [
+      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+      { name: "Genf", lat: 46.2044, lng: 6.1432 },
+      { name: "Basel", lat: 47.5596, lng: 7.5886 },
+      { name: "Bern", lat: 46.948, lng: 7.4474 },
+      { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+      { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+      { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+      { name: "Montreux", lat: 46.4312, lng: 6.9107 },
+      { name: "Interlaken", lat: 46.6863, lng: 7.8632 },
+      { name: "Chur", lat: 46.8503, lng: 9.5334 },
+      { name: "Sion", lat: 46.2293, lng: 7.3586 },
+      { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+    ];
+    let nearest = centers[0],
+      minDist = Infinity;
+    centers.forEach((c) => {
+      const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
+      if (d < minDist) {
+        minDist = d;
+        nearest = c;
+      }
+    });
+    return `~${Math.round(minDist)} km von ${nearest.name}`;
+  };
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
     try {
@@ -682,12 +713,14 @@ const Listings = () => {
                           <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                         </div>
                         <h3 className="font-serif text-lg text-neutral-900 line-clamp-1">{event.title}</h3>
-                        <div className="group/map relative mt-1.5 cursor-help">
+                        <div className="group/map relative mt-1.5 cursor-pointer">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
                             <span className="truncate">{getEventLocation(event)}</span>
                             {event.latitude && (
-                              <span className="text-neutral-400 text-xs whitespace-nowrap">• Karte</span>
+                              <span className="text-xs text-gray-400">
+                                • {getDistanceInfo(event.latitude, event.longitude)}
+                              </span>
                             )}
                           </div>
                           {event.latitude && event.longitude && (
