@@ -6,13 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Aggressives Bündeln: Wir nehmen 12 Zeichen (Fix für Helene Fischer & Linkin Park)
 function superClean(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
     .trim()
-    .substring(0, 15);
+    .substring(0, 12);
 }
 
 serve(async (req) => {
@@ -20,37 +21,49 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+    // Limit 30 für maximale Stabilität
     const { offset = 0, limit = 30, initialLoad = true, filters = {} } = body;
     const { searchQuery, categoryId, tags, cityLat, cityLng, radius } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // 1. KEYWORDS LADEN (Mit Case-Korrektur)
+    // 1. ÜBERSETZUNG (Mapping Frontend -> DB)
+    const tagMapping: Record<string, string> = {
+      "romantisch-date": "romantik-date",
+      "wellness-selfcare": "wellness",
+      "schlechtwetter-indoor": "mistwetter",
+      "familie-kinder": "kinder",
+      "nightlife-party": "nightlife",
+      "natur-erlebnisse": "natur",
+    };
+
     let activeKeywords: string[] = [];
     if (tags && tags.length > 0) {
-      // Wir wandeln die Tags in Kleinschreibung um, passend zur Datenbank
-      const searchTags = tags.map((t: string) => t.toLowerCase());
-      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", searchTags);
+      // Wir übersetzen die Tags von der Webseite in deine DB-Kategorien
+      const mappedTags = tags.map((t: string) => tagMapping[t] || t);
+      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", mappedTags);
       activeKeywords = kwData?.map((k) => k.keyword.toLowerCase()) || [];
     }
 
-    // 2. SQL ABFRAGE
+    // 2. BASIS ABFRAGE
     let query = supabase.from("events").select("*", { count: "exact" });
 
+    // Volltext-Vorsuche in SQL (Titel & Beschreibung)
     if (activeKeywords.length > 0) {
-      // Wir suchen in SQL nach den Top 10 Keywords für beste Trefferquote
-      const sqlTerms = activeKeywords
-        .slice(0, 10)
-        .map((kw) => `title.ilike.%${kw}%`)
-        .join(",");
-      query = query.or(sqlTerms);
+      const topKws = activeKeywords.slice(0, 8); // Top 8 Keywords für SQL
+      const sqlFilter = topKws.flatMap((kw) => [`title.ilike.%${kw}%`, `short_description.ilike.%${kw}%`]).join(",");
+      query = query.or(sqlFilter);
+    } else if (tags && tags.length > 0) {
+      // Wenn Tag aktiv, aber keine Keywords in DB -> Leere Liste statt ALLES
+      return new Response(JSON.stringify({ events: [], pagination: { total: 0, hasMore: false } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
-
     if (categoryId) query = query.eq("category_main_id", categoryId);
 
     const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(1000);
@@ -60,7 +73,7 @@ serve(async (req) => {
     const tmMap = new Map<string, any>();
 
     (rawEvents || []).forEach((event) => {
-      // A. Radius Check
+      // Umkreis-Check
       if (cityLat && cityLng && radius > 0 && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -71,24 +84,24 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // B. INTELLIGENTER MOOD-FILTER
+      // INTELLIGENTER FILTER (Weighted Search)
       if (activeKeywords.length > 0) {
-        const txt = ` ${event.title} ${event.short_description || ""} ${event.venue_name || ""} `.toLowerCase();
+        const title = (event.title || "").toLowerCase();
+        const desc = (event.short_description || "").toLowerCase();
+        const combined = ` ${title} ${desc} `;
 
-        const hasMatch = activeKeywords.some((kw) => {
+        const isMatch = activeKeywords.some((kw) => {
           if (kw.length <= 3) {
-            // Kurze Wörter wie 'spa' müssen freistehend sein (verhindert 'spass')
-            const regex = new RegExp(`\\b${kw}\\b`, "i");
-            return regex.test(txt);
+            // "Spa" Fix: Nur als ganzes Wort
+            return new RegExp(`\\b${kw}\\b`, "i").test(combined);
           }
-          // Lange Wörter dürfen Teil von anderen Wörtern sein (findet 'jazzabend')
-          return txt.includes(kw);
+          // "Jazz" Fix: Darf Teil von Wörtern sein (findet Jazzabend)
+          return combined.includes(kw);
         });
-
-        if (!hasMatch) return;
+        if (!isMatch) return;
       }
 
-      // C. Ticketmaster Bündelung
+      // Ticketmaster Bündelung (Fix für Helene & Linkin Park)
       const isTM = event.external_id?.toLowerCase().startsWith("tm");
       if (!isTM) {
         processed.push(event);
