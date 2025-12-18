@@ -47,7 +47,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-// DIREKT-VERBINDUNG zum externen Projekt
+// DIREKT-VERBINDUNG zu deinem externen Projekt
 import { createClient } from "@supabase/supabase-js";
 const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const EXTERNAL_KEY =
@@ -149,11 +149,26 @@ const Listings = () => {
     [],
   );
 
+  // FIX: hasActiveFilters wieder eingebaut
+  const hasActiveFilters =
+    selectedCity !== "" || radius[0] > 0 || selectedQuickFilters.length > 0 || searchQuery.trim() !== "";
+
+  const clearFilters = () => {
+    setSelectedCity("");
+    setRadius([0]);
+    setSelectedQuickFilters([]);
+    setSearchQuery("");
+    setSelectedCategoryId(null);
+    setSelectedSubcategoryId(null);
+    setSelectedTimeFilter(null);
+    setSelectedPriceTier(null);
+    setDogFriendly(false);
+  };
+
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
     if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
     if (selectedCategoryId !== null) filters.categoryId = selectedCategoryId;
-    if (selectedSubcategoryId !== null) filters.subcategoryId = selectedSubcategoryId;
     if (selectedPriceTier) filters.priceTier = selectedPriceTier;
     if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
     if (selectedCity) {
@@ -177,7 +192,6 @@ const Listings = () => {
   }, [
     searchQuery,
     selectedCategoryId,
-    selectedSubcategoryId,
     selectedPriceTier,
     selectedTimeFilter,
     selectedCity,
@@ -227,7 +241,6 @@ const Listings = () => {
     selectedCity,
     radius,
     selectedCategoryId,
-    selectedSubcategoryId,
     selectedQuickFilters,
     selectedPriceTier,
     selectedTimeFilter,
@@ -303,15 +316,7 @@ const Listings = () => {
       </div>
 
       {hasActiveFilters && (
-        <button
-          onClick={() => {
-            setSelectedCity("");
-            setRadius([0]);
-            setSelectedQuickFilters([]);
-            setSearchQuery("");
-          }}
-          className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600"
-        >
+        <button onClick={clearFilters} className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600">
           ✕ Filter zurücksetzen
         </button>
       )}
@@ -368,7 +373,9 @@ const Listings = () => {
                             e.preventDefault();
                             toggleFavorite({
                               id: event.id,
+                              slug: event.id, // FIX: slug hinzugefügt
                               title: event.title,
+                              venue: event.venue_name || "", // FIX: venue hinzugefügt
                               image: event.image_url || getPlaceholderImage(index),
                               location: getEventLocation(event),
                               date: formatEventDate(event.start_date),
@@ -413,8 +420,8 @@ const Listings = () => {
                                   <div
                                     className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white"
                                     style={{
-                                      left: `${((event.longitude - 5.85) / 4.7) * 100}%`,
-                                      top: `${(1 - (event.latitude - 45.75) / 2.1) * 100}%`,
+                                      left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
+                                      top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
                                     }}
                                   />
                                 </div>
@@ -441,21 +448,6 @@ const Listings = () => {
           </main>
         </div>
       </div>
-
-      {showMobileFilters && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <span className="font-semibold">Filter anpassen</span>
-              <button onClick={() => setShowMobileFilters(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            {filterContent}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
