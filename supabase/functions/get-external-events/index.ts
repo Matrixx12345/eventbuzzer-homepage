@@ -20,11 +20,12 @@ serve(async (req) => {
     let query = supabase.from("events").select("*");
     if (searchQuery?.trim()) query = query.ilike("title", `%${searchQuery.trim()}%`);
 
-    const { data: rawEvents, error } = await query.order("start_date", { ascending: true }).limit(800);
-    if (error) throw error;
+    const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(800);
+    if (dbError) throw dbError;
 
-    const processed = [];
-    const tmMap = new Map();
+    // Fix TS7034: Explizite Typzuweisung für das Array
+    const processed: any[] = [];
+    const tmMap = new Map<string, any>();
 
     (rawEvents || []).forEach((event) => {
       // Radius Filter Logik (Haversine)
@@ -38,10 +39,12 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
+      // Die Weiche: Ticketmaster vs. Rest
       const isTM = event.external_id?.startsWith("tm");
       if (!isTM) {
         processed.push(event);
       } else {
+        // Bündelung: Alle Sonderzeichen/Leerzeichen raus für den Vergleich
         const key = `${event.title.toLowerCase().replace(/[^a-z0-9]/g, "")}_${(event.address_city || "ch").toLowerCase()}`;
         if (!tmMap.has(key)) {
           tmMap.set(key, { ...event, all_dates: [event.start_date] });
@@ -66,7 +69,12 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+  } catch (err: unknown) {
+    // Fix TS18046: Error Typ-Sicherheit
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 });
