@@ -122,7 +122,21 @@ const Listings = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
-  const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+  const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([
+    { id: 2, name: "Musik & Party", type: "main", parent_id: null },
+    { id: 3, name: "Kunst & Kultur", type: "main", parent_id: null },
+    { id: 4, name: "Kulinarik & Genuss", type: "main", parent_id: null },
+    { id: 6, name: "Märkte & Stadtfeste", type: "main", parent_id: null },
+    { id: 37, name: "Sport & Freizeit", type: "main", parent_id: null },
+    { id: 7, name: "Rock & Pop", type: "sub", parent_id: 2 },
+    { id: 8, name: "Klassik & Oper", type: "sub", parent_id: 2 },
+    { id: 9, name: "Jazz & Blues", type: "sub", parent_id: 2 },
+    { id: 10, name: "Electro & Techno", type: "sub", parent_id: 2 },
+    { id: 15, name: "Museum & Ausstellung", type: "sub", parent_id: 3 },
+    { id: 17, name: "Film & Kino", type: "sub", parent_id: 3 },
+    { id: 18, name: "Workshops & Kurse", type: "sub", parent_id: 4 },
+    { id: 20, name: "Fine Dining", type: "sub", parent_id: 4 },
+  ]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalEvents, setTotalEvents] = useState(0);
