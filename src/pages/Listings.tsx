@@ -57,269 +57,29 @@ import swissZurich from "@/assets/swiss-zurich.jpg";
 const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
 
-interface ExternalEvent {
-  id: string;
-  external_id?: string;
-  title: string;
-  description?: string;
-  short_description?: string;
-  location?: string;
-  venue_name?: string;
-  address_city?: string;
-  start_date?: string;
-  end_date?: string;
-  image_url?: string;
-  price_from?: number;
-  price_to?: number;
-  price_label?: string;
-  latitude?: number;
-  longitude?: number;
-  tags?: string[];
-  date_range_start?: string;
-  date_range_end?: string;
-  show_count?: number;
-  available_months?: number[];
-}
+const getEventLocation = (event: ExternalEvent) => {
+  const city = event.address_city?.trim();
+  if (city && city !== "Schweiz" && !event.title.toLowerCase().includes(city.toLowerCase())) return city;
+  const venue = event.venue_name?.trim();
+  if (venue && venue !== event.title) return venue;
+  return event.location?.trim() !== "Schweiz" ? event.location : "Schweiz";
+};
 
-interface TaxonomyItem {
-  id: number;
-  name: string;
-  type: "main" | "sub";
-  parent_id: number | null;
-}
-
-const quickFilters = [
-  { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
-  { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
-  { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
-  { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["foto-spot"] },
-  { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
-  {
-    id: "mit-kind",
-    label: "Mit Kind",
-    icon: Smile,
-    tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"],
-  },
-  {
-    id: "nightlife",
-    label: "Nightlife",
-    icon: PartyPopper,
-    tags: ["nightlife-party", "afterwork", "rooftop-aussicht"],
-  },
-  { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
-  { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
-];
-
-const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
-
-const Listings = () => {
-  const { isFavorite, toggleFavorite } = useFavorites();
-  const { sendLike } = useLikeOnFavorite();
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [events, setEvents] = useState<ExternalEvent[]>([]);
-  const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [totalEvents, setTotalEvents] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [nextOffset, setNextOffset] = useState(0);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  const [selectedCity, setSelectedCity] = useState("");
-  const [radius, setRadius] = useState([0]);
-  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
-  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
-  const [dogFriendly, setDogFriendly] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
-  const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
-  const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
-  const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
-
-  const indoorFilters = [
-    { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
-    { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
+const getDistanceInfo = (lat: number, lng: number) => {
+  const centers = [
+    { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+    { name: "Bern", lat: 46.948, lng: 7.4474 },
+    { name: "Basel", lat: 47.5596, lng: 7.5886 },
+    { name: "Genf", lat: 46.2044, lng: 6.1432 },
+    { name: "Luzern", lat: 47.0502, lng: 8.3093 },
   ];
-  const familyAgeFilters = [
-    { id: "alle", label: "Alle Altersgruppen", tag: "familie-kinder" },
-    { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
-    { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
-    { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
-  ];
-
-  const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
-    () => ({
-      zürich: { lat: 47.3769, lng: 8.5417 },
-      bern: { lat: 46.948, lng: 7.4474 },
-      basel: { lat: 47.5596, lng: 7.5886 },
-      luzern: { lat: 47.0502, lng: 8.3093 },
-      genf: { lat: 46.2044, lng: 6.1432 },
-      baden: { lat: 47.4734, lng: 8.3063 },
-      winterthur: { lat: 47.4984, lng: 8.7246 },
-      "st. gallen": { lat: 47.4245, lng: 9.3767 },
-    }),
-    [],
-  );
-
-  const hasActiveFilters =
-    selectedCity !== "" ||
-    radius[0] > 0 ||
-    selectedQuickFilters.length > 0 ||
-    searchQuery.trim() !== "" ||
-    selectedCategoryId !== null ||
-    selectedTimeFilter !== null ||
-    selectedPriceTier !== null ||
-    dogFriendly ||
-    selectedDate !== undefined ||
-    selectedDateRange !== undefined;
-
-  const clearFilters = () => {
-    setSelectedCity("");
-    setRadius([0]);
-    setSelectedQuickFilters([]);
-    setSearchQuery("");
-    setSelectedCategoryId(null);
-    setSelectedSubcategoryId(null);
-    setSelectedTimeFilter(null);
-    setSelectedPriceTier(null);
-    setDogFriendly(false);
-    setSelectedDate(undefined);
-    setSelectedDateRange(undefined);
-  };
-
-  const buildFilters = useCallback(() => {
-    const filters: Record<string, any> = {};
-    if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
-    if (selectedCategoryId !== null) filters.categoryId = selectedCategoryId;
-    if (selectedSubcategoryId !== null) filters.subcategoryId = selectedSubcategoryId;
-    if (selectedPriceTier) filters.priceTier = selectedPriceTier;
-    if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
-    if (selectedDate) filters.singleDate = selectedDate.toISOString();
-    if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
-    if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
-
-    if (selectedCity) {
-      filters.city = selectedCity;
-      if (radius[0] > 0) {
-        filters.radius = radius[0];
-        const coords = CITY_COORDINATES[selectedCity.toLowerCase().trim()];
-        if (coords) {
-          filters.cityLat = coords.lat;
-          filters.cityLng = coords.lng;
-        }
-      }
-    }
-    const tags: string[] = [];
-    if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
-    if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
-    if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
-    if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
-    if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
-    if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
-    if (selectedQuickFilters.includes("mistwetter")) {
-      const indoor = indoorFilters.find((f) => f.id === selectedIndoorFilter) || indoorFilters[0];
-      tags.push(...indoor.tags);
-    }
-    if (selectedQuickFilters.includes("mit-kind")) {
-      tags.push(
-        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter,
-      );
-    }
-    if (tags.length > 0) filters.tags = tags;
-    return filters;
-  }, [
-    searchQuery,
-    selectedCategoryId,
-    selectedSubcategoryId,
-    selectedPriceTier,
-    selectedTimeFilter,
-    selectedCity,
-    radius,
-    selectedQuickFilters,
-    selectedDate,
-    selectedDateRange,
-    selectedIndoorFilter,
-    selectedFamilyAgeFilter,
-    CITY_COORDINATES,
-  ]);
-
-  const fetchEvents = useCallback(
-    async (isInitial: boolean = true) => {
-      try {
-        if (isInitial) {
-          setLoading(true);
-          setEvents([]);
-          setNextOffset(0);
-        } else setLoadingMore(true);
-        const offset = isInitial ? 0 : nextOffset;
-        const { data, error } = await supabase.functions.invoke("get-external-events", {
-          body: { offset, limit: 30, initialLoad: isInitial, filters: buildFilters() },
-        });
-        if (error) throw error;
-        if (data?.events) setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
-        if (data?.pagination) {
-          setHasMore(data.pagination.hasMore);
-          setNextOffset(data.pagination.nextOffset || offset + 30);
-          setTotalEvents(data.pagination.total);
-        }
-        if (isInitial && data?.taxonomy) setTaxonomy(data.taxonomy);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-      }
-    },
-    [nextOffset, buildFilters],
-  );
-
-  useEffect(() => {
-    const t = setTimeout(() => fetchEvents(true), 400);
-    return () => clearTimeout(t);
-  }, [
-    searchQuery,
-    selectedCity,
-    radius,
-    selectedCategoryId,
-    selectedSubcategoryId,
-    selectedQuickFilters,
-    selectedPriceTier,
-    selectedTimeFilter,
-    selectedDate,
-    selectedDateRange,
-    dogFriendly,
-  ]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) fetchEvents(false);
-      },
-      { threshold: 0.1 },
-    );
-    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading, fetchEvents]);
-
-  const toggleQuickFilter = (filterId: string) => {
-    const active = selectedQuickFilters.includes(filterId);
-    if (active) {
-      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
-      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
-      setSelectedQuickFilters([]);
-    } else {
-      if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
-      if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
-      setSelectedQuickFilters([filterId]);
-    }
-  };
-
+  let nearest = centers[0], minDist = Infinity;
+  centers.forEach(c => {
+    const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
+    if (d < minDist) { minDist = d; nearest = c; }
+  });
+  return `~${Math.round(minDist)} km von ${nearest.name}`;
+};
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
     try {
