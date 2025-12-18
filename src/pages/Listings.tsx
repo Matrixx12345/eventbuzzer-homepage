@@ -189,10 +189,7 @@ const Listings = () => {
   const [radius, setRadius] = useState([0]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
-  const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
   const [dogFriendly, setDogFriendly] = useState(false);
 
   const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
@@ -208,6 +205,21 @@ const Listings = () => {
     }),
     [],
   );
+
+  // FIX: Die fehlende clearFilters Funktion
+  const clearFilters = () => {
+    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
+    setSelectedTimeFilter(null);
+    setSelectedQuickFilters([]);
+    setSelectedPriceTier(null);
+    setSelectedCity("");
+    setRadius([0]);
+    setSelectedCategoryId(null);
+    setSelectedSubcategoryId(null);
+    setSearchQuery("");
+    setDogFriendly(false);
+  };
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
