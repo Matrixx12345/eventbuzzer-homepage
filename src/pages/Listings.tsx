@@ -47,7 +47,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-// DIREKT-VERBINDUNG zum externen Projekt
+// DIREKT-VERBINDUNG zu deinem Projekt
 import { createClient } from "@supabase/supabase-js";
 const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const EXTERNAL_KEY =
@@ -124,7 +124,6 @@ const Listings = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
-  const [vipArtists, setVipArtists] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -132,7 +131,6 @@ const Listings = () => {
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Filter States
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
@@ -145,6 +143,19 @@ const Listings = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
+  const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
+  const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
+
+  const indoorFilters = [
+    { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
+    { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
+  ];
+  const familyAgeFilters = [
+    { id: "alle", label: "Alle Altersgruppen", tag: "familie-kinder" },
+    { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
+    { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
+    { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
+  ];
 
   const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
     () => ({
@@ -159,32 +170,6 @@ const Listings = () => {
     }),
     [],
   );
-
-  const hasActiveFilters =
-    selectedCity !== "" ||
-    radius[0] > 0 ||
-    selectedQuickFilters.length > 0 ||
-    searchQuery.trim() !== "" ||
-    selectedCategoryId !== null ||
-    selectedTimeFilter !== null ||
-    selectedPriceTier !== null ||
-    dogFriendly ||
-    selectedDate !== undefined ||
-    selectedDateRange !== undefined;
-
-  const clearFilters = () => {
-    setSelectedCity("");
-    setRadius([0]);
-    setSelectedQuickFilters([]);
-    setSearchQuery("");
-    setSelectedCategoryId(null);
-    setSelectedSubcategoryId(null);
-    setSelectedTimeFilter(null);
-    setSelectedPriceTier(null);
-    setDogFriendly(false);
-    setSelectedDate(undefined);
-    setSelectedDateRange(undefined);
-  };
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
@@ -208,14 +193,23 @@ const Listings = () => {
         }
       }
     }
-    if (selectedQuickFilters.length > 0) {
-      const tags: string[] = [];
-      selectedQuickFilters.forEach((id) => {
-        const found = quickFilters.find((f) => f.id === id);
-        if (found) tags.push(...found.tags);
-      });
-      if (tags.length > 0) filters.tags = tags;
+    const tags: string[] = [];
+    if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
+    if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
+    if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
+    if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
+    if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
+    if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
+    if (selectedQuickFilters.includes("mistwetter")) {
+      const indoor = indoorFilters.find((f) => f.id === selectedIndoorFilter) || indoorFilters[0];
+      tags.push(...indoor.tags);
     }
+    if (selectedQuickFilters.includes("mit-kind")) {
+      tags.push(
+        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter,
+      );
+    }
+    if (tags.length > 0) filters.tags = tags;
     return filters;
   }, [
     searchQuery,
@@ -228,6 +222,8 @@ const Listings = () => {
     selectedQuickFilters,
     selectedDate,
     selectedDateRange,
+    selectedIndoorFilter,
+    selectedFamilyAgeFilter,
     CITY_COORDINATES,
   ]);
 
@@ -240,14 +236,11 @@ const Listings = () => {
           setNextOffset(0);
         } else setLoadingMore(true);
         const offset = isInitial ? 0 : nextOffset;
-        const filters = buildFilters();
         const { data, error } = await supabase.functions.invoke("get-external-events", {
-          body: { offset, limit: 30, initialLoad: isInitial, filters },
+          body: { offset, limit: 30, initialLoad: isInitial, filters: buildFilters() },
         });
         if (error) throw error;
-        if (data?.events) {
-          setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
-        }
+        if (data?.events) setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
         if (data?.pagination) {
           setHasMore(data.pagination.hasMore);
           setNextOffset(data.pagination.nextOffset || offset + 30);
@@ -281,9 +274,32 @@ const Listings = () => {
     dogFriendly,
   ]);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) fetchEvents(false);
+      },
+      { threshold: 0.1 },
+    );
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading, fetchEvents]);
+
+  const toggleQuickFilter = (filterId: string) => {
+    const active = selectedQuickFilters.includes(filterId);
+    if (active) {
+      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
+      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
+      setSelectedQuickFilters([]);
+    } else {
+      if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
+      if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
+      setSelectedQuickFilters([filterId]);
+    }
+  };
+
   const getEventLocation = (event: ExternalEvent) =>
     event.address_city || event.venue_name || event.location || "Schweiz";
-
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
     try {
@@ -296,10 +312,40 @@ const Listings = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSelectedCity("");
+    setRadius([0]);
+    setSelectedQuickFilters([]);
+    setSearchQuery("");
+    setSelectedCategoryId(null);
+    setSelectedSubcategoryId(null);
+    setSelectedTimeFilter(null);
+    setSelectedPriceTier(null);
+    setDogFriendly(false);
+    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
+  };
+
+  const hasActiveFilters =
+    selectedCity !== "" ||
+    radius[0] > 0 ||
+    selectedQuickFilters.length > 0 ||
+    searchQuery.trim() !== "" ||
+    selectedCategoryId !== null ||
+    selectedTimeFilter !== null ||
+    selectedPriceTier !== null ||
+    dogFriendly;
+
   const mainCategories = useMemo(
     () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
     [taxonomy],
   );
+  const subCategories = useMemo(() => {
+    if (!selectedCategoryId) return [];
+    return taxonomy
+      .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [taxonomy, selectedCategoryId]);
 
   const filterContent = (
     <div className="space-y-5">
@@ -334,49 +380,157 @@ const Listings = () => {
 
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
-        <div className="grid grid-cols-3 gap-1.5">
-          {quickFilters.map((f) => {
-            const Icon = f.icon;
-            const active = selectedQuickFilters.includes(f.id);
-            return (
-              <button
-                key={f.id}
-                onClick={() => setSelectedQuickFilters((prev) => (prev.includes(f.id) ? [] : [f.id]))}
-                className={cn(
-                  "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5 border",
-                  active ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-800",
+        <div className="space-y-2">
+          {(() => {
+            const rows = [];
+            for (let i = 0; i < quickFilters.length; i += 3) rows.push(quickFilters.slice(i, i + 3));
+            return rows.map((row, rIdx) => (
+              <div key={rIdx}>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {row.map((f) => {
+                    const Icon = f.icon;
+                    const active = selectedQuickFilters.includes(f.id);
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => toggleQuickFilter(f.id)}
+                        className={cn(
+                          "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5 border",
+                          active ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-800",
+                        )}
+                      >
+                        <Icon size={18} />
+                        <span className="text-[13px] font-medium leading-tight mt-0.5">{f.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {row.some((f) => f.id === "mistwetter") && selectedQuickFilters.includes("mistwetter") && (
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 space-y-1.5">
+                    {indoorFilters.map((ifilt) => (
+                      <button
+                        key={ifilt.id}
+                        onClick={() => setSelectedIndoorFilter(ifilt.id)}
+                        className={cn(
+                          "w-full py-2 px-3 rounded-lg text-xs text-left",
+                          selectedIndoorFilter === ifilt.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
+                        )}
+                      >
+                        {ifilt.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
-              >
-                <Icon size={18} />
-                <span className="text-[13px] font-medium leading-tight mt-0.5">{f.label}</span>
-              </button>
-            );
-          })}
+                {row.some((f) => f.id === "mit-kind") && selectedQuickFilters.includes("mit-kind") && (
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 space-y-1.5">
+                    {familyAgeFilters.map((afilt) => (
+                      <button
+                        key={afilt.id}
+                        onClick={() => setSelectedFamilyAgeFilter(afilt.id)}
+                        className={cn(
+                          "w-full py-2 px-3 rounded-lg text-xs text-left",
+                          selectedFamilyAgeFilter === afilt.id ? "bg-pink-600 text-white" : "bg-white text-gray-800",
+                        )}
+                      >
+                        {afilt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ));
+          })()}
         </div>
       </div>
 
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
-        <Select
-          value={selectedCategoryId?.toString() || "all"}
-          onValueChange={(v) => setSelectedCategoryId(v === "all" ? null : parseInt(v))}
-        >
-          <SelectTrigger className="w-full bg-white rounded-xl border">
-            <SelectValue placeholder="Alle Kategorien" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Kategorien</SelectItem>
-            {mainCategories.map((c) => (
-              <SelectItem key={c.id} value={c.id.toString()}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          {(() => {
+            const allCats = [
+              { id: null, name: "Alle", icon: LayoutGrid },
+              ...mainCategories.map((c) => ({
+                id: c.id,
+                name: c.name,
+                icon: c.name.includes("Musik")
+                  ? Music
+                  : c.name.includes("Kunst")
+                    ? Palette
+                    : c.name.includes("Kulinarik")
+                      ? UtensilsCrossed
+                      : LayoutGrid,
+              })),
+            ];
+            const rows = [];
+            for (let i = 0; i < allCats.length; i += 2) rows.push(allCats.slice(i, i + 2));
+            return rows.map((row, rIdx) => {
+              const selectedInRow = row.find((c) => selectedCategoryId === c.id && c.id !== null);
+              return (
+                <div key={rIdx}>
+                  <div className="grid grid-cols-2 gap-2">
+                    {row.map((cat) => (
+                      <button
+                        key={cat.id ?? "all"}
+                        onClick={() => {
+                          setSelectedCategoryId(cat.id === selectedCategoryId ? null : cat.id);
+                          setSelectedSubcategoryId(null);
+                        }}
+                        className={cn(
+                          "flex flex-col items-center py-4 rounded-xl border transition-all",
+                          selectedCategoryId === cat.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
+                        )}
+                      >
+                        <cat.icon size={24} className="mb-2" />
+                        <span className="text-[13px] font-medium">{cat.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedInRow && subCategories.length > 0 && (
+                    <div className="mt-2 bg-neutral-900 rounded-xl p-3 border border-neutral-700 flex flex-col gap-1.5">
+                      <button
+                        onClick={() => setSelectedSubcategoryId(null)}
+                        className={cn(
+                          "w-full px-3 py-2 rounded-full text-xs text-left",
+                          selectedSubcategoryId === null ? "bg-blue-600 text-white" : "text-gray-300",
+                        )}
+                      >
+                        Alle
+                      </button>
+                      {subCategories.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => setSelectedSubcategoryId(s.id === selectedSubcategoryId ? null : s.id)}
+                          className={cn(
+                            "w-full px-3 py-2 rounded-full text-xs text-left",
+                            selectedSubcategoryId === s.id ? "bg-blue-600 text-white" : "text-gray-300",
+                          )}
+                        >
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            });
+          })()}
+        </div>
       </div>
 
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
+        <button
+          onClick={() => setSelectedTimeFilter("now")}
+          className={cn(
+            "w-full h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all",
+            selectedTimeFilter === "now"
+              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+              : "bg-white border text-gray-800",
+          )}
+        >
+          <Zap size={16} />
+          ⚡️ JETZT
+        </button>
         <div className="grid grid-cols-3 gap-1.5">
           {[
             { id: "today", label: "Heute" },
@@ -387,7 +541,7 @@ const Listings = () => {
               key={t.id}
               onClick={() => setSelectedTimeFilter((prev) => (prev === t.id ? null : t.id))}
               className={cn(
-                "h-9 rounded-lg text-xs border transition-all",
+                "h-9 rounded-lg text-xs border",
                 selectedTimeFilter === t.id ? "bg-blue-600 text-white" : "bg-white",
               )}
             >
@@ -405,7 +559,8 @@ const Listings = () => {
             selectedDateRange?.from ? "bg-blue-600 text-white" : "bg-white",
           )}
         >
-          <CalendarIcon size={14} /> <span>{selectedDateRange?.from ? "Zeitraum gewählt" : "Zeitraum wählen"}</span>
+          <CalendarIcon size={14} />
+          <span>Zeitraum wählen</span>
         </button>
       </div>
 
@@ -427,7 +582,7 @@ const Listings = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between py-2 border-t border-neutral-700 mt-2">
+      <div className="flex items-center justify-between py-2 border-t border-neutral-700">
         <div className="flex items-center gap-2">
           <Dog size={16} className="text-gray-400" />
           <span className="text-sm font-medium text-gray-300">Mit Hund?</span>
@@ -449,10 +604,7 @@ const Listings = () => {
       </div>
 
       {hasActiveFilters && (
-        <button
-          onClick={clearFilters}
-          className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600 transition-all"
-        >
+        <button onClick={clearFilters} className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600">
           ✕ Filter zurücksetzen
         </button>
       )}
@@ -472,15 +624,6 @@ const Listings = () => {
           </aside>
 
           <main className="flex-1 min-w-0">
-            <div className="lg:hidden mb-6">
-              <button
-                onClick={() => setShowMobileFilters(true)}
-                className="flex items-center gap-2.5 px-5 py-3 bg-white shadow-sm rounded-full text-sm font-medium border"
-              >
-                <SlidersHorizontal size={16} /> Filter
-              </button>
-            </div>
-
             {loading && !loadingMore ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
@@ -489,7 +632,7 @@ const Listings = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {events.map((event, index) => (
                   <Link key={event.id} to={`/event/${event.id}`} className="block group">
-                    <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+                    <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500">
                       <div className="relative overflow-hidden">
                         <img
                           src={event.image_url || getPlaceholderImage(index)}
@@ -531,13 +674,12 @@ const Listings = () => {
                           <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                         </div>
                         <h3 className="font-serif text-lg text-neutral-900 line-clamp-1">{event.title}</h3>
-
                         <div className="group/map relative mt-1.5 cursor-help">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
                             <span className="truncate">{getEventLocation(event)}</span>
                             {event.latitude && (
-                              <span className="text-neutral-400 text-xs whitespace-nowrap">• Karte ansehen</span>
+                              <span className="text-neutral-400 text-xs whitespace-nowrap">• Karte</span>
                             )}
                           </div>
                           {event.latitude && event.longitude && (
@@ -575,21 +717,6 @@ const Listings = () => {
           </main>
         </div>
       </div>
-
-      {showMobileFilters && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <span className="font-semibold">Filter anpassen</span>
-              <button onClick={() => setShowMobileFilters(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            {filterContent}
-          </div>
-        </div>
-      )}
 
       <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
         <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl">
