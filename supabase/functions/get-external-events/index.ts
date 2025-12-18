@@ -182,17 +182,17 @@ serve(async (req) => {
       query = query.or(`address_city.ilike.%${city}%,location.ilike.%${city}%`);
     }
 
-    // Order and paginate
-    query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+    // Fetch ALL matching events first (no pagination yet) to consolidate properly
+    query = query.order("start_date", { ascending: true }).limit(2000);
 
-    const { data, error: queryError, count: totalFiltered } = await query;
+    const { data, error: queryError } = await query;
 
     if (queryError) {
       console.error("Events query error:", JSON.stringify(queryError));
       throw new Error(`Query failed: ${queryError.message}`);
     }
 
-    console.log(`Fetched ${data?.length || 0} events (offset: ${offset}, total filtered: ${totalFiltered})`);
+    console.log(`Fetched ${data?.length || 0} events before consolidation`);
 
     // Radius filter (post-query since Supabase doesn't have native geo)
     let filteredData = data || [];
@@ -275,7 +275,11 @@ serve(async (req) => {
     };
 
     filteredData = consolidateEvents(filteredData);
-    console.log(`After consolidation: ${filteredData.length} unique events`);
+    const totalConsolidated = filteredData.length;
+    console.log(`After consolidation: ${totalConsolidated} unique events`);
+
+    // NOW apply pagination to consolidated results
+    const paginatedData = filteredData.slice(offset, offset + limit);
 
     // Only fetch taxonomy and VIP artists on initial load
     let taxonomy: any[] = [];
@@ -304,18 +308,18 @@ serve(async (req) => {
       vipArtists = vipData?.map(a => a.artists_name).filter(Boolean) || [];
     }
 
-    const hasMore = offset + filteredData.length < (totalFiltered || 0);
-    const nextOffset = offset + filteredData.length;
+    const hasMore = offset + paginatedData.length < totalConsolidated;
+    const nextOffset = offset + paginatedData.length;
 
     return new Response(JSON.stringify({ 
-      events: filteredData, 
+      events: paginatedData, 
       taxonomy,
       vipArtists,
       pagination: {
         offset,
         limit,
-        fetched: filteredData.length,
-        total: totalFiltered || 0,
+        fetched: paginatedData.length,
+        total: totalConsolidated,
         hasMore,
         nextOffset
       }
