@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Aggressives Bündeln: Wir nehmen 12 Zeichen (Fix für Helene Fischer & Linkin Park)
+// Fix für Helene Fischer / Linkin Park: Wir bündeln nach den ersten 12 Zeichen
 function superClean(text: string): string {
   if (!text) return "";
   return text
@@ -21,40 +21,45 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    // Limit 30 für maximale Stabilität
     const { offset = 0, limit = 30, initialLoad = true, filters = {} } = body;
     const { searchQuery, categoryId, tags, cityLat, cityLng, radius } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // 1. ÜBERSETZUNG (Mapping Frontend -> DB)
+    // 1. MAPPING (ERWEITERT: Slug & Anzeigename)
     const tagMapping: Record<string, string> = {
       "romantisch-date": "romantik-date",
+      "Romantisch & Date-Idee": "romantik-date",
       "wellness-selfcare": "wellness",
+      "Wellness & Self-Care": "wellness",
       "schlechtwetter-indoor": "mistwetter",
+      "Schlechtwetter-Tipp & Indoor": "mistwetter",
       "familie-kinder": "kinder",
-      "nightlife-party": "nightlife",
-      "natur-erlebnisse": "natur",
+      "Familientauglich & Mit Kindern": "kinder",
     };
 
     let activeKeywords: string[] = [];
     if (tags && tags.length > 0) {
-      // Wir übersetzen die Tags von der Webseite in deine DB-Kategorien
-      const mappedTags = tags.map((t: string) => tagMapping[t] || t);
-      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", mappedTags);
-      activeKeywords = kwData?.map((k) => k.keyword.toLowerCase()) || [];
+      // Wir prüfen jedes geschickte Tag gegen unsere Übersetzungsliste
+      const mappedCategories = tags.map((t: string) => tagMapping[t] || t.toLowerCase());
+
+      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", mappedCategories);
+
+      activeKeywords = kwData?.map((k) => k.keyword.toLowerCase().trim()) || [];
     }
 
-    // 2. BASIS ABFRAGE
+    // 2. DATENBANK ABFRAGE
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // Volltext-Vorsuche in SQL (Titel & Beschreibung)
+    // Wenn Keywords da sind, suchen wir gezielt in der ganzen DB (nicht nur 1000)
     if (activeKeywords.length > 0) {
-      const topKws = activeKeywords.slice(0, 8); // Top 8 Keywords für SQL
-      const sqlFilter = topKws.flatMap((kw) => [`title.ilike.%${kw}%`, `short_description.ilike.%${kw}%`]).join(",");
-      query = query.or(sqlFilter);
+      const sqlTerms = activeKeywords
+        .slice(0, 10)
+        .map((kw) => `title.ilike.%${kw}%`)
+        .join(",");
+      query = query.or(sqlTerms);
     } else if (tags && tags.length > 0) {
-      // Wenn Tag aktiv, aber keine Keywords in DB -> Leere Liste statt ALLES
+      // Falls ein Mood-Tag aktiv ist, aber keine Keywords gefunden wurden -> 0 Treffer
       return new Response(JSON.stringify({ events: [], pagination: { total: 0, hasMore: false } }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -62,7 +67,7 @@ serve(async (req) => {
 
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
-      query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
+      query = query.or(`title.ilike.${s},venue_name.ilike.${s}`);
     }
     if (categoryId) query = query.eq("category_main_id", categoryId);
 
@@ -73,7 +78,7 @@ serve(async (req) => {
     const tmMap = new Map<string, any>();
 
     (rawEvents || []).forEach((event) => {
-      // Umkreis-Check
+      // Radius Filter
       if (cityLat && cityLng && radius > 0 && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -84,24 +89,21 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // INTELLIGENTER FILTER (Weighted Search)
+      // PRÄZISER MOOD-FILTER (Prüft Titel & Description)
       if (activeKeywords.length > 0) {
-        const title = (event.title || "").toLowerCase();
-        const desc = (event.short_description || "").toLowerCase();
-        const combined = ` ${title} ${desc} `;
-
-        const isMatch = activeKeywords.some((kw) => {
-          if (kw.length <= 3) {
-            // "Spa" Fix: Nur als ganzes Wort
-            return new RegExp(`\\b${kw}\\b`, "i").test(combined);
+        const fullText = ` ${event.title || ""} ${event.short_description || ""} `.toLowerCase();
+        const hasMatch = activeKeywords.some((kw) => {
+          if (kw.length <= 4) {
+            // Kurze Wörter (spa, pool) müssen isoliert stehen
+            return new RegExp(`\\b${kw}\\b`, "i").test(fullText);
           }
-          // "Jazz" Fix: Darf Teil von Wörtern sein (findet Jazzabend)
-          return combined.includes(kw);
+          // Lange Wörter (romantisch, jazz) dürfen Teil von Wörtern sein
+          return fullText.includes(kw);
         });
-        if (!isMatch) return;
+        if (!hasMatch) return;
       }
 
-      // Ticketmaster Bündelung (Fix für Helene & Linkin Park)
+      // TICKETMASTER BÜNDELUNG
       const isTM = event.external_id?.toLowerCase().startsWith("tm");
       if (!isTM) {
         processed.push(event);
@@ -125,6 +127,7 @@ serve(async (req) => {
 
     const result = final.slice(offset, offset + limit);
 
+    // Initial Load (VIPs & Taxonomy)
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
     if (initialLoad) {
