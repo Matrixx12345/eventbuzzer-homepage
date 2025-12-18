@@ -387,21 +387,12 @@ const Listings = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [nextOffset]);
+  }, [nextOffset, buildFilters]);
 
-  // Initial load
+  // Load events on mount and when filters change
   useEffect(() => {
     fetchEvents(true);
-  }, []);
-
-  // Refetch when filters change
-  useEffect(() => {
-    // Skip on initial mount (handled by initial load above)
-    if (taxonomy.length === 0) return;
-    fetchEvents(true);
-  }, [searchQuery, selectedCategoryId, selectedSubcategoryId, selectedPriceTier, selectedSource, 
-      selectedTimeFilter, selectedAvailability, selectedDate, selectedDateRange, selectedCity, 
-      radius, selectedQuickFilters, selectedFamilyAgeFilter, selectedIndoorFilter, dogFriendly]);
+  }, [fetchEvents]);
 
   // Infinite scroll with IntersectionObserver
   useEffect(() => {
