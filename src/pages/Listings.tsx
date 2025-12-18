@@ -38,6 +38,7 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,7 +47,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-// DIREKT-VERBINDUNG zu deinem externen Projekt
+// DIREKT-VERBINDUNG zu deinem externen Projekt (tfkiyvhfhvkejpljsnrk)
 import { createClient } from "@supabase/supabase-js";
 const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const EXTERNAL_KEY =
@@ -79,10 +80,10 @@ interface ExternalEvent {
   latitude?: number;
   longitude?: number;
   tags?: string[];
+  available_months?: number[];
   date_range_start?: string;
   date_range_end?: string;
   show_count?: number;
-  available_months?: number[];
 }
 
 interface TaxonomyItem {
@@ -123,6 +124,7 @@ const Listings = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+  const [vipArtists, setVipArtists] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -130,20 +132,20 @@ const Listings = () => {
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const [selectedCity, setSelectedCity] = useState("");
-  const [radius, setRadius] = useState([0]);
-  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
-  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
-  const [dogFriendly, setDogFriendly] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
+  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
+  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [radius, setRadius] = useState([0]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
   const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
+  const [dogFriendly, setDogFriendly] = useState(false);
 
   const indoorFilters = [
     { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
@@ -154,6 +156,11 @@ const Listings = () => {
     { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
     { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
     { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
+  ];
+  const timeFilters = [
+    { id: "today", label: "Heute" },
+    { id: "tomorrow", label: "Morgen" },
+    { id: "thisWeek", label: "Wochenende" },
   ];
 
   const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
@@ -169,32 +176,6 @@ const Listings = () => {
     }),
     [],
   );
-
-  const hasActiveFilters =
-    selectedCity !== "" ||
-    radius[0] > 0 ||
-    selectedQuickFilters.length > 0 ||
-    searchQuery.trim() !== "" ||
-    selectedCategoryId !== null ||
-    selectedTimeFilter !== null ||
-    selectedPriceTier !== null ||
-    dogFriendly ||
-    selectedDate !== undefined ||
-    selectedDateRange !== undefined;
-
-  const clearFilters = () => {
-    setSelectedCity("");
-    setRadius([0]);
-    setSelectedQuickFilters([]);
-    setSearchQuery("");
-    setSelectedCategoryId(null);
-    setSelectedSubcategoryId(null);
-    setSelectedTimeFilter(null);
-    setSelectedPriceTier(null);
-    setDogFriendly(false);
-    setSelectedDate(undefined);
-    setSelectedDateRange(undefined);
-  };
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
@@ -230,9 +211,9 @@ const Listings = () => {
       tags.push(...indoor.tags);
     }
     if (selectedQuickFilters.includes("mit-kind")) {
-      tags.push(
-        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter,
-      );
+      const ageTag =
+        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter;
+      tags.push(ageTag);
     }
     if (tags.length > 0) filters.tags = tags;
     return filters;
@@ -323,6 +304,41 @@ const Listings = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSelectedCity("");
+    setRadius([0]);
+    setSelectedQuickFilters([]);
+    setSearchQuery("");
+    setSelectedCategoryId(null);
+    setSelectedSubcategoryId(null);
+    setSelectedTimeFilter(null);
+    setSelectedPriceTier(null);
+    setDogFriendly(false);
+    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
+  };
+
+  const hasActiveFilters =
+    selectedCity !== "" ||
+    radius[0] > 0 ||
+    selectedQuickFilters.length > 0 ||
+    searchQuery.trim() !== "" ||
+    selectedCategoryId !== null ||
+    selectedTimeFilter !== null ||
+    selectedPriceTier !== null ||
+    dogFriendly;
+
+  const mainCategories = useMemo(
+    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
+    [taxonomy],
+  );
+  const subCategories = useMemo(() => {
+    if (!selectedCategoryId) return [];
+    return taxonomy
+      .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [taxonomy, selectedCategoryId]);
+
   const getEventLocation = (event: ExternalEvent) =>
     event.address_city || event.venue_name || event.location || "Schweiz";
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
@@ -337,19 +353,9 @@ const Listings = () => {
     }
   };
 
-  const mainCategories = useMemo(
-    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
-    [taxonomy],
-  );
-  const subCategories = useMemo(() => {
-    if (!selectedCategoryId) return [];
-    return taxonomy
-      .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [taxonomy, selectedCategoryId]);
-
   const filterContent = (
     <div className="space-y-5">
+      {/* 1. WO / ORT */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">WO / ORT</h3>
         <div className="relative">
@@ -360,7 +366,7 @@ const Listings = () => {
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             list="cities"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border bg-white"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border bg-white text-gray-800"
           />
           <datalist id="cities">
             {cities.map((c) => (
@@ -372,13 +378,14 @@ const Listings = () => {
           <Slider value={radius} onValueChange={setRadius} max={50} step={5} className="w-full" />
           <div className="flex justify-between items-center mt-1.5">
             <span className="text-xs text-gray-400 font-medium">Umkreis</span>
-            <span className="text-sm font-semibold tabular-nums border px-2 py-0.5 rounded-lg bg-white">
+            <span className="text-sm font-semibold tabular-nums border px-2 py-0.5 rounded-lg bg-white text-gray-800">
               {radius[0]} km
             </span>
           </div>
         </div>
       </div>
 
+      {/* 2. STIMMUNG */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
         <div className="space-y-2">
@@ -407,13 +414,13 @@ const Listings = () => {
                   })}
                 </div>
                 {row.some((f) => f.id === "mistwetter") && selectedQuickFilters.includes("mistwetter") && (
-                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5">
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
                     {indoorFilters.map((ifilt) => (
                       <button
                         key={ifilt.id}
                         onClick={() => setSelectedIndoorFilter(ifilt.id)}
                         className={cn(
-                          "w-full py-2 px-3 rounded-lg text-xs text-left",
+                          "w-full py-2 px-3 rounded-lg text-xs text-left transition-all",
                           selectedIndoorFilter === ifilt.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
                         )}
                       >
@@ -423,13 +430,13 @@ const Listings = () => {
                   </div>
                 )}
                 {row.some((f) => f.id === "mit-kind") && selectedQuickFilters.includes("mit-kind") && (
-                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5">
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
                     {familyAgeFilters.map((afilt) => (
                       <button
                         key={afilt.id}
                         onClick={() => setSelectedFamilyAgeFilter(afilt.id)}
                         className={cn(
-                          "w-full py-2 px-3 rounded-lg text-xs text-left",
+                          "w-full py-2 px-3 rounded-lg text-xs text-left transition-all",
                           selectedFamilyAgeFilter === afilt.id ? "bg-pink-600 text-white" : "bg-white text-gray-800",
                         )}
                       >
@@ -444,6 +451,7 @@ const Listings = () => {
         </div>
       </div>
 
+      {/* 3. KATEGORIE - DEIN ORIGINALES 2-SPALTEN-DESIGN MIT DRAWER */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
         <div className="space-y-2">
@@ -486,17 +494,19 @@ const Listings = () => {
                         )}
                       >
                         <cat.icon size={24} className="mb-2" />
-                        <span className="text-[13px] font-medium">{cat.name}</span>
+                        <span className="text-[13px] font-medium text-center">{cat.name}</span>
                       </button>
                     ))}
                   </div>
                   {selectedInRow && subCategories.length > 0 && (
-                    <div className="mt-2 bg-neutral-900 rounded-xl p-3 border border-neutral-700 flex flex-col gap-1.5">
+                    <div className="mt-2 bg-neutral-900 rounded-xl p-3 border border-neutral-700 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
                       <button
                         onClick={() => setSelectedSubcategoryId(null)}
                         className={cn(
-                          "w-full px-3 py-2 rounded-full text-xs text-left",
-                          selectedSubcategoryId === null ? "bg-blue-600 text-white" : "text-gray-300",
+                          "w-full px-3 py-2 rounded-full text-[13px] text-left transition-all",
+                          selectedSubcategoryId === null
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-300 bg-neutral-800 hover:bg-neutral-700",
                         )}
                       >
                         Alle
@@ -506,8 +516,10 @@ const Listings = () => {
                           key={s.id}
                           onClick={() => setSelectedSubcategoryId(s.id === selectedSubcategoryId ? null : s.id)}
                           className={cn(
-                            "w-full px-3 py-2 rounded-full text-xs text-left",
-                            selectedSubcategoryId === s.id ? "bg-blue-600 text-white" : "text-gray-300",
+                            "w-full px-3 py-2 rounded-full text-[13px] text-left transition-all",
+                            selectedSubcategoryId === s.id
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-300 bg-neutral-800 hover:bg-neutral-700",
                           )}
                         >
                           {s.name}
@@ -522,6 +534,7 @@ const Listings = () => {
         </div>
       </div>
 
+      {/* 4. WANN? */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
         <button
@@ -530,24 +543,22 @@ const Listings = () => {
             "w-full h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all",
             selectedTimeFilter === "now"
               ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
-              : "bg-white border text-gray-800",
+              : "bg-white border text-gray-800 border-gray-200",
           )}
         >
-          <Zap size={16} />
+          <Zap size={16} className={selectedTimeFilter === "now" ? "animate-pulse" : ""} />
           ⚡️ JETZT
         </button>
         <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { id: "today", label: "Heute" },
-            { id: "tomorrow", label: "Morgen" },
-            { id: "thisWeek", label: "WE" },
-          ].map((t) => (
+          {timeFilters.map((t) => (
             <button
               key={t.id}
               onClick={() => setSelectedTimeFilter((prev) => (prev === t.id ? null : t.id))}
               className={cn(
-                "h-9 rounded-lg text-xs border",
-                selectedTimeFilter === t.id ? "bg-blue-600 text-white" : "bg-white",
+                "h-9 rounded-lg text-xs border transition-all",
+                selectedTimeFilter === t.id
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-800 border-gray-200",
               )}
             >
               {t.label}
@@ -560,15 +571,16 @@ const Listings = () => {
             setShowCalendar(true);
           }}
           className={cn(
-            "w-full h-10 rounded-xl text-sm border flex items-center justify-center gap-2",
-            selectedDateRange?.from ? "bg-blue-600 text-white" : "bg-white",
+            "w-full h-10 rounded-xl text-sm border flex items-center justify-center gap-2 transition-all",
+            selectedDateRange?.from ? "bg-blue-600 text-white" : "bg-white text-gray-800 border-gray-200",
           )}
         >
           <CalendarIcon size={14} />
-          <span>Zeitraum wählen</span>
+          <span>{selectedDateRange?.from ? "Zeitraum gewählt" : "Zeitraum wählen"}</span>
         </button>
       </div>
 
+      {/* 5. BUDGET */}
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
         <div className="grid grid-cols-4 gap-1.5">
@@ -577,8 +589,10 @@ const Listings = () => {
               key={p}
               onClick={() => setSelectedPriceTier((prev) => (prev === p ? null : p))}
               className={cn(
-                "h-10 rounded-xl text-xs font-bold border",
-                selectedPriceTier === p ? "bg-blue-600 text-white" : "bg-white",
+                "h-10 rounded-xl text-xs font-bold border transition-all",
+                selectedPriceTier === p
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-800 border-gray-200",
               )}
             >
               {p.toUpperCase()}
@@ -587,23 +601,26 @@ const Listings = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between py-2 border-t border-neutral-700">
+      {/* 6. MIT HUND */}
+      <div className="flex items-center justify-between py-2 border-t border-neutral-700 mt-2">
         <div className="flex items-center gap-2">
           <Dog size={16} className="text-gray-400" />
-          <span className="text-sm font-medium text-gray-300">Mit Hund?</span>
+          <span className="text-sm font-medium text-gray-300">Mit Hund erlaubt?</span>
         </div>
         <Switch checked={dogFriendly} onCheckedChange={setDogFriendly} />
       </div>
 
+      {/* 7. SUCHE */}
       <div className="space-y-3 pt-3 border-t border-neutral-700">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Suche</h3>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Suche..."
+            placeholder="Künstler, Event..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm border"
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm border border-gray-200 text-gray-800"
           />
         </div>
       </div>
@@ -632,6 +649,15 @@ const Listings = () => {
           </aside>
 
           <main className="flex-1 min-w-0">
+            <div className="lg:hidden mb-6">
+              <button
+                onClick={() => setShowMobileFilters(true)}
+                className="flex items-center gap-2.5 px-5 py-3 bg-white shadow-sm rounded-full text-sm font-medium border text-gray-700 hover:shadow-md transition-all"
+              >
+                <SlidersHorizontal size={16} /> Filter {hasActiveFilters && `(${selectedQuickFilters.length})`}
+              </button>
+            </div>
+
             {loading && !loadingMore ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
@@ -660,7 +686,7 @@ const Listings = () => {
                               date: formatEventDate(event.start_date),
                             });
                           }}
-                          className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 shadow-sm"
+                          className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 shadow-sm hover:scale-110 transition-all"
                         >
                           <Heart
                             size={16}
@@ -681,7 +707,10 @@ const Listings = () => {
                           </p>
                           <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                         </div>
-                        <h3 className="font-serif text-lg text-neutral-900 line-clamp-1">{event.title}</h3>
+                        <h3 className="font-serif text-lg text-neutral-900 line-clamp-1 group-hover:text-neutral-700 transition-colors">
+                          {event.title}
+                        </h3>
+
                         <div className="group/map relative mt-1.5 cursor-help">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
@@ -692,8 +721,8 @@ const Listings = () => {
                           </div>
                           {event.latitude && event.longitude && (
                             <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                              <div className="bg-white p-3 rounded-xl shadow-2xl border w-48 h-40">
-                                <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                              <div className="bg-white p-3 rounded-xl shadow-2xl border border-gray-200 w-48 overflow-hidden">
+                                <div className="relative w-full h-32 bg-slate-50 rounded-lg overflow-hidden">
                                   <img src="/swiss-outline.svg" className="w-full h-full object-contain" />
                                   <div
                                     className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
@@ -727,7 +756,7 @@ const Listings = () => {
       </div>
 
       <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-        <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl">
+        <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-xl border-0 shadow-2xl rounded-3xl">
           <div className="flex justify-center py-4">
             <Calendar
               mode={calendarMode as any}
@@ -744,6 +773,7 @@ const Listings = () => {
                     }
               }
               locale={de}
+              className="rounded-2xl"
             />
           </div>
         </DialogContent>
