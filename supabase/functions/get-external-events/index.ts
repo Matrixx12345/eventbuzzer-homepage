@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Hilfsfunktion für den radikalen Ticketmaster-Abgleich
-function superClean(text: string): string {
+// Reinigt den Titel für den Vergleich
+function bundleKey(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
@@ -21,8 +21,6 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { offset = 0, limit = 50, initialLoad = true, filters = {} } = body;
-
-    // ALLE DEINE BESTEHENDEN FILTER-VARIABLEN
     const {
       searchQuery,
       categoryId,
@@ -34,65 +32,35 @@ serve(async (req) => {
       cityLat,
       cityLng,
       timeFilter,
-      availability,
-      singleDate,
-      dateFrom,
-      dateTo,
       tags,
       vipArtistsFilter,
     } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // 1. DATEN LADEN (Erhöhtes Limit für Grouping-Futter)
+    // 1. BREITE ABFRAGE STARTEN
+    // Wir laden 1000 Events, um sicherzustellen, dass TM-Events dabei sind
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // --- DEINE ORIGINAL SQL-FILTER (Mühsam erarbeitet) ---
+    // Nur grobe SQL-Filter, um TM-Events nicht vorab zu löschen
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
     }
 
+    // WENN eine Kategorie gewählt ist, filtern wir in SQL (schneller)
     if (categoryId) query = query.eq("category_main_id", categoryId);
     if (subcategoryId) query = query.eq("category_sub_id", subcategoryId);
-    if (source) query = query.ilike("external_id", `${source}%`);
 
-    // Preis-Logik wie besprochen
-    if (priceTier) {
-      if (priceTier === "gratis")
-        query = query.or("price_from.eq.0,price_label.ilike.%kostenlos%,price_label.ilike.%gratis%");
-      else if (priceTier === "$") query = query.lte("price_from", 50);
-      else if (priceTier === "$$") query = query.gt("price_from", 50).lte("price_from", 120);
-      else if (priceTier === "$$$") query = query.gt("price_from", 120);
-    }
-
-    // Zeit-Logik (Heute, Morgen, etc.)
-    const now = new Date();
-    if (timeFilter === "now") {
-      query = query
-        .gte("start_date", now.toISOString())
-        .lte("start_date", new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString());
-    } else if (timeFilter === "today") {
-      query = query
-        .gte("start_date", now.toISOString())
-        .lte("start_date", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString());
-    } else if (singleDate) {
-      const d = new Date(singleDate);
-      query = query
-        .gte("start_date", new Date(d.setHours(0, 0, 0, 0)).toISOString())
-        .lte("start_date", new Date(d.setHours(23, 59, 59)).toISOString());
-    }
-
-    // Wir laden 1000 Stück, um Dubletten über Seiten hinweg zu finden
+    // Sortierung nach Datum
     const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(1000);
     if (dbError) throw dbError;
 
-    // --- 2. JAVASCRIPT LOGIK (Bündelung & Deine Spezial-Filter) ---
     const processed: any[] = [];
     const tmMap = new Map<string, any>();
 
     (rawEvents || []).forEach((event) => {
-      // A. Radius Check (Haversine)
+      // A. RADIUS CHECK
       if (cityLat && cityLng && radius > 0 && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -103,42 +71,26 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // B. DEINE SPEZIAL-TAGS (Mistwetter, Kids-Alter, Romantik, etc.)
+      // B. DEINE SPEZIAL-TAGS (Mistwetter, Kids, Romantik)
       if (tags && tags.length > 0) {
-        const eventText = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
-        const matchesTags = tags.some((tag: string) => {
-          // Mistwetter / Indoor
-          if (tag === "schlechtwetter-indoor")
-            return /indoor|museum|kino|theater|halle|konzertsaal/i.test(eventText) || event.tags?.includes(tag);
-          // Kinder Altersgruppen
-          if (tag === "kleinkinder") return /baby|kleinkind|0-4|krabbeln/i.test(eventText) || event.tags?.includes(tag);
-          if (tag === "schulkinder") return /schulkind|5-10|primarschule/i.test(eventText) || event.tags?.includes(tag);
-          if (tag === "teenager")
-            return /teenager|jugend|ab 12|jugendlich/i.test(eventText) || event.tags?.includes(tag);
-          // Standard-Tags (Romantik, Nightlife, etc.)
-          return event.tags?.includes(tag) || eventText.includes(tag.split("-")[0]);
+        const txt = `${event.title} ${event.short_description || ""}`.toLowerCase();
+        const hasTag = tags.some((t: string) => {
+          if (t === "schlechtwetter-indoor") return /indoor|halle|museum|kino/i.test(txt);
+          if (t === "kleinkinder") return /baby|0-4|krabbeln/i.test(txt);
+          if (t === "schulkinder") return /5-10|primar/i.test(txt);
+          if (t === "teenager") return /teenager|ab 12/i.test(txt);
+          return event.tags?.includes(t) || txt.includes(t.split("-")[0]);
         });
-        if (!matchesTags) return;
+        if (!hasTag) return;
       }
 
-      // C. VIP ARTISTS FILTER
-      if (vipArtistsFilter && vipArtistsFilter.length > 0) {
-        const isVip = vipArtistsFilter.some((artist: string) =>
-          event.title?.toLowerCase().includes(artist.toLowerCase()),
-        );
-        if (!isVip) return;
-      }
-
-      // D. DIE TICKETMASTER-BÜNDELUNG (Das eigentliche Problem heute)
-      const isTM = event.external_id?.startsWith("tm");
+      // C. TICKETMASTER BÜNDELUNG
+      const isTM = event.external_id?.toLowerCase().startsWith("tm");
 
       if (!isTM) {
-        // MySwitzerland & Rest: 1:1 durchreichen, nichts verändern!
-        processed.push(event);
+        processed.push(event); // MySwitzerland & Rest
       } else {
-        // Ticketmaster: Gruppieren nach gereinigtem Titel + Stadt
-        const key = `${superClean(event.title)}_${superClean(event.address_city || "ch")}`;
-
+        const key = `${bundleKey(event.title)}_${bundleKey(event.address_city || "ch")}`;
         if (!tmMap.has(key)) {
           tmMap.set(key, { ...event, all_dates: [event.start_date] });
         } else {
@@ -148,17 +100,14 @@ serve(async (req) => {
           existing.start_date = sorted[0];
           existing.end_date = sorted[sorted.length - 1];
           existing.is_range = true;
-          // Bild-Fallback
-          if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
         }
       }
     });
 
-    // Alles mischen und final nach Datum sortieren
     const final = [...processed, ...Array.from(tmMap.values())];
     final.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-    // 3. EXTRAS FÜR INITIAL LOAD (Kategorien & VIPs für deine Filter-Menüs)
+    // 2. EXTRAS (Taxonomy für die Filter-Menüs)
     let taxonomy: any[] = [];
     let vipArtists: any[] = [];
     if (initialLoad) {
@@ -168,17 +117,19 @@ serve(async (req) => {
       vipArtists = vips?.map((a) => a.artists_name).filter(Boolean) || [];
     }
 
+    // LIMIT 50 beachten (wegen Browser-Error aus History)
+    const result = final.slice(offset, offset + limit);
+
     return new Response(
       JSON.stringify({
-        events: final.slice(offset, offset + limit),
+        events: result,
         taxonomy,
         vipArtists,
         pagination: { total: final.length, hasMore: offset + limit < final.length },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: errorMessage }), { status: 500, headers: corsHeaders });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 });
