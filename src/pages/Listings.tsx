@@ -22,6 +22,7 @@ import {
   Music,
   Palette,
   Sparkles,
+  Flame,
   LayoutGrid,
   Zap,
   UtensilsCrossed,
@@ -35,29 +36,77 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
-import { format, parseISO } from "date-fns";
+import {
+  format,
+  addDays,
+  addWeeks,
+  isToday,
+  isTomorrow,
+  parseISO,
+  isSameDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isWithinInterval,
+  isAfter,
+  isBefore,
+} from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-// DIREKT-VERBINDUNG zu deinem externen Projekt
+// FIX: Direkte Verbindung zu deinem echten Supabase-Projekt
 import { createClient } from "@supabase/supabase-js";
 const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const EXTERNAL_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDA4MDQsImV4cCI6MjA4MDY3NjgwNH0.bth3dTvG3fXSu4qILB514x1TRy0scRLo_KM9lDMMKDs";
 const supabase = createClient(EXTERNAL_URL, EXTERNAL_KEY);
 
-// Placeholder images
+// Placeholder images for fallback
 import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
 import eventConcert from "@/assets/event-concert.jpg";
+import eventSymphony from "@/assets/event-symphony.jpg";
 import swissZurich from "@/assets/swiss-zurich.jpg";
-const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
-const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
+import swissBern from "@/assets/swiss-bern.jpg";
+import swissLucerne from "@/assets/swiss-lucerne.jpg";
+import swissGeneva from "@/assets/swiss-geneva.jpg";
+import weekendJazz from "@/assets/weekend-jazz.jpg";
+import weekendOpera from "@/assets/weekend-opera.jpg";
+import festivalCrowd from "@/assets/festival-crowd.jpg";
+import festivalSinger from "@/assets/festival-singer.jpg";
+import festivalStage from "@/assets/festival-stage.jpg";
+import festivalFriends from "@/assets/festival-friends.jpg";
+import festivalChoir from "@/assets/festival-choir.jpg";
+
+const placeholderImages = [
+  eventAbbey,
+  eventVenue,
+  eventConcert,
+  eventSymphony,
+  swissZurich,
+  swissBern,
+  swissLucerne,
+  swissGeneva,
+  weekendJazz,
+  weekendOpera,
+  festivalCrowd,
+  festivalSinger,
+  festivalStage,
+  festivalFriends,
+  festivalChoir,
+];
+
+const getPlaceholderImage = (index: number) => {
+  return placeholderImages[index % placeholderImages.length];
+};
 
 interface ExternalEvent {
   id: string;
@@ -74,13 +123,16 @@ interface ExternalEvent {
   price_from?: number;
   price_to?: number;
   price_label?: string;
+  ticket_link?: string;
+  category_main_id?: number;
+  category_sub_id?: number;
   latitude?: number;
   longitude?: number;
   tags?: string[];
+  available_months?: number[];
   date_range_start?: string;
   date_range_end?: string;
   show_count?: number;
-  available_months?: number[];
 }
 
 interface TaxonomyItem {
@@ -119,29 +171,63 @@ const Listings = () => {
   const { sendLike } = useLikeOnFavorite();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+  const [vipArtists, setVipArtists] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [totalEvents, setTotalEvents] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [nextOffset, setNextOffset] = useState(0);
+  const [totalEvents, setTotalEvents] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const [selectedCity, setSelectedCity] = useState("");
-  const [radius, setRadius] = useState([0]);
-  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
-  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
-  const [dogFriendly, setDogFriendly] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
+  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
+  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [radius, setRadius] = useState([0]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
   const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
+  const [dogFriendly, setDogFriendly] = useState(false);
+
+  const indoorFilters = [
+    { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
+    { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
+  ];
+  const familyAgeFilters = [
+    { id: "alle", label: "Alle Altersgruppen", tag: "familie-kinder" },
+    { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
+    { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
+    { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
+  ];
+  const timeFilters = [
+    { id: "today", label: "Heute" },
+    { id: "tomorrow", label: "Morgen" },
+    { id: "thisWeek", label: "Wochenende" },
+  ];
+
+  const isFamilyFilterActive = selectedQuickFilters.includes("mit-kind");
+  const isMistwetterFilterActive = selectedQuickFilters.includes("mistwetter");
+  const isTopStarsActive = selectedQuickFilters.includes("top-stars");
+
+  const mainCategories = useMemo(
+    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
+    [taxonomy],
+  );
+  const subCategories = useMemo(() => {
+    if (!selectedCategoryId) return [];
+    return taxonomy
+      .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [taxonomy, selectedCategoryId]);
 
   const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
     () => ({
@@ -176,11 +262,23 @@ const Listings = () => {
       }
     }
     const tags: string[] = [];
-    selectedQuickFilters.forEach((id) => {
-      const found = quickFilters.find((f) => f.id === id);
-      if (found) tags.push(...found.tags);
-    });
+    if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
+    if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
+    if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
+    if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
+    if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
+    if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
+    if (selectedQuickFilters.includes("mistwetter")) {
+      const indoor = indoorFilters.find((f) => f.id === selectedIndoorFilter) || indoorFilters[0];
+      tags.push(...indoor.tags);
+    }
+    if (selectedQuickFilters.includes("mit-kind")) {
+      const ageTag =
+        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter;
+      tags.push(ageTag);
+    }
     if (tags.length > 0) filters.tags = tags;
+    if (isTopStarsActive && vipArtists.length > 0) filters.vipArtistsFilter = vipArtists;
     return filters;
   }, [
     searchQuery,
@@ -191,7 +289,14 @@ const Listings = () => {
     selectedCity,
     radius,
     selectedQuickFilters,
+    selectedDate,
+    selectedDateRange,
+    selectedIndoorFilter,
+    selectedFamilyAgeFilter,
+    isTopStarsActive,
+    vipArtists,
     CITY_COORDINATES,
+    indoorFilters,
   ]);
 
   const fetchEvents = useCallback(
@@ -210,12 +315,15 @@ const Listings = () => {
         if (data?.events) setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
         if (data?.pagination) {
           setHasMore(data.pagination.hasMore);
-          setNextOffset(data.pagination.nextOffset || offset + 30);
+          setNextOffset(data.pagination.nextOffset);
           setTotalEvents(data.pagination.total);
         }
-        if (isInitial && data?.taxonomy) setTaxonomy(data.taxonomy);
+        if (isInitial) {
+          if (data?.taxonomy) setTaxonomy(data.taxonomy);
+          if (data?.vipArtists) setVipArtists(data.vipArtists);
+        }
       } catch (err) {
-        console.error(err);
+        setError(err instanceof Error ? err.message : "Failed to load events");
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -225,8 +333,8 @@ const Listings = () => {
   );
 
   useEffect(() => {
-    const t = setTimeout(() => fetchEvents(true), 400);
-    return () => clearTimeout(t);
+    const timeoutId = setTimeout(() => fetchEvents(true), 400);
+    return () => clearTimeout(timeoutId);
   }, [
     searchQuery,
     selectedCity,
@@ -236,62 +344,46 @@ const Listings = () => {
     selectedQuickFilters,
     selectedPriceTier,
     selectedTimeFilter,
+    dogFriendly,
+    selectedDate,
+    selectedDateRange,
   ]);
 
-  // LOGIK FÜR ENTFERNUNG UND KURZEN ORT
-  const getDistanceInfo = (lat: number, lng: number) => {
-    const centers = [
-      { name: "Zürich", lat: 47.3769, lng: 8.5417 },
-      { name: "Bern", lat: 46.948, lng: 7.4474 },
-      { name: "Basel", lat: 47.5596, lng: 7.5886 },
-      { name: "Genf", lat: 46.2044, lng: 6.1432 },
-      { name: "Luzern", lat: 47.0502, lng: 8.3093 },
-    ];
-    let nearest = centers[0],
-      minDist = Infinity;
-    centers.forEach((c) => {
-      const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
-      if (d < minDist) {
-        minDist = d;
-        nearest = c;
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) fetchEvents(false);
+      },
+      { threshold: 0.1 },
+    );
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading, fetchEvents]);
+
+  const toggleQuickFilter = (filterId: string) => {
+    const active = selectedQuickFilters.includes(filterId);
+    if (active) {
+      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
+      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
+      setSelectedQuickFilters([]);
+    } else {
+      if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
+      if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
+      if (filterId === "top-stars") {
+        setSelectedCategoryId(null);
+        setSelectedSubcategoryId(null);
       }
-    });
-    const dLat = lat - nearest.lat,
-      dLng = lng - nearest.lng;
-    const dir =
-      dLat > 0.05
-        ? dLng > 0.05
-          ? "NO"
-          : dLng < -0.05
-            ? "NW"
-            : "N"
-        : dLat < -0.05
-          ? dLng > 0.05
-            ? "SO"
-            : dLng < -0.05
-              ? "SW"
-              : "S"
-          : dLng > 0.05
-            ? "O"
-            : dLng < -0.05
-              ? "W"
-              : "";
-    return minDist > 1 ? `~${Math.round(minDist)} km ${dir} von ${nearest.name}` : `in ${nearest.name}`;
+      setSelectedQuickFilters([filterId]);
+    }
   };
 
-  const getEventLocation = (event: ExternalEvent) => {
-    const city = event.address_city?.trim();
-    if (city && city !== "Schweiz" && !event.title.includes(city)) return city;
-    const venue = event.venue_name?.trim();
-    if (venue && venue !== event.title) return venue;
-    return event.location?.trim() !== "Schweiz" ? event.location : "Schweiz";
-  };
-
+  const getEventLocation = (event: ExternalEvent) =>
+    event.address_city || event.venue_name || event.location || "Schweiz";
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
     try {
       if (start && end && count && count > 1)
-        return `${format(parseISO(start), "d. MMM", { locale: de })} – ${format(parseISO(end), "d. MMM yyyy", { locale: de })}`;
+        return `${format(parseISO(start), "d. MMM", { locale: de })} – ${format(parseISO(end), "d. MMM yyyy", { locale: de })} (${count} Shows)`;
       return format(parseISO(d), "d. MMM yyyy", { locale: de });
     } catch {
       return "Datum TBA";
@@ -308,6 +400,8 @@ const Listings = () => {
     setSelectedTimeFilter(null);
     setSelectedPriceTier(null);
     setDogFriendly(false);
+    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
   };
 
   const hasActiveFilters =
@@ -315,7 +409,12 @@ const Listings = () => {
     radius[0] > 0 ||
     selectedQuickFilters.length > 0 ||
     searchQuery.trim() !== "" ||
-    selectedCategoryId !== null;
+    selectedCategoryId !== null ||
+    selectedTimeFilter !== null ||
+    selectedPriceTier !== null ||
+    dogFriendly ||
+    selectedDate !== undefined ||
+    selectedDateRange !== undefined;
 
   const filterContent = (
     <div className="space-y-5">
@@ -341,7 +440,7 @@ const Listings = () => {
           <Slider value={radius} onValueChange={setRadius} max={50} step={5} className="w-full" />
           <div className="flex justify-between items-center mt-1.5">
             <span className="text-xs text-gray-400">Umkreis</span>
-            <span className="text-sm font-semibold tabular-nums px-2 py-0.5 border rounded-lg bg-white">
+            <span className="text-sm font-semibold tabular-nums border px-2 py-0.5 rounded-lg bg-white text-gray-800">
               {radius[0]} km
             </span>
           </div>
@@ -350,22 +449,64 @@ const Listings = () => {
 
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
-        <div className="grid grid-cols-3 gap-1.5">
-          {quickFilters.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => toggleQuickFilter(f.id)}
-              className={cn(
-                "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all border",
-                selectedQuickFilters.includes(f.id)
-                  ? "bg-blue-600 text-white shadow-md border-blue-600"
-                  : "bg-white text-gray-800 border-gray-200",
-              )}
-            >
-              <f.icon size={18} />
-              <span className="text-[11px] mt-1">{f.label}</span>
-            </button>
-          ))}
+        <div className="space-y-2">
+          {(() => {
+            const rows = [];
+            for (let i = 0; i < quickFilters.length; i += 3) rows.push(quickFilters.slice(i, i + 3));
+            return rows.map((row, rIdx) => (
+              <div key={rIdx}>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {row.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => toggleQuickFilter(f.id)}
+                      className={cn(
+                        "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5 border",
+                        selectedQuickFilters.includes(f.id)
+                          ? "bg-blue-600 text-white shadow-md border-blue-600"
+                          : "bg-white text-gray-800 border-gray-200",
+                      )}
+                    >
+                      <f.icon size={18} />
+                      <span className="text-[13px] font-medium mt-0.5">{f.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {row.some((f) => f.id === "mistwetter") && isMistwetterFilterActive && (
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
+                    {indoorFilters.map((ifilt) => (
+                      <button
+                        key={ifilt.id}
+                        onClick={() => setSelectedIndoorFilter(ifilt.id)}
+                        className={cn(
+                          "w-full py-2 px-3 rounded-lg text-xs text-left",
+                          selectedIndoorFilter === ifilt.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
+                        )}
+                      >
+                        {ifilt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {row.some((f) => f.id === "mit-kind") && isFamilyFilterActive && (
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
+                    {familyAgeFilters.map((afilt) => (
+                      <button
+                        key={afilt.id}
+                        onClick={() => setSelectedFamilyAgeFilter(afilt.id)}
+                        className={cn(
+                          "w-full py-2 px-3 rounded-lg text-xs text-left",
+                          selectedFamilyAgeFilter === afilt.id ? "bg-pink-600 text-white" : "bg-white text-gray-800",
+                        )}
+                      >
+                        {afilt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ));
+          })()}
         </div>
       </div>
 
@@ -375,19 +516,17 @@ const Listings = () => {
           {(() => {
             const allCats = [
               { id: null, name: "Alle", icon: LayoutGrid },
-              ...taxonomy
-                .filter((t) => t.type === "main")
-                .map((c) => ({
-                  id: c.id,
-                  name: c.name,
-                  icon: c.name.includes("Musik")
-                    ? Music
-                    : c.name.includes("Kunst")
-                      ? Palette
-                      : c.name.includes("Kulinarik")
-                        ? UtensilsCrossed
-                        : LayoutGrid,
-                })),
+              ...mainCategories.map((c) => ({
+                id: c.id,
+                name: c.name,
+                icon: c.name.includes("Musik")
+                  ? Music
+                  : c.name.includes("Kunst")
+                    ? Palette
+                    : c.name.includes("Kulinarik")
+                      ? UtensilsCrossed
+                      : LayoutGrid,
+              })),
             ].slice(0, 6);
             const rows = [];
             for (let i = 0; i < allCats.length; i += 2) rows.push(allCats.slice(i, i + 2));
@@ -406,7 +545,7 @@ const Listings = () => {
                         className={cn(
                           "flex flex-col items-center py-4 rounded-xl border transition-all h-24 justify-center",
                           selectedCategoryId === cat.id
-                            ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                            ? "bg-blue-600 text-white shadow-md border-blue-600"
                             : "bg-white text-gray-800 border-gray-200",
                         )}
                       >
@@ -466,11 +605,7 @@ const Listings = () => {
           <Zap size={16} strokeWidth={3} className="-ml-2" /> JETZT
         </button>
         <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { id: "today", label: "Heute" },
-            { id: "tomorrow", label: "Morgen" },
-            { id: "thisWeek", label: "Wochenende" },
-          ].map((t) => (
+          {timeFilters.map((t) => (
             <button
               key={t.id}
               onClick={() => setSelectedTimeFilter((prev) => (prev === t.id ? null : t.id))}
@@ -492,7 +627,7 @@ const Listings = () => {
           }}
           className="w-full h-11 rounded-xl text-sm border flex items-center justify-center gap-2 bg-white border-gray-200 shadow-sm"
         >
-          <CalendarIcon size={16} className="text-gray-500" />
+          <CalendarIcon size={16} />
           <span>Zeitraum wählen</span>
         </button>
       </div>
@@ -530,14 +665,13 @@ const Listings = () => {
           <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Suche..."
+            placeholder="Künstler, Event..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-11 pr-4 py-3 bg-white rounded-xl text-sm border border-gray-200 text-gray-800 shadow-inner"
           />
         </div>
       </div>
-
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
@@ -562,7 +696,6 @@ const Listings = () => {
               {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
             </div>
           </aside>
-
           <main className="flex-1 min-w-0">
             <div className="lg:hidden mb-6">
               <button
@@ -572,7 +705,6 @@ const Listings = () => {
                 <SlidersHorizontal size={18} /> Filter anpassen
               </button>
             </div>
-
             {loading && !loadingMore ? (
               <div className="flex justify-center py-40">
                 <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
@@ -630,14 +762,12 @@ const Listings = () => {
                             <MapPin size={16} className="text-red-500 flex-shrink-0" />
                             <span className="truncate font-medium">{getEventLocation(event)}</span>
                             {event.latitude && (
-                              <span className="text-neutral-400 text-xs whitespace-nowrap opacity-80">
-                                • {getDistanceInfo(event.latitude, event.longitude)}
-                              </span>
+                              <span className="text-neutral-400 text-xs whitespace-nowrap opacity-80">• Karte</span>
                             )}
                           </div>
                           {event.latitude && event.longitude && (
                             <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-300">
-                              <div className="bg-white p-4 rounded-3xl shadow-2xl border w-52 h-44">
+                              <div className="bg-white p-4 rounded-3xl shadow-2xl border border-gray-200 w-52 h-44">
                                 <div className="relative w-full h-full bg-slate-50 rounded-2xl overflow-hidden">
                                   <img src="/swiss-outline.svg" className="w-full h-full object-contain p-2" />
                                   <div
@@ -669,32 +799,11 @@ const Listings = () => {
               </div>
             )}
             <div ref={loadMoreRef} className="h-24 flex justify-center items-center mt-10">
-              {loadingMore && (
-                <div className="flex items-center gap-3 text-neutral-400">
-                  <Loader2 className="animate-spin" />
-                  <span>Lade mehr...</span>
-                </div>
-              )}
+              {loadingMore && <Loader2 className="animate-spin" />}
             </div>
           </main>
         </div>
       </div>
-
-      {showMobileFilters && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] p-8 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
-              <span className="text-xl font-bold">Filter anpassen</span>
-              <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-neutral-100 rounded-full">
-                <X size={24} />
-              </button>
-            </div>
-            <div className="bg-neutral-900 rounded-[2rem] p-6 shadow-xl mb-20">{filterContent}</div>
-          </div>
-        </div>
-      )}
-
       <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
         <DialogContent className="sm:max-w-md bg-white border-0 shadow-3xl rounded-[2rem] p-0 overflow-hidden">
           <Calendar
