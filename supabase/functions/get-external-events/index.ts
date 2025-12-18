@@ -20,30 +20,30 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    // Wir nutzen das stabile Limit von 30
     const { offset = 0, limit = 30, initialLoad = true, filters = {} } = body;
     const { searchQuery, categoryId, tags, cityLat, cityLng, radius } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // 1. DYNAMISCHE KEYWORDS LADEN
+    // 1. KEYWORDS LADEN (Mit Case-Korrektur)
     let activeKeywords: string[] = [];
     if (tags && tags.length > 0) {
-      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", tags);
+      // Wir wandeln die Tags in Kleinschreibung um, passend zur Datenbank
+      const searchTags = tags.map((t: string) => t.toLowerCase());
+      const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", searchTags);
       activeKeywords = kwData?.map((k) => k.keyword.toLowerCase()) || [];
     }
 
-    // 2. BASIS-QUERY ERSTELLEN
+    // 2. SQL ABFRAGE
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // Wenn Mood-Keywords da sind, lassen wir die DB direkt danach suchen (SQL Vollsuche)
     if (activeKeywords.length > 0) {
-      // Wir nehmen die ersten 5 Keywords für die schnelle SQL-Vorsuche
-      const sqlSearch = activeKeywords
-        .slice(0, 5)
+      // Wir suchen in SQL nach den Top 10 Keywords für beste Trefferquote
+      const sqlTerms = activeKeywords
+        .slice(0, 10)
         .map((kw) => `title.ilike.%${kw}%`)
         .join(",");
-      query = query.or(sqlSearch);
+      query = query.or(sqlTerms);
     }
 
     if (searchQuery?.trim()) {
@@ -53,15 +53,11 @@ serve(async (req) => {
 
     if (categoryId) query = query.eq("category_main_id", categoryId);
 
-    // Wir laden genug Futter für das Grouping
     const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(1000);
     if (dbError) throw dbError;
 
     const processed: any[] = [];
     const tmMap = new Map<string, any>();
-
-    // Regex für "Ganze Wörter": Verhindert, dass 'spa' in 'spass' gefunden wird
-    const keywordRegex = activeKeywords.length > 0 ? new RegExp(`\\b(${activeKeywords.join("|")})\\b`, "i") : null;
 
     (rawEvents || []).forEach((event) => {
       // A. Radius Check
@@ -75,10 +71,21 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // B. PRÄZISIONS-MOOD-FILTER (Ganze Wörter)
-      if (keywordRegex) {
-        const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`;
-        if (!keywordRegex.test(txt)) return;
+      // B. INTELLIGENTER MOOD-FILTER
+      if (activeKeywords.length > 0) {
+        const txt = ` ${event.title} ${event.short_description || ""} ${event.venue_name || ""} `.toLowerCase();
+
+        const hasMatch = activeKeywords.some((kw) => {
+          if (kw.length <= 3) {
+            // Kurze Wörter wie 'spa' müssen freistehend sein (verhindert 'spass')
+            const regex = new RegExp(`\\b${kw}\\b`, "i");
+            return regex.test(txt);
+          }
+          // Lange Wörter dürfen Teil von anderen Wörtern sein (findet 'jazzabend')
+          return txt.includes(kw);
+        });
+
+        if (!hasMatch) return;
       }
 
       // C. Ticketmaster Bündelung
@@ -103,7 +110,6 @@ serve(async (req) => {
     const final = [...processed, ...Array.from(tmMap.values())];
     final.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-    // Rückgabe mit dem stabilen Limit
     const result = final.slice(offset, offset + limit);
 
     let taxonomy: any[] = [];
