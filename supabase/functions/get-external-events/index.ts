@@ -6,14 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Aggressives Bündeln: Wir nehmen nur die ersten 15 Zeichen
+// Hilfsfunktion für den radikalen Abgleich (Linkin Park Fix)
 function superClean(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
+    .replace(/[^a-z0-9]/g, "") // Entfernt alles außer Buchstaben/Zahlen
     .trim()
-    .substring(0, 15); // Der "Linkin Park" Fix
+    .substring(0, 15); // Vergleicht nur die ersten 15 Zeichen
 }
 
 serve(async (req) => {
@@ -26,9 +26,10 @@ serve(async (req) => {
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
+    // Wir laden 1000 Events für das Grouping
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // SQL-Vorfilterung
+    // SQL-Vorfilterung (Suche & Kategorie)
     if (searchQuery?.trim()) {
       const s = `%${searchQuery.trim()}%`;
       query = query.or(`title.ilike.${s},venue_name.ilike.${s},address_city.ilike.${s}`);
@@ -42,7 +43,7 @@ serve(async (req) => {
     const tmMap = new Map<string, any>();
 
     (rawEvents || []).forEach((event) => {
-      // Radius-Check
+      // 1. RADIUS CHECK
       if (cityLat && cityLng && radius > 0 && event.latitude && event.longitude) {
         const dLat = ((event.latitude - cityLat) * Math.PI) / 180;
         const dLng = ((event.longitude - cityLng) * Math.PI) / 180;
@@ -53,16 +54,18 @@ serve(async (req) => {
         if (dist > radius) return;
       }
 
-      // --- THEMA 1: ROMANTIK (DIE MEGA-LISTE) ---
+      // 2. ROMANTIK-FILTER (DIE MEGA-LISTE)
       if (tags && tags.includes("romantisch-date")) {
         const txt = `${event.title} ${event.short_description || ""} ${event.venue_name || ""}`.toLowerCase();
         const romantikKeywords = [
-          // Klassik & Vibe
+          // Vibe & Klassik
           "romant",
           "date",
           "love",
           "liebe",
+          "liebi",
           "herz",
+          "heart",
           "kiss",
           "kuss",
           "sweetheart",
@@ -73,8 +76,17 @@ serve(async (req) => {
           "kerzen",
           "valentinstag",
           "valentine",
-          // Kulinarik (Essen & Trinken)
+          "sternenhimmel",
+          "stargazing",
+          "moonlight",
+          "mondschein",
+          "kamin",
+          "lagerfeuer",
+          "fire",
+          "rosen",
+          // Kulinarik
           "dinner",
+          "nachtässe",
           "gänge",
           "menü",
           "menu",
@@ -97,33 +109,31 @@ serve(async (req) => {
           "aphrodisiac",
           "austern",
           "trüffel",
-          // Erlebnisse
-          "sternenhimmel",
-          "stargazing",
-          "moonlight",
-          "mondschein",
-          "kamin",
-          "lagerfeuer",
-          "fire",
+          "kaviar",
+          "gala",
+          // Kultur & Musik (JAZZ!)
+          "jazz",
           "piano",
           "klavier",
-          "jazz",
           "chanson",
           "serenade",
           "ballade",
           "oper",
           "ballett",
-          "schiff",
-          "cruise",
-          "gondel",
-          "kutsche",
-          "carriage",
+          "klassik",
           "schloss",
           "castle",
           "burg",
-          "sommernacht",
+          "kutsche",
+          "carriage",
+          "gondel",
+          "schiff",
+          "cruise",
+          "boot",
+          "sommernachtskino",
           "openairkino",
           "sommerkino",
+          "sternwarte",
           // Wellness & Schweizerdeutsch
           "massage",
           "spa",
@@ -134,25 +144,24 @@ serve(async (req) => {
           "schmüsele",
           "kuscheln",
           "chuschle",
-          "liebi",
           "schätzli",
           "gnüsse",
-          "zäme",
           "gnuss",
-          "nachtässe",
+          "zäme",
           "usflug",
+          "schmusen",
         ];
 
         const isRomantisch = romantikKeywords.some((key) => txt.includes(key));
-        if (!isRomantisch) return; // Wenn nicht romantisch, aussortieren
+        if (!isRomantisch) return;
       }
 
-      // Bündelung
+      // 3. TICKETMASTER BÜNDELUNG (MIT AGGRESSIVEM KEY)
       const isTM = event.external_id?.toLowerCase().startsWith("tm");
       if (!isTM) {
-        processed.push(event);
+        processed.push(event); // MySwitzerland & Rest unverändert
       } else {
-        // Der aggressive Key für Helene/Linkin Park etc.
+        // Schlüssel aus den ersten 15 Zeichen + Stadt
         const key = `${superClean(event.title)}_${(event.address_city || "ch").toLowerCase()}`;
         if (!tmMap.has(key)) {
           tmMap.set(key, { ...event, all_dates: [event.start_date] });
@@ -163,6 +172,8 @@ serve(async (req) => {
           existing.start_date = sorted[0];
           existing.end_date = sorted[sorted.length - 1];
           existing.is_range = true;
+          // Bild-Fallback
+          if (!existing.image_url && event.image_url) existing.image_url = event.image_url;
         }
       }
     });
@@ -170,7 +181,7 @@ serve(async (req) => {
     const final = [...processed, ...Array.from(tmMap.values())];
     final.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-    // WICHTIG: Limit 50 einhalten
+    // Rückgabe auf 50 begrenzen
     const result = final.slice(offset, offset + limit);
 
     let taxonomy: any[] = [];
