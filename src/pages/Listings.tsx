@@ -122,20 +122,44 @@ const Listings = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
+  // FIX: Taxonomie BEREINIGT (ID 25 "Stadtfest" wieder da, aber ohne Rummel)
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([
-    { id: 2, name: "Musik & Party", type: "main", parent_id: null },
-    { id: 3, name: "Kunst & Kultur", type: "main", parent_id: null },
-    { id: 4, name: "Kulinarik & Genuss", type: "main", parent_id: null },
-    { id: 6, name: "Märkte & Stadtfeste", type: "main", parent_id: null },
-    { id: 37, name: "Sport & Freizeit", type: "main", parent_id: null },
-    { id: 7, name: "Rock & Pop", type: "sub", parent_id: 2 },
-    { id: 8, name: "Klassik & Oper", type: "sub", parent_id: 2 },
-    { id: 9, name: "Jazz & Blues", type: "sub", parent_id: 2 },
-    { id: 10, name: "Electro & Techno", type: "sub", parent_id: 2 },
-    { id: 15, name: "Museum & Ausstellung", type: "sub", parent_id: 3 },
-    { id: 17, name: "Film & Kino", type: "sub", parent_id: 3 },
-    { id: 18, name: "Workshops & Kurse", type: "sub", parent_id: 4 },
-    { id: 20, name: "Fine Dining", type: "sub", parent_id: 4 },
+    // --- HAUPTKATEGORIEN ---
+    { id: 37, name: "Natur & Ausflüge", type: "main", parent_id: null },
+    { id: 3, name: "Kultur & Bühne", type: "main", parent_id: null },
+    { id: 4, name: "Genuss & Gastro", type: "main", parent_id: null },
+    { id: 5, name: "Märkte & Shopping", type: "main", parent_id: null },
+    { id: 6, name: "Feste & Events", type: "main", parent_id: null },
+
+    // --- SUBKATEGORIEN ---
+
+    // 1. Natur & Ausflüge (ID 37)
+    { id: 40, name: "Seen & Ausflüge", type: "sub", parent_id: 37 },
+    { id: 38, name: "Berge & Wandern", type: "sub", parent_id: 37 },
+    { id: 39, name: "Fahrrad", type: "sub", parent_id: 37 },
+    { id: 41, name: "Winter", type: "sub", parent_id: 37 },
+
+    // 2. Kultur & Bühne (ID 3)
+    { id: 13, name: "Theater, Musical & Show", type: "sub", parent_id: 3 },
+    { id: 14, name: "Comedy & Kabarett", type: "sub", parent_id: 3 },
+    { id: 15, name: "Museum, Kunst & Ausstellung", type: "sub", parent_id: 3 },
+    { id: 16, name: "Buchlesungen & Vorträge", type: "sub", parent_id: 3 },
+    { id: 17, name: "Film & Kino Events", type: "sub", parent_id: 3 },
+
+    // 3. Genuss & Gastro (ID 4)
+    { id: 18, name: "Tastings, Workshops & Kurse", type: "sub", parent_id: 4 },
+    { id: 19, name: "Dinner-Shows & Erlebnis-Gastro", type: "sub", parent_id: 4 },
+    { id: 20, name: "Fine Dining & Besondere Restaurants", type: "sub", parent_id: 4 },
+    { id: 21, name: "Lokale Spezialitäten & Tradition", type: "sub", parent_id: 4 },
+
+    // 4. Märkte & Shopping (ID 5)
+    { id: 22, name: "Flohmarkt & Trödel", type: "sub", parent_id: 5 },
+    { id: 23, name: "Wochen- & Frischemärkte", type: "sub", parent_id: 5 },
+    { id: 24, name: "Streetfood & Designmärkte", type: "sub", parent_id: 5 },
+
+    // 5. Feste & Events (ID 6)
+    { id: 25, name: "Stadtfest", type: "sub", parent_id: 6 }, // ID 25 korrigiert (nur "Stadtfest")
+    { id: 26, name: "Saisonale Märkte", type: "sub", parent_id: 6 },
   ]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -368,21 +392,7 @@ const Listings = () => {
         nearest = c;
       }
     });
-
-    const dLat = lat - nearest.lat;
-    const dLng = lng - nearest.lng;
-    const angle = (Math.atan2(dLat, dLng) * 180) / Math.PI;
-    let dir = "Östlich";
-    if (angle > -22.5 && angle <= 22.5) dir = "Östlich";
-    else if (angle > 22.5 && angle <= 67.5) dir = "NO";
-    else if (angle > 67.5 && angle <= 112.5) dir = "Nördlich";
-    else if (angle > 112.5 && angle <= 157.5) dir = "NW";
-    else if (angle > 157.5 || angle <= -157.5) dir = "Westlich";
-    else if (angle > -157.5 && angle <= -112.5) dir = "SW";
-    else if (angle > -112.5 && angle <= -67.5) dir = "Südlich";
-    else if (angle > -67.5 && angle <= -22.5) dir = "SO";
-
-    return `~${Math.round(minDist)} km ${dir} von ${nearest.name}`;
+    return `~${Math.round(minDist)} km von ${nearest.name}`;
   };
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
