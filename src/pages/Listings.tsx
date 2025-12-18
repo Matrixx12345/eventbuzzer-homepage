@@ -47,7 +47,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-// DIREKT-VERBINDUNG zu deinem externen Projekt
+// DIREKT-VERBINDUNG zum externen Projekt
 import { createClient } from "@supabase/supabase-js";
 const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const EXTERNAL_KEY =
@@ -99,10 +99,20 @@ const quickFilters = [
   { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
   { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["foto-spot"] },
   { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
-  { id: "mit-kind", label: "Mit Kind", icon: Smile, tags: ["familie-kinder"] },
-  { id: "nightlife", label: "Nightlife", icon: PartyPopper, tags: ["nightlife-party"] },
+  {
+    id: "mit-kind",
+    label: "Mit Kind",
+    icon: Smile,
+    tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"],
+  },
+  {
+    id: "nightlife",
+    label: "Nightlife",
+    icon: PartyPopper,
+    tags: ["nightlife-party", "afterwork", "rooftop-aussicht"],
+  },
   { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
-  { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse"] },
+  { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
 ];
 
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
@@ -114,6 +124,7 @@ const Listings = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+  const [vipArtists, setVipArtists] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -149,9 +160,17 @@ const Listings = () => {
     [],
   );
 
-  // FIX: hasActiveFilters wieder eingebaut
   const hasActiveFilters =
-    selectedCity !== "" || radius[0] > 0 || selectedQuickFilters.length > 0 || searchQuery.trim() !== "";
+    selectedCity !== "" ||
+    radius[0] > 0 ||
+    selectedQuickFilters.length > 0 ||
+    searchQuery.trim() !== "" ||
+    selectedCategoryId !== null ||
+    selectedTimeFilter !== null ||
+    selectedPriceTier !== null ||
+    dogFriendly ||
+    selectedDate !== undefined ||
+    selectedDateRange !== undefined;
 
   const clearFilters = () => {
     setSelectedCity("");
@@ -163,14 +182,21 @@ const Listings = () => {
     setSelectedTimeFilter(null);
     setSelectedPriceTier(null);
     setDogFriendly(false);
+    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
   };
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
     if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
     if (selectedCategoryId !== null) filters.categoryId = selectedCategoryId;
+    if (selectedSubcategoryId !== null) filters.subcategoryId = selectedSubcategoryId;
     if (selectedPriceTier) filters.priceTier = selectedPriceTier;
     if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
+    if (selectedDate) filters.singleDate = selectedDate.toISOString();
+    if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
+    if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
+
     if (selectedCity) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
@@ -182,21 +208,26 @@ const Listings = () => {
         }
       }
     }
-    const tags: string[] = [];
-    selectedQuickFilters.forEach((id) => {
-      const found = quickFilters.find((f) => f.id === id);
-      if (found) tags.push(...found.tags);
-    });
-    if (tags.length > 0) filters.tags = tags;
+    if (selectedQuickFilters.length > 0) {
+      const tags: string[] = [];
+      selectedQuickFilters.forEach((id) => {
+        const found = quickFilters.find((f) => f.id === id);
+        if (found) tags.push(...found.tags);
+      });
+      if (tags.length > 0) filters.tags = tags;
+    }
     return filters;
   }, [
     searchQuery,
     selectedCategoryId,
+    selectedSubcategoryId,
     selectedPriceTier,
     selectedTimeFilter,
     selectedCity,
     radius,
     selectedQuickFilters,
+    selectedDate,
+    selectedDateRange,
     CITY_COORDINATES,
   ]);
 
@@ -241,9 +272,13 @@ const Listings = () => {
     selectedCity,
     radius,
     selectedCategoryId,
+    selectedSubcategoryId,
     selectedQuickFilters,
     selectedPriceTier,
     selectedTimeFilter,
+    selectedDate,
+    selectedDateRange,
+    dogFriendly,
   ]);
 
   const getEventLocation = (event: ExternalEvent) =>
@@ -260,6 +295,11 @@ const Listings = () => {
       return "Datum TBA";
     }
   };
+
+  const mainCategories = useMemo(
+    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
+    [taxonomy],
+  );
 
   const filterContent = (
     <div className="space-y-5">
@@ -304,7 +344,7 @@ const Listings = () => {
                 onClick={() => setSelectedQuickFilters((prev) => (prev.includes(f.id) ? [] : [f.id]))}
                 className={cn(
                   "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5 border",
-                  active ? "bg-blue-600 text-white" : "bg-white text-gray-800",
+                  active ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-800",
                 )}
               >
                 <Icon size={18} />
@@ -315,8 +355,104 @@ const Listings = () => {
         </div>
       </div>
 
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
+        <Select
+          value={selectedCategoryId?.toString() || "all"}
+          onValueChange={(v) => setSelectedCategoryId(v === "all" ? null : parseInt(v))}
+        >
+          <SelectTrigger className="w-full bg-white rounded-xl border">
+            <SelectValue placeholder="Alle Kategorien" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Kategorien</SelectItem>
+            {mainCategories.map((c) => (
+              <SelectItem key={c.id} value={c.id.toString()}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { id: "today", label: "Heute" },
+            { id: "tomorrow", label: "Morgen" },
+            { id: "thisWeek", label: "WE" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setSelectedTimeFilter((prev) => (prev === t.id ? null : t.id))}
+              className={cn(
+                "h-9 rounded-lg text-xs border transition-all",
+                selectedTimeFilter === t.id ? "bg-blue-600 text-white" : "bg-white",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => {
+            setCalendarMode("range");
+            setShowCalendar(true);
+          }}
+          className={cn(
+            "w-full h-10 rounded-xl text-sm border flex items-center justify-center gap-2",
+            selectedDateRange?.from ? "bg-blue-600 text-white" : "bg-white",
+          )}
+        >
+          <CalendarIcon size={14} /> <span>{selectedDateRange?.from ? "Zeitraum gewählt" : "Zeitraum wählen"}</span>
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
+        <div className="grid grid-cols-4 gap-1.5">
+          {["gratis", "$", "$$", "$$$"].map((p) => (
+            <button
+              key={p}
+              onClick={() => setSelectedPriceTier((prev) => (prev === p ? null : p))}
+              className={cn(
+                "h-10 rounded-xl text-xs font-bold border",
+                selectedPriceTier === p ? "bg-blue-600 text-white" : "bg-white",
+              )}
+            >
+              {p.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-2 border-t border-neutral-700 mt-2">
+        <div className="flex items-center gap-2">
+          <Dog size={16} className="text-gray-400" />
+          <span className="text-sm font-medium text-gray-300">Mit Hund?</span>
+        </div>
+        <Switch checked={dogFriendly} onCheckedChange={setDogFriendly} />
+      </div>
+
+      <div className="space-y-3 pt-3 border-t border-neutral-700">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Suche..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm border"
+          />
+        </div>
+      </div>
+
       {hasActiveFilters && (
-        <button onClick={clearFilters} className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600">
+        <button
+          onClick={clearFilters}
+          className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600 transition-all"
+        >
           ✕ Filter zurücksetzen
         </button>
       )}
@@ -330,30 +466,22 @@ const Listings = () => {
         <div className="flex gap-10">
           <aside className="hidden lg:block w-[340px] flex-shrink-0">
             <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">{filterContent}</div>
-            <div className="mt-4 px-2 text-xs text-neutral-500">
-              {loading ? (
-                "Lädt..."
-              ) : (
-                <>
-                  <p>
-                    {events.length} von {totalEvents} Events
-                  </p>
-                </>
-              )}
-            </div>
+            <p className="mt-4 px-2 text-xs text-neutral-500">
+              {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
+            </p>
           </aside>
 
           <main className="flex-1 min-w-0">
             <div className="lg:hidden mb-6">
               <button
                 onClick={() => setShowMobileFilters(true)}
-                className="flex items-center gap-2.5 px-5 py-3 bg-white shadow-sm rounded-full text-sm font-medium"
+                className="flex items-center gap-2.5 px-5 py-3 bg-white shadow-sm rounded-full text-sm font-medium border"
               >
                 <SlidersHorizontal size={16} /> Filter
               </button>
             </div>
 
-            {loading ? (
+            {loading && !loadingMore ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
               </div>
@@ -373,9 +501,9 @@ const Listings = () => {
                             e.preventDefault();
                             toggleFavorite({
                               id: event.id,
-                              slug: event.id, // FIX: slug hinzugefügt
+                              slug: event.id,
                               title: event.title,
-                              venue: event.venue_name || "", // FIX: venue hinzugefügt
+                              venue: event.venue_name || "",
                               image: event.image_url || getPlaceholderImage(index),
                               location: getEventLocation(event),
                               date: formatEventDate(event.start_date),
@@ -406,7 +534,7 @@ const Listings = () => {
 
                         <div className="group/map relative mt-1.5 cursor-help">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
-                            <MapPin size={14} className="text-red-500" />
+                            <MapPin size={14} className="text-red-500 flex-shrink-0" />
                             <span className="truncate">{getEventLocation(event)}</span>
                             {event.latitude && (
                               <span className="text-neutral-400 text-xs whitespace-nowrap">• Karte ansehen</span>
@@ -418,7 +546,7 @@ const Listings = () => {
                                 <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
                                   <img src="/swiss-outline.svg" className="w-full h-full object-contain" />
                                   <div
-                                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white"
+                                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                     style={{
                                       left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
                                       top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
@@ -429,7 +557,6 @@ const Listings = () => {
                             </div>
                           )}
                         </div>
-
                         {event.price_from && (
                           <p className="text-sm font-medium text-neutral-900 mt-2">ab CHF {event.price_from}</p>
                         )}
@@ -448,6 +575,44 @@ const Listings = () => {
           </main>
         </div>
       </div>
+
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <span className="font-semibold">Filter anpassen</span>
+              <button onClick={() => setShowMobileFilters(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            {filterContent}
+          </div>
+        </div>
+      )}
+
+      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+        <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl">
+          <div className="flex justify-center py-4">
+            <Calendar
+              mode={calendarMode as any}
+              selected={calendarMode === "single" ? selectedDate : (selectedDateRange as any)}
+              onSelect={
+                calendarMode === "single"
+                  ? (d: any) => {
+                      setSelectedDate(d);
+                      setShowCalendar(false);
+                    }
+                  : (r: any) => {
+                      setSelectedDateRange(r);
+                      if (r?.from && r?.to) setShowCalendar(false);
+                    }
+              }
+              locale={de}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
