@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom"; // NavLink für aktive Zustände hinzugefügt
-import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,21 +26,13 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <NavLink
+              <Link
                 key={link.label}
                 to={link.href}
-                className={({ isActive }) =>
-                  cn(
-                    "text-sm font-medium transition-colors",
-                    // Falls aktiv: Volle Farbe, falls nicht: 80% Deckkraft
-                    isActive
-                      ? "text-navbar-foreground border-b-2 border-blue-500 pb-1"
-                      : "text-navbar-foreground/80 hover:text-navbar-foreground",
-                  )
-                }
+                className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors"
               >
                 {link.label}
-              </NavLink>
+              </Link>
             ))}
           </div>
 
@@ -56,33 +47,28 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 text-navbar-foreground" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button
+            className="md:hidden p-2 text-navbar-foreground"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border/50 bg-navbar">
+          <div className="md:hidden py-4 border-t border-border/50">
             <div className="flex flex-col gap-4">
               {navLinks.map((link) => (
-                <NavLink
+                <Link
                   key={link.label}
                   to={link.href}
-                  onClick={() => setMobileMenuOpen(false)} // Schließt Menü bei Klick
-                  className={({ isActive }) =>
-                    cn(
-                      "text-sm font-medium transition-colors px-2 py-1 rounded-md",
-                      isActive
-                        ? "bg-blue-500/10 text-blue-500"
-                        : "text-navbar-foreground/80 hover:text-navbar-foreground",
-                    )
-                  }
+                  className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors"
                 >
                   {link.label}
-                </NavLink>
+                </Link>
               ))}
-              <div className="flex gap-3 pt-4 border-t border-border/50">
+              <div className="flex gap-3 pt-4">
                 <Button variant="outline" size="sm" className="flex-1">
                   Log In
                 </Button>
