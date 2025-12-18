@@ -38,7 +38,6 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -47,7 +46,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-// DIREKT-VERBINDUNG zu deinem Projekt
+// DIREKT-VERBINDUNG zu deinem externen Projekt
 import { createClient } from "@supabase/supabase-js";
 const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
 const EXTERNAL_KEY =
@@ -170,6 +169,32 @@ const Listings = () => {
     }),
     [],
   );
+
+  const hasActiveFilters =
+    selectedCity !== "" ||
+    radius[0] > 0 ||
+    selectedQuickFilters.length > 0 ||
+    searchQuery.trim() !== "" ||
+    selectedCategoryId !== null ||
+    selectedTimeFilter !== null ||
+    selectedPriceTier !== null ||
+    dogFriendly ||
+    selectedDate !== undefined ||
+    selectedDateRange !== undefined;
+
+  const clearFilters = () => {
+    setSelectedCity("");
+    setRadius([0]);
+    setSelectedQuickFilters([]);
+    setSearchQuery("");
+    setSelectedCategoryId(null);
+    setSelectedSubcategoryId(null);
+    setSelectedTimeFilter(null);
+    setSelectedPriceTier(null);
+    setDogFriendly(false);
+    setSelectedDate(undefined);
+    setSelectedDateRange(undefined);
+  };
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
@@ -312,30 +337,6 @@ const Listings = () => {
     }
   };
 
-  const clearFilters = () => {
-    setSelectedCity("");
-    setRadius([0]);
-    setSelectedQuickFilters([]);
-    setSearchQuery("");
-    setSelectedCategoryId(null);
-    setSelectedSubcategoryId(null);
-    setSelectedTimeFilter(null);
-    setSelectedPriceTier(null);
-    setDogFriendly(false);
-    setSelectedDate(undefined);
-    setSelectedDateRange(undefined);
-  };
-
-  const hasActiveFilters =
-    selectedCity !== "" ||
-    radius[0] > 0 ||
-    selectedQuickFilters.length > 0 ||
-    searchQuery.trim() !== "" ||
-    selectedCategoryId !== null ||
-    selectedTimeFilter !== null ||
-    selectedPriceTier !== null ||
-    dogFriendly;
-
   const mainCategories = useMemo(
     () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
     [taxonomy],
@@ -406,7 +407,7 @@ const Listings = () => {
                   })}
                 </div>
                 {row.some((f) => f.id === "mistwetter") && selectedQuickFilters.includes("mistwetter") && (
-                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 space-y-1.5">
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5">
                     {indoorFilters.map((ifilt) => (
                       <button
                         key={ifilt.id}
@@ -422,7 +423,7 @@ const Listings = () => {
                   </div>
                 )}
                 {row.some((f) => f.id === "mit-kind") && selectedQuickFilters.includes("mit-kind") && (
-                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 space-y-1.5">
+                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5">
                     {familyAgeFilters.map((afilt) => (
                       <button
                         key={afilt.id}
@@ -458,7 +459,11 @@ const Listings = () => {
                     ? Palette
                     : c.name.includes("Kulinarik")
                       ? UtensilsCrossed
-                      : LayoutGrid,
+                      : c.name.includes("Freizeit")
+                        ? Sparkles
+                        : c.name.includes("Märkte")
+                          ? Gift
+                          : LayoutGrid,
               })),
             ];
             const rows = [];
@@ -520,7 +525,7 @@ const Listings = () => {
       <div className="space-y-3">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
         <button
-          onClick={() => setSelectedTimeFilter("now")}
+          onClick={() => setSelectedTimeFilter(selectedTimeFilter === "now" ? null : "now")}
           className={cn(
             "w-full h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all",
             selectedTimeFilter === "now"
@@ -604,7 +609,10 @@ const Listings = () => {
       </div>
 
       {hasActiveFilters && (
-        <button onClick={clearFilters} className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600">
+        <button
+          onClick={clearFilters}
+          className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600 transition-all"
+        >
           ✕ Filter zurücksetzen
         </button>
       )}
@@ -618,9 +626,9 @@ const Listings = () => {
         <div className="flex gap-10">
           <aside className="hidden lg:block w-[340px] flex-shrink-0">
             <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">{filterContent}</div>
-            <p className="mt-4 px-2 text-xs text-neutral-500">
+            <div className="mt-4 px-2 text-xs text-neutral-500">
               {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
-            </p>
+            </div>
           </aside>
 
           <main className="flex-1 min-w-0">
@@ -632,7 +640,7 @@ const Listings = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {events.map((event, index) => (
                   <Link key={event.id} to={`/event/${event.id}`} className="block group">
-                    <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500">
+                    <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
                       <div className="relative overflow-hidden">
                         <img
                           src={event.image_url || getPlaceholderImage(index)}
