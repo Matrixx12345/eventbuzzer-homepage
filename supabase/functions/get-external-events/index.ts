@@ -11,68 +11,62 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+    // Wir setzen das Limit auf 30, um Browser-Fehler zu vermeiden
     const { offset = 0, limit = 30, filters = {} } = body;
-    const { searchQuery, categoryId, tags } = filters;
+    const { tags = [] } = filters;
 
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
-    // --- DIE ÜBERSETZUNG (Exakt abgestimmt auf deine Listings.tsx) ---
+    // --- DER DOLMETSCHER (Wichtig!) ---
+    // Hier wird 'romantisch-date' (Frontend) zu 'romantik-date' (Deine DB)
     const translator: Record<string, string> = {
       "romantisch-date": "romantik-date",
       "wellness-selfcare": "wellness",
       "schlechtwetter-indoor": "mistwetter",
       "familie-kinder": "kinder",
-      "natur-erlebnisse": "natur",
     };
 
     let keywords: string[] = [];
-    if (tags && tags.length > 0) {
-      // Wir übersetzen 'romantisch-date' zu 'romantik-date' für die DB-Suche
+    if (tags.length > 0) {
       const dbCategories = tags.map((t: string) => translator[t] || t);
       const { data: kwData } = await supabase.from("mood_keywords").select("keyword").in("category", dbCategories);
+
       keywords = kwData?.map((k) => k.keyword.toLowerCase()) || [];
     }
 
     let query = supabase.from("events").select("*", { count: "exact" });
 
-    // Wenn Keywords da sind, suchen wir gezielt in Titeln UND Beschreibungen
+    // Wenn Keywords gefunden wurden, durchsuchen wir Titel und Beschreibung
     if (keywords.length > 0) {
-      const sqlParts = keywords
+      const sqlFilter = keywords
         .slice(0, 10)
         .flatMap((kw) => [`title.ilike.%${kw}%`, `short_description.ilike.%${kw}%`])
         .join(",");
-      query = query.or(sqlParts);
-    } else if (tags && tags.length > 0) {
-      // Sicherheit: Falls ein Button gedrückt wurde, aber keine Keywords da sind -> 0 Treffer
-      return new Response(JSON.stringify({ events: [], pagination: { total: 0, hasMore: false } }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      query = query.or(sqlFilter);
+    } else if (tags.length > 0) {
+      // Falls ein Filter aktiv ist, aber keine Keywords in der DB existieren
+      return new Response(
+        JSON.stringify({
+          events: [],
+          pagination: { total: 0, hasMore: false },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    if (searchQuery) {
-      query = query.or(`title.ilike.%${searchQuery}%,venue_name.ilike.%${searchQuery}%`);
-    }
-    if (categoryId) query = query.eq("category_main_id", categoryId);
+    const { data: events, error } = await query.order("start_date", { ascending: true }).limit(500);
+    if (error) throw error;
 
-    const { data: rawEvents, error: dbError } = await query.order("start_date", { ascending: true }).limit(500);
-    if (dbError) throw dbError;
-
-    // Feinfilterung im Code (für den 'Spa'-Fix bei Wellness)
-    const finalEvents = (rawEvents || []).filter((event) => {
-      if (keywords.length === 0) return true;
-      const fullText = ` ${event.title} ${event.short_description || ""} `.toLowerCase();
-      return keywords.some((kw) => {
-        if (kw.length <= 3) return new RegExp(`\\b${kw}\\b`, "i").test(fullText);
-        return fullText.includes(kw);
-      });
-    });
-
-    const result = finalEvents.slice(offset, offset + limit);
+    // Wir geben nur die Anzahl zurück, die der Browser gut verträgt (30)
+    const result = (events || []).slice(offset, offset + limit);
 
     return new Response(
       JSON.stringify({
         events: result,
-        pagination: { total: finalEvents.length, hasMore: offset + limit < finalEvents.length },
+        pagination: {
+          total: events?.length || 0,
+          hasMore: (events?.length || 0) > offset + limit,
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
