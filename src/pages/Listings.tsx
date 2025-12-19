@@ -415,9 +415,7 @@ const Listings = () => {
       else if (dLng < -0.02) direction += "W";
     }
 
-    const distanceText = direction
-      ? `~${Math.round(minDist)} km ${direction} von ${nearest.name}`
-      : `~${Math.round(minDist)} km von ${nearest.name}`;
+    const distanceText = direction ? `~${Math.round(minDist)} km ${direction}` : `~${Math.round(minDist)} km`;
 
     return { city: nearest.name, distance: distanceText };
   };
@@ -788,7 +786,7 @@ const Listings = () => {
                                 •{" "}
                                 {(() => {
                                   const info = getDistanceInfo(event.latitude, event.longitude);
-                                  return `${info.distance} von ${info.city}`;
+                                  return info.distance;
                                 })()}
                               </span>
                             )}
