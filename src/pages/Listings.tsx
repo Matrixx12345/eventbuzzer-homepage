@@ -363,18 +363,9 @@ const Listings = () => {
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    if (event.address_city && event.address_city.trim().length > 0 && event.address_city !== "Schweiz") {
-      return event.address_city;
-    }
+    if (event.address_city && event.address_city.trim().length > 0) return event.address_city;
     if (event.venue_name && event.venue_name.trim() !== event.title.trim()) return event.venue_name;
-
-    // Fallback: Use nearest city from coordinates
-    if (event.latitude && event.longitude) {
-      const info = getDistanceInfo(event.latitude, event.longitude);
-      return info.city;
-    }
-
-    return "Schweiz";
+    return "";
   };
 
   const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
@@ -794,11 +785,7 @@ const Listings = () => {
                             <span className="truncate">{getEventLocation(event)}</span>
                             {event.latitude && event.longitude && (
                               <span className="text-xs text-gray-400 flex-shrink-0">
-                                •{" "}
-                                {(() => {
-                                  const info = getDistanceInfo(event.latitude, event.longitude);
-                                  return `${info.distance} von ${info.city}`;
-                                })()}
+                                • {getDistanceInfo(event.latitude, event.longitude).distance}
                               </span>
                             )}
                           </div>
