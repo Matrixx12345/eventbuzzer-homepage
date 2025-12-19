@@ -262,6 +262,7 @@ const Listings = () => {
     if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
     if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
     if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
+    if (selectedQuickFilters.includes("top-stars")) tags.push("vip-artists");
     if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
     if (selectedQuickFilters.includes("mistwetter")) {
       const indoor = indoorFilters.find((f) => f.id === selectedIndoorFilter) || indoorFilters[0];
@@ -404,9 +405,7 @@ const Listings = () => {
       else if (dLng < -0.02) direction += "W";
     }
 
-    const distanceText = direction 
-      ? `~${Math.round(minDist)} km ${direction}` 
-      : `~${Math.round(minDist)} km`;
+    const distanceText = direction ? `~${Math.round(minDist)} km ${direction}` : `~${Math.round(minDist)} km`;
 
     return { city: nearest.name, distance: distanceText };
   };
@@ -773,7 +772,8 @@ const Listings = () => {
                             <span className="truncate">{getEventLocation(event)}</span>
                             {event.latitude && event.longitude && (
                               <span className="text-xs text-gray-400 flex-shrink-0">
-                                • {(() => {
+                                •{" "}
+                                {(() => {
                                   const info = getDistanceInfo(event.latitude, event.longitude);
                                   return `${info.distance} von ${info.city}`;
                                 })()}
