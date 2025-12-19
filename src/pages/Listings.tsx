@@ -245,8 +245,7 @@ const Listings = () => {
     if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
     if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
 
-    // ✅ NUR Stadt/Radius wenn NICHT top-stars aktiv
-    if (selectedCity && !selectedQuickFilters.includes("top-stars")) {
+    if (selectedCity) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
         filters.radius = radius[0];
@@ -385,8 +384,10 @@ const Listings = () => {
       { name: "Sion", lat: 46.2293, lng: 7.3586 },
       { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
     ];
+
     let nearest = centers[0],
       minDist = Infinity;
+
     centers.forEach((c) => {
       const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
       if (d < minDist) {
@@ -395,7 +396,15 @@ const Listings = () => {
       }
     });
 
-    // Himmelsrichtung berechnen
+    // ✅ FIX: If event is IN the city (< 5km), show "In [Stadt]"
+    if (minDist < 5) {
+      return {
+        city: nearest.name,
+        distance: `In ${nearest.name}`,
+      };
+    }
+
+    // Himmelsrichtung berechnen (nur für Events außerhalb)
     const dLat = lat - nearest.lat;
     const dLng = lng - nearest.lng;
     let direction = "";
@@ -406,10 +415,13 @@ const Listings = () => {
       else if (dLng < -0.02) direction += "W";
     }
 
-    const distanceText = direction ? `~${Math.round(minDist)} km ${direction}` : `~${Math.round(minDist)} km`;
+    const distanceText = direction
+      ? `~${Math.round(minDist)} km ${direction} von ${nearest.name}`
+      : `~${Math.round(minDist)} km von ${nearest.name}`;
 
     return { city: nearest.name, distance: distanceText };
   };
+
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
     try {
