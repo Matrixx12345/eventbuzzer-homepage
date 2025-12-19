@@ -245,7 +245,8 @@ const Listings = () => {
     if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
     if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
 
-    if (selectedCity) {
+    // ✅ NUR Stadt/Radius wenn NICHT top-stars aktiv
+    if (selectedCity && !selectedQuickFilters.includes("top-stars")) {
       filters.city = selectedCity;
       if (radius[0] > 0) {
         filters.radius = radius[0];
