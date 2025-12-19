@@ -363,9 +363,18 @@ const Listings = () => {
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    if (event.address_city && event.address_city.trim().length > 0) return event.address_city;
+    if (event.address_city && event.address_city.trim().length > 0 && event.address_city !== "Schweiz") {
+      return event.address_city;
+    }
     if (event.venue_name && event.venue_name.trim() !== event.title.trim()) return event.venue_name;
-    return "";
+
+    // Fallback: Use nearest city from coordinates
+    if (event.latitude && event.longitude) {
+      const info = getDistanceInfo(event.latitude, event.longitude);
+      return info.city;
+    }
+
+    return "Schweiz";
   };
 
   const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
@@ -415,7 +424,9 @@ const Listings = () => {
       else if (dLng < -0.02) direction += "W";
     }
 
-    const distanceText = direction ? `~${Math.round(minDist)} km ${direction}` : `~${Math.round(minDist)} km`;
+    const distanceText = direction
+      ? `~${Math.round(minDist)} km ${direction} von ${nearest.name}`
+      : `~${Math.round(minDist)} km von ${nearest.name}`;
 
     return { city: nearest.name, distance: distanceText };
   };
@@ -786,7 +797,7 @@ const Listings = () => {
                                 •{" "}
                                 {(() => {
                                   const info = getDistanceInfo(event.latitude, event.longitude);
-                                  return info.distance;
+                                  return `${info.distance} von ${info.city}`;
                                 })()}
                               </span>
                             )}
