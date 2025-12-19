@@ -770,15 +770,27 @@ const Listings = () => {
                         <div className="group/map relative mt-1.5 cursor-pointer">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                            <span className="truncate">{getEventLocation(event)}</span>
-                            {event.latitude && event.longitude && (
-                              <span className="text-xs text-gray-400 flex-shrink-0">
-                                • {(() => {
-                                  const info = getDistanceInfo(event.latitude, event.longitude);
-                                  return `${info.distance} von ${info.city}`;
-                                })()}
-                              </span>
-                            )}
+                            {(() => {
+                              const locationName = getEventLocation(event);
+                              if (event.latitude && event.longitude) {
+                                const info = getDistanceInfo(event.latitude, event.longitude);
+                                // Wenn kein Ort vorhanden, zeige nur die Großstadt-Info
+                                if (!locationName) {
+                                  return <span className="truncate">{info.city}</span>;
+                                }
+                                // Sonst: Ort + Distanz zur Großstadt
+                                return (
+                                  <>
+                                    <span className="truncate">{locationName}</span>
+                                    <span className="text-xs text-gray-400 flex-shrink-0">
+                                      • {info.distance} von {info.city}
+                                    </span>
+                                  </>
+                                );
+                              }
+                              // Keine Geodaten: nur Ort anzeigen
+                              return <span className="truncate">{locationName || "Schweiz"}</span>;
+                            })()}
                           </div>
                           {event.latitude && event.longitude && (
                             <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
