@@ -367,7 +367,7 @@ const Listings = () => {
     return "";
   };
 
-  const getDistanceInfo = (lat: number, lng: number) => {
+  const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
     const centers = [
       { name: "Zürich", lat: 47.3769, lng: 8.5417 },
       { name: "Genf", lat: 46.2044, lng: 6.1432 },
@@ -392,7 +392,23 @@ const Listings = () => {
         nearest = c;
       }
     });
-    return `~${Math.round(minDist)} km von ${nearest.name}`;
+
+    // Himmelsrichtung berechnen
+    const dLat = lat - nearest.lat;
+    const dLng = lng - nearest.lng;
+    let direction = "";
+    if (Math.round(minDist) > 2) {
+      if (dLat > 0.02) direction += "N";
+      else if (dLat < -0.02) direction += "S";
+      if (dLng > 0.02) direction += "O";
+      else if (dLng < -0.02) direction += "W";
+    }
+
+    const distanceText = direction 
+      ? `~${Math.round(minDist)} km ${direction}` 
+      : `~${Math.round(minDist)} km`;
+
+    return { city: nearest.name, distance: distanceText };
   };
   const formatEventDate = (d?: string, ext?: string, start?: string, end?: string, count?: number) => {
     if (!d) return ext?.startsWith("mys_") ? "Jederzeit" : "Datum TBA";
@@ -754,10 +770,14 @@ const Listings = () => {
                         <div className="group/map relative mt-1.5 cursor-pointer">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                            <span className="truncate">{getEventLocation(event)}</span>
-                            {event.latitude && (
+                            <span className="truncate">
+                              {event.latitude && event.longitude
+                                ? getDistanceInfo(event.latitude, event.longitude).city
+                                : getEventLocation(event)}
+                            </span>
+                            {event.latitude && event.longitude && (
                               <span className="text-xs text-gray-400">
-                                • {getDistanceInfo(event.latitude, event.longitude)}
+                                • {getDistanceInfo(event.latitude, event.longitude).distance}
                               </span>
                             )}
                           </div>
