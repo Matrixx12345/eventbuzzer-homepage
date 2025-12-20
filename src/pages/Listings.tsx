@@ -45,6 +45,7 @@ import { Switch } from "@/components/ui/switch";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
+import { getNearestPlace } from "@/utils/swissPlaces";
 
 // DIREKT-VERBINDUNG zu deinem externen Projekt
 import { createClient } from "@supabase/supabase-js";
@@ -362,7 +363,7 @@ const Listings = () => {
     }
   };
 
-  const getEventLocation = (event: ExternalEvent): string | null => {
+  const getEventLocation = (event: ExternalEvent): string => {
     // Liste von Ländernamen die NIEMALS angezeigt werden sollen
     const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein"];
     
@@ -387,8 +388,12 @@ const Listings = () => {
       return event.location.trim();
     }
     
-    // 4. Kein gültiger Ort gefunden - return null (nur Distanz-Info wird angezeigt)
-    return null;
+    // 4. FALLBACK: Nutze Geodaten um den nächsten Schweizer Ort zu finden
+    if (event.latitude && event.longitude) {
+      return getNearestPlace(event.latitude, event.longitude);
+    }
+    
+    return "";
   };
 
   const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
