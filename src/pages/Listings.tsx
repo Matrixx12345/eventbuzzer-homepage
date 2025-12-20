@@ -362,7 +362,7 @@ const Listings = () => {
     }
   };
 
-  const getEventLocation = (event: ExternalEvent) => {
+  const getEventLocation = (event: ExternalEvent): string | null => {
     // Liste von Ländernamen die NIEMALS angezeigt werden sollen
     const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein"];
     
@@ -377,7 +377,7 @@ const Listings = () => {
       return city;
     }
     
-    // 2. Prüfe venue_name (nur wenn nicht gleich Titel)
+    // 2. Prüfe venue_name (nur wenn nicht gleich Titel und kein Land)
     if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
       return event.venue_name.trim();
     }
@@ -387,13 +387,8 @@ const Listings = () => {
       return event.location.trim();
     }
     
-    // 4. FALLBACK: Nutze Geodaten um nächste Großstadt zu ermitteln
-    if (event.latitude && event.longitude) {
-      const { city: nearestCity } = getDistanceInfo(event.latitude, event.longitude);
-      return nearestCity;
-    }
-    
-    return "";
+    // 4. Kein gültiger Ort gefunden - return null (nur Distanz-Info wird angezeigt)
+    return null;
   };
 
   const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
@@ -810,12 +805,30 @@ const Listings = () => {
                         <div className="group/map relative mt-1.5 cursor-pointer">
                           <div className="flex items-center gap-1.5 text-sm text-neutral-500">
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                            <span className="truncate">{getEventLocation(event)}</span>
-                            {event.latitude && event.longitude && (
-                              <span className="text-xs text-gray-400 flex-shrink-0">
-                                • {getDistanceInfo(event.latitude, event.longitude).distance}
-                              </span>
-                            )}
+                            {(() => {
+                              const locationName = getEventLocation(event);
+                              const distanceInfo = event.latitude && event.longitude 
+                                ? getDistanceInfo(event.latitude, event.longitude).distance 
+                                : null;
+                              
+                              if (locationName && distanceInfo) {
+                                // Beides vorhanden: "Bettingen • ~5 km NO von Basel"
+                                return (
+                                  <>
+                                    <span className="truncate">{locationName}</span>
+                                    <span className="text-xs text-gray-400 flex-shrink-0">• {distanceInfo}</span>
+                                  </>
+                                );
+                              } else if (locationName) {
+                                // Nur Ort vorhanden
+                                return <span className="truncate">{locationName}</span>;
+                              } else if (distanceInfo) {
+                                // Nur Distanz vorhanden (kein gültiger Ortsname)
+                                return <span className="truncate">{distanceInfo}</span>;
+                              } else {
+                                return <span className="truncate">Schweiz</span>;
+                              }
+                            })()}
                           </div>
                           {event.latitude && event.longitude && (
                             <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
