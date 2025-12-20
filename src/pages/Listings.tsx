@@ -363,20 +363,36 @@ const Listings = () => {
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    // Niemals Land anzeigen - nur Stadt oder Venue
+    // Liste von Ländernamen die NIEMALS angezeigt werden sollen
+    const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein"];
+    
+    const isCountry = (str?: string) => {
+      if (!str) return true;
+      return countryNames.includes(str.toLowerCase().trim());
+    };
+    
+    // 1. Prüfe address_city
     const city = event.address_city?.trim();
-    // Prüfen ob es kein Land ist (Länder sind kurz und oft "Schweiz", "Switzerland", etc.)
-    const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien"];
-    if (city && city.length > 0 && !countryNames.includes(city.toLowerCase())) {
+    if (city && city.length > 0 && !isCountry(city)) {
       return city;
     }
-    if (event.venue_name && event.venue_name.trim() !== event.title.trim()) {
+    
+    // 2. Prüfe venue_name (nur wenn nicht gleich Titel)
+    if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
       return event.venue_name.trim();
     }
-    // Falls nur Land vorhanden, location aus venue oder leer
-    if (event.location && !countryNames.includes(event.location.toLowerCase().trim())) {
+    
+    // 3. Prüfe location Feld
+    if (event.location && !isCountry(event.location)) {
       return event.location.trim();
     }
+    
+    // 4. FALLBACK: Nutze Geodaten um nächste Großstadt zu ermitteln
+    if (event.latitude && event.longitude) {
+      const { city: nearestCity } = getDistanceInfo(event.latitude, event.longitude);
+      return nearestCity;
+    }
+    
     return "";
   };
 
