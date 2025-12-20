@@ -363,8 +363,20 @@ const Listings = () => {
   };
 
   const getEventLocation = (event: ExternalEvent) => {
-    if (event.address_city && event.address_city.trim().length > 0) return event.address_city;
-    if (event.venue_name && event.venue_name.trim() !== event.title.trim()) return event.venue_name;
+    // Niemals Land anzeigen - nur Stadt oder Venue
+    const city = event.address_city?.trim();
+    // Prüfen ob es kein Land ist (Länder sind kurz und oft "Schweiz", "Switzerland", etc.)
+    const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien"];
+    if (city && city.length > 0 && !countryNames.includes(city.toLowerCase())) {
+      return city;
+    }
+    if (event.venue_name && event.venue_name.trim() !== event.title.trim()) {
+      return event.venue_name.trim();
+    }
+    // Falls nur Land vorhanden, location aus venue oder leer
+    if (event.location && !countryNames.includes(event.location.toLowerCase().trim())) {
+      return event.location.trim();
+    }
     return "";
   };
 
