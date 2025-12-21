@@ -80,12 +80,12 @@ serve(async (req) => {
       }
     }
 
-    // Kategorien-Filter
+    // Kategorien-Filter (neue Spalten: category_main_id und category_sub_id)
     if (categoryId) {
-      query = query.eq("category_id", categoryId);
+      query = query.eq("category_main_id", categoryId);
     }
     if (subcategoryId) {
-      query = query.eq("subcategory_id", subcategoryId);
+      query = query.eq("category_sub_id", subcategoryId);
     }
 
     // Suchtext-Filter
