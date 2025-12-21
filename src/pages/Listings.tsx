@@ -91,6 +91,8 @@ interface TaxonomyItem {
   name: string;
   type: "main" | "sub";
   parent_id: number | null;
+  display_order?: number;
+  is_active?: boolean;
 }
 
 const quickFilters = [
@@ -123,45 +125,8 @@ const Listings = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
-  // FIX: Taxonomie BEREINIGT (ID 25 "Stadtfest" wieder da, aber ohne Rummel)
-  const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([
-    // --- HAUPTKATEGORIEN ---
-    { id: 37, name: "Natur & Ausflüge", type: "main", parent_id: null },
-    { id: 3, name: "Kultur & Bühne", type: "main", parent_id: null },
-    { id: 4, name: "Genuss & Gastro", type: "main", parent_id: null },
-    { id: 5, name: "Märkte & Shopping", type: "main", parent_id: null },
-    { id: 6, name: "Feste & Events", type: "main", parent_id: null },
-
-    // --- SUBKATEGORIEN ---
-
-    // 1. Natur & Ausflüge (ID 37)
-    { id: 40, name: "Seen & Ausflüge", type: "sub", parent_id: 37 },
-    { id: 38, name: "Berge & Wandern", type: "sub", parent_id: 37 },
-    { id: 39, name: "Fahrrad", type: "sub", parent_id: 37 },
-    { id: 41, name: "Winter", type: "sub", parent_id: 37 },
-
-    // 2. Kultur & Bühne (ID 3)
-    { id: 13, name: "Theater, Musical & Show", type: "sub", parent_id: 3 },
-    { id: 14, name: "Comedy & Kabarett", type: "sub", parent_id: 3 },
-    { id: 15, name: "Museum, Kunst & Ausstellung", type: "sub", parent_id: 3 },
-    { id: 16, name: "Buchlesungen & Vorträge", type: "sub", parent_id: 3 },
-    { id: 17, name: "Film & Kino Events", type: "sub", parent_id: 3 },
-
-    // 3. Genuss & Gastro (ID 4)
-    { id: 18, name: "Tastings, Workshops & Kurse", type: "sub", parent_id: 4 },
-    { id: 19, name: "Dinner-Shows & Erlebnis-Gastro", type: "sub", parent_id: 4 },
-    { id: 20, name: "Fine Dining & Besondere Restaurants", type: "sub", parent_id: 4 },
-    { id: 21, name: "Lokale Spezialitäten & Tradition", type: "sub", parent_id: 4 },
-
-    // 4. Märkte & Shopping (ID 5)
-    { id: 22, name: "Flohmarkt & Trödel", type: "sub", parent_id: 5 },
-    { id: 23, name: "Wochen- & Frischemärkte", type: "sub", parent_id: 5 },
-    { id: 24, name: "Streetfood & Designmärkte", type: "sub", parent_id: 5 },
-
-    // 5. Feste & Events (ID 6)
-    { id: 25, name: "Stadtfest", type: "sub", parent_id: 6 }, // ID 25 korrigiert (nur "Stadtfest")
-    { id: 26, name: "Saisonale Märkte", type: "sub", parent_id: 6 },
-  ]);
+  const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+  const [taxonomyLoaded, setTaxonomyLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -322,6 +287,40 @@ const Listings = () => {
     [nextOffset, buildFilters],
   );
 
+  // Taxonomy aus Supabase laden
+  useEffect(() => {
+    const loadTaxonomy = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("taxonomy")
+          .select("*")
+          .eq("is_active", true)
+          .order("display_order", { ascending: true });
+        
+        if (error) {
+          console.error("Taxonomy load error:", error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setTaxonomy(data.map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            type: t.type as "main" | "sub",
+            parent_id: t.parent_id,
+            display_order: t.display_order,
+            is_active: t.is_active,
+          })));
+        }
+        setTaxonomyLoaded(true);
+      } catch (err) {
+        console.error("Taxonomy fetch error:", err);
+        setTaxonomyLoaded(true);
+      }
+    };
+    loadTaxonomy();
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => fetchEvents(true), 400);
     return () => clearTimeout(t);
@@ -463,14 +462,16 @@ const Listings = () => {
   };
 
   const mainCategories = useMemo(
-    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => a.name.localeCompare(b.name)),
+    () => taxonomy
+      .filter((t) => t.type === "main")
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     [taxonomy],
   );
   const subCategories = useMemo(() => {
     if (!selectedCategoryId) return [];
     return taxonomy
       .filter((t) => t.type === "sub" && t.parent_id === selectedCategoryId)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
   }, [taxonomy, selectedCategoryId]);
 
   const filterContent = (
@@ -757,6 +758,39 @@ const Listings = () => {
           </aside>
 
           <main className="flex-1 min-w-0">
+            {/* Subcategory Sticky Bar */}
+            {selectedCategoryId && subCategories.length > 0 && (
+              <div className="sticky top-0 z-10 bg-stone-50/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
+                <div className="flex gap-2 min-w-max">
+                  <button
+                    onClick={() => setSelectedSubcategoryId(null)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                      selectedSubcategoryId === null
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-white text-gray-700 border hover:bg-gray-50"
+                    )}
+                  >
+                    Alle
+                  </button>
+                  {subCategories.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setSelectedSubcategoryId(sub.id === selectedSubcategoryId ? null : sub.id)}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                        selectedSubcategoryId === sub.id
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "bg-white text-gray-700 border hover:bg-gray-50"
+                      )}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {loading && !loadingMore ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
