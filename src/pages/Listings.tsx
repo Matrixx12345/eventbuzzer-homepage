@@ -594,56 +594,26 @@ const Listings = () => {
             ];
             const rows = [];
             for (let i = 0; i < allCats.length; i += 2) rows.push(allCats.slice(i, i + 2));
-            return rows.map((row, rIdx) => {
-              const selectedInRow = row.find((c) => selectedCategoryId === c.id && c.id !== null);
-              return (
-                <div key={rIdx}>
-                  <div className="grid grid-cols-2 gap-2">
-                    {row.map((cat) => (
-                      <button
-                        key={cat.id ?? "all"}
-                        onClick={() => {
-                          setSelectedCategoryId(cat.id === selectedCategoryId ? null : cat.id);
-                          setSelectedSubcategoryId(null);
-                        }}
-                        className={cn(
-                          "flex flex-col items-center py-4 rounded-xl border transition-all",
-                          selectedCategoryId === cat.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
-                        )}
-                      >
-                        <cat.icon size={24} className="mb-2" />
-                        <span className="text-[13px] font-medium">{cat.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {selectedInRow && subCategories.length > 0 && (
-                    <div className="mt-2 bg-neutral-900 rounded-xl p-3 border border-neutral-700 flex flex-col gap-1.5">
-                      <button
-                        onClick={() => setSelectedSubcategoryId(null)}
-                        className={cn(
-                          "w-full px-3 py-2 rounded-full text-xs text-left",
-                          selectedSubcategoryId === null ? "bg-blue-600 text-white" : "text-gray-300",
-                        )}
-                      >
-                        Alle
-                      </button>
-                      {subCategories.map((s) => (
-                        <button
-                          key={s.id}
-                          onClick={() => setSelectedSubcategoryId(s.id === selectedSubcategoryId ? null : s.id)}
-                          className={cn(
-                            "w-full px-3 py-2 rounded-full text-xs text-left",
-                            selectedSubcategoryId === s.id ? "bg-blue-600 text-white" : "text-gray-300",
-                          )}
-                        >
-                          {s.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            });
+            return rows.map((row, rIdx) => (
+              <div key={rIdx} className="grid grid-cols-2 gap-2">
+                {row.map((cat) => (
+                  <button
+                    key={cat.id ?? "all"}
+                    onClick={() => {
+                      setSelectedCategoryId(cat.id === selectedCategoryId ? null : cat.id);
+                      setSelectedSubcategoryId(null);
+                    }}
+                    className={cn(
+                      "flex flex-col items-center py-4 rounded-xl border transition-all",
+                      selectedCategoryId === cat.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
+                    )}
+                  >
+                    <cat.icon size={24} className="mb-2" />
+                    <span className="text-[13px] font-medium">{cat.name}</span>
+                  </button>
+                ))}
+              </div>
+            ));
           })()}
         </div>
       </div>
