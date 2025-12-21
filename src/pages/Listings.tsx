@@ -88,6 +88,7 @@ interface ExternalEvent {
 
 interface TaxonomyItem {
   id: number;
+  slug: string;
   name: string;
   type: "main" | "sub";
   parent_id: number | null;
@@ -287,13 +288,13 @@ const Listings = () => {
     [nextOffset, buildFilters],
   );
 
-  // Taxonomy aus Supabase laden
+  // Taxonomy aus Supabase laden (id, slug, name)
   useEffect(() => {
     const loadTaxonomy = async () => {
       try {
         const { data, error } = await supabase
           .from("taxonomy")
-          .select("*")
+          .select("id, slug, name, type, parent_id, display_order, is_active")
           .eq("is_active", true)
           .order("display_order", { ascending: true });
         
@@ -305,6 +306,7 @@ const Listings = () => {
         if (data && data.length > 0) {
           setTaxonomy(data.map((t: any) => ({
             id: t.id,
+            slug: t.slug,
             name: t.name,
             type: t.type as "main" | "sub",
             parent_id: t.parent_id,
