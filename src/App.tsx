@@ -8,11 +8,13 @@ import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
 import Favorites from "./pages/Favorites";
 import Listings from "./pages/Listings";
+import Impressum from "./pages/Impressum";
 import SupabaseTest from "./pages/SupabaseTest";
 import AdminUpload from "./pages/AdminUpload";
 import AdminRatings from "./pages/AdminRatings";
 import AdminSpeedTagging from "./pages/AdminSpeedTagging";
 import NotFound from "./pages/NotFound";
+import LegalFooter from "./components/LegalFooter";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,7 @@ const App = () => (
             <Route path="/event/:slug" element={<EventDetail />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/listings" element={<Listings />} />
+            <Route path="/impressum" element={<Impressum />} />
             <Route path="/supabase-test" element={<SupabaseTest />} />
             <Route path="/admin-upload" element={<AdminUpload />} />
             <Route path="/admin/ratings" element={<AdminRatings />} />
@@ -35,6 +38,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <LegalFooter />
         </BrowserRouter>
       </TooltipProvider>
     </FavoritesProvider>
