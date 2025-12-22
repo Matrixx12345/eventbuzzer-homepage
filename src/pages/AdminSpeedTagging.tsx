@@ -294,6 +294,8 @@ export default function SpeedTagging() {
             <div className="mb-6 p-4 bg-red-50 rounded-xl border border-red-200">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
+                  id="mark-for-deletion"
+                  name="markedForDeletion"
                   type="checkbox"
                   checked={markedForDeletion}
                   onChange={(e) => setMarkedForDeletion(e.target.checked)}

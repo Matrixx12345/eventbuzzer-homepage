@@ -47,12 +47,8 @@ import { de } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 import { getNearestPlace } from "@/utils/swissPlaces";
 
-// DIREKT-VERBINDUNG zu deinem externen Projekt
-import { createClient } from "@supabase/supabase-js";
-const EXTERNAL_URL = "https://tfkiyvhfhvkejpljsnrk.supabase.co";
-const EXTERNAL_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDA4MDQsImV4cCI6MjA4MDY3NjgwNH0.bth3dTvG3fXSu4qILB514x1TRy0scRLo_KM9lDMMKDs";
-const supabase = createClient(EXTERNAL_URL, EXTERNAL_KEY);
+// Nutze den zentralen externen Supabase Client
+import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -483,6 +479,8 @@ const Listings = () => {
         <div className="relative">
           <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            id="city-filter"
+            name="city"
             type="text"
             placeholder="Stadt eingeben..."
             value={selectedCity}
@@ -697,6 +695,8 @@ const Listings = () => {
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            id="search-filter"
+            name="search"
             type="text"
             placeholder="Suche..."
             value={searchQuery}

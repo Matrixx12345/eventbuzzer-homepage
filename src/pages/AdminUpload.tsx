@@ -473,6 +473,8 @@ const AdminUpload = () => {
 
             <div className="flex gap-2">
               <input
+                id="new-tag-input"
+                name="newTag"
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}

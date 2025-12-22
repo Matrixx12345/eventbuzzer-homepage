@@ -359,6 +359,8 @@ export default function AdminRatings() {
 
             <div className="flex gap-2">
               <input
+                id="new-tag-ratings"
+                name="newTag"
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
