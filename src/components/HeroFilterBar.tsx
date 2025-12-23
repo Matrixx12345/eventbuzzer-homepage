@@ -38,20 +38,20 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
   };
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-[95%] max-w-4xl">
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-[95%] max-w-7xl">
       {/* Glassmorphism Container */}
-      <div className="backdrop-blur-xl bg-white/30 border border-white/60 rounded-2xl p-5 shadow-lg">
-        <div className="flex items-center gap-6">
+      <div className="backdrop-blur-xl bg-white/30 border border-white/60 rounded-2xl p-6 shadow-lg">
+        <div className="flex items-center gap-8">
           {/* Filter Pills Grid - Left Side */}
-          <div className="flex-1 grid grid-cols-5 gap-3">
+          <div className="flex-1 grid grid-cols-5 gap-4">
             {categoryFilters.map((filter) => (
               <button
                 key={filter.display}
                 onClick={() => handleFilterClick(filter.value)}
                 className={`
-                  px-3 py-2.5 rounded-full text-sm font-medium
+                  px-5 py-3 rounded-xl text-sm font-medium
                   border border-white/80 transition-all duration-200
-                  flex items-center justify-center gap-1.5
+                  flex items-center justify-center gap-2
                   ${
                     activeFilter === filter.value
                       ? "bg-white text-foreground shadow-md"
@@ -69,7 +69,7 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
           <button
             onClick={handleSearch}
             className="
-              px-5 py-2.5 rounded-xl text-sm font-semibold
+              px-8 py-3 rounded-xl text-sm font-semibold
               bg-white/80 text-foreground border border-white/80
               hover:bg-white hover:shadow-md transition-all duration-200
               flex items-center justify-center gap-2 shrink-0
