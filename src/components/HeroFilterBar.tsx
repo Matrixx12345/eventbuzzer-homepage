@@ -2,18 +2,18 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Mapping: Display label → Database value
+// Die exakten 10 Filter mit Mapping zu den Quick-Filter Tags
 const categoryFilters = [
-  { display: "Alle", value: null, emoji: "✨" },
-  { display: "Romantik", value: "Romantik", emoji: "❤️" },
-  { display: "Top Stars", value: "Top Stars", emoji: "⭐" },
-  { display: "Familie", value: "Familie", emoji: "👨‍👩‍👧" },
-  { display: "Mit Kind", value: "Mit Kind", emoji: "👶" },
-  { display: "Natur", value: "Natur & Ausflüge", emoji: "🌿" },
-  { display: "Musik", value: "Musik & Party", emoji: "🎵" },
-  { display: "Kunst", value: "Kunst & Kultur", emoji: "🎨" },
-  { display: "Kulinarik", value: "Kulinarik & Genuss", emoji: "🍽️" },
-  { display: "Märkte", value: "Märkte & Stadtfeste", emoji: "🎪" },
+  { display: "Musik", value: "musik-party", emoji: "🎵" },
+  { display: "Kunst", value: "kunst-kultur", emoji: "🎨" },
+  { display: "Kulinarik", value: "kulinarik-genuss", emoji: "🍽️" },
+  { display: "Ausflüge", value: "natur-ausfluege", emoji: "🌿" },
+  { display: "Märkte", value: "maerkte-stadtfeste", emoji: "🎪" },
+  { display: "Romantik", value: "romantik", emoji: "❤️" },
+  { display: "Top Stars", value: "top-stars", emoji: "⭐" },
+  { display: "Mit Kind", value: "mit-kind", emoji: "👶" },
+  { display: "Mistwetter", value: "mistwetter", emoji: "🌧️" },
+  { display: "Wellness", value: "wellness", emoji: "💆" },
 ];
 
 interface HeroFilterBarProps {
@@ -25,31 +25,33 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
   const navigate = useNavigate();
 
   const handleFilterClick = (value: string | null) => {
-    setActiveFilter(value);
-    onFilterChange?.(value);
+    // Toggle: if already active, deselect
+    const newValue = activeFilter === value ? null : value;
+    setActiveFilter(newValue);
+    onFilterChange?.(newValue);
   };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (activeFilter) {
-      params.set("category", activeFilter);
+      params.set("quickFilter", activeFilter);
     }
     navigate(`/listings${params.toString() ? `?${params.toString()}` : ""}`);
   };
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-[95%] max-w-7xl">
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-[90vw]">
       {/* Glassmorphism Container */}
       <div className="backdrop-blur-xl bg-white/30 border border-white/60 rounded-2xl p-6 shadow-lg">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-12">
           {/* Filter Pills Grid - Left Side */}
-          <div className="flex-1 grid grid-cols-5 gap-4">
+          <div className="flex-1 grid grid-cols-5 gap-6">
             {categoryFilters.map((filter) => (
               <button
                 key={filter.display}
                 onClick={() => handleFilterClick(filter.value)}
                 className={`
-                  px-5 py-3 rounded-xl text-sm font-medium
+                  px-4 py-2.5 rounded-xl text-sm font-medium
                   border border-white/80 transition-all duration-200
                   flex items-center justify-center gap-2
                   ${
@@ -69,7 +71,7 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
           <button
             onClick={handleSearch}
             className="
-              px-8 py-3 rounded-xl text-sm font-semibold
+              px-8 py-2.5 rounded-xl text-sm font-semibold
               bg-white/80 text-foreground border border-white/80
               hover:bg-white hover:shadow-md transition-all duration-200
               flex items-center justify-center gap-2 shrink-0
