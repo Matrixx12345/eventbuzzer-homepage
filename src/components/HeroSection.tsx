@@ -1,6 +1,11 @@
 import heroImage from "@/assets/hero-mountains.jpg";
+import HeroFilterBar from "./HeroFilterBar";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  onFilterChange?: (categoryValue: string | null) => void;
+}
+
+const HeroSection = ({ onFilterChange }: HeroSectionProps) => {
   return (
     <section className="relative">
       {/* Hero Headline above image */}
@@ -10,14 +15,17 @@ const HeroSection = () => {
         </h1>
       </div>
 
-      {/* Hero Image */}
-      <div className="relative h-64 sm:h-80 lg:h-96 overflow-hidden">
+      {/* Hero Image with Filter Bar */}
+      <div className="relative h-72 sm:h-96 lg:h-[28rem] overflow-hidden">
         <img
           src={heroImage}
           alt="Mountain landscape at sunset with golden bokeh lights"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20" />
+        
+        {/* Filter Bar positioned at bottom of hero */}
+        <HeroFilterBar onFilterChange={onFilterChange} />
       </div>
     </section>
   );
