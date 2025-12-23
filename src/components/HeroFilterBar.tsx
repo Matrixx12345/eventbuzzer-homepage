@@ -51,9 +51,9 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
                 key={filter.display}
                 onClick={() => handleFilterClick(filter.value)}
                 className={`
-                  px-4 py-2.5 rounded-xl text-sm font-medium
+                  px-3 py-1.5 rounded-lg text-sm font-medium
                   border border-white/80 transition-all duration-200
-                  flex items-center justify-center gap-2
+                  flex items-center justify-center gap-1.5
                   ${
                     activeFilter === filter.value
                       ? "bg-white text-foreground shadow-md"
@@ -61,7 +61,7 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
                   }
                 `}
               >
-                <span className="text-base">{filter.emoji}</span>
+                <span className="text-sm">{filter.emoji}</span>
                 <span className="hidden sm:inline">{filter.display}</span>
               </button>
             ))}
@@ -71,8 +71,8 @@ const HeroFilterBar = ({ onFilterChange }: HeroFilterBarProps) => {
           <button
             onClick={handleSearch}
             className="
-              px-8 py-2.5 rounded-xl text-sm font-semibold
-              bg-white/80 text-foreground border border-white/80
+              px-10 py-2.5 rounded-lg text-sm font-semibold
+              bg-white/90 text-foreground border border-white/80
               hover:bg-white hover:shadow-md transition-all duration-200
               flex items-center justify-center gap-2 shrink-0
             "
