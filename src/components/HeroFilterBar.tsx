@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
 
-// 6 Filter in einer Reihe
+// 6 Filter - Values müssen mit quickFilters IDs in Listings.tsx übereinstimmen
 const categoryFilters = [
-  { display: "Musik", value: "musik-party", emoji: "🎵" },
-  { display: "Kunst", value: "kunst-kultur", emoji: "🎨" },
-  { display: "Ausflüge", value: "natur-ausfluege", emoji: "🌿" },
-  { display: "Märkte", value: "maerkte-stadtfeste", emoji: "🎪" },
-  { display: "Romantik", value: "romantik", emoji: "❤️" },
-  { display: "Mit Kind", value: "mit-kind", emoji: "👶" },
+  { display: "Musik", value: "musik", emoji: "🎵", tags: ["musik-konzerte", "party-clubs"] },
+  { display: "Kunst", value: "kunst", emoji: "🎨", tags: ["kunst-kultur", "museum-galerie"] },
+  { display: "Ausflüge", value: "natur", emoji: "🌿", tags: ["natur-erlebnisse", "open-air"] },
+  { display: "Märkte", value: "maerkte", emoji: "🎪", tags: ["maerkte-feste", "food-maerkte"] },
+  { display: "Romantik", value: "romantik", emoji: "❤️", tags: ["romantisch-date"] },
+  { display: "Mit Kind", value: "mit-kind", emoji: "👶", tags: ["familie-kinder"] },
 ];
 
 const HeroFilterBar = () => {
