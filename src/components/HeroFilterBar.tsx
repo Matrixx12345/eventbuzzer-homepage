@@ -36,8 +36,7 @@ const HeroFilterBar = () => {
                 backdrop-blur-sm whitespace-nowrap
               "
             >
-              <span>{filter.emoji}</span>
-              <span>{filter.display}</span>
+              {filter.display}
             </button>
           ))}
         </div>
