@@ -28,12 +28,12 @@ const HeroFilterBar = () => {
               key={filter.display}
               onClick={() => handleFilterClick(filter.value)}
               className="
-                px-5 py-2.5 rounded-full text-sm font-medium
+                min-w-[110px] px-5 py-2.5 rounded-full text-sm font-medium
                 border border-white/60 transition-all duration-300
                 flex items-center justify-center gap-2
                 bg-white/90 text-foreground/90 
                 hover:bg-white hover:shadow-lg hover:scale-105
-                backdrop-blur-sm
+                backdrop-blur-sm whitespace-nowrap
               "
             >
               <span>{filter.emoji}</span>
