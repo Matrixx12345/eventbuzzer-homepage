@@ -32,7 +32,7 @@ import {
   CalendarDays,
   Dog,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
@@ -93,6 +93,9 @@ interface TaxonomyItem {
 }
 
 const quickFilters = [
+  { id: "musik", label: "Musik", icon: Music, tags: ["musik-konzerte", "party-clubs"] },
+  { id: "kunst", label: "Kunst", icon: Palette, tags: ["kunst-kultur", "museum-galerie"] },
+  { id: "maerkte", label: "Märkte", icon: Gift, tags: ["maerkte-feste", "food-maerkte"] },
   { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
   { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
   { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
@@ -117,6 +120,7 @@ const quickFilters = [
 const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
 
 const Listings = () => {
+  const [searchParams] = useSearchParams();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -131,9 +135,14 @@ const Listings = () => {
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  // URL parameter für QuickFilter auslesen
+  const urlQuickFilter = searchParams.get("quickFilter");
+
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
-  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
+  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>(
+    urlQuickFilter ? [urlQuickFilter] : []
+  );
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
