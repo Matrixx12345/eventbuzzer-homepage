@@ -750,12 +750,12 @@ const Listings = () => {
   );
 
   return (
-    <div className="min-h-screen bg-stone-500">
+    <div className="min-h-screen bg-stone-120">
       <Navbar />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
           <aside className="hidden lg:block w-[340px] flex-shrink-0">
-            <div className="backdrop-blur-xl bg-white/70 border border-white/50 rounded-2xl p-6 shadow-xl">
+            <div className="backdrop-blur-xl bg-white/40 border border-white/50 rounded-2xl p-6 shadow-xl">
               {filterContent}
             </div>
             <div className="mt-4 px-2 text-xs text-neutral-500">
