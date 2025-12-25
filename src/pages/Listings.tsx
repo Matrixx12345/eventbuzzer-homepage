@@ -138,9 +138,7 @@ const Listings = () => {
 
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
-  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>(
-    urlQuickFilter ? [urlQuickFilter] : []
-  );
+  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>(urlQuickFilter ? [urlQuickFilter] : []);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(urlCategory || null);
@@ -301,22 +299,24 @@ const Listings = () => {
           .select("id, slug, name, type, parent_id, display_order, is_active")
           .eq("is_active", true)
           .order("display_order", { ascending: true });
-        
+
         if (error) {
           console.error("Taxonomy load error:", error);
           return;
         }
-        
+
         if (data && data.length > 0) {
-          setTaxonomy(data.map((t: any) => ({
-            id: t.id,
-            slug: t.slug,
-            name: t.name,
-            type: t.type as "main" | "sub",
-            parent_id: t.parent_id,
-            display_order: t.display_order,
-            is_active: t.is_active,
-          })));
+          setTaxonomy(
+            data.map((t: any) => ({
+              id: t.id,
+              slug: t.slug,
+              name: t.name,
+              type: t.type as "main" | "sub",
+              parent_id: t.parent_id,
+              display_order: t.display_order,
+              is_active: t.is_active,
+            })),
+          );
         }
         setTaxonomyLoaded(true);
       } catch (err) {
@@ -330,9 +330,7 @@ const Listings = () => {
   // URL-Kategorie-Parameter in Kategorie-ID umwandeln
   useEffect(() => {
     if (taxonomyLoaded && selectedCategorySlug && taxonomy.length > 0) {
-      const matchingCategory = taxonomy.find(
-        (t) => t.type === "main" && t.slug === selectedCategorySlug
-      );
+      const matchingCategory = taxonomy.find((t) => t.type === "main" && t.slug === selectedCategorySlug);
       if (matchingCategory) {
         setSelectedCategoryId(matchingCategory.id);
       }
@@ -384,34 +382,48 @@ const Listings = () => {
 
   const getEventLocation = (event: ExternalEvent): string => {
     // Liste von Ländernamen die NIEMALS angezeigt werden sollen
-    const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein"];
-    
+    const countryNames = [
+      "schweiz",
+      "switzerland",
+      "suisse",
+      "svizzera",
+      "germany",
+      "deutschland",
+      "france",
+      "frankreich",
+      "austria",
+      "österreich",
+      "italy",
+      "italien",
+      "liechtenstein",
+    ];
+
     const isCountry = (str?: string) => {
       if (!str) return true;
       return countryNames.includes(str.toLowerCase().trim());
     };
-    
+
     // 1. Prüfe address_city
     const city = event.address_city?.trim();
     if (city && city.length > 0 && !isCountry(city)) {
       return city;
     }
-    
+
     // 2. Prüfe venue_name (nur wenn nicht gleich Titel und kein Land)
     if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
       return event.venue_name.trim();
     }
-    
+
     // 3. Prüfe location Feld
     if (event.location && !isCountry(event.location)) {
       return event.location.trim();
     }
-    
+
     // 4. FALLBACK: Nutze Geodaten um den nächsten Schweizer Ort zu finden
     if (event.latitude && event.longitude) {
       return getNearestPlace(event.latitude, event.longitude);
     }
-    
+
     return "";
   };
 
@@ -482,9 +494,7 @@ const Listings = () => {
   };
 
   const mainCategories = useMemo(
-    () => taxonomy
-      .filter((t) => t.type === "main")
-      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+    () => taxonomy.filter((t) => t.type === "main").sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     [taxonomy],
   );
   const subCategories = useMemo(() => {
@@ -740,12 +750,14 @@ const Listings = () => {
   );
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-100">
       <Navbar />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
           <aside className="hidden lg:block w-[340px] flex-shrink-0">
-            <div className="backdrop-blur-xl bg-white/70 border border-white/50 rounded-2xl p-6 shadow-xl">{filterContent}</div>
+            <div className="backdrop-blur-xl bg-white/70 border border-white/50 rounded-2xl p-6 shadow-xl">
+              {filterContent}
+            </div>
             <div className="mt-4 px-2 text-xs text-neutral-500">
               {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
             </div>
@@ -762,7 +774,7 @@ const Listings = () => {
                       "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                       selectedSubcategoryId === null
                         ? "bg-blue-600 text-white shadow-md"
-                        : "bg-white text-gray-700 border hover:bg-gray-50"
+                        : "bg-white text-gray-700 border hover:bg-gray-50",
                     )}
                   >
                     Alle
@@ -775,7 +787,7 @@ const Listings = () => {
                         "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                         selectedSubcategoryId === sub.id
                           ? "bg-blue-600 text-white shadow-md"
-                          : "bg-white text-gray-700 border hover:bg-gray-50"
+                          : "bg-white text-gray-700 border hover:bg-gray-50",
                       )}
                     >
                       {sub.name}
@@ -840,10 +852,11 @@ const Listings = () => {
                             <MapPin size={14} className="text-red-500 flex-shrink-0" />
                             {(() => {
                               const locationName = getEventLocation(event);
-                              const distanceInfo = event.latitude && event.longitude 
-                                ? getDistanceInfo(event.latitude, event.longitude).distance 
-                                : null;
-                              
+                              const distanceInfo =
+                                event.latitude && event.longitude
+                                  ? getDistanceInfo(event.latitude, event.longitude).distance
+                                  : null;
+
                               if (locationName && distanceInfo) {
                                 // Beides vorhanden: "Bettingen • ~5 km NO von Basel"
                                 return (
