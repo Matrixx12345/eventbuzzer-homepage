@@ -93,9 +93,6 @@ interface TaxonomyItem {
 }
 
 const quickFilters = [
-  { id: "musik", label: "Musik", icon: Music, tags: ["musik-konzerte", "party-clubs"] },
-  { id: "kunst", label: "Kunst", icon: Palette, tags: ["kunst-kultur", "museum-galerie"] },
-  { id: "maerkte", label: "Märkte", icon: Gift, tags: ["maerkte-feste", "food-maerkte"] },
   { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
   { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
   { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
@@ -135,8 +132,9 @@ const Listings = () => {
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // URL parameter für QuickFilter auslesen
+  // URL parameter für QuickFilter und Kategorie auslesen
   const urlQuickFilter = searchParams.get("quickFilter");
+  const urlCategory = searchParams.get("category");
 
   const [selectedCity, setSelectedCity] = useState("");
   const [radius, setRadius] = useState([0]);
@@ -145,6 +143,7 @@ const Listings = () => {
   );
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(urlCategory || null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
   const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
@@ -327,6 +326,20 @@ const Listings = () => {
     };
     loadTaxonomy();
   }, []);
+
+  // URL-Kategorie-Parameter in Kategorie-ID umwandeln
+  useEffect(() => {
+    if (taxonomyLoaded && selectedCategorySlug && taxonomy.length > 0) {
+      const matchingCategory = taxonomy.find(
+        (t) => t.type === "main" && t.slug === selectedCategorySlug
+      );
+      if (matchingCategory) {
+        setSelectedCategoryId(matchingCategory.id);
+      }
+      // Slug zurücksetzen nach Verarbeitung
+      setSelectedCategorySlug(null);
+    }
+  }, [taxonomyLoaded, selectedCategorySlug, taxonomy]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchEvents(true), 400);
