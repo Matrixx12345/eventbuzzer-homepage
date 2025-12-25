@@ -497,7 +497,7 @@ const Listings = () => {
   const filterContent = (
     <div className="space-y-5">
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">WO / ORT</h3>
+        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">WO / ORT</h3>
         <div className="relative">
           <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -519,7 +519,7 @@ const Listings = () => {
         <div className="pt-1 px-1">
           <Slider value={radius} onValueChange={setRadius} max={50} step={5} className="w-full" />
           <div className="flex justify-between items-center mt-1.5">
-            <span className="text-xs text-gray-400 font-medium">Umkreis</span>
+            <span className="text-xs text-foreground/60 font-medium">Umkreis</span>
             <span className="text-sm font-semibold tabular-nums border px-2 py-0.5 rounded-lg bg-white">
               {radius[0]} km
             </span>
@@ -528,7 +528,7 @@ const Listings = () => {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stimmung</h3>
+        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Stimmung</h3>
         <div className="space-y-2">
           {(() => {
             const rows = [];
@@ -555,7 +555,7 @@ const Listings = () => {
                   })}
                 </div>
                 {row.some((f) => f.id === "mistwetter") && selectedQuickFilters.includes("mistwetter") && (
-                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5">
+                  <div className="mt-2 p-2.5 bg-white/50 backdrop-blur-sm rounded-xl border border-white/60 flex flex-col gap-1.5">
                     {indoorFilters.map((ifilt) => (
                       <button
                         key={ifilt.id}
@@ -571,7 +571,7 @@ const Listings = () => {
                   </div>
                 )}
                 {row.some((f) => f.id === "mit-kind") && selectedQuickFilters.includes("mit-kind") && (
-                  <div className="mt-2 p-2.5 bg-neutral-800 rounded-xl border border-neutral-700 flex flex-col gap-1.5">
+                  <div className="mt-2 p-2.5 bg-white/50 backdrop-blur-sm rounded-xl border border-white/60 flex flex-col gap-1.5">
                     {familyAgeFilters.map((afilt) => (
                       <button
                         key={afilt.id}
@@ -593,7 +593,7 @@ const Listings = () => {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Kategorie</h3>
+        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Kategorie</h3>
         <div className="space-y-2">
           {(() => {
             const allCats = [
@@ -641,7 +641,7 @@ const Listings = () => {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Wann?</h3>
+        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Wann?</h3>
         <button
           onClick={() => setSelectedTimeFilter(selectedTimeFilter === "now" ? null : "now")}
           className={cn(
@@ -688,7 +688,7 @@ const Listings = () => {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Budget</h3>
+        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Budget</h3>
         <div className="grid grid-cols-4 gap-1.5">
           {["gratis", "$", "$$", "$$$"].map((p) => (
             <button
@@ -705,15 +705,15 @@ const Listings = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between py-2 border-t border-neutral-700">
+      <div className="flex items-center justify-between py-2 border-t border-foreground/10">
         <div className="flex items-center gap-2">
-          <Dog size={16} className="text-gray-400" />
-          <span className="text-sm font-medium text-gray-300">Mit Hund?</span>
+          <Dog size={16} className="text-foreground/60" />
+          <span className="text-sm font-medium text-foreground/80">Mit Hund?</span>
         </div>
         <Switch checked={dogFriendly} onCheckedChange={setDogFriendly} />
       </div>
 
-      <div className="space-y-3 pt-3 border-t border-neutral-700">
+      <div className="space-y-3 pt-3 border-t border-foreground/10">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -731,7 +731,7 @@ const Listings = () => {
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
-          className="w-full py-2 text-xs font-medium text-gray-400 hover:text-gray-600 transition-all"
+          className="w-full py-2 text-xs font-medium text-foreground/50 hover:text-foreground/70 transition-all"
         >
           ✕ Filter zurücksetzen
         </button>
@@ -745,7 +745,7 @@ const Listings = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-10">
           <aside className="hidden lg:block w-[340px] flex-shrink-0">
-            <div className="bg-neutral-900 rounded-2xl p-6 shadow-xl">{filterContent}</div>
+            <div className="backdrop-blur-xl bg-white/70 border border-white/50 rounded-2xl p-6 shadow-xl">{filterContent}</div>
             <div className="mt-4 px-2 text-xs text-neutral-500">
               {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
             </div>
