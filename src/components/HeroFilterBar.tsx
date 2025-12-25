@@ -34,7 +34,7 @@ const HeroFilterBar = () => {
               key={filter.display}
               onClick={() => handleFilterClick(filter)}
               className="
-                px-4 md:px-5 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-medium
+                min-w-[90px] md:min-w-[110px] lg:min-w-[120px] px-4 md:px-5 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-medium
                 border border-white/60 transition-all duration-300
                 flex items-center justify-center flex-shrink-0
                 bg-white/90 text-foreground/90 
