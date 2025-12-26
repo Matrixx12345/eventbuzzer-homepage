@@ -173,9 +173,9 @@ const HeroFilterBar = () => {
   };
 
   return (
-    <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-10 w-full px-4">
+    <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-10 w-full px-4 md:px-6">
       {/* Glassmorphism Container */}
-      <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl lg:rounded-full px-4 md:px-6 lg:px-8 py-4 shadow-2xl mx-auto w-auto max-w-[95%] md:max-w-[90%] lg:max-w-[900px]">
+      <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl lg:rounded-full p-3 md:p-4 lg:px-6 lg:py-3 shadow-2xl mx-auto w-fit max-w-full">
         
         {/* Mobile: Stacked Layout */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-2">
