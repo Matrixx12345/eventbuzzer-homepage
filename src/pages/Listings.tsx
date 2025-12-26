@@ -7,45 +7,26 @@ import {
   X,
   MapPin,
   Calendar as CalendarIcon,
-  Cake,
-  CloudRain,
-  Star,
-  Camera,
-  Heart as HeartIcon,
-  Smile,
-  PartyPopper,
-  Waves,
-  Mountain,
-  Search,
   Loader2,
-  Check,
   Music,
   Palette,
   Sparkles,
-  Flame,
-  LayoutGrid,
-  Zap,
   UtensilsCrossed,
   Gift,
-  Snowflake,
-  Sun,
-  CalendarDays,
-  Dog,
+  LayoutGrid,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { Slider } from "@/components/ui/slider";
-import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
-import type { DateRange } from "react-day-picker";
 import { getNearestPlace } from "@/utils/swissPlaces";
+import DiscoverHeroFilterBar, { categories, moods } from "@/components/DiscoverHeroFilterBar";
+
+// Hero image
+import heroMountains from "@/assets/hero-mountains.jpg";
 
 // Nutze den zentralen externen Supabase Client
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
@@ -93,35 +74,22 @@ interface TaxonomyItem {
 }
 
 const quickFilters = [
-  { id: "geburtstag", label: "Geburtstag", icon: Cake, tags: ["besondere-anlaesse", "freunde-gruppen"] },
-  { id: "mistwetter", label: "Mistwetter", icon: CloudRain, tags: ["schlechtwetter-indoor"] },
-  { id: "top-stars", label: "Top Stars", icon: Star, tags: ["vip-artists"] },
-  { id: "foto-spots", label: "Foto-Spots", icon: Camera, tags: ["foto-spot"] },
-  { id: "romantik", label: "Romantik", icon: HeartIcon, tags: ["romantisch-date"] },
-  {
-    id: "mit-kind",
-    label: "Mit Kind",
-    icon: Smile,
-    tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"],
-  },
-  {
-    id: "nightlife",
-    label: "Nightlife",
-    icon: PartyPopper,
-    tags: ["nightlife-party", "afterwork", "rooftop-aussicht"],
-  },
-  { id: "wellness", label: "Wellness", icon: Waves, tags: ["wellness-selfcare"] },
-  { id: "natur", label: "Natur", icon: Mountain, tags: ["natur-erlebnisse", "open-air"] },
+  { id: "geburtstag", label: "Geburtstag", tags: ["besondere-anlaesse", "freunde-gruppen"] },
+  { id: "mistwetter", label: "Mistwetter", tags: ["schlechtwetter-indoor"] },
+  { id: "top-stars", label: "Top Stars", tags: ["vip-artists"] },
+  { id: "foto-spots", label: "Foto-Spots", tags: ["foto-spot"] },
+  { id: "romantik", label: "Romantik", tags: ["romantisch-date"] },
+  { id: "mit-kind", label: "Mit Kind", tags: ["familie-kinder", "kleinkinder", "schulkinder", "teenager"] },
+  { id: "nightlife", label: "Nightlife", tags: ["nightlife-party", "afterwork", "rooftop-aussicht"] },
+  { id: "wellness", label: "Wellness", tags: ["wellness-selfcare"] },
+  { id: "natur", label: "Natur", tags: ["natur-erlebnisse", "open-air"] },
 ];
 
-const cities = ["Zürich", "Bern", "Basel", "Luzern", "Genf", "Baden", "Winterthur", "St. Gallen"];
-
 const Listings = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [events, setEvents] = useState<ExternalEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
   const [taxonomyLoaded, setTaxonomyLoaded] = useState(false);
@@ -132,36 +100,23 @@ const Listings = () => {
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // URL parameter für QuickFilter und Kategorie auslesen
+  // URL parameter auslesen
   const urlQuickFilter = searchParams.get("quickFilter");
   const urlCategory = searchParams.get("category");
+  const urlCity = searchParams.get("city");
+  const urlRadius = searchParams.get("radius");
+  const urlTime = searchParams.get("time");
+  const urlDate = searchParams.get("date");
 
-  const [selectedCity, setSelectedCity] = useState("");
-  const [radius, setRadius] = useState([0]);
+  // Filter states
+  const [selectedCity, setSelectedCity] = useState(urlCity || "");
+  const [radius, setRadius] = useState(urlRadius ? parseInt(urlRadius) : 0);
   const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>(urlQuickFilter ? [urlQuickFilter] : []);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | null>(null);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(urlCategory || null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
-  const [selectedPriceTier, setSelectedPriceTier] = useState<string | null>(null);
-  const [dogFriendly, setDogFriendly] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
-  const [calendarMode, setCalendarMode] = useState<"single" | "range">("single");
-  const [selectedFamilyAgeFilter, setSelectedFamilyAgeFilter] = useState<string | null>(null);
-  const [selectedIndoorFilter, setSelectedIndoorFilter] = useState<string | null>(null);
-
-  const indoorFilters = [
-    { id: "alles-indoor", label: "Alles bei Mistwetter", tags: ["schlechtwetter-indoor"] },
-    { id: "mit-kindern", label: "Mit Kindern", tags: ["schlechtwetter-indoor", "familie-kinder"] },
-  ];
-  const familyAgeFilters = [
-    { id: "alle", label: "Alle Altersgruppen", tag: "familie-kinder" },
-    { id: "kleinkinder", label: "Kleinkinder (0-4 J.)", tag: "kleinkinder" },
-    { id: "schulkinder", label: "Schulkinder (5-10 J.)", tag: "schulkinder" },
-    { id: "teenager", label: "Teenager (ab 11 J.)", tag: "teenager" },
-  ];
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(urlTime || null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(urlDate ? new Date(urlDate) : undefined);
 
   const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = useMemo(
     () => ({
@@ -179,45 +134,34 @@ const Listings = () => {
 
   const hasActiveFilters =
     selectedCity !== "" ||
-    radius[0] > 0 ||
+    radius > 0 ||
     selectedQuickFilters.length > 0 ||
-    searchQuery.trim() !== "" ||
     selectedCategoryId !== null ||
     selectedTimeFilter !== null ||
-    selectedPriceTier !== null ||
-    dogFriendly ||
-    selectedDate !== undefined ||
-    selectedDateRange !== undefined;
+    selectedDate !== undefined;
 
   const clearFilters = () => {
     setSelectedCity("");
-    setRadius([0]);
+    setRadius(0);
     setSelectedQuickFilters([]);
-    setSearchQuery("");
     setSelectedCategoryId(null);
     setSelectedSubcategoryId(null);
     setSelectedTimeFilter(null);
-    setSelectedPriceTier(null);
-    setDogFriendly(false);
     setSelectedDate(undefined);
-    setSelectedDateRange(undefined);
+    setSearchParams({});
   };
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
-    if (searchQuery.trim()) filters.searchQuery = searchQuery.trim();
     if (selectedCategoryId !== null) filters.categoryId = selectedCategoryId;
     if (selectedSubcategoryId !== null) filters.subcategoryId = selectedSubcategoryId;
-    if (selectedPriceTier) filters.priceTier = selectedPriceTier;
     if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
     if (selectedDate) filters.singleDate = selectedDate.toISOString();
-    if (selectedDateRange?.from) filters.dateFrom = selectedDateRange.from.toISOString();
-    if (selectedDateRange?.to) filters.dateTo = selectedDateRange.to.toISOString();
 
     if (selectedCity) {
       filters.city = selectedCity;
-      if (radius[0] > 0) {
-        filters.radius = radius[0];
+      if (radius > 0) {
+        filters.radius = radius;
         const coords = CITY_COORDINATES[selectedCity.toLowerCase().trim()];
         if (coords) {
           filters.cityLat = coords.lat;
@@ -226,37 +170,20 @@ const Listings = () => {
       }
     }
     const tags: string[] = [];
-    if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
-    if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
-    if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
-    if (selectedQuickFilters.includes("foto-spots")) tags.push("foto-spot");
-    if (selectedQuickFilters.includes("nightlife")) tags.push("nightlife-party", "afterwork", "rooftop-aussicht");
-    if (selectedQuickFilters.includes("top-stars")) tags.push("vip-artists");
-    if (selectedQuickFilters.includes("geburtstag")) tags.push("besondere-anlaesse", "freunde-gruppen");
-    if (selectedQuickFilters.includes("mistwetter")) {
-      const indoor = indoorFilters.find((f) => f.id === selectedIndoorFilter) || indoorFilters[0];
-      tags.push(...indoor.tags);
-    }
-    if (selectedQuickFilters.includes("mit-kind")) {
-      tags.push(
-        selectedFamilyAgeFilter === "alle" || !selectedFamilyAgeFilter ? "familie-kinder" : selectedFamilyAgeFilter,
-      );
-    }
+    selectedQuickFilters.forEach(filterId => {
+      const qf = quickFilters.find(f => f.id === filterId);
+      if (qf) tags.push(...qf.tags);
+    });
     if (tags.length > 0) filters.tags = tags;
     return filters;
   }, [
-    searchQuery,
     selectedCategoryId,
     selectedSubcategoryId,
-    selectedPriceTier,
     selectedTimeFilter,
     selectedCity,
     radius,
     selectedQuickFilters,
     selectedDate,
-    selectedDateRange,
-    selectedIndoorFilter,
-    selectedFamilyAgeFilter,
     CITY_COORDINATES,
   ]);
 
@@ -290,7 +217,7 @@ const Listings = () => {
     [nextOffset, buildFilters],
   );
 
-  // Taxonomy aus Supabase laden (id, slug, name)
+  // Taxonomy aus Supabase laden
   useEffect(() => {
     const loadTaxonomy = async () => {
       try {
@@ -334,7 +261,6 @@ const Listings = () => {
       if (matchingCategory) {
         setSelectedCategoryId(matchingCategory.id);
       }
-      // Slug zurücksetzen nach Verarbeitung
       setSelectedCategorySlug(null);
     }
   }, [taxonomyLoaded, selectedCategorySlug, taxonomy]);
@@ -343,17 +269,13 @@ const Listings = () => {
     const t = setTimeout(() => fetchEvents(true), 400);
     return () => clearTimeout(t);
   }, [
-    searchQuery,
     selectedCity,
     radius,
     selectedCategoryId,
     selectedSubcategoryId,
     selectedQuickFilters,
-    selectedPriceTier,
     selectedTimeFilter,
     selectedDate,
-    selectedDateRange,
-    dogFriendly,
   ]);
 
   useEffect(() => {
@@ -367,35 +289,10 @@ const Listings = () => {
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loading, fetchEvents]);
 
-  const toggleQuickFilter = (filterId: string) => {
-    const active = selectedQuickFilters.includes(filterId);
-    if (active) {
-      if (filterId === "mit-kind") setSelectedFamilyAgeFilter(null);
-      if (filterId === "mistwetter") setSelectedIndoorFilter(null);
-      setSelectedQuickFilters([]);
-    } else {
-      if (filterId === "mit-kind") setSelectedFamilyAgeFilter("alle");
-      if (filterId === "mistwetter") setSelectedIndoorFilter("alles-indoor");
-      setSelectedQuickFilters([filterId]);
-    }
-  };
-
   const getEventLocation = (event: ExternalEvent): string => {
-    // Liste von Ländernamen die NIEMALS angezeigt werden sollen
     const countryNames = [
-      "schweiz",
-      "switzerland",
-      "suisse",
-      "svizzera",
-      "germany",
-      "deutschland",
-      "france",
-      "frankreich",
-      "austria",
-      "österreich",
-      "italy",
-      "italien",
-      "liechtenstein",
+      "schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland",
+      "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein",
     ];
 
     const isCountry = (str?: string) => {
@@ -403,23 +300,19 @@ const Listings = () => {
       return countryNames.includes(str.toLowerCase().trim());
     };
 
-    // 1. Prüfe address_city
     const city = event.address_city?.trim();
     if (city && city.length > 0 && !isCountry(city)) {
       return city;
     }
 
-    // 2. Prüfe venue_name (nur wenn nicht gleich Titel und kein Land)
     if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
       return event.venue_name.trim();
     }
 
-    // 3. Prüfe location Feld
     if (event.location && !isCountry(event.location)) {
       return event.location.trim();
     }
 
-    // 4. FALLBACK: Nutze Geodaten um den nächsten Schweizer Ort zu finden
     if (event.latitude && event.longitude) {
       return getNearestPlace(event.latitude, event.longitude);
     }
@@ -455,7 +348,6 @@ const Listings = () => {
       }
     });
 
-    // ✅ FIX: If event is IN the city (< 5km), show "In [Stadt]"
     if (minDist < 5) {
       return {
         city: nearest.name,
@@ -463,7 +355,6 @@ const Listings = () => {
       };
     }
 
-    // Himmelsrichtung berechnen (nur für Events außerhalb)
     const dLat = lat - nearest.lat;
     const dLng = lng - nearest.lng;
     let direction = "";
@@ -497,6 +388,7 @@ const Listings = () => {
     () => taxonomy.filter((t) => t.type === "main").sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     [taxonomy],
   );
+  
   const subCategories = useMemo(() => {
     if (!selectedCategoryId) return [];
     return taxonomy
@@ -504,433 +396,314 @@ const Listings = () => {
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
   }, [taxonomy, selectedCategoryId]);
 
-  const filterContent = (
-    <div className="space-y-5">
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">WO / ORT</h3>
-        <div className="relative">
-          <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            id="city-filter"
-            name="city"
-            type="text"
-            placeholder="Stadt eingeben..."
-            value={selectedCity}
-            onChange={(e) => setSelectedCity(e.target.value)}
-            list="cities"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border bg-white"
+  // Hero filter bar callbacks
+  const handleCategoryChange = (cat: typeof categories[0]) => {
+    if (cat.id === null) {
+      setSelectedCategoryId(null);
+    } else {
+      const matchingTaxonomy = taxonomy.find(t => t.slug === cat.slug);
+      setSelectedCategoryId(matchingTaxonomy?.id || null);
+    }
+    setSelectedSubcategoryId(null);
+  };
+
+  const handleMoodChange = (mood: typeof moods[0]) => {
+    if (mood.id === null) {
+      setSelectedQuickFilters([]);
+    } else {
+      setSelectedQuickFilters([mood.id as string]);
+    }
+  };
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+  };
+
+  const handleRadiusChange = (r: number) => {
+    setRadius(r);
+  };
+
+  const handleTimeChange = (time: string | null) => {
+    setSelectedTimeFilter(time);
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+  };
+
+  const handleSearch = () => {
+    // Filters are already applied via state, just scroll to results
+    const resultsSection = document.getElementById('results-section');
+    if (resultsSection) {
+      resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Get icon for category
+  const getCategoryIcon = (catName: string) => {
+    if (catName.includes("Musik")) return Music;
+    if (catName.includes("Kunst")) return Palette;
+    if (catName.includes("Kulinarik")) return UtensilsCrossed;
+    if (catName.includes("Freizeit") || catName.includes("Natur")) return Sparkles;
+    if (catName.includes("Märkte")) return Gift;
+    return LayoutGrid;
+  };
+
+  return (
+    <div className="min-h-screen bg-stone-50">
+      <Navbar />
+      
+      {/* Hero Section - Slimmer version */}
+      <div className="relative h-[280px] md:h-[320px] overflow-hidden">
+        <img
+          src={heroMountains}
+          alt="Swiss Mountains"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        
+        {/* Search Bar centered in hero */}
+        <div className="absolute inset-0 flex items-center justify-center pt-16">
+          <DiscoverHeroFilterBar
+            initialCategory={urlCategory}
+            initialMood={urlQuickFilter}
+            initialCity={urlCity || ""}
+            initialRadius={urlRadius ? parseInt(urlRadius) : 25}
+            initialTime={urlTime}
+            initialDate={urlDate ? new Date(urlDate) : undefined}
+            onCategoryChange={handleCategoryChange}
+            onMoodChange={handleMoodChange}
+            onCityChange={handleCityChange}
+            onRadiusChange={handleRadiusChange}
+            onTimeChange={handleTimeChange}
+            onDateChange={handleDateChange}
+            onSearch={handleSearch}
           />
-          <datalist id="cities">
-            {cities.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
         </div>
-        <div className="pt-1 px-1">
-          <Slider value={radius} onValueChange={setRadius} max={50} step={5} className="w-full" />
-          <div className="flex justify-between items-center mt-1.5">
-            <span className="text-xs text-foreground/60 font-medium">Umkreis</span>
-            <span className="text-sm font-semibold tabular-nums border px-2 py-0.5 rounded-lg bg-white">
-              {radius[0]} km
-            </span>
+      </div>
+
+      {/* Sticky Sub-Navigation */}
+      <div className="sticky top-0 z-20 bg-white border-b shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-3">
+            {/* Scrollable Category/Subcategory Pills */}
+            <div className="flex-1 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 min-w-max pr-4">
+                {/* Main categories as pills if no category selected */}
+                {!selectedCategoryId && mainCategories.map((cat) => {
+                  const Icon = getCategoryIcon(cat.name);
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategoryId(cat.id);
+                        setSelectedSubcategoryId(null);
+                      }}
+                      className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all bg-white text-foreground/70 border hover:bg-muted flex items-center gap-2"
+                    >
+                      <Icon size={14} />
+                      {cat.name}
+                    </button>
+                  );
+                })}
+                
+                {/* Subcategories when category is selected */}
+                {selectedCategoryId && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setSelectedCategoryId(null);
+                        setSelectedSubcategoryId(null);
+                      }}
+                      className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all bg-foreground text-background"
+                    >
+                      ← Alle
+                    </button>
+                    <button
+                      onClick={() => setSelectedSubcategoryId(null)}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                        selectedSubcategoryId === null
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-white text-foreground/70 border hover:bg-muted"
+                      )}
+                    >
+                      Alle {mainCategories.find(c => c.id === selectedCategoryId)?.name}
+                    </button>
+                    {subCategories.map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setSelectedSubcategoryId(sub.id === selectedSubcategoryId ? null : sub.id)}
+                        className={cn(
+                          "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                          selectedSubcategoryId === sub.id
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "bg-white text-foreground/70 border hover:bg-muted"
+                        )}
+                      >
+                        {sub.name}
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Filter Button */}
+            <div className="flex items-center gap-3 pl-4 border-l ml-4">
+              <button
+                onClick={() => setShowAdvancedFilters(true)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                  hasActiveFilters 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-white text-foreground/70 hover:bg-muted"
+                )}
+              >
+                <SlidersHorizontal size={16} />
+                <span className="hidden sm:inline">Filter</span>
+                {hasActiveFilters && (
+                  <span className="w-5 h-5 rounded-full bg-white/20 text-xs flex items-center justify-center">
+                    !
+                  </span>
+                )}
+              </button>
+              
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="p-2 rounded-full hover:bg-muted transition-colors"
+                >
+                  <X size={16} className="text-foreground/60" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Stimmung</h3>
-        <div className="space-y-2">
-          {(() => {
-            const rows = [];
-            for (let i = 0; i < quickFilters.length; i += 3) rows.push(quickFilters.slice(i, i + 3));
-            return rows.map((row, rIdx) => (
-              <div key={rIdx}>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {row.map((f) => {
-                    const Icon = f.icon;
-                    const active = selectedQuickFilters.includes(f.id);
-                    return (
-                      <button
-                        key={f.id}
-                        onClick={() => toggleQuickFilter(f.id)}
-                        className={cn(
-                          "aspect-[4/3] flex flex-col items-center justify-center rounded-xl transition-all p-1.5 border",
-                          active ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-800",
-                        )}
-                      >
-                        <Icon size={18} />
-                        <span className="text-[13px] font-medium leading-tight mt-0.5">{f.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {row.some((f) => f.id === "mistwetter") && selectedQuickFilters.includes("mistwetter") && (
-                  <div className="mt-2 p-2.5 bg-white/50 backdrop-blur-sm rounded-xl border border-white/60 flex flex-col gap-1.5">
-                    {indoorFilters.map((ifilt) => (
-                      <button
-                        key={ifilt.id}
-                        onClick={() => setSelectedIndoorFilter(ifilt.id)}
-                        className={cn(
-                          "w-full py-2 px-3 rounded-lg text-xs text-left",
-                          selectedIndoorFilter === ifilt.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
-                        )}
-                      >
-                        {ifilt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {row.some((f) => f.id === "mit-kind") && selectedQuickFilters.includes("mit-kind") && (
-                  <div className="mt-2 p-2.5 bg-white/50 backdrop-blur-sm rounded-xl border border-white/60 flex flex-col gap-1.5">
-                    {familyAgeFilters.map((afilt) => (
-                      <button
-                        key={afilt.id}
-                        onClick={() => setSelectedFamilyAgeFilter(afilt.id)}
-                        className={cn(
-                          "w-full py-2 px-3 rounded-lg text-xs text-left",
-                          selectedFamilyAgeFilter === afilt.id ? "bg-pink-600 text-white" : "bg-white text-gray-800",
-                        )}
-                      >
-                        {afilt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ));
-          })()}
+      {/* Results Section */}
+      <div id="results-section" className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Results count */}
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-sm text-foreground/60">
+            {loading ? "Lädt Events..." : `${totalEvents} Events gefunden`}
+          </p>
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Kategorie</h3>
-        <div className="space-y-2">
-          {(() => {
-            const allCats = [
-              { id: null, name: "Alle", icon: LayoutGrid },
-              ...mainCategories.map((c) => ({
-                id: c.id,
-                name: c.name,
-                icon: c.name.includes("Musik")
-                  ? Music
-                  : c.name.includes("Kunst")
-                    ? Palette
-                    : c.name.includes("Kulinarik")
-                      ? UtensilsCrossed
-                      : c.name.includes("Freizeit")
-                        ? Sparkles
-                        : c.name.includes("Märkte")
-                          ? Gift
-                          : LayoutGrid,
-              })),
-            ];
-            const rows = [];
-            for (let i = 0; i < allCats.length; i += 2) rows.push(allCats.slice(i, i + 2));
-            return rows.map((row, rIdx) => (
-              <div key={rIdx} className="grid grid-cols-2 gap-2">
-                {row.map((cat) => (
-                  <button
-                    key={cat.id ?? "all"}
-                    onClick={() => {
-                      setSelectedCategoryId(cat.id === selectedCategoryId ? null : cat.id);
-                      setSelectedSubcategoryId(null);
-                    }}
-                    className={cn(
-                      "flex flex-col items-center py-4 rounded-xl border transition-all",
-                      selectedCategoryId === cat.id ? "bg-blue-600 text-white" : "bg-white text-gray-800",
-                    )}
-                  >
-                    <cat.icon size={24} className="mb-2" />
-                    <span className="text-[13px] font-medium">{cat.name}</span>
-                  </button>
-                ))}
-              </div>
-            ));
-          })()}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Wann?</h3>
-        <button
-          onClick={() => setSelectedTimeFilter(selectedTimeFilter === "now" ? null : "now")}
-          className={cn(
-            "w-full h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all",
-            selectedTimeFilter === "now"
-              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
-              : "bg-white border text-gray-800",
-          )}
-        >
-          <Zap size={16} />
-          ⚡️ JETZT
-        </button>
-        <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { id: "today", label: "Heute" },
-            { id: "tomorrow", label: "Morgen" },
-            { id: "thisWeek", label: "WE" },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setSelectedTimeFilter((prev) => (prev === t.id ? null : t.id))}
-              className={cn(
-                "h-9 rounded-lg text-xs border",
-                selectedTimeFilter === t.id ? "bg-blue-600 text-white" : "bg-white",
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => {
-            setCalendarMode("range");
-            setShowCalendar(true);
-          }}
-          className={cn(
-            "w-full h-10 rounded-xl text-sm border flex items-center justify-center gap-2",
-            selectedDateRange?.from ? "bg-blue-600 text-white" : "bg-white",
-          )}
-        >
-          <CalendarIcon size={14} />
-          <span>Zeitraum wählen</span>
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">Budget</h3>
-        <div className="grid grid-cols-4 gap-1.5">
-          {["gratis", "$", "$$", "$$$"].map((p) => (
-            <button
-              key={p}
-              onClick={() => setSelectedPriceTier((prev) => (prev === p ? null : p))}
-              className={cn(
-                "h-10 rounded-xl text-xs font-bold border",
-                selectedPriceTier === p ? "bg-blue-600 text-white" : "bg-white",
-              )}
-            >
-              {p.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between py-2 border-t border-foreground/10">
-        <div className="flex items-center gap-2">
-          <Dog size={16} className="text-foreground/60" />
-          <span className="text-sm font-medium text-foreground/80">Mit Hund?</span>
-        </div>
-        <Switch checked={dogFriendly} onCheckedChange={setDogFriendly} />
-      </div>
-
-      <div className="space-y-3 pt-3 border-t border-foreground/10">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            id="search-filter"
-            name="search"
-            type="text"
-            placeholder="Suche..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl text-sm border"
-          />
-        </div>
-      </div>
-
-      {hasActiveFilters && (
-        <button
-          onClick={clearFilters}
-          className="w-full py-2 text-xs font-medium text-foreground/50 hover:text-foreground/70 transition-all"
-        >
-          ✕ Filter zurücksetzen
-        </button>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-stone-120">
-      <Navbar />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-10">
-          <aside className="hidden lg:block w-[340px] flex-shrink-0">
-            <div className="backdrop-blur-xl bg-white/40 border border-white/50 rounded-2xl p-6 shadow-xl">
-              {filterContent}
-            </div>
-            <div className="mt-4 px-2 text-xs text-neutral-500">
-              {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
-            </div>
-          </aside>
-
-          <main className="flex-1 min-w-0">
-            {/* Subcategory Sticky Bar */}
-            {selectedCategoryId && subCategories.length > 0 && (
-              <div className="sticky top-0 z-10 bg-stone-50/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
-                <div className="flex gap-2 min-w-max">
-                  <button
-                    onClick={() => setSelectedSubcategoryId(null)}
-                    className={cn(
-                      "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                      selectedSubcategoryId === null
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "bg-white text-gray-700 border hover:bg-gray-50",
-                    )}
-                  >
-                    Alle
-                  </button>
-                  {subCategories.map((sub) => (
+        {/* Events Grid - 4 columns on large screens */}
+        {loading && !loadingMore ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-foreground/40" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {events.map((event, index) => (
+              <Link key={event.id} to={`/event/${event.id}`} className="block group">
+                <article className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={event.image_url || getPlaceholderImage(index)}
+                      alt={event.title}
+                      className="w-full aspect-[4/5] object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                     <button
-                      key={sub.id}
-                      onClick={() => setSelectedSubcategoryId(sub.id === selectedSubcategoryId ? null : sub.id)}
-                      className={cn(
-                        "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                        selectedSubcategoryId === sub.id
-                          ? "bg-blue-600 text-white shadow-md"
-                          : "bg-white text-gray-700 border hover:bg-gray-50",
-                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleFavorite({
+                          id: event.id,
+                          slug: event.id,
+                          title: event.title,
+                          venue: event.venue_name || "",
+                          image: event.image_url || getPlaceholderImage(index),
+                          location: getEventLocation(event),
+                          date: formatEventDate(event.start_date),
+                        });
+                      }}
+                      className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 shadow-sm hover:scale-110 transition-transform"
                     >
-                      {sub.name}
+                      <Heart
+                        size={16}
+                        className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-foreground/50"}
+                      />
                     </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {loading && !loadingMore ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {events.map((event, index) => (
-                  <Link key={event.id} to={`/event/${event.id}`} className="block group">
-                    <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
-                      <div className="relative overflow-hidden">
-                        <img
-                          src={event.image_url || getPlaceholderImage(index)}
-                          alt={event.title}
-                          className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleFavorite({
-                              id: event.id,
-                              slug: event.id,
-                              title: event.title,
-                              venue: event.venue_name || "",
-                              image: event.image_url || getPlaceholderImage(index),
-                              location: getEventLocation(event),
-                              date: formatEventDate(event.start_date),
-                            });
-                          }}
-                          className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 shadow-sm"
-                        >
-                          <Heart
-                            size={16}
-                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
-                          />
-                        </button>
-                      </div>
-                      <div className="p-5">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-xs text-neutral-400 font-medium">
-                            {formatEventDate(
-                              event.start_date,
-                              event.external_id,
-                              event.date_range_start,
-                              event.date_range_end,
-                              event.show_count,
-                            )}
-                          </p>
-                          <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                        </div>
-                        <h3 className="font-serif text-lg text-neutral-900 line-clamp-1">{event.title}</h3>
-                        <div className="group/map relative mt-1.5 cursor-pointer">
-                          <div className="flex items-center gap-1.5 text-sm text-neutral-500">
-                            <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                            {(() => {
-                              const locationName = getEventLocation(event);
-                              const distanceInfo =
-                                event.latitude && event.longitude
-                                  ? getDistanceInfo(event.latitude, event.longitude).distance
-                                  : null;
-
-                              if (locationName && distanceInfo) {
-                                // Beides vorhanden: "Bettingen • ~5 km NO von Basel"
-                                return (
-                                  <>
-                                    <span className="truncate">{locationName}</span>
-                                    <span className="text-xs text-gray-400 flex-shrink-0">• {distanceInfo}</span>
-                                  </>
-                                );
-                              } else if (locationName) {
-                                // Nur Ort vorhanden
-                                return <span className="truncate">{locationName}</span>;
-                              } else if (distanceInfo) {
-                                // Nur Distanz vorhanden (kein gültiger Ortsname)
-                                return <span className="truncate">{distanceInfo}</span>;
-                              } else {
-                                return <span className="truncate">Schweiz</span>;
-                              }
-                            })()}
-                          </div>
-                          {event.latitude && event.longitude && (
-                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                              <div className="bg-white p-3 rounded-xl shadow-2xl border w-48 h-40">
-                                <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
-                                  <img src="/swiss-outline.svg" className="w-full h-full object-contain" />
-                                  <div
-                                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
-                                    style={{
-                                      left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
-                                      top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        {event.price_from && (
-                          <p className="text-sm font-medium text-neutral-900 mt-2">ab CHF {event.price_from}</p>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs text-foreground/50 font-medium">
+                        {formatEventDate(
+                          event.start_date,
+                          event.external_id,
+                          event.date_range_start,
+                          event.date_range_end,
+                          event.show_count,
                         )}
-                        {event.short_description && (
-                          <p className="text-xs text-neutral-500 mt-2 line-clamp-2">{event.short_description}</p>
-                        )}
-                      </div>
-                    </article>
-                  </Link>
-                ))}
-              </div>
-            )}
-            <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
-              {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />}
-            </div>
-          </main>
+                      </p>
+                      <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                    </div>
+                    <h3 className="font-serif text-base text-foreground line-clamp-2 leading-snug">{event.title}</h3>
+                    <div className="flex items-center gap-1.5 text-sm text-foreground/60 mt-1.5">
+                      <MapPin size={12} className="text-red-500 flex-shrink-0" />
+                      {(() => {
+                        const locationName = getEventLocation(event);
+                        const distanceInfo =
+                          event.latitude && event.longitude
+                            ? getDistanceInfo(event.latitude, event.longitude).distance
+                            : null;
+
+                        if (locationName && distanceInfo) {
+                          return (
+                            <>
+                              <span className="truncate">{locationName}</span>
+                              <span className="text-xs text-foreground/40 flex-shrink-0">• {distanceInfo}</span>
+                            </>
+                          );
+                        } else if (locationName) {
+                          return <span className="truncate">{locationName}</span>;
+                        } else if (distanceInfo) {
+                          return <span className="truncate">{distanceInfo}</span>;
+                        } else {
+                          return <span className="truncate">Schweiz</span>;
+                        }
+                      })()}
+                    </div>
+                    {event.price_from && (
+                      <p className="text-sm font-medium text-foreground mt-2">ab CHF {event.price_from}</p>
+                    )}
+                  </div>
+                </article>
+              </Link>
+            ))}
+          </div>
+        )}
+        
+        {/* Load more trigger */}
+        <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
+          {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-foreground/40" />}
         </div>
       </div>
 
-      <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
-        <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl">
-          <div className="flex justify-center py-4">
-            <Calendar
-              mode={calendarMode as any}
-              selected={calendarMode === "single" ? selectedDate : (selectedDateRange as any)}
-              onSelect={
-                calendarMode === "single"
-                  ? (d: any) => {
-                      setSelectedDate(d);
-                      setShowCalendar(false);
-                    }
-                  : (r: any) => {
-                      setSelectedDateRange(r);
-                      if (r?.from && r?.to) setShowCalendar(false);
-                    }
-              }
-              locale={de}
-            />
+      {/* Advanced Filters Dialog */}
+      <Dialog open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+        <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-6">
+          <h2 className="text-lg font-semibold mb-4">Erweiterte Filter</h2>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-foreground/60">
+              Nutze die Suchleiste oben für Kategorie, Stimmung, Ort und Datum.
+            </p>
+            
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  clearFilters();
+                  setShowAdvancedFilters(false);
+                }}
+                className="w-full py-3 bg-foreground text-background rounded-xl font-medium hover:bg-foreground/90 transition-colors"
+              >
+                Alle Filter zurücksetzen
+              </button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
