@@ -440,23 +440,21 @@ const Listings = () => {
           </div>
         )}
 
-        {/* Masonry Grid */}
+        {/* Events Grid - 4 columns on desktop */}
         {loading && !loadingMore ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {events.map((event, index) => (
-              <Link key={event.id} to={`/event/${event.id}`} className="block group break-inside-avoid">
-                <article className="bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300">
+              <Link key={event.id} to={`/event/${event.id}`} className="block group">
+                <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
                   <div className="relative overflow-hidden">
                     <img
                       src={event.image_url || getPlaceholderImage(index)}
                       alt={event.title}
-                      className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${
-                        index % 3 === 0 ? 'aspect-[5/6]' : 'aspect-[4/3]'
-                      }`}
+                      className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <button
                       onClick={(e) => {
