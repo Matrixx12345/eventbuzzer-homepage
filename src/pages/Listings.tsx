@@ -446,82 +446,99 @@ const Listings = () => {
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {events.map((event, index) => (
-              <Link key={event.id} to={`/event/${event.id}`} className="block group">
-                <article className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={event.image_url || getPlaceholderImage(index)}
-                      alt={event.title}
-                      className="w-full aspect-[5/6] object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleFavorite({
-                          id: event.id,
-                          slug: event.id,
-                          title: event.title,
-                          venue: event.venue_name || "",
-                          image: event.image_url || getPlaceholderImage(index),
-                          location: getEventLocation(event),
-                          date: formatEventDate(event.start_date),
-                        });
-                      }}
-                      className="absolute top-3 right-3 p-2.5 rounded-full bg-white/95 shadow-sm"
-                    >
-                      <Heart
-                        size={16}
-                        className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
-                      />
-                    </button>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-xs text-neutral-400 font-medium">
-                        {formatEventDate(
-                          event.start_date,
-                          event.external_id,
-                          event.date_range_start,
-                          event.date_range_end,
-                          event.show_count,
-                        )}
-                      </p>
-                      <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                    </div>
-                    <h3 className="font-serif text-lg text-neutral-900 line-clamp-1">{event.title}</h3>
-                    <div className="group/map relative mt-1.5 cursor-pointer">
-                      <div className="flex items-center gap-1.5 text-sm text-neutral-500">
-                        <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                        {(() => {
-                          const locationName = getEventLocation(event);
-                          const distanceInfo =
-                            event.latitude && event.longitude
-                              ? getDistanceInfo(event.latitude, event.longitude).distance
-                              : null;
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+            {events.map((event, index) => {
+              const locationName = getEventLocation(event);
+              const distanceInfo =
+                event.latitude && event.longitude
+                  ? getDistanceInfo(event.latitude, event.longitude).distance
+                  : null;
 
-                          if (locationName && distanceInfo) {
-                            return (
-                              <>
-                                <span className="truncate">{locationName}</span>
-                                <span className="text-xs text-gray-400 flex-shrink-0">• {distanceInfo}</span>
-                              </>
-                            );
-                          } else if (locationName) {
-                            return <span className="truncate">{locationName}</span>;
-                          } else if (distanceInfo) {
-                            return <span className="truncate">{distanceInfo}</span>;
-                          } else {
-                            return <span className="truncate">Schweiz</span>;
-                          }
-                        })()}
+              return (
+                <article 
+                  key={event.id}
+                  className="break-inside-avoid bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300"
+                >
+                  <Link to={`/event/${event.id}`}>
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={event.image_url || getPlaceholderImage(index)}
+                        alt={event.title}
+                        className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                          index % 5 === 0 ? 'aspect-[4/5]' : index % 3 === 0 ? 'aspect-[3/4]' : 'aspect-[5/4]'
+                        }`}
+                      />
+                      
+                      {/* Date Badge - Top Left */}
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                        <p className="text-[11px] font-semibold text-neutral-700">
+                          {formatEventDate(
+                            event.start_date,
+                            event.external_id,
+                            event.date_range_start,
+                            event.date_range_end,
+                            event.show_count,
+                          )}
+                        </p>
+                      </div>
+                      
+                      {/* Favorite Button - Top Right */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleFavorite({
+                            id: event.id,
+                            slug: event.id,
+                            title: event.title,
+                            venue: event.venue_name || "",
+                            image: event.image_url || getPlaceholderImage(index),
+                            location: locationName,
+                            date: formatEventDate(event.start_date),
+                          });
+                        }}
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
+                        aria-label="Add to favorites"
+                      >
+                        <Heart
+                          size={18}
+                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
+                        />
+                      </button>
+                      
+                      {/* Title Overlay - Bottom Left */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-4 pt-12">
+                        <h3 className="font-serif text-lg text-white font-semibold line-clamp-2 drop-shadow-md">
+                          {event.title}
+                        </h3>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Content Section */}
+                  <div className="p-4">
+                    {/* Location with Map Hover */}
+                    <div className="group/map relative cursor-pointer">
+                      <div className="flex items-center gap-1.5 text-sm text-neutral-600">
+                        <MapPin size={14} className="text-red-500 flex-shrink-0" />
+                        {locationName && distanceInfo ? (
+                          <>
+                            <span className="truncate">{locationName}</span>
+                            <span className="text-xs text-neutral-400 flex-shrink-0">• {distanceInfo}</span>
+                          </>
+                        ) : locationName ? (
+                          <span className="truncate">{locationName}</span>
+                        ) : distanceInfo ? (
+                          <span className="truncate">{distanceInfo}</span>
+                        ) : (
+                          <span className="truncate">Schweiz</span>
+                        )}
                       </div>
                       {event.latitude && event.longitude && (
                         <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
                           <div className="bg-white p-3 rounded-xl shadow-2xl border w-48 h-40">
                             <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
-                              <img src="/swiss-outline.svg" className="w-full h-full object-contain" />
+                              <img src="/swiss-outline.svg" className="w-full h-full object-contain" alt="Map" />
                               <div
                                 className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
                                 style={{
@@ -534,16 +551,27 @@ const Listings = () => {
                         </div>
                       )}
                     </div>
-                    {event.price_from && (
-                      <p className="text-sm font-medium text-neutral-900 mt-2">ab CHF {event.price_from}</p>
-                    )}
+                    
+                    {/* Short Description */}
                     {event.short_description && (
                       <p className="text-xs text-neutral-500 mt-2 line-clamp-2">{event.short_description}</p>
                     )}
+                    
+                    {/* Price & Rating Row */}
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
+                      <div className="flex items-center gap-2">
+                        {event.price_from && (
+                          <span className="text-sm font-medium text-neutral-800">ab CHF {event.price_from}</span>
+                        )}
+                      </div>
+                      <div className="opacity-40 hover:opacity-100 transition-opacity">
+                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                      </div>
+                    </div>
                   </div>
                 </article>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
         <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
