@@ -50,7 +50,7 @@ const EventCard = ({
   };
 
   return (
-    <article className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-border/50">
+    <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100">
       {/* Image Section */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
@@ -58,22 +58,11 @@ const EventCard = ({
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        
-        {/* Date Badge - Top Left */}
-        {date && (
-          <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-foreground text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
-            {date}
-          </div>
-        )}
-        
-        {/* Popular Badge - Below Date if exists */}
         {isPopular && (
-          <div className="absolute top-12 left-3 flex items-center gap-1.5 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-full uppercase">
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-full uppercase">
             <Flame size={12} /> Popular
           </div>
         )}
-        
-        {/* Heart Button - Top Right */}
         <button
           onClick={handleFavoriteClick}
           className="absolute top-3 right-3 p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-black/40 transition-colors"
@@ -82,17 +71,61 @@ const EventCard = ({
         </button>
       </div>
 
-      {/* Content Section - Compact */}
-      <div className="p-4 bg-white">
-        {/* Title */}
-        <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-2 mb-1">
+      {/* Content Section */}
+      <div className="p-4 flex flex-col flex-grow gap-2">
+        {/* Title: Fixed 2 lines with min-height for consistent card heights */}
+        <h3 className="text-[15px] font-bold text-card-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
           {title}
         </h3>
-        
-        {/* Location */}
-        <p className="text-xs text-muted-foreground">
-          {location || venue || "Schweiz"}
-        </p>
+
+        {/* Venue */}
+        <p className="text-[12px] text-muted-foreground truncate opacity-80">{venue}</p>
+
+        {/* Location with Mini-Map Hover Tooltip */}
+        <div className="group/map relative inline-flex items-center gap-1.5 text-[13px] font-medium text-gray-600 cursor-help w-fit mt-1">
+          <span className="text-red-500 animate-pulse">📍</span>
+          <span className="border-b border-dotted border-gray-400 group-hover/map:text-red-600 transition-colors">
+            {location || "Schweiz"}
+          </span>
+
+          {/* Mini-Map Tooltip */}
+          <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
+              <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                {/* Swiss Outline SVG Background */}
+                <img 
+                  src="/swiss-outline.svg" 
+                  className="w-full h-full object-contain opacity-30 p-2" 
+                  alt="Switzerland Map" 
+                />
+                {/* Dynamic Red Pin based on lat/lng */}
+                {latitude && longitude && (
+                  <div
+                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
+                    style={{
+                      // Map Swiss coordinates to SVG position
+                      // Switzerland bounds: lat 45.8-47.8, lng 5.9-10.5
+                      left: `${((longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                      top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+            {/* Tooltip Arrow */}
+            <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+          </div>
+        </div>
+
+        {/* Footer with Badge and Rating */}
+        <div className="mt-auto pt-2 flex items-center justify-between">
+          {isMySwitzerland && isYearRound && (
+            <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+              Ganzjährig
+            </span>
+          )}
+          <EventRatingButtons eventId={id} eventTitle={title} />
+        </div>
       </div>
     </article>
   );
