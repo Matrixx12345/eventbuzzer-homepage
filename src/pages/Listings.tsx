@@ -457,21 +457,21 @@ const Listings = () => {
               return (
                 <article 
                   key={event.id}
-                  className="break-inside-avoid bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300"
+                  className="break-inside-avoid bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-neutral-100/50"
                 >
                   <Link to={`/event/${event.id}`}>
-                    <div className="relative overflow-hidden">
+                    <div className="relative overflow-hidden group">
                       <img
                         src={event.image_url || getPlaceholderImage(index)}
                         alt={event.title}
-                        className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                        className={`w-full object-cover group-hover:scale-105 transition-transform duration-700 ${
                           index % 5 === 0 ? 'aspect-[4/5]' : index % 3 === 0 ? 'aspect-[3/4]' : 'aspect-[5/4]'
                         }`}
                       />
                       
-                      {/* Date Badge - Top Left */}
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
-                        <p className="text-[11px] font-semibold text-neutral-700">
+                      {/* Date Badge - Glassmorphism */}
+                      <div className="absolute top-3 left-3 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-white/30">
+                        <p className="text-[10px] font-bold text-neutral-800 tracking-wide uppercase">
                           {formatEventDate(
                             event.start_date,
                             event.external_id,
@@ -497,34 +497,28 @@ const Listings = () => {
                             date: formatEventDate(event.start_date),
                           });
                         }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
+                        className="absolute top-3 right-3 p-2.5 rounded-full bg-white/60 backdrop-blur-md hover:bg-white/90 transition-all shadow-lg border border-white/30"
                         aria-label="Add to favorites"
                       >
                         <Heart
-                          size={18}
-                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
+                          size={16}
+                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-600"}
                         />
                       </button>
-                      
-                      {/* Title Overlay - Bottom Left */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-4 pt-12">
-                        <h3 className="font-serif text-lg text-white font-semibold line-clamp-2 drop-shadow-md">
-                          {event.title}
-                        </h3>
-                      </div>
                     </div>
                   </Link>
 
-                  {/* Content Section */}
-                  <div className="p-4">
-                    {/* Location with Map Hover */}
-                    <div className="group/map relative cursor-pointer">
-                      <div className="flex items-center gap-1.5 text-sm text-neutral-600">
-                        <MapPin size={14} className="text-red-500 flex-shrink-0" />
+                  {/* Content Section - Compact Premium Editorial */}
+                  <div className="p-3">
+                    {/* Eyebrow Location - Uppercase, Small, Gray */}
+                    <div className="group/map relative cursor-pointer mb-1">
+                      <div className="flex items-center gap-1 text-[10px] text-neutral-400 uppercase tracking-widest font-medium">
+                        <MapPin size={10} className="text-red-400 flex-shrink-0" />
                         {locationName && distanceInfo ? (
                           <>
                             <span className="truncate">{locationName}</span>
-                            <span className="text-xs text-neutral-400 flex-shrink-0">• {distanceInfo}</span>
+                            <span className="text-neutral-300">•</span>
+                            <span className="flex-shrink-0">{distanceInfo}</span>
                           </>
                         ) : locationName ? (
                           <span className="truncate">{locationName}</span>
@@ -552,19 +546,26 @@ const Listings = () => {
                       )}
                     </div>
                     
+                    {/* Title - Large Serif Bold */}
+                    <Link to={`/event/${event.id}`}>
+                      <h3 className="font-serif text-xl font-bold text-neutral-900 leading-tight line-clamp-2 hover:text-neutral-700 transition-colors">
+                        {event.title}
+                      </h3>
+                    </Link>
+                    
                     {/* Short Description */}
                     {event.short_description && (
-                      <p className="text-xs text-neutral-500 mt-2 line-clamp-2">{event.short_description}</p>
+                      <p className="text-xs text-neutral-500 mt-1.5 line-clamp-2 leading-relaxed">{event.short_description}</p>
                     )}
                     
                     {/* Price & Rating Row */}
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center gap-2">
-                        {event.price_from && (
-                          <span className="text-sm font-medium text-neutral-800">ab CHF {event.price_from}</span>
-                        )}
-                      </div>
-                      <div className="opacity-40 hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
+                      {event.price_from ? (
+                        <span className="text-sm font-bold text-neutral-900">ab CHF {event.price_from}</span>
+                      ) : (
+                        <span></span>
+                      )}
+                      <div className="opacity-30 hover:opacity-100 transition-opacity">
                         <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                       </div>
                     </div>
