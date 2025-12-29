@@ -440,13 +440,13 @@ const Listings = () => {
           </div>
         )}
 
-        {/* Events Grid - 4 columns on desktop */}
+        {/* Events Grid - Zig-Zag 5er-Muster */}
         {loading && !loadingMore ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 auto-rows-fr">
             {events.map((event, index) => {
               const locationName = getEventLocation(event);
               const distanceInfo =
@@ -454,19 +454,44 @@ const Listings = () => {
                   ? getDistanceInfo(event.latitude, event.longitude).distance
                   : null;
 
+              // Zig-Zag Pattern Logic
+              const groupIndex = Math.floor(index / 5);
+              const positionInGroup = index % 5;
+              const isPatternA = groupIndex % 2 === 0; // Hero Links
+              const isHero = positionInGroup === 0;
+              
+              // Grid positioning for hero cards
+              let gridClasses = "";
+              if (isHero) {
+                if (isPatternA) {
+                  // Pattern A: Hero in column 1, spans 2 rows
+                  gridClasses = "lg:col-start-1 lg:row-span-2";
+                } else {
+                  // Pattern B: Hero in column 3, spans 2 rows
+                  gridClasses = "lg:col-start-3 lg:row-span-2";
+                }
+              }
+
               return (
                 <article 
                   key={event.id}
-                  className="break-inside-avoid bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-neutral-100/50"
+                  className={cn(
+                    "bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-neutral-100/50 flex flex-col",
+                    gridClasses
+                  )}
                 >
-                  <Link to={`/event/${event.id}`}>
-                    <div className="relative overflow-hidden group">
+                  <Link to={`/event/${event.id}`} className={cn("block", isHero ? "flex-1" : "")}>
+                    <div className={cn(
+                      "relative overflow-hidden group",
+                      isHero ? "h-full" : ""
+                    )}>
                       <img
                         src={event.image_url || getPlaceholderImage(index)}
                         alt={event.title}
-                        className={`w-full object-cover group-hover:scale-105 transition-transform duration-700 ${
-                          index % 5 === 0 ? 'aspect-[4/5]' : index % 3 === 0 ? 'aspect-[3/4]' : 'aspect-[5/4]'
-                        }`}
+                        className={cn(
+                          "w-full object-cover group-hover:scale-105 transition-transform duration-700",
+                          isHero ? "h-full min-h-[300px]" : "aspect-[4/3]"
+                        )}
                       />
                       
                       {/* Date Badge - Glassmorphism */}
