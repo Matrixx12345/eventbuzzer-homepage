@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Zap } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import EventCard from "./EventCard";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
@@ -33,6 +34,19 @@ const EventsSection = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [cityName, setCityName] = useState<string>("Zurich");
   const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -340, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 340, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     async function loadNearbyEvents() {
@@ -136,8 +150,12 @@ const EventsSection = () => {
         }));
 
         eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
-        const topEvents = eventsWithDistance.slice(0, 4);
-        console.log(`Setting ${topEvents.length} events for ${nearestCity.name}:`, topEvents);
+
+        // Filter: Nur Events innerhalb von 30km
+        const nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
+        const topEvents = nearbyEvents.slice(0, 8);
+
+        console.log(`Setting ${topEvents.length} events for ${nearestCity.name} (within 30km):`, topEvents);
         setEvents(topEvents);
       } catch (error) {
         console.error("Error loading nearby events:", error);
@@ -181,28 +199,70 @@ const EventsSection = () => {
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Zap size={20} className="text-primary" />
-          <span className="text-sm font-semibold text-foreground">Right now in {cityName}</span>
+        {/* Header with clickable title */}
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            to={`/discover?location=${cityName}`}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity group"
+          >
+            <Zap size={20} className="text-primary" />
+            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+              Right now in {cityName}
+            </span>
+          </Link>
+
+          <Link
+            to={`/discover?location=${cityName}`}
+            className="flex items-center gap-1 text-sm font-medium text-primary hover:gap-2 transition-all"
+          >
+            View all
+            <ArrowRight size={16} />
+          </Link>
         </div>
 
-        {/* Events Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {events.map((event: any, index: number) => (
-            <div key={event.id} className="opacity-0 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-              <EventCard
-                id={event.id}
-                slug={event.id}
-                image={event.image_url || "/placeholder.jpg"}
-                title={event.title}
-                venue={event.venue || ""}
-                location={event.location}
-                isPopular={true}
-                latitude={event.latitude}
-                longitude={event.longitude}
-              />
+        {/* Horizontal Scrollable Carousel */}
+        <div className="relative group">
+          {/* Left Chevron Button */}
+          <button
+            onClick={scrollLeft}
+            className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft size={24} className="text-foreground" />
+          </button>
+
+          {/* Right Chevron Button */}
+          <button
+            onClick={scrollRight}
+            className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Scroll right"
+          >
+            <ChevronRight size={24} className="text-foreground" />
+          </button>
+
+          <div ref={scrollContainerRef} className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-6 pb-4">
+              {events.map((event: any, index: number) => (
+                <div
+                  key={event.id}
+                  className="flex-none w-[280px] sm:w-[320px] opacity-0 animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <EventCard
+                    id={event.id}
+                    slug={event.id}
+                    image={event.image_url || "/placeholder.jpg"}
+                    title={event.title}
+                    venue={event.venue || ""}
+                    location={event.location}
+                    isPopular={true}
+                    latitude={event.latitude}
+                    longitude={event.longitude}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </section>
