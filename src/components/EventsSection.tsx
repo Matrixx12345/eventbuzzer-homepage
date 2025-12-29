@@ -1,12 +1,11 @@
-import { useEffect, useState, useRef } from "react";
-import { Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import EventCard from "./EventCard";
+import { ChevronDown } from "lucide-react";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
-// üåç Haversine-Formel: Berechnet Distanz zwischen zwei Koordinaten in km
+// Haversine-Formel: Berechnet Distanz zwischen zwei Koordinaten in km
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Erdradius in km
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
@@ -18,44 +17,160 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// üá®üá≠ Gro√üe Schweizer St√§dte (nur diese werden f√ºr Location-basierte Suche verwendet)
 const SWISS_CITIES = [
-  { name: "Zurich", lat: 47.3769, lon: 8.5417, minPopulation: 400000 },
-  { name: "Geneva", lat: 46.2044, lon: 6.1432, minPopulation: 200000 },
-  { name: "Basel", lat: 47.5596, lon: 7.5886, minPopulation: 170000 },
-  { name: "Bern", lat: 46.948, lon: 7.4474, minPopulation: 130000 },
-  { name: "Lausanne", lat: 46.5197, lon: 6.6323, minPopulation: 140000 },
-  { name: "Winterthur", lat: 47.499, lon: 8.724, minPopulation: 110000 },
-  { name: "Lucerne", lat: 47.0502, lon: 8.3093, minPopulation: 80000 },
-  { name: "St. Gallen", lat: 47.4245, lon: 9.3767, minPopulation: 75000 },
+  { name: "Zurich", lat: 47.3769, lon: 8.5417 },
+  { name: "Geneva", lat: 46.2044, lon: 6.1432 },
+  { name: "Basel", lat: 47.5596, lon: 7.5886 },
+  { name: "Bern", lat: 46.948, lon: 7.4474 },
+  { name: "Lausanne", lat: 46.5197, lon: 6.6323 },
+  { name: "Winterthur", lat: 47.499, lon: 8.724 },
+  { name: "Lucerne", lat: 47.0502, lon: 8.3093 },
+  { name: "St. Gallen", lat: 47.4245, lon: 9.3767 },
 ];
+
+interface BentoCardProps {
+  title: string;
+  description?: string;
+  image: string;
+  venue: string;
+  location: string;
+  imagePosition: string;
+  isTall?: boolean;
+  isWide?: boolean;
+  slug?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+const BentoCard = ({
+  title,
+  description,
+  image,
+  venue,
+  location,
+  imagePosition,
+  isTall,
+  isWide,
+  slug,
+  latitude,
+  longitude,
+}: BentoCardProps) => {
+  const CardContent = (
+    <div className="flex flex-col justify-center p-6 text-center h-full">
+      <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">Premium Highlight</span>
+      <h3 className="font-serif text-lg text-white mb-2 line-clamp-2 min-h-[3rem]">{title}</h3>
+
+      <div className="group/map relative inline-flex items-center justify-center gap-1 text-gray-400 text-xs mb-3 cursor-help">
+        <span className="text-red-500">üìç</span>
+        <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
+
+        {latitude && longitude && (
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
+              <div className="relative w-full h-full">
+                <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
+                <div
+                  className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm"
+                  style={{
+                    left: `${((longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                    top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 mx-auto shadow-sm" />
+          </div>
+        )}
+      </div>
+
+      <p className="text-gray-400 font-sans text-xs mb-2">{venue}</p>
+      {description && (
+        <p className="text-gray-400 font-sans text-xs leading-relaxed mb-4 line-clamp-2">{description}</p>
+      )}
+
+      <div className="mt-auto">
+        <span className="inline-block border border-white/20 text-white hover:bg-white/10 text-[10px] px-3 py-1.5 rounded transition-colors uppercase tracking-wider">
+          Explore
+        </span>
+      </div>
+    </div>
+  );
+
+  const cardBaseClass =
+    "bg-neutral-900 rounded-3xl overflow-hidden h-full group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-xl";
+
+  if (isWide) {
+    return (
+      <Link to={`/event/${slug}`} className="block h-full">
+        <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 min-h-[280px]`}>
+          <div className="relative h-48 md:h-full overflow-hidden">
+            <img
+              src={image}
+              alt={title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          </div>
+          {CardContent}
+        </div>
+      </Link>
+    );
+  }
+
+  if (imagePosition === "left" || imagePosition === "right") {
+    return (
+      <Link to={`/event/${slug}`} className="block h-full">
+        <div className={`${cardBaseClass} grid grid-cols-2 min-h-[280px]`}>
+          {imagePosition === "left" && (
+            <div className="relative overflow-hidden">
+              <img
+                src={image}
+                alt={title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+          )}
+          {CardContent}
+          {imagePosition === "right" && (
+            <div className="relative overflow-hidden">
+              <img
+                src={image}
+                alt={title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+          )}
+        </div>
+      </Link>
+    );
+  }
+
+  return (
+    <Link to={`/event/${slug}`} className="block h-full">
+      <div className={`${cardBaseClass} flex flex-col ${isTall ? "min-h-[580px]" : "min-h-[280px]"}`}>
+        <div className={`relative overflow-hidden ${isTall ? "flex-1" : "h-40"}`}>
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+        <div className="flex-shrink-0">{CardContent}</div>
+      </div>
+    </Link>
+  );
+};
 
 const EventsSection = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [cityName, setCityName] = useState<string>("Zurich");
   const [loading, setLoading] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -340, behavior: "smooth" });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 340, behavior: "smooth" });
-    }
-  };
 
   useEffect(() => {
-    async function loadNearbyEvents() {
+    async function loadTodayEvents() {
       try {
-        // 1Ô∏è‚É£ User-Position von IP-API holen
-        let userLat: number = 47.3769; // Default: Zurich
+        // 1. User-Position ermitteln
+        let userLat: number = 47.3769;
         let userLon: number = 8.5417;
-        let city = "Zurich";
-        let isInSwitzerland = true;
 
         try {
           const locationResponse = await fetch("https://ipapi.co/json/");
@@ -65,34 +180,17 @@ const EventsSection = () => {
             userLat = locationData.latitude;
             userLon = locationData.longitude;
 
-            // Check country and set Swiss city accordingly
             const countryCode = locationData.country_code;
-
-            if (countryCode === "CH") {
-              // User in Schweiz ‚Üí Finde n√§chste gro√üe Stadt
-              isInSwitzerland = true;
-              console.log(`User in Switzerland: ${locationData.city}`);
-            } else if (countryCode === "DE") {
-              // User in Deutschland ‚Üí Zeige Basel (grenznah & cool!)
-              city = "Basel";
+            if (countryCode === "DE") {
               userLat = 47.5596;
               userLon = 7.5886;
-              isInSwitzerland = true;
-              console.log("User in Germany, showing Basel events");
-            } else {
-              // User irgendwo anders ‚Üí Zeige Zurich
-              city = "Zurich";
-              userLat = 47.3769;
-              userLon = 8.5417;
-              isInSwitzerland = true;
-              console.log(`User in ${countryCode}, showing Zurich events`);
             }
           }
         } catch (error) {
           console.warn("IP-Location API failed, using fallback", error);
         }
 
-        // 2Ô∏è‚É£ Events aus Supabase laden (nur heute)
+        // 2. Events von HEUTE laden (nur Ticketmaster)
         const today = new Date();
         const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString();
         const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString();
@@ -100,37 +198,21 @@ const EventsSection = () => {
         const { data: eventsData, error } = await supabase
           .from("events")
           .select("*")
+          .eq("source", "ticketmaster")
           .not("latitude", "is", null)
           .not("longitude", "is", null)
           .gte("start_date", todayStart)
           .lte("start_date", todayEnd)
-          .gte("relevance_score", 35) // Filtere schlechte Events raus
           .order("start_date", { ascending: true })
-          .limit(100);
+          .limit(50);
 
         if (error) {
           console.error("Supabase error:", error);
           throw error;
         }
 
-        console.log(`Loaded ${eventsData?.length || 0} events from Supabase`);
-
-        if (!eventsData || eventsData.length === 0) {
-          // Fallback: Neueste Events
-          const { data: fallbackData } = await supabase
-            .from("events")
-            .select("*")
-            .gte("start_date", new Date().toISOString())
-            .order("relevance_score", { ascending: false })
-            .limit(4);
-
-          setEvents(fallbackData || []);
-          setLoading(false);
-          return;
-        }
-
-        // 3Ô∏è‚É£ Finde n√§chste gro√üe Schweizer Stadt (IMMER!)
-        let nearestCity = SWISS_CITIES[0]; // Default: Z√ºrich
+        // 3. N√§chste Stadt finden
+        let nearestCity = SWISS_CITIES[0];
         let minDistance = Infinity;
 
         for (const cityItem of SWISS_CITIES) {
@@ -141,129 +223,297 @@ const EventsSection = () => {
           }
         }
 
-        // Wenn User > 50km von allen St√§dten entfernt ‚Üí Zeige Zurich
         if (minDistance > 50) {
-          nearestCity = SWISS_CITIES[0]; // Zurich als Fallback
-          console.log(`User too far from cities (${minDistance.toFixed(1)}km), showing Zurich`);
+          nearestCity = SWISS_CITIES[0];
         }
 
         setCityName(nearestCity.name);
 
-        // Sortiere Events nach Distanz zur n√§chsten gro√üen Stadt
-        const eventsWithDistance = eventsData.map((event: any) => ({
-          ...event,
-          distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
-        }));
+        // 4. Events nach Distanz filtern
+        if (eventsData && eventsData.length > 0) {
+          const eventsWithDistance = eventsData.map((event: any) => ({
+            ...event,
+            distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
+          }));
 
-        eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
+          eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
+          const nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
 
-        // Filter: Nur Events innerhalb von 30km
-        const nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
-        const topEvents = nearbyEvents.slice(0, 8);
+          setEvents(nearbyEvents.slice(0, 12));
+        } else {
+          // Fallback: n√§chste 7 Tage
+          const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        console.log(`Setting ${topEvents.length} events for ${nearestCity.name} (within 30km):`, topEvents);
-        setEvents(topEvents);
+          const { data: fallbackData } = await supabase
+            .from("events")
+            .select("*")
+            .eq("source", "ticketmaster")
+            .not("latitude", "is", null)
+            .not("longitude", "is", null)
+            .gte("start_date", new Date().toISOString())
+            .lte("start_date", nextWeek)
+            .order("start_date", { ascending: true })
+            .limit(12);
+
+          if (fallbackData) {
+            const eventsWithDistance = fallbackData.map((event: any) => ({
+              ...event,
+              distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
+            }));
+
+            eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
+            const nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
+            setEvents(nearbyEvents.slice(0, 12));
+          }
+        }
       } catch (error) {
-        console.error("Error loading nearby events:", error);
-
-        // Ultimate Fallback: Top Events
-        const { data: fallbackData } = await supabase
-          .from("events")
-          .select("*")
-          .gte("start_date", new Date().toISOString())
-          .order("relevance_score", { ascending: false })
-          .limit(4);
-
-        setEvents(fallbackData || []);
-        setCityName("Zurich"); // Immer eine Stadt zeigen
+        console.error("Error loading today events:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadNearbyEvents();
+    loadTodayEvents();
   }, []);
 
   if (loading) {
     return (
-      <section className="py-12 sm:py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">L√§dt...</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-gray-200 h-64 rounded-lg animate-pulse"></div>
-            ))}
-          </div>
+      <section className="bg-background py-24 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16 italic">Laedt...</h2>
         </div>
       </section>
     );
   }
 
-  return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header with clickable title */}
-        <div className="flex items-center justify-between mb-8">
-          <Link to={`/discover?location=${cityName}`} className="hover:opacity-80 transition-opacity group">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground group-hover:text-primary transition-colors">
-              In deiner N√§he ‚Ä¢ {cityName}
-            </h2>
-          </Link>
+  if (events.length === 0) {
+    return null;
+  }
 
-          <Link
-            to={`/discover?location=${cityName}`}
-            className="flex items-center gap-1 text-base font-medium text-primary hover:gap-2 transition-all"
-          >
-            Alle anzeigen
-            <ArrowRight size={18} />
-          </Link>
+  return (
+    <section className="bg-background py-24 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Intro Text - mittig wie Switzerland Titel */}
+        <div className="text-center mb-16">
+          <p className="font-serif text-4xl md:text-5xl text-foreground italic flex items-center justify-center gap-2">
+            Oder entdecke unsere Auswahl
+            <ChevronDown size={24} className="text-primary animate-bounce" />
+          </p>
         </div>
 
-        {/* Horizontal Scrollable Carousel */}
-        <div className="relative group">
-          {/* Left Chevron Button */}
-          <button
-            onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={24} className="text-foreground" />
-          </button>
+        {/* Title - links wie Weekend */}
+        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-muted-foreground mb-8 sm:mb-12">
+          Heute in deiner Naehe
+        </h2>
 
-          {/* Right Chevron Button */}
-          <button
-            onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={24} className="text-foreground" />
-          </button>
-
-          <div ref={scrollContainerRef} className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-6 pb-4">
-              {events.map((event: any, index: number) => (
-                <div
-                  key={event.id}
-                  className="flex-none w-[280px] sm:w-[320px] opacity-0 animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <EventCard
-                    id={event.id}
-                    slug={event.id}
-                    image={event.image_url || "/placeholder.jpg"}
-                    title={event.title}
-                    venue={event.venue || ""}
-                    location={event.location}
-                    isPopular={true}
-                    latitude={event.latitude}
-                    longitude={event.longitude}
-                  />
-                </div>
-              ))}
+        {/* Grid wie Switzerland */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Event 0: 2-spaltig links */}
+          {events[0] && (
+            <div className="md:col-span-2">
+              <BentoCard
+                title={events[0].title}
+                description={events[0].description}
+                image={events[0].image_url || "/placeholder.jpg"}
+                venue={events[0].venue || ""}
+                location={events[0].location}
+                imagePosition="left"
+                slug={events[0].id}
+                latitude={events[0].latitude}
+                longitude={events[0].longitude}
+              />
             </div>
-          </div>
+          )}
+
+          {/* Event 2: 1-spaltig tall rechts (2 Reihen hoch) */}
+          {events[2] && (
+            <div className="md:col-span-1 md:row-span-2">
+              <BentoCard
+                title={events[2].title}
+                description={events[2].description}
+                image={events[2].image_url || "/placeholder.jpg"}
+                venue={events[2].venue || ""}
+                location={events[2].location}
+                imagePosition="top"
+                isTall
+                slug={events[2].id}
+                latitude={events[2].latitude}
+                longitude={events[2].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 1: 2-spaltig links (zweite Reihe) */}
+          {events[1] && (
+            <div className="md:col-span-2">
+              <BentoCard
+                title={events[1].title}
+                description={events[1].description}
+                image={events[1].image_url || "/placeholder.jpg"}
+                venue={events[1].venue || ""}
+                location={events[1].location}
+                imagePosition="right"
+                slug={events[1].id}
+                latitude={events[1].latitude}
+                longitude={events[1].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 3: 1-spaltig */}
+          {events[3] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[3].title}
+                description={events[3].description}
+                image={events[3].image_url || "/placeholder.jpg"}
+                venue={events[3].venue || ""}
+                location={events[3].location}
+                imagePosition="left"
+                slug={events[3].id}
+                latitude={events[3].latitude}
+                longitude={events[3].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 4: 1-spaltig */}
+          {events[4] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[4].title}
+                description={events[4].description}
+                image={events[4].image_url || "/placeholder.jpg"}
+                venue={events[4].venue || ""}
+                location={events[4].location}
+                imagePosition="left"
+                slug={events[4].id}
+                latitude={events[4].latitude}
+                longitude={events[4].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 5: 1-spaltig */}
+          {events[5] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[5].title}
+                description={events[5].description}
+                image={events[5].image_url || "/placeholder.jpg"}
+                venue={events[5].venue || ""}
+                location={events[5].location}
+                imagePosition="top"
+                slug={events[5].id}
+                latitude={events[5].latitude}
+                longitude={events[5].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 6: 1-spaltig */}
+          {events[6] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[6].title}
+                description={events[6].description}
+                image={events[6].image_url || "/placeholder.jpg"}
+                venue={events[6].venue || ""}
+                location={events[6].location}
+                imagePosition="top"
+                slug={events[6].id}
+                latitude={events[6].latitude}
+                longitude={events[6].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 7: 1-spaltig */}
+          {events[7] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[7].title}
+                description={events[7].description}
+                image={events[7].image_url || "/placeholder.jpg"}
+                venue={events[7].venue || ""}
+                location={events[7].location}
+                imagePosition="top"
+                slug={events[7].id}
+                latitude={events[7].latitude}
+                longitude={events[7].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 8: Interlaken - 1-spaltig links */}
+          {events[8] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[8].title}
+                description={events[8].description}
+                image={events[8].image_url || "/placeholder.jpg"}
+                venue={events[8].venue || ""}
+                location={events[8].location}
+                imagePosition="top"
+                slug={events[8].id}
+                latitude={events[8].latitude}
+                longitude={events[8].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 9: Basel - 1-spaltig mitte */}
+          {events[9] && (
+            <div className="md:col-span-1">
+              <BentoCard
+                title={events[9].title}
+                description={events[9].description}
+                image={events[9].image_url || "/placeholder.jpg"}
+                venue={events[9].venue || ""}
+                location={events[9].location}
+                imagePosition="top"
+                slug={events[9].id}
+                latitude={events[9].latitude}
+                longitude={events[9].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 10: TALL rechts - 2 Zeilen hoch! (L√úCKE GEF√úLLT) */}
+          {events[10] && (
+            <div className="md:col-span-1 md:row-span-2">
+              <BentoCard
+                title={events[10].title}
+                description={events[10].description}
+                image={events[10].image_url || "/placeholder.jpg"}
+                venue={events[10].venue || ""}
+                location={events[10].location}
+                imagePosition="top"
+                isTall
+                slug={events[10].id}
+                latitude={events[10].latitude}
+                longitude={events[10].longitude}
+              />
+            </div>
+          )}
+
+          {/* Event 11: Grand Train Tour - 2-spaltig breit unten */}
+          {events[11] && (
+            <div className="md:col-span-2">
+              <BentoCard
+                title={events[11].title}
+                description={events[11].description}
+                image={events[11].image_url || "/placeholder.jpg"}
+                venue={events[11].venue || ""}
+                location={events[11].location}
+                imagePosition="left"
+                isWide
+                slug={events[11].id}
+                latitude={events[11].latitude}
+                longitude={events[11].longitude}
+              />
+            </div>
+          )}
         </div>
       </div>
     </section>
