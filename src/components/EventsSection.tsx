@@ -17,20 +17,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-interface Event {
-  id: string;
-  title: string;
-  location: string;
-  latitude: number;
-  longitude: number;
-  start_date: string;
-  image_url?: string;
-  venue?: string;
-  distance?: number;
-}
-
 const EventsSection = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [cityName, setCityName] = useState<string>("your area");
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +45,7 @@ const EventsSection = () => {
         }
 
         // 2Ô∏è‚É£ Events aus Supabase laden (nur aktive mit Koordinaten)
-        const { data: eventsData, error } = await supabase
+        const { data: eventsData, error } = await (supabase as any)
           .from("events")
           .select("*")
           .not("latitude", "is", null)
@@ -66,11 +54,14 @@ const EventsSection = () => {
           .order("start_date", { ascending: true })
           .limit(100);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
 
         if (!eventsData || eventsData.length === 0) {
           // Fallback: Neueste Events ohne Koordinaten-Filter
-          const { data: fallbackData } = await supabase
+          const { data: fallbackData } = await (supabase as any)
             .from("events")
             .select("*")
             .gte("start_date", new Date().toISOString())
@@ -84,13 +75,13 @@ const EventsSection = () => {
 
         // 3Ô∏è‚É£ Distanz berechnen & sortieren
         if (userLat !== null && userLon !== null) {
-          const eventsWithDistance = eventsData.map((event) => ({
+          const eventsWithDistance = eventsData.map((event: any) => ({
             ...event,
             distance: calculateDistance(userLat!, userLon!, event.latitude, event.longitude),
           }));
 
           // Sortiere nach Distanz
-          eventsWithDistance.sort((a, b) => a.distance! - b.distance!);
+          eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
           setEvents(eventsWithDistance.slice(0, 4));
         } else {
           // Fallback: Zeige einfach die neuesten 4
@@ -100,7 +91,7 @@ const EventsSection = () => {
         console.error("Error loading nearby events:", error);
 
         // Ultimate Fallback: Top Events by relevance
-        const { data: fallbackData } = await supabase
+        const { data: fallbackData } = await (supabase as any)
           .from("events")
           .select("*")
           .gte("start_date", new Date().toISOString())
@@ -144,7 +135,7 @@ const EventsSection = () => {
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {events.map((event, index) => (
+          {events.map((event: any, index: number) => (
             <div key={event.id} className="opacity-0 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
               <EventCard
                 id={event.id}
