@@ -440,13 +440,13 @@ const Listings = () => {
           </div>
         )}
 
-        {/* Events Grid - Zig-Zag 5er-Muster */}
+        {/* Events Grid - Clean 3-Column Layout */}
         {loading && !loadingMore ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 auto-rows-fr">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {events.map((event, index) => {
               const locationName = getEventLocation(event);
               const distanceInfo =
@@ -454,49 +454,22 @@ const Listings = () => {
                   ? getDistanceInfo(event.latitude, event.longitude).distance
                   : null;
 
-              // Zig-Zag Pattern Logic
-              const groupIndex = Math.floor(index / 5);
-              const positionInGroup = index % 5;
-              const isPatternA = groupIndex % 2 === 0; // Hero Links
-              const isHero = positionInGroup === 0;
-              
-              // Grid positioning for hero cards
-              let gridClasses = "";
-              if (isHero) {
-                if (isPatternA) {
-                  // Pattern A: Hero in column 1, spans 2 rows
-                  gridClasses = "lg:col-start-1 lg:row-span-2";
-                } else {
-                  // Pattern B: Hero in column 3, spans 2 rows
-                  gridClasses = "lg:col-start-3 lg:row-span-2";
-                }
-              }
-
               return (
                 <article 
                   key={event.id}
-                  className={cn(
-                    "bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-neutral-100/50 flex flex-col",
-                    gridClasses
-                  )}
+                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                 >
-                  <Link to={`/event/${event.id}`} className={cn("block", isHero ? "flex-1" : "")}>
-                    <div className={cn(
-                      "relative overflow-hidden group",
-                      isHero ? "h-full" : ""
-                    )}>
+                  <Link to={`/event/${event.id}`} className="block">
+                    <div className="relative overflow-hidden">
                       <img
                         src={event.image_url || getPlaceholderImage(index)}
                         alt={event.title}
-                        className={cn(
-                          "w-full object-cover group-hover:scale-105 transition-transform duration-700",
-                          isHero ? "h-full min-h-[300px]" : "aspect-[4/3]"
-                        )}
+                        className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
-                      {/* Date Badge - Glassmorphism */}
-                      <div className="absolute top-3 left-3 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-white/30">
-                        <p className="text-[10px] font-bold text-neutral-800 tracking-wide uppercase">
+                      {/* Date Badge - Elegant Glassmorphism */}
+                      <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
+                        <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
                           {formatEventDate(
                             event.start_date,
                             event.external_id,
@@ -522,44 +495,35 @@ const Listings = () => {
                             date: formatEventDate(event.start_date),
                           });
                         }}
-                        className="absolute top-3 right-3 p-2.5 rounded-full bg-white/60 backdrop-blur-md hover:bg-white/90 transition-all shadow-lg border border-white/30"
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
                         aria-label="Add to favorites"
                       >
                         <Heart
-                          size={16}
-                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-600"}
+                          size={14}
+                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
                         />
                       </button>
                     </div>
                   </Link>
 
-                  {/* Content Section - Compact Premium Editorial */}
-                  <div className="p-3">
-                    {/* Eyebrow Location - Uppercase, Small, Gray */}
-                    <div className="group/map relative cursor-pointer mb-1">
-                      <div className="flex items-center gap-1 text-[10px] text-neutral-400 uppercase tracking-widest font-medium">
-                        <MapPin size={10} className="text-red-400 flex-shrink-0" />
-                        {locationName && distanceInfo ? (
-                          <>
-                            <span className="truncate">{locationName}</span>
-                            <span className="text-neutral-300">•</span>
-                            <span className="flex-shrink-0">{distanceInfo}</span>
-                          </>
-                        ) : locationName ? (
-                          <span className="truncate">{locationName}</span>
-                        ) : distanceInfo ? (
-                          <span className="truncate">{distanceInfo}</span>
-                        ) : (
-                          <span className="truncate">Schweiz</span>
-                        )}
+                  {/* Content Section - Compact & Elegant */}
+                  <div className="p-4">
+                    {/* Location Eyebrow with Map Hover */}
+                    <div className="group/map relative cursor-pointer mb-2">
+                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium">
+                        <MapPin size={11} className="text-primary/60 flex-shrink-0" />
+                        <span className="truncate">
+                          {locationName || "Schweiz"}
+                          {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
+                        </span>
                       </div>
                       {event.latitude && event.longitude && (
                         <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                          <div className="bg-white p-3 rounded-xl shadow-2xl border w-48 h-40">
-                            <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
-                              <img src="/swiss-outline.svg" className="w-full h-full object-contain" alt="Map" />
+                          <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
+                            <div className="relative w-full h-full bg-slate-50 rounded overflow-hidden">
+                              <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-30" alt="Map" />
                               <div
-                                className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-lg"
+                                className="absolute w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow"
                                 style={{
                                   left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
                                   top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
@@ -571,26 +535,24 @@ const Listings = () => {
                       )}
                     </div>
                     
-                    {/* Title - Large Serif Bold */}
+                    {/* Title - Serif Bold */}
                     <Link to={`/event/${event.id}`}>
-                      <h3 className="font-serif text-xl font-bold text-neutral-900 leading-tight line-clamp-2 hover:text-neutral-700 transition-colors">
+                      <h3 className="font-serif text-lg font-bold text-foreground leading-snug line-clamp-2 hover:text-primary/80 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
                     
-                    {/* Short Description */}
-                    {event.short_description && (
-                      <p className="text-xs text-neutral-500 mt-1.5 line-clamp-2 leading-relaxed">{event.short_description}</p>
-                    )}
+                    {/* Short Description - Always 2 lines */}
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed min-h-[2.5rem]">
+                      {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
+                    </p>
                     
                     {/* Price & Rating Row */}
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                      {event.price_from ? (
-                        <span className="text-sm font-bold text-neutral-900">ab CHF {event.price_from}</span>
-                      ) : (
-                        <span></span>
-                      )}
-                      <div className="opacity-30 hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
+                      <span className="text-sm text-neutral-500 font-medium">
+                        {event.price_from ? `ab CHF ${event.price_from}` : "Preis auf Anfrage"}
+                      </span>
+                      <div className="opacity-40 hover:opacity-100 transition-opacity">
                         <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                       </div>
                     </div>
