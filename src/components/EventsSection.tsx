@@ -230,6 +230,8 @@ const EventsSection = () => {
         setCityName(nearestCity.name);
 
         // 4. Events nach Distanz filtern
+        let finalEvents: any[] = [];
+
         if (eventsData && eventsData.length > 0) {
           const eventsWithDistance = eventsData.map((event: any) => ({
             ...event,
@@ -237,11 +239,24 @@ const EventsSection = () => {
           }));
 
           eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
-          const nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
 
-          setEvents(nearbyEvents.slice(0, 12));
-        } else {
-          // Fallback: n√§chste 7 Tage
+          // Versuche zuerst 30km, dann 50km, dann 100km, dann alle
+          let nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
+          if (nearbyEvents.length < 12) {
+            nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 50);
+          }
+          if (nearbyEvents.length < 12) {
+            nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 100);
+          }
+          if (nearbyEvents.length < 12) {
+            nearbyEvents = eventsWithDistance; // Alle Events, sortiert nach Distanz
+          }
+
+          finalEvents = nearbyEvents.slice(0, 12);
+        }
+
+        // Fallback: Wenn keine Events von HEUTE oder zu wenige, hole Events der n√§chsten 7 Tage
+        if (finalEvents.length < 12) {
           const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
           const { data: fallbackData } = await supabase
@@ -253,19 +268,23 @@ const EventsSection = () => {
             .gte("start_date", new Date().toISOString())
             .lte("start_date", nextWeek)
             .order("start_date", { ascending: true })
-            .limit(12);
+            .limit(50);
 
-          if (fallbackData) {
+          if (fallbackData && fallbackData.length > 0) {
             const eventsWithDistance = fallbackData.map((event: any) => ({
               ...event,
               distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
             }));
 
             eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
-            const nearbyEvents = eventsWithDistance.filter((event: any) => event.distance <= 30);
-            setEvents(nearbyEvents.slice(0, 12));
+
+            // F√ºge fehlende Events hinzu (bis zu 12 insgesamt) - KEIN Distanzfilter beim Fallback!
+            const additionalEvents = eventsWithDistance.slice(0, 12 - finalEvents.length);
+            finalEvents = [...finalEvents, ...additionalEvents];
           }
         }
+
+        setEvents(finalEvents);
       } catch (error) {
         console.error("Error loading today events:", error);
       } finally {
@@ -286,9 +305,10 @@ const EventsSection = () => {
     );
   }
 
-  if (events.length === 0) {
-    return null;
-  }
+  // NICHT VERSTECKEN! Immer anzeigen, auch wenn keine Events
+  // if (events.length === 0) {
+  //   return null;
+  // }
 
   return (
     <section className="bg-background py-24 px-4 md:px-8">
