@@ -4,6 +4,34 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
+// Helper function to get nearest Swiss city from coordinates
+const getNearestPlace = (lat: number, lng: number): string => {
+  const places = [
+    { name: "Z√ºrich", lat: 47.3769, lng: 8.5417 },
+    { name: "Bern", lat: 46.948, lng: 7.4474 },
+    { name: "Basel", lat: 47.5596, lng: 7.5886 },
+    { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+    { name: "Genf", lat: 46.2044, lng: 6.1432 },
+    { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+    { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+    { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+    { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+  ];
+
+  let nearest = places[0];
+  let minDistance = Infinity;
+
+  places.forEach((place) => {
+    const distance = Math.sqrt(Math.pow((lat - place.lat) * 111, 2) + Math.pow((lng - place.lng) * 85, 2));
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearest = place;
+    }
+  });
+
+  return nearest.name;
+};
+
 interface WeekendCardProps {
   id: string;
   image: string;
@@ -63,7 +91,11 @@ const WeekendCard = ({
           <h3 className="font-serif text-card-foreground text-xl lg:text-2xl font-semibold leading-tight mb-2 line-clamp-2">
             {title}
           </h3>
-          {description && isLarge && <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{description}</p>}
+          {description && isLarge && (
+            <p className="text-gray-100 text-sm mb-4 line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              {description}
+            </p>
+          )}
           <div className="mb-4">
             <p className="text-muted-foreground text-sm">{venue}</p>
 
@@ -103,6 +135,53 @@ const WeekendCard = ({
       </article>
     </Link>
   );
+};
+
+// Helper to get location - same logic as Discover page
+const getEventLocation = (event: any): string => {
+  const countryNames = [
+    "schweiz",
+    "switzerland",
+    "suisse",
+    "svizzera",
+    "germany",
+    "deutschland",
+    "france",
+    "frankreich",
+    "austria",
+    "√∂sterreich",
+    "italy",
+    "italien",
+    "liechtenstein",
+  ];
+
+  const isCountry = (str?: string) => {
+    if (!str) return true;
+    return countryNames.includes(str.toLowerCase().trim());
+  };
+
+  // 1. Try address_city first
+  const city = event.address_city?.trim();
+  if (city && city.length > 0 && !isCountry(city)) {
+    return city;
+  }
+
+  // 2. Try venue_name
+  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
+    return event.venue_name.trim();
+  }
+
+  // 3. Try location field
+  if (event.location && !isCountry(event.location)) {
+    return event.location.trim();
+  }
+
+  // 4. Calculate from GPS coordinates
+  if (event.latitude && event.longitude) {
+    return getNearestPlace(event.latitude, event.longitude);
+  }
+
+  return "Schweiz";
 };
 
 const WeekendSection = () => {
@@ -161,7 +240,7 @@ const WeekendSection = () => {
             title: events[0].title,
             description: events[0].description,
             venue: events[0].venue_name || "Venue",
-            location: events[0].location || "Schweiz",
+            location: getEventLocation(events[0]),
             slug: events[0].id,
             latitude: events[0].latitude,
             longitude: events[0].longitude,
@@ -174,7 +253,7 @@ const WeekendSection = () => {
               image: events[1].image_url,
               title: events[1].title,
               venue: events[1].venue_name || "Venue",
-              location: events[1].location || "Schweiz",
+              location: getEventLocation(events[1]),
               slug: events[1].id,
               latitude: events[1].latitude,
               longitude: events[1].longitude,
@@ -186,7 +265,7 @@ const WeekendSection = () => {
               image: events[2].image_url,
               title: events[2].title,
               venue: events[2].venue_name || "Venue",
-              location: events[2].location || "Schweiz",
+              location: getEventLocation(events[2]),
               slug: events[2].id,
               latitude: events[2].latitude,
               longitude: events[2].longitude,
@@ -202,7 +281,7 @@ const WeekendSection = () => {
             title: events[3].title,
             description: events[3].description,
             venue: events[3].venue_name || "Venue",
-            location: events[3].location || "Schweiz",
+            location: getEventLocation(events[3]),
             slug: events[3].id,
             latitude: events[3].latitude,
             longitude: events[3].longitude,
@@ -214,7 +293,7 @@ const WeekendSection = () => {
             image: events[4].image_url,
             title: events[4].title,
             venue: events[4].venue_name || "Venue",
-            location: events[4].location || "Schweiz",
+            location: getEventLocation(events[4]),
             slug: events[4].id,
             latitude: events[4].latitude,
             longitude: events[4].longitude,
@@ -229,7 +308,7 @@ const WeekendSection = () => {
               image: events[5].image_url,
               title: events[5].title,
               venue: events[5].venue_name || "Venue",
-              location: events[5].location || "Schweiz",
+              location: getEventLocation(events[5]),
               slug: events[5].id,
               latitude: events[5].latitude,
               longitude: events[5].longitude,
@@ -241,7 +320,7 @@ const WeekendSection = () => {
               image: events[6].image_url,
               title: events[6].title,
               venue: events[6].venue_name || "Venue",
-              location: events[6].location || "Schweiz",
+              location: getEventLocation(events[6]),
               slug: events[6].id,
               latitude: events[6].latitude,
               longitude: events[6].longitude,
@@ -255,7 +334,7 @@ const WeekendSection = () => {
             title: events[7].title,
             description: events[7].description,
             venue: events[7].venue_name || "Venue",
-            location: events[7].location || "Schweiz",
+            location: getEventLocation(events[7]),
             slug: events[7].id,
             latitude: events[7].latitude,
             longitude: events[7].longitude,
