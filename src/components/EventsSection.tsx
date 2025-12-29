@@ -92,13 +92,19 @@ const EventsSection = () => {
           console.warn("IP-Location API failed, using fallback", error);
         }
 
-        // 2Ô∏è‚É£ Events aus Supabase laden
+        // 2Ô∏è‚É£ Events aus Supabase laden (nur heute)
+        const today = new Date();
+        const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+        const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+
         const { data: eventsData, error } = await supabase
           .from("events")
           .select("*")
           .not("latitude", "is", null)
           .not("longitude", "is", null)
-          .gte("start_date", new Date().toISOString())
+          .gte("start_date", todayStart)
+          .lte("start_date", todayEnd)
+          .gte("relevance_score", 35) // Filtere schlechte Events raus
           .order("start_date", { ascending: true })
           .limit(100);
 
@@ -182,9 +188,8 @@ const EventsSection = () => {
     return (
       <section className="py-12 sm:py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 mb-6">
-            <Zap size={20} className="text-primary" />
-            <span className="text-sm font-semibold text-foreground">Loading...</span>
+          <div className="mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">L√§dt...</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
@@ -200,23 +205,19 @@ const EventsSection = () => {
     <section className="py-12 sm:py-16 lg:py-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header with clickable title */}
-        <div className="flex items-center justify-between mb-6">
-          <Link
-            to={`/discover?location=${cityName}`}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity group"
-          >
-            <Zap size={20} className="text-primary" />
-            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-              Right now in {cityName}
-            </span>
+        <div className="flex items-center justify-between mb-8">
+          <Link to={`/discover?location=${cityName}`} className="hover:opacity-80 transition-opacity group">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground group-hover:text-primary transition-colors">
+              In deiner N√§he ‚Ä¢ {cityName}
+            </h2>
           </Link>
 
           <Link
             to={`/discover?location=${cityName}`}
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:gap-2 transition-all"
+            className="flex items-center gap-1 text-base font-medium text-primary hover:gap-2 transition-all"
           >
-            View all
-            <ArrowRight size={16} />
+            Alle anzeigen
+            <ArrowRight size={18} />
           </Link>
         </div>
 
