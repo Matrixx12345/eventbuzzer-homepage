@@ -440,13 +440,13 @@ const Listings = () => {
           </div>
         )}
 
-        {/* Events Grid - Clean 3-Column Layout */}
+        {/* Events Grid - Bento Layout with Variety */}
         {loading && !loadingMore ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {events.map((event, index) => {
               const locationName = getEventLocation(event);
               const distanceInfo =
@@ -454,10 +454,185 @@ const Listings = () => {
                   ? getDistanceInfo(event.latitude, event.longitude).distance
                   : null;
 
+              // Bento Pattern: Repeating 6-item cycle
+              // 0: Wide (2 cols)
+              // 1: Tall (row-span-2) 
+              // 2: Normal
+              // 3: Normal
+              // 4: Normal  
+              // 5: Wide (2 cols)
+              const patternPosition = index % 6;
+              const isWide = patternPosition === 0 || patternPosition === 5;
+              const isTall = patternPosition === 1;
+              const isNormal = !isWide && !isTall;
+
+              // Grid classes
+              const gridClasses = cn(
+                isWide && "md:col-span-2",
+                isTall && "md:row-span-2"
+              );
+
+              // Card with image on side for wide cards
+              if (isWide) {
+                return (
+                  <article 
+                    key={event.id}
+                    className={cn(
+                      "group bg-neutral-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:ring-1 hover:ring-white/20 transition-all duration-300",
+                      gridClasses
+                    )}
+                  >
+                    <Link to={`/event/${event.id}`} className="block h-full">
+                      <div className="grid grid-cols-1 md:grid-cols-2 h-full min-h-[280px]">
+                        {/* Image Side */}
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={event.image_url || getPlaceholderImage(index)}
+                            alt={event.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* Favorite Button */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleFavorite({
+                                id: event.id,
+                                slug: event.id,
+                                title: event.title,
+                                venue: event.venue_name || "",
+                                image: event.image_url || getPlaceholderImage(index),
+                                location: locationName,
+                                date: formatEventDate(event.start_date),
+                              });
+                            }}
+                            className="absolute top-3 right-3 p-2 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 transition-all"
+                            aria-label="Add to favorites"
+                          >
+                            <Heart
+                              size={16}
+                              className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-white/80"}
+                            />
+                          </button>
+                        </div>
+                        
+                        {/* Content Side */}
+                        <div className="flex flex-col justify-center p-6 text-center">
+                          <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
+                            {formatEventDate(event.start_date, event.external_id, event.date_range_start, event.date_range_end, event.show_count)}
+                          </span>
+                          <h3 className="font-serif text-xl text-white mb-2 line-clamp-2">{event.title}</h3>
+                          <div className="flex items-center justify-center gap-1 text-neutral-400 text-xs mb-3">
+                            <MapPin size={10} className="text-primary/60" />
+                            <span>{locationName || "Schweiz"}</span>
+                          </div>
+                          <p className="text-neutral-400 font-sans text-xs leading-relaxed mb-4 line-clamp-2">
+                            {event.short_description || "Entdecke dieses einzigartige Event."}
+                          </p>
+                          <div className="flex items-center justify-center gap-3 mt-auto">
+                            <span className="text-neutral-300 text-sm">
+                              {event.price_from ? `ab CHF ${event.price_from}` : ""}
+                            </span>
+                            <div className="opacity-40 hover:opacity-100 transition-opacity">
+                              <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </article>
+                );
+              }
+
+              // Tall card - vertical with large image
+              if (isTall) {
+                return (
+                  <article 
+                    key={event.id}
+                    className={cn(
+                      "group bg-neutral-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:ring-1 hover:ring-white/20 transition-all duration-300 flex flex-col",
+                      gridClasses
+                    )}
+                  >
+                    <Link to={`/event/${event.id}`} className="block flex-1">
+                      <div className="relative overflow-hidden h-1/2 min-h-[200px]">
+                        <img
+                          src={event.image_url || getPlaceholderImage(index)}
+                          alt={event.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleFavorite({
+                              id: event.id,
+                              slug: event.id,
+                              title: event.title,
+                              venue: event.venue_name || "",
+                              image: event.image_url || getPlaceholderImage(index),
+                              location: locationName,
+                              date: formatEventDate(event.start_date),
+                            });
+                          }}
+                          className="absolute top-3 right-3 p-2 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 transition-all"
+                          aria-label="Add to favorites"
+                        >
+                          <Heart
+                            size={16}
+                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-white/80"}
+                          />
+                        </button>
+                      </div>
+                    </Link>
+                    <div className="flex flex-col justify-center p-5 text-center flex-1">
+                      <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
+                        {formatEventDate(event.start_date, event.external_id, event.date_range_start, event.date_range_end, event.show_count)}
+                      </span>
+                      <Link to={`/event/${event.id}`}>
+                        <h3 className="font-serif text-lg text-white mb-2 line-clamp-2 hover:text-primary/80 transition-colors">{event.title}</h3>
+                      </Link>
+                      <div className="group/map relative flex items-center justify-center gap-1 text-neutral-400 text-xs mb-3 cursor-pointer">
+                        <MapPin size={10} className="text-primary/60" />
+                        <span className="border-b border-dotted border-neutral-600 hover:text-white transition-colors">{locationName || "Schweiz"}</span>
+                        {event.latitude && event.longitude && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                            <div className="bg-white p-2 rounded-lg shadow-xl border w-32 h-24">
+                              <div className="relative w-full h-full">
+                                <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="Map" />
+                                <div
+                                  className="absolute w-2 h-2 bg-primary rounded-full border-2 border-white shadow"
+                                  style={{
+                                    left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                                    top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-neutral-400 font-sans text-xs leading-relaxed mb-3 line-clamp-2">
+                        {event.short_description || "Entdecke dieses einzigartige Event."}
+                      </p>
+                      <div className="flex items-center justify-center gap-3 mt-auto pt-3 border-t border-neutral-800">
+                        <span className="text-neutral-300 text-sm">
+                          {event.price_from ? `ab CHF ${event.price_from}` : ""}
+                        </span>
+                        <div className="opacity-40 hover:opacity-100 transition-opacity">
+                          <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              }
+
+              // Normal card - compact white card
               return (
                 <article 
                   key={event.id}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
                   <Link to={`/event/${event.id}`} className="block">
                     <div className="relative overflow-hidden">
@@ -467,20 +642,14 @@ const Listings = () => {
                         className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
-                      {/* Date Badge - Elegant Glassmorphism */}
-                      <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
-                        <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
-                          {formatEventDate(
-                            event.start_date,
-                            event.external_id,
-                            event.date_range_start,
-                            event.date_range_end,
-                            event.show_count,
-                          )}
+                      {/* Date Badge */}
+                      <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                        <p className="text-[10px] font-semibold text-neutral-700">
+                          {formatEventDate(event.start_date, event.external_id, event.date_range_start, event.date_range_end, event.show_count)}
                         </p>
                       </div>
                       
-                      {/* Favorite Button - Top Right */}
+                      {/* Favorite Button */}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -495,7 +664,7 @@ const Listings = () => {
                             date: formatEventDate(event.start_date),
                           });
                         }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all shadow-sm"
                         aria-label="Add to favorites"
                       >
                         <Heart
@@ -506,27 +675,23 @@ const Listings = () => {
                     </div>
                   </Link>
 
-                  {/* Content Section - Compact & Elegant */}
                   <div className="p-4">
-                    {/* Location Eyebrow with Map Hover */}
-                    <div className="group/map relative cursor-pointer mb-2">
-                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium">
-                        <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                        <span className="truncate">
-                          {locationName || "Schweiz"}
-                          {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
-                        </span>
+                    {/* Location Eyebrow */}
+                    <div className="group/map relative cursor-pointer mb-1.5">
+                      <div className="flex items-center gap-1 text-[10px] text-neutral-400 uppercase tracking-wider font-medium">
+                        <MapPin size={10} className="text-primary/60" />
+                        <span className="truncate">{locationName || "Schweiz"}</span>
                       </div>
                       {event.latitude && event.longitude && (
                         <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                          <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
-                            <div className="relative w-full h-full bg-slate-50 rounded overflow-hidden">
-                              <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-30" alt="Map" />
+                          <div className="bg-white p-2 rounded-lg shadow-xl border w-32 h-24">
+                            <div className="relative w-full h-full">
+                              <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="Map" />
                               <div
-                                className="absolute w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow"
+                                className="absolute w-2 h-2 bg-primary rounded-full border-2 border-white shadow"
                                 style={{
-                                  left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
-                                  top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
+                                  left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                                  top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
                                 }}
                               />
                             </div>
@@ -535,22 +700,22 @@ const Listings = () => {
                       )}
                     </div>
                     
-                    {/* Title - Serif Bold */}
+                    {/* Title */}
                     <Link to={`/event/${event.id}`}>
                       <h3 className="font-serif text-lg font-bold text-foreground leading-snug line-clamp-2 hover:text-primary/80 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
                     
-                    {/* Short Description - Always 2 lines */}
+                    {/* Description */}
                     <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed min-h-[2.5rem]">
-                      {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
+                      {event.short_description || "Entdecke dieses einzigartige Event."}
                     </p>
                     
-                    {/* Price & Rating Row */}
+                    {/* Price & Rating */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
-                      <span className="text-sm text-neutral-500 font-medium">
-                        {event.price_from ? `ab CHF ${event.price_from}` : "Preis auf Anfrage"}
+                      <span className="text-sm text-neutral-500">
+                        {event.price_from ? `ab CHF ${event.price_from}` : ""}
                       </span>
                       <div className="opacity-40 hover:opacity-100 transition-opacity">
                         <EventRatingButtons eventId={event.id} eventTitle={event.title} />
