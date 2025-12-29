@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
 import EventCard from "./EventCard";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
 // üåç Haversine-Formel: Berechnet Distanz zwischen zwei Koordinaten in km
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -19,28 +19,28 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 // üá®üá≠ Gro√üe Schweizer St√§dte (nur diese werden f√ºr Location-basierte Suche verwendet)
 const SWISS_CITIES = [
-  { name: "Z√ºrich", lat: 47.3769, lon: 8.5417, minPopulation: 400000 },
-  { name: "Genf", lat: 46.2044, lon: 6.1432, minPopulation: 200000 },
+  { name: "Zurich", lat: 47.3769, lon: 8.5417, minPopulation: 400000 },
+  { name: "Geneva", lat: 46.2044, lon: 6.1432, minPopulation: 200000 },
   { name: "Basel", lat: 47.5596, lon: 7.5886, minPopulation: 170000 },
   { name: "Bern", lat: 46.948, lon: 7.4474, minPopulation: 130000 },
   { name: "Lausanne", lat: 46.5197, lon: 6.6323, minPopulation: 140000 },
   { name: "Winterthur", lat: 47.499, lon: 8.724, minPopulation: 110000 },
-  { name: "Luzern", lat: 47.0502, lon: 8.3093, minPopulation: 80000 },
+  { name: "Lucerne", lat: 47.0502, lon: 8.3093, minPopulation: 80000 },
   { name: "St. Gallen", lat: 47.4245, lon: 9.3767, minPopulation: 75000 },
 ];
 
 const EventsSection = () => {
   const [events, setEvents] = useState<any[]>([]);
-  const [cityName, setCityName] = useState<string>("Z√ºrich");
+  const [cityName, setCityName] = useState<string>("Zurich");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadNearbyEvents() {
       try {
         // 1Ô∏è‚É£ User-Position von IP-API holen
-        let userLat: number = 47.3769; // Default: Z√ºrich
+        let userLat: number = 47.3769; // Default: Zurich
         let userLon: number = 8.5417;
-        let city = "Z√ºrich";
+        let city = "Zurich";
         let isInSwitzerland = true;
 
         try {
@@ -66,12 +66,12 @@ const EventsSection = () => {
               isInSwitzerland = true;
               console.log("User in Germany, showing Basel events");
             } else {
-              // User irgendwo anders ‚Üí Zeige Z√ºrich
-              city = "Z√ºrich";
+              // User irgendwo anders ‚Üí Zeige Zurich
+              city = "Zurich";
               userLat = 47.3769;
               userLon = 8.5417;
               isInSwitzerland = true;
-              console.log(`User in ${countryCode}, showing Z√ºrich events`);
+              console.log(`User in ${countryCode}, showing Zurich events`);
             }
           }
         } catch (error) {
@@ -79,7 +79,7 @@ const EventsSection = () => {
         }
 
         // 2Ô∏è‚É£ Events aus Supabase laden
-        const { data: eventsData, error } = await (supabase as any)
+        const { data: eventsData, error } = await supabase
           .from("events")
           .select("*")
           .not("latitude", "is", null)
@@ -93,9 +93,11 @@ const EventsSection = () => {
           throw error;
         }
 
+        console.log(`Loaded ${eventsData?.length || 0} events from Supabase`);
+
         if (!eventsData || eventsData.length === 0) {
           // Fallback: Neueste Events
-          const { data: fallbackData } = await (supabase as any)
+          const { data: fallbackData } = await supabase
             .from("events")
             .select("*")
             .gte("start_date", new Date().toISOString())
@@ -119,10 +121,10 @@ const EventsSection = () => {
           }
         }
 
-        // Wenn User > 50km von allen St√§dten entfernt ‚Üí Zeige Z√ºrich
+        // Wenn User > 50km von allen St√§dten entfernt ‚Üí Zeige Zurich
         if (minDistance > 50) {
-          nearestCity = SWISS_CITIES[0]; // Z√ºrich als Fallback
-          console.log(`User too far from cities (${minDistance.toFixed(1)}km), showing Z√ºrich`);
+          nearestCity = SWISS_CITIES[0]; // Zurich als Fallback
+          console.log(`User too far from cities (${minDistance.toFixed(1)}km), showing Zurich`);
         }
 
         setCityName(nearestCity.name);
@@ -134,12 +136,14 @@ const EventsSection = () => {
         }));
 
         eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
-        setEvents(eventsWithDistance.slice(0, 4));
+        const topEvents = eventsWithDistance.slice(0, 4);
+        console.log(`Setting ${topEvents.length} events for ${nearestCity.name}:`, topEvents);
+        setEvents(topEvents);
       } catch (error) {
         console.error("Error loading nearby events:", error);
 
         // Ultimate Fallback: Top Events
-        const { data: fallbackData } = await (supabase as any)
+        const { data: fallbackData } = await supabase
           .from("events")
           .select("*")
           .gte("start_date", new Date().toISOString())
@@ -147,7 +151,7 @@ const EventsSection = () => {
           .limit(4);
 
         setEvents(fallbackData || []);
-        setCityName("Z√ºrich"); // Immer eine Stadt zeigen
+        setCityName("Zurich"); // Immer eine Stadt zeigen
       } finally {
         setLoading(false);
       }
