@@ -31,17 +31,17 @@ const SWISS_CITIES = [
 
 const EventsSection = () => {
   const [events, setEvents] = useState<any[]>([]);
-  const [cityName, setCityName] = useState<string>("Switzerland");
+  const [cityName, setCityName] = useState<string>("Z√ºrich");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadNearbyEvents() {
       try {
         // 1Ô∏è‚É£ User-Position von IP-API holen
-        let userLat: number | null = null;
-        let userLon: number | null = null;
-        let city = "Switzerland";
-        let isInSwitzerland = false;
+        let userLat: number = 47.3769; // Default: Z√ºrich
+        let userLon: number = 8.5417;
+        let city = "Z√ºrich";
+        let isInSwitzerland = true;
 
         try {
           const locationResponse = await fetch("https://ipapi.co/json/");
@@ -107,47 +107,34 @@ const EventsSection = () => {
           return;
         }
 
-        // 3Ô∏è‚É£ Location-based filtering (nur wenn in Schweiz)
-        if (isInSwitzerland && userLat !== null && userLon !== null) {
-          // Finde n√§chste gro√üe Schweizer Stadt
-          let nearestCity = SWISS_CITIES[0]; // Default: Z√ºrich
-          let minDistance = Infinity;
+        // 3Ô∏è‚É£ Finde n√§chste gro√üe Schweizer Stadt (IMMER!)
+        let nearestCity = SWISS_CITIES[0]; // Default: Z√ºrich
+        let minDistance = Infinity;
 
-          for (const city of SWISS_CITIES) {
-            const distance = calculateDistance(userLat, userLon, city.lat, city.lon);
-            if (distance < minDistance) {
-              minDistance = distance;
-              nearestCity = city;
-            }
+        for (const cityItem of SWISS_CITIES) {
+          const distance = calculateDistance(userLat, userLon, cityItem.lat, cityItem.lon);
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestCity = cityItem;
           }
-
-          // Wenn User > 50km von allen St√§dten entfernt ‚Üí Zeige Z√ºrich
-          if (minDistance > 50) {
-            nearestCity = SWISS_CITIES[0]; // Z√ºrich als Fallback
-            console.log(`User too far from cities (${minDistance.toFixed(1)}km), showing Z√ºrich`);
-          }
-
-          setCityName(nearestCity.name);
-
-          // Sortiere Events nach Distanz zur n√§chsten gro√üen Stadt
-          const eventsWithDistance = eventsData.map((event: any) => ({
-            ...event,
-            distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
-          }));
-
-          eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
-          setEvents(eventsWithDistance.slice(0, 4));
-        } else {
-          // User NICHT in Schweiz oder keine Location ‚Üí Zeige Top Events
-          console.log("User not in Switzerland, showing top events");
-          setCityName("Switzerland");
-
-          // Sortiere nach Relevanz-Score
-          const sortedEvents = [...eventsData].sort(
-            (a: any, b: any) => (b.relevance_score || 0) - (a.relevance_score || 0),
-          );
-          setEvents(sortedEvents.slice(0, 4));
         }
+
+        // Wenn User > 50km von allen St√§dten entfernt ‚Üí Zeige Z√ºrich
+        if (minDistance > 50) {
+          nearestCity = SWISS_CITIES[0]; // Z√ºrich als Fallback
+          console.log(`User too far from cities (${minDistance.toFixed(1)}km), showing Z√ºrich`);
+        }
+
+        setCityName(nearestCity.name);
+
+        // Sortiere Events nach Distanz zur n√§chsten gro√üen Stadt
+        const eventsWithDistance = eventsData.map((event: any) => ({
+          ...event,
+          distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
+        }));
+
+        eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
+        setEvents(eventsWithDistance.slice(0, 4));
       } catch (error) {
         console.error("Error loading nearby events:", error);
 
@@ -160,7 +147,7 @@ const EventsSection = () => {
           .limit(4);
 
         setEvents(fallbackData || []);
-        setCityName("Switzerland");
+        setCityName("Z√ºrich"); // Immer eine Stadt zeigen
       } finally {
         setLoading(false);
       }
