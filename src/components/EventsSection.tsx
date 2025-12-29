@@ -17,9 +17,21 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
+// üá®üá≠ Gro√üe Schweizer St√§dte (nur diese werden f√ºr Location-basierte Suche verwendet)
+const SWISS_CITIES = [
+  { name: "Z√ºrich", lat: 47.3769, lon: 8.5417, minPopulation: 400000 },
+  { name: "Genf", lat: 46.2044, lon: 6.1432, minPopulation: 200000 },
+  { name: "Basel", lat: 47.5596, lon: 7.5886, minPopulation: 170000 },
+  { name: "Bern", lat: 46.948, lon: 7.4474, minPopulation: 130000 },
+  { name: "Lausanne", lat: 46.5197, lon: 6.6323, minPopulation: 140000 },
+  { name: "Winterthur", lat: 47.499, lon: 8.724, minPopulation: 110000 },
+  { name: "Luzern", lat: 47.0502, lon: 8.3093, minPopulation: 80000 },
+  { name: "St. Gallen", lat: 47.4245, lon: 9.3767, minPopulation: 75000 },
+];
+
 const EventsSection = () => {
   const [events, setEvents] = useState<any[]>([]);
-  const [cityName, setCityName] = useState<string>("your area");
+  const [cityName, setCityName] = useState<string>("Switzerland");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +40,8 @@ const EventsSection = () => {
         // 1Ô∏è‚É£ User-Position von IP-API holen
         let userLat: number | null = null;
         let userLon: number | null = null;
-        let city = "your area";
+        let city = "Switzerland";
+        let isInSwitzerland = false;
 
         try {
           const locationResponse = await fetch("https://ipapi.co/json/");
@@ -37,14 +50,35 @@ const EventsSection = () => {
           if (locationData.latitude && locationData.longitude) {
             userLat = locationData.latitude;
             userLon = locationData.longitude;
-            city = locationData.city || locationData.region || "your area";
-            setCityName(city);
+
+            // Check country and set Swiss city accordingly
+            const countryCode = locationData.country_code;
+
+            if (countryCode === "CH") {
+              // User in Schweiz ‚Üí Finde n√§chste gro√üe Stadt
+              isInSwitzerland = true;
+              console.log(`User in Switzerland: ${locationData.city}`);
+            } else if (countryCode === "DE") {
+              // User in Deutschland ‚Üí Zeige Basel (grenznah & cool!)
+              city = "Basel";
+              userLat = 47.5596;
+              userLon = 7.5886;
+              isInSwitzerland = true;
+              console.log("User in Germany, showing Basel events");
+            } else {
+              // User irgendwo anders ‚Üí Zeige Z√ºrich
+              city = "Z√ºrich";
+              userLat = 47.3769;
+              userLon = 8.5417;
+              isInSwitzerland = true;
+              console.log(`User in ${countryCode}, showing Z√ºrich events`);
+            }
           }
         } catch (error) {
           console.warn("IP-Location API failed, using fallback", error);
         }
 
-        // 2Ô∏è‚É£ Events aus Supabase laden (nur aktive mit Koordinaten)
+        // 2Ô∏è‚É£ Events aus Supabase laden
         const { data: eventsData, error } = await (supabase as any)
           .from("events")
           .select("*")
@@ -60,12 +94,12 @@ const EventsSection = () => {
         }
 
         if (!eventsData || eventsData.length === 0) {
-          // Fallback: Neueste Events ohne Koordinaten-Filter
+          // Fallback: Neueste Events
           const { data: fallbackData } = await (supabase as any)
             .from("events")
             .select("*")
             .gte("start_date", new Date().toISOString())
-            .order("start_date", { ascending: true })
+            .order("relevance_score", { ascending: false })
             .limit(4);
 
           setEvents(fallbackData || []);
@@ -73,24 +107,51 @@ const EventsSection = () => {
           return;
         }
 
-        // 3Ô∏è‚É£ Distanz berechnen & sortieren
-        if (userLat !== null && userLon !== null) {
+        // 3Ô∏è‚É£ Location-based filtering (nur wenn in Schweiz)
+        if (isInSwitzerland && userLat !== null && userLon !== null) {
+          // Finde n√§chste gro√üe Schweizer Stadt
+          let nearestCity = SWISS_CITIES[0]; // Default: Z√ºrich
+          let minDistance = Infinity;
+
+          for (const city of SWISS_CITIES) {
+            const distance = calculateDistance(userLat, userLon, city.lat, city.lon);
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestCity = city;
+            }
+          }
+
+          // Wenn User > 50km von allen St√§dten entfernt ‚Üí Zeige Z√ºrich
+          if (minDistance > 50) {
+            nearestCity = SWISS_CITIES[0]; // Z√ºrich als Fallback
+            console.log(`User too far from cities (${minDistance.toFixed(1)}km), showing Z√ºrich`);
+          }
+
+          setCityName(nearestCity.name);
+
+          // Sortiere Events nach Distanz zur n√§chsten gro√üen Stadt
           const eventsWithDistance = eventsData.map((event: any) => ({
             ...event,
-            distance: calculateDistance(userLat!, userLon!, event.latitude, event.longitude),
+            distance: calculateDistance(nearestCity.lat, nearestCity.lon, event.latitude, event.longitude),
           }));
 
-          // Sortiere nach Distanz
           eventsWithDistance.sort((a: any, b: any) => a.distance - b.distance);
           setEvents(eventsWithDistance.slice(0, 4));
         } else {
-          // Fallback: Zeige einfach die neuesten 4
-          setEvents(eventsData.slice(0, 4));
+          // User NICHT in Schweiz oder keine Location ‚Üí Zeige Top Events
+          console.log("User not in Switzerland, showing top events");
+          setCityName("Switzerland");
+
+          // Sortiere nach Relevanz-Score
+          const sortedEvents = [...eventsData].sort(
+            (a: any, b: any) => (b.relevance_score || 0) - (a.relevance_score || 0),
+          );
+          setEvents(sortedEvents.slice(0, 4));
         }
       } catch (error) {
         console.error("Error loading nearby events:", error);
 
-        // Ultimate Fallback: Top Events by relevance
+        // Ultimate Fallback: Top Events
         const { data: fallbackData } = await (supabase as any)
           .from("events")
           .select("*")
@@ -99,6 +160,7 @@ const EventsSection = () => {
           .limit(4);
 
         setEvents(fallbackData || []);
+        setCityName("Switzerland");
       } finally {
         setLoading(false);
       }
