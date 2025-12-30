@@ -193,8 +193,8 @@ const BentoCard = ({
 const SwitzerlandSection = () => {
   return <section className="bg-background py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16 italic">
-          This Month in Switzerland
+        <h2 className="font-serif text-4xl md:text-5xl mb-16 not-italic text-left text-neutral-500">
+          This Month in Switzerland:
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
