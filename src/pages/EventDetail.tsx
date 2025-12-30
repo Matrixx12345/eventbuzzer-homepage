@@ -376,7 +376,89 @@ interface DynamicEvent {
   price_to?: number;
   price_label?: string;
   ticket_link?: string;
+  latitude?: number;
+  longitude?: number;
 }
+
+// Country name list for filtering
+const COUNTRY_NAMES = [
+  "schweiz", "switzerland", "suisse", "svizzera",
+  "germany", "deutschland", "france", "frankreich",
+  "austria", "österreich", "italy", "italien", "liechtenstein",
+];
+
+const isCountryName = (str?: string) => {
+  if (!str) return true;
+  return COUNTRY_NAMES.includes(str.toLowerCase().trim());
+};
+
+// Get clean location name (like in Listings)
+const getEventLocation = (event: DynamicEvent): string => {
+  const city = event.address_city?.trim();
+  if (city && city.length > 0 && !isCountryName(city)) {
+    return city;
+  }
+
+  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountryName(event.venue_name)) {
+    return event.venue_name.trim();
+  }
+
+  if (event.location && !isCountryName(event.location)) {
+    return event.location.trim();
+  }
+
+  return "";
+};
+
+// Get distance from nearest major city (like in Listings)
+const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
+  const centers = [
+    { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+    { name: "Genf", lat: 46.2044, lng: 6.1432 },
+    { name: "Basel", lat: 47.5596, lng: 7.5886 },
+    { name: "Bern", lat: 46.948, lng: 7.4474 },
+    { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+    { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+    { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+    { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+    { name: "Montreux", lat: 46.4312, lng: 6.9107 },
+    { name: "Interlaken", lat: 46.6863, lng: 7.8632 },
+    { name: "Chur", lat: 46.8503, lng: 9.5334 },
+    { name: "Sion", lat: 46.2293, lng: 7.3586 },
+    { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+  ];
+
+  let nearest = centers[0],
+    minDist = Infinity;
+
+  centers.forEach((c) => {
+    const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
+    if (d < minDist) {
+      minDist = d;
+      nearest = c;
+    }
+  });
+
+  if (minDist < 5) {
+    return { city: nearest.name, distance: `In ${nearest.name}` };
+  }
+
+  const dLat = lat - nearest.lat;
+  const dLng = lng - nearest.lng;
+  let direction = "";
+  if (Math.round(minDist) > 2) {
+    if (dLat > 0.02) direction += "N";
+    else if (dLat < -0.02) direction += "S";
+    if (dLng > 0.02) direction += "O";
+    else if (dLng < -0.02) direction += "W";
+  }
+
+  const distanceText = direction
+    ? `~${Math.round(minDist)} km ${direction} von ${nearest.name}`
+    : `~${Math.round(minDist)} km von ${nearest.name}`;
+
+  return { city: nearest.name, distance: distanceText };
+};
 
 const EventDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -458,6 +540,8 @@ const EventDetail = () => {
     priceFrom?: number;
     priceTo?: number;
     priceLabel?: string;
+    latitude?: number;
+    longitude?: number;
   };
 
   if (isStaticEvent) {
@@ -488,28 +572,28 @@ const EventDetail = () => {
       timeDisplay = formatTime(dynamicEvent.start_date) || "";
     }
     
+    // Use the smart location extraction
+    const locationName = getEventLocation(dynamicEvent);
+    const distanceInfo = dynamicEvent.latitude && dynamicEvent.longitude
+      ? getDistanceInfo(dynamicEvent.latitude, dynamicEvent.longitude)
+      : null;
+    
     event = {
       image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
       title: dynamicEvent.title,
-      venue: dynamicEvent.venue_name || dynamicEvent.location || dynamicEvent.address_city || "Veranstaltungsort",
-      location: (() => {
-        const city = dynamicEvent.address_city;
-        const loc = dynamicEvent.location;
-        // Avoid duplicates like "Schweiz, Schweiz" or "Zürich, Zürich"
-        if (city && loc && city.toLowerCase() !== loc.toLowerCase() && loc !== dynamicEvent.title) {
-          return `${city}, ${loc}`;
-        }
-        return city || (loc !== dynamicEvent.title ? loc : null) || "Schweiz";
-      })(),
+      venue: dynamicEvent.venue_name || (dynamicEvent.location !== dynamicEvent.title ? dynamicEvent.location : null) || "",
+      location: locationName || "Schweiz",
       address: addressParts.length > 0 ? addressParts.join(", ") : "",
       date: dateDisplay,
       time: timeDisplay,
-      distance: "",
+      distance: distanceInfo?.distance || "",
       description: dynamicEvent.long_description || dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
       ticketLink: dynamicEvent.ticket_link,
       priceFrom: dynamicEvent.price_from,
       priceTo: dynamicEvent.price_to,
       priceLabel: dynamicEvent.price_label,
+      latitude: dynamicEvent.latitude,
+      longitude: dynamicEvent.longitude,
     };
   } else {
     event = {
@@ -571,18 +655,43 @@ const EventDetail = () => {
                 </span>
               </div>
             )}
-            {event.venue && (
+            
+            {/* Location with Swiss Map Hover */}
+            {event.location && (
+              <div className="group/map relative cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <MapPin size={18} className="text-neutral-400" />
+                  <span className="text-base">
+                    {event.location}
+                    {event.distance && <span className="text-neutral-400 ml-1">• {event.distance}</span>}
+                  </span>
+                </div>
+                {event.latitude && event.longitude && (
+                  <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
+                      <div className="relative w-full h-full bg-slate-50 rounded overflow-hidden">
+                        <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-60" alt="Map" />
+                        <div
+                          className="absolute w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow"
+                          style={{
+                            left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
+                            top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {event.venue && event.venue !== event.location && (
               <div className="flex items-center gap-2">
-                <MapPin size={18} className="text-neutral-400" />
+                <Navigation size={18} className="text-neutral-400" />
                 <span className="text-base">{event.venue}</span>
               </div>
             )}
-            {event.address && (
-              <div className="flex items-center gap-2">
-                <Navigation size={18} className="text-neutral-400" />
-                <span className="text-base">{event.address}</span>
-              </div>
-            )}
+            
             {(event.priceLabel || event.priceFrom) && (
               <div className="flex items-center gap-2 text-neutral-900 font-medium">
                 <span className="text-base">
@@ -592,12 +701,6 @@ const EventDetail = () => {
                       ? `CHF ${event.priceFrom} – ${event.priceTo}`
                       : `ab CHF ${event.priceFrom}`}
                 </span>
-              </div>
-            )}
-            {event.distance && (
-              <div className="flex items-center gap-2">
-                <Navigation size={18} className="text-neutral-900" />
-                <span className="text-base font-medium text-neutral-900">{event.distance}</span>
               </div>
             )}
           </div>
