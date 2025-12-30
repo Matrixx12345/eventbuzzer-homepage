@@ -312,7 +312,7 @@ const WeekendSection = () => {
   };
   return <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12">Verpasse nicht an diesem Wochenende:</h2>
+        <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 sm:mb-12 lg:text-3xl">Verpasse nicht an diesem Wochenende:</h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-auto">
           {weekendEvents.row1.large && <div className="h-[500px] lg:h-[520px]">
