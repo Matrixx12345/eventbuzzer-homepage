@@ -120,7 +120,7 @@ const WeekendCard = ({
 
             {/* Location mit Mini-Map Hover */}
             <div className="group/map relative inline-flex items-center gap-1 text-muted-foreground text-sm cursor-help">
-              <span className="text-red-500">üìç</span>
+              <span className="text-red-500">📍</span>
               <span className="border-b border-dotted border-muted-foreground/50 hover:text-white transition-colors">
                 {location}
               </span>
