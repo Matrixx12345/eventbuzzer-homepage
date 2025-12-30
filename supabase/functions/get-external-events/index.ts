@@ -20,9 +20,11 @@ serve(async (req) => {
       console.log("Fetching single event by ID:", eventId);
       
       // Try to find by external_id first, then by numeric id
+      // Select all columns for single event detail view
+      const detailColumns = "id,external_id,title,short_description,description,venue_name,address_city,address_full,location,start_date,end_date,date_range_start,date_range_end,show_count,image_url,price_from,price_to,price_label,latitude,longitude,tags,category_main_id,category_sub_id,available_months,ticket_url,source_url,source";
       let { data: event, error } = await supabase
         .from("events")
-        .select("*")
+        .select(detailColumns)
         .eq("external_id", eventId)
         .maybeSingle();
       
@@ -32,7 +34,7 @@ serve(async (req) => {
         if (!isNaN(numericId)) {
           const result = await supabase
             .from("events")
-            .select("*")
+            .select(detailColumns)
             .eq("id", numericId)
             .maybeSingle();
           event = result.data;
@@ -89,7 +91,9 @@ serve(async (req) => {
       "freunde-gruppen": ["freunde-gruppen"],
     };
 
-    let query = supabase.from("events").select("*", { count: "exact" });
+    // Select only needed columns for better performance
+    const columns = "id,external_id,title,short_description,venue_name,address_city,location,start_date,end_date,date_range_start,date_range_end,show_count,image_url,price_from,price_to,price_label,latitude,longitude,tags,category_main_id,category_sub_id,available_months";
+    let query = supabase.from("events").select(columns, { count: "exact" });
 
     // ✅ TAG-FILTER: Direkt mit .contains() auf der tags-Spalte filtern
     if (tags.length > 0) {
