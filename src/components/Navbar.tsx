@@ -1,18 +1,29 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navLinks = [
     { label: "Discover", href: "/listings" },
-    { label: "Supabase Test", href: "/supabase-test" },
     { label: "Favorites", href: "/favorites" },
-    { label: "Admin", href: "/admin-upload" },
-    { label: "Tagging", href: "/admin/speed-tagging" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-navbar border-b border-border/50">
@@ -38,12 +49,31 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="outline" size="sm">
-              Log In
-            </Button>
-            <Button variant="outline" size="sm">
-              Sign Up
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <User size={16} />
+                    {user.email?.split("@")[0]}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
+                    <LogOut size={16} />
+                    Abmelden
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/auth">Anmelden</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/auth">Registrieren</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -64,17 +94,27 @@ const Navbar = () => {
                   key={link.label}
                   to={link.href}
                   className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
                 </Link>
               ))}
               <div className="flex gap-3 pt-4">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Log In
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  Sign Up
-                </Button>
+                {user ? (
+                  <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleSignOut}>
+                    <LogOut size={16} />
+                    Abmelden
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Anmelden</Link>
+                    </Button>
+                    <Button size="sm" className="flex-1" asChild>
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Registrieren</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
