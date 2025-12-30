@@ -170,7 +170,7 @@ const EventsSection = () => {
   }
 
   return (
-    <section className="bg-background pt-8 pb-24 px-4 md:px-8">
+    <section className="bg-background pt-4 pb-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Title - links wie Weekend */}
         <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-muted-foreground mb-8 sm:mb-12">
