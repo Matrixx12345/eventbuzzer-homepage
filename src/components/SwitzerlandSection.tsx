@@ -245,7 +245,7 @@ const SwitzerlandSection = () => {
   return (
     <section className="bg-background py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16 italic">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12">
           Highlights diesen Monat in der Schweiz:
         </h2>
 
