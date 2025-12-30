@@ -5,6 +5,7 @@ import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import {
   Carousel,
   CarouselContent,
@@ -626,53 +627,113 @@ const EventDetail = () => {
               <Heart size={20} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                const shareData = {
+                  title: event.title,
+                  text: `Schau dir dieses Event an: ${event.title}`,
+                  url: window.location.href,
+                };
+                
                 if (navigator.share) {
-                  navigator.share({
-                    title: event.title,
-                    text: `Schau dir dieses Event an: ${event.title}`,
-                    url: window.location.href,
-                  });
+                  try {
+                    await navigator.share(shareData);
+                  } catch (err) {
+                    // User cancelled or share failed - ignore
+                  }
                 } else {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert("Link kopiert!");
+                  try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    toast({
+                      title: "Link kopiert!",
+                      description: "Der Event-Link wurde in die Zwischenablage kopiert.",
+                    });
+                  } catch {
+                    toast({
+                      title: "Fehler",
+                      description: "Link konnte nicht kopiert werden.",
+                      variant: "destructive",
+                    });
+                  }
                 }
               }}
               className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-              title="Teilen"
+              title="Mit Freunden teilen"
             >
               <Share2 size={20} className="text-neutral-400" />
             </button>
             <button
               onClick={() => {
-                const startDate = dynamicEvent?.start_date ? new Date(dynamicEvent.start_date) : new Date();
-                const endDate = dynamicEvent?.end_date ? new Date(dynamicEvent.end_date) : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+                // Determine start date
+                const startDate = dynamicEvent?.start_date 
+                  ? new Date(dynamicEvent.start_date) 
+                  : new Date();
                 
+                // End date: use end_date if available, otherwise +2 hours
+                const endDate = dynamicEvent?.end_date 
+                  ? new Date(dynamicEvent.end_date) 
+                  : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+                
+                // Format date for iCalendar (UTC format)
                 const formatICSDate = (date: Date) => {
                   return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
                 };
                 
+                // Escape special characters for ICS
+                const escapeICS = (text: string) => {
+                  return text
+                    .replace(/\\/g, '\\\\')
+                    .replace(/;/g, '\\;')
+                    .replace(/,/g, '\\,')
+                    .replace(/\n/g, '\\n');
+                };
+                
+                // Build description with link back to EventBuzzer
+                const eventUrl = window.location.href;
+                const shortDesc = event.description?.substring(0, 200) || '';
+                const fullDescription = `${shortDesc}${shortDesc.length >= 200 ? '...' : ''}\\n\\nMehr Infos auf EventBuzzer: ${eventUrl}`;
+                
+                // Build location string
+                const locationStr = [event.venue, event.address].filter(Boolean).join(', ');
+                
+                // Generate unique ID for the event
+                const uid = `${eventId}-${Date.now()}@eventbuzzer.ch`;
+                
                 const icsContent = [
                   'BEGIN:VCALENDAR',
                   'VERSION:2.0',
+                  'PRODID:-//EventBuzzer//Event Calendar//DE',
+                  'CALSCALE:GREGORIAN',
+                  'METHOD:PUBLISH',
                   'BEGIN:VEVENT',
+                  `UID:${uid}`,
+                  `DTSTAMP:${formatICSDate(new Date())}`,
                   `DTSTART:${formatICSDate(startDate)}`,
                   `DTEND:${formatICSDate(endDate)}`,
-                  `SUMMARY:${event.title}`,
-                  `DESCRIPTION:${event.description?.substring(0, 200) || ''}`,
-                  `LOCATION:${event.venue}${event.address ? ', ' + event.address : ''}`,
+                  `SUMMARY:${escapeICS(event.title)}`,
+                  `DESCRIPTION:${escapeICS(fullDescription)}`,
+                  `LOCATION:${escapeICS(locationStr)}`,
+                  `URL:${eventUrl}`,
                   'END:VEVENT',
                   'END:VCALENDAR'
                 ].join('\r\n');
                 
+                // Create and download the file
                 const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+                link.download = `${event.title.replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '').replace(/\s+/g, '_')}.ics`;
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                toast({
+                  title: "Kalender-Export",
+                  description: "Die .ics Datei wurde heruntergeladen.",
+                });
               }}
               className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-              title="In Kalender exportieren"
+              title="In Kalender eintragen"
             >
               <CalendarPlus size={20} className="text-neutral-400" />
             </button>
