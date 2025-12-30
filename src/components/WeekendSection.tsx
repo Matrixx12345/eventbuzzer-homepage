@@ -215,7 +215,7 @@ const WeekendSection = () => {
   if (loading) {
     return <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 sm:text-3xl">Verpasse nicht an diesem Wochenende</h2>
+          <h2 className="text-3xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 sm:text-3xl">Verpasse nicht an diesemWochenende</h2>
         </div>
       </section>;
   }
