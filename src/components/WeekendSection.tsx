@@ -4,25 +4,6 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
-// NEUE IMPORTS
-const filterEvents = (events: any[]): any[] => {
-  const BLACKLIST = [
-    "hop-on-hop-off",
-    "hop on hop off",
-    "city sightseeing bus",
-    "stadtrundfahrt bus",
-    "malen wie",
-    "zeichnen wie",
-    "basteln wie",
-  ];
-
-  return events.filter((event) => {
-    const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
-    const isBlacklisted = BLACKLIST.some((keyword) => searchText.includes(keyword.toLowerCase()));
-    return !isBlacklisted;
-  });
-};
-
 // Helper function to get nearest Swiss city from coordinates
 const getNearestPlace = (lat: number, lng: number): string => {
   const places = [
@@ -210,7 +191,7 @@ const WeekendSection = () => {
   useEffect(() => {
     async function loadWeekendEvents() {
       try {
-        // Load top 12 MySwitzerland events by score (mehr wegen Filter)
+        // Load top 12 MySwitzerland events by score (mehr laden wegen Filter)
         const { data, error } = await supabase
           .from("events")
           .select("*")
@@ -224,9 +205,24 @@ const WeekendSection = () => {
           return;
         }
 
-        // FILTER ANWENDEN
-        const filteredEvents = filterEvents(data || []);
-        setEvents(filteredEvents.slice(0, 8));
+        // FILTER: Entferne schlechte Events
+        const BLACKLIST = [
+          "hop-on-hop-off",
+          "hop on hop off",
+          "city sightseeing bus",
+          "stadtrundfahrt bus",
+          "malen wie",
+          "zeichnen wie",
+          "basteln wie",
+        ];
+
+        const filtered = (data || []).filter((event) => {
+          const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
+          const isBlacklisted = BLACKLIST.some((keyword) => searchText.includes(keyword.toLowerCase()));
+          return !isBlacklisted;
+        });
+
+        setEvents(filtered.slice(0, 8));
       } catch (error) {
         console.error("Error loading weekend events:", error);
       } finally {
