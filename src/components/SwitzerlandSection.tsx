@@ -245,7 +245,7 @@ const SwitzerlandSection = () => {
   return (
     <section className="bg-background py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-muted-foreground mb-8 sm:mb-12 italic">
+        <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl text-foreground font-medium mb-8 sm:mb-12">
           Diesen Monat in der Schweiz
         </h2>
 
@@ -273,16 +273,15 @@ const SwitzerlandSection = () => {
           <div className="md:col-span-1">
             <BentoCard {...swissEvents[6]} />
           </div>
+          <div className="md:col-span-1 md:row-span-2">
+            <BentoCard {...swissEvents[3]} isTall />
+          </div>
+
           <div className="md:col-span-1">
             <BentoCard {...swissEvents[7]} />
           </div>
-
-          <div className="md:col-span-2">
-            <BentoCard {...swissEvents[8]} />
-          </div>
-          {/* Fehlende Kachel rechts unten */}
           <div className="md:col-span-1">
-            <BentoCard {...swissEvents[5]} />
+            <BentoCard {...swissEvents[8]} isWide={false} />
           </div>
         </div>
       </div>
