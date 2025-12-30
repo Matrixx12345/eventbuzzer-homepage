@@ -29,7 +29,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import heroImage from "@/assets/hero-mountains.jpg";
+import filterBg from "@/assets/filter-bg.jpg";
 
 // NEU: Icon mapping (außerhalb der Komponente)
 const getCategoryIcon = (slug: string | null) => {
@@ -278,7 +278,7 @@ const ListingsFilterBar = ({
     <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl mb-6">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img src={heroImage} alt="" className="w-full h-full object-cover" />
+        <img src={filterBg} alt="" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40" />
       </div>
 

@@ -23,7 +23,6 @@ import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
 import eventConcert from "@/assets/event-concert.jpg";
 import swissZurich from "@/assets/swiss-zurich.jpg";
-import listingsHero from "@/assets/listings-hero.jpg";
 const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
 
@@ -400,27 +399,6 @@ const Listings = () => {
   return (
     <div className="min-h-screen bg-stone-100">
       <Navbar />
-      
-      {/* Hero Section */}
-      <div className="relative h-48 sm:h-64 overflow-hidden">
-        <img 
-          src={listingsHero} 
-          alt="Schweizer Alpen Panorama" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
-              Alle Events
-            </h1>
-            <p className="mt-2 text-white/90 text-sm sm:text-base drop-shadow-md">
-              Entdecke einzigartige Erlebnisse in der Schweiz
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Top Filter Bar */}
         <ListingsFilterBar
