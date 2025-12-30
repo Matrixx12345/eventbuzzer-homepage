@@ -11,7 +11,46 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { offset = 0, limit = 30, filters = {} } = body;
+    const { offset = 0, limit = 30, filters = {}, eventId } = body;
+    
+    const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
+    
+    // Fast path: Single event lookup by ID
+    if (eventId) {
+      console.log("Fetching single event by ID:", eventId);
+      
+      // Try to find by external_id first, then by numeric id
+      let { data: event, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("external_id", eventId)
+        .maybeSingle();
+      
+      if (!event && !error) {
+        // Try numeric ID
+        const numericId = parseInt(eventId, 10);
+        if (!isNaN(numericId)) {
+          const result = await supabase
+            .from("events")
+            .select("*")
+            .eq("id", numericId)
+            .maybeSingle();
+          event = result.data;
+          error = result.error;
+        }
+      }
+      
+      if (error) {
+        console.error("Error fetching event:", error);
+        throw error;
+      }
+      
+      return new Response(
+        JSON.stringify({ events: event ? [event] : [], pagination: { total: event ? 1 : 0, hasMore: false } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     const { 
       tags = [], 
       searchQuery, 
@@ -29,8 +68,6 @@ serve(async (req) => {
     } = filters;
 
     console.log("Received filters:", JSON.stringify(filters));
-
-    const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
 
     // Übersetzer von Frontend-Tags zu Datenbank-Tags
     const tagTranslator: Record<string, string[]> = {
