@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,8 +16,15 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const navLinks = [
-    { label: "Discover", href: "/listings" },
-    { label: "Favorites", href: "/favorites" },
+    { label: "Startseite", href: "/" },
+    { label: "Alle Events", href: "/listings" },
+    { label: "Favoriten", href: "/favorites" },
+  ];
+
+  const adminLinks = [
+    { label: "Dashboard", href: "/admin/ratings" },
+    { label: "Tagging", href: "/admin/speed-tagging" },
+    { label: "Supabase Test", href: "/supabase-test" },
   ];
 
   const handleSignOut = async () => {
@@ -45,6 +52,25 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
+            
+            {/* Ghost Admin Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors flex items-center gap-1">
+                  <Settings size={14} />
+                  <span>Admin</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="bg-popover">
+                {adminLinks.map((link) => (
+                  <DropdownMenuItem key={link.label} asChild>
+                    <Link to={link.href} className="cursor-pointer">
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Desktop Actions */}
@@ -57,7 +83,7 @@ const Navbar = () => {
                     {user.email?.split("@")[0]}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="bg-popover">
                   <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
                     <LogOut size={16} />
                     Abmelden
@@ -69,7 +95,7 @@ const Navbar = () => {
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/auth">Anmelden</Link>
                 </Button>
-                <Button size="sm" asChild>
+                <Button variant="secondary" size="sm" asChild>
                   <Link to="/auth">Registrieren</Link>
                 </Button>
               </>
@@ -99,6 +125,22 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Mobile Admin Links - Ghost Style */}
+              <div className="pt-2 border-t border-border/30">
+                <span className="text-xs text-navbar-foreground/20 mb-2 block">Admin</span>
+                {adminLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors block py-1"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+              
               <div className="flex gap-3 pt-4">
                 {user ? (
                   <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleSignOut}>
@@ -110,7 +152,7 @@ const Navbar = () => {
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                       <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Anmelden</Link>
                     </Button>
-                    <Button size="sm" className="flex-1" asChild>
+                    <Button variant="secondary" size="sm" className="flex-1" asChild>
                       <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Registrieren</Link>
                     </Button>
                   </>
