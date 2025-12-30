@@ -26,7 +26,7 @@ const filterEvents = (events: any[]): any[] => {
 // Helper function to get nearest Swiss city from coordinates
 const getNearestPlace = (lat: number, lng: number): string => {
   const places = [
-    { name: "Z√ºrich", lat: 47.3769, lng: 8.5417 },
+    { name: "Zürich", lat: 47.3769, lng: 8.5417 },
     { name: "Bern", lat: 46.948, lng: 7.4474 },
     { name: "Basel", lat: 47.5596, lng: 7.5886 },
     { name: "Luzern", lat: 47.0502, lng: 8.3093 },
@@ -120,7 +120,7 @@ const WeekendCard = ({
 
             {/* Location mit Mini-Map Hover */}
             <div className="group/map relative inline-flex items-center gap-1 text-muted-foreground text-sm cursor-help">
-              <span className="text-red-500">üìç</span>
+              <span className="text-red-500">📍</span>
               <span className="border-b border-dotted border-muted-foreground/50 hover:text-white transition-colors">
                 {location}
               </span>
@@ -147,7 +147,7 @@ const WeekendCard = ({
           </div>
           {isLarge && (
             <span className="w-fit bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2.5 rounded-md transition-colors">
-              Book Now
+              Jetzt buchen
             </span>
           )}
         </div>
@@ -168,7 +168,7 @@ const getEventLocation = (event: any): string => {
     "france",
     "frankreich",
     "austria",
-    "√∂sterreich",
+    "österreich",
     "italy",
     "italien",
     "liechtenstein",
@@ -241,7 +241,7 @@ const WeekendSection = () => {
     return (
       <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12">Laedt...</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 italic">Lädt...</h2>
         </div>
       </section>
     );
@@ -367,8 +367,8 @@ const WeekendSection = () => {
   return (
     <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12">
-          Don't Miss This Weekend
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 italic">
+          Verpasse nicht an diesem Wochenende
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-auto">

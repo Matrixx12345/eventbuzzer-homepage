@@ -179,7 +179,7 @@ const RainyDaySection = () => {
     <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 italic">
-          Save the Rainy Day
+          Rette den Regentag
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-auto">
