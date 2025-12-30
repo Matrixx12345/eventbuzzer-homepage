@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail } from "lucide-react";
+import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag } from "lucide-react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -711,10 +711,6 @@ const EventDetail = () => {
             )}
           </div>
 
-          {/* Rating Buttons */}
-          <div className="mb-6">
-            <EventRatingButtons eventId={eventId} eventTitle={event.title} />
-          </div>
 
           {/* Actions */}
           <div className="flex items-center gap-3 mb-8">
@@ -933,6 +929,11 @@ const EventDetail = () => {
                 mehr lesen
               </button>
             )}
+            
+            {/* Report Error - Subtle maintenance function */}
+            <div className="mt-6 pt-4 border-t border-neutral-100">
+              <EventRatingButtons eventId={eventId} eventTitle={event.title} />
+            </div>
           </div>
         </div>
       </section>
