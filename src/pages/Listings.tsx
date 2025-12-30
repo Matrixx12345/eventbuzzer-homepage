@@ -416,8 +416,8 @@ const Listings = () => {
           onDateChange={handleDateChange}
         />
 
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-neutral-500">
+        {/* Results Count - extra margin for floating filter */}
+        <div className="mt-10 mb-4 text-sm text-neutral-500">
           {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
         </div>
 
