@@ -7,6 +7,7 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getNearestPlace } from "@/utils/swissPlaces";
 import {
   Popover,
   PopoverContent,
@@ -392,7 +393,7 @@ const isCountryName = (str?: string) => {
   return COUNTRY_NAMES.includes(str.toLowerCase().trim());
 };
 
-// Get clean location name (like in Listings)
+// Get clean location name (like in Listings) - with coordinates fallback
 const getEventLocation = (event: DynamicEvent): string => {
   const city = event.address_city?.trim();
   if (city && city.length > 0 && !isCountryName(city)) {
@@ -405,6 +406,11 @@ const getEventLocation = (event: DynamicEvent): string => {
 
   if (event.location && !isCountryName(event.location)) {
     return event.location.trim();
+  }
+
+  // Fallback: Use coordinates to find nearest Swiss place
+  if (event.latitude && event.longitude) {
+    return getNearestPlace(event.latitude, event.longitude);
   }
 
   return "";
