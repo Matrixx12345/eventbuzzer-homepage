@@ -4,17 +4,15 @@ import EventsSection from "@/components/EventsSection";
 import WeekendSection from "@/components/WeekendSection";
 import SwitzerlandSection from "@/components/SwitzerlandSection";
 import RainyDaySection from "@/components/RainyDaySection";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navbar />
       <main>
         <HeroSection />
         
         {/* Discovery CTA */}
         <div className="bg-background py-16 text-center">
-          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[#1f1f1f] italic">
+          <h2 className="font-serif text-4xl md:text-5xl text-[#1f1f1f] italic lg:text-4xl font-normal text-center">
             Oder entdecke unsere Auswahl ↓
           </h2>
         </div>
@@ -24,8 +22,6 @@ const Index = () => {
         <SwitzerlandSection />
         <RainyDaySection />
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
