@@ -275,24 +275,24 @@ const ListingsFilterBar = ({
   };
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl mb-6">
-      {/* Background Image */}
+    <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl mb-6 min-h-[180px]">
+      {/* Background Image - larger and more visible */}
       <div className="absolute inset-0">
-        <img src={filterBg} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40" />
+        <img src={filterBg} alt="" className="w-full h-full object-cover scale-110" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30" />
       </div>
 
       {/* Content */}
       <div className="relative z-10">
-        {/* Collapsed Bar */}
+        {/* Collapsed Bar - slimmer */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-6 py-4 flex items-center justify-between backdrop-blur-xl bg-white/25 border-b border-white/20"
+          className="w-full px-6 py-3 flex items-center justify-between backdrop-blur-sm bg-white/15 border-b border-white/10"
         >
           <div className="flex items-center gap-3">
-            <span className="text-white/90 font-medium text-sm">{getFilterSummary()}</span>
+            <span className="text-white font-medium text-sm drop-shadow-sm">{getFilterSummary()}</span>
           </div>
-          <div className="flex items-center gap-2 text-white/80">
+          <div className="flex items-center gap-2 text-white/90">
             <span className="text-xs font-medium">{isExpanded ? "Einklappen" : "Filter anpassen"}</span>
             {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
@@ -300,9 +300,9 @@ const ListingsFilterBar = ({
 
         {/* Expanded Content */}
         {isExpanded && (
-          <div className="p-4 md:p-6">
-            {/* Glassmorphism Container */}
-            <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl p-4 md:p-6 shadow-xl">
+          <div className="p-3 md:p-4">
+            {/* Glassmorphism Container - less blur, more transparent */}
+            <div className="backdrop-blur-md bg-white/20 border border-white/30 rounded-xl p-3 md:p-4 shadow-lg">
               {/* Filter Pills Row */}
               <div className="flex flex-wrap gap-3 mb-4">
                 {/* Kategorie Button */}
