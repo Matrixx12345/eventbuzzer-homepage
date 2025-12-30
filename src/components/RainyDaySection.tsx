@@ -178,7 +178,7 @@ const RainyDaySection = () => {
   return (
     <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 italic">
+        <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl text-foreground font-medium mb-8 sm:mb-12">
           Rette den Regentag
         </h2>
 
