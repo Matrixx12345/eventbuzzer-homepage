@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import EventCard from "./EventCard";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
@@ -170,16 +170,8 @@ const EventsSection = () => {
   }
 
   return (
-    <section className="bg-background py-24 px-4 md:px-8">
+    <section className="bg-background pt-8 pb-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Intro Text - mittig */}
-        <div className="text-center mb-16">
-          <p className="font-serif text-4xl md:text-5xl text-foreground italic flex items-center justify-center gap-2">
-            Oder entdecke unsere Auswahl
-            <ChevronDown size={24} className="text-primary animate-bounce" />
-          </p>
-        </div>
-
         {/* Title - links wie Weekend */}
         <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-muted-foreground mb-8 sm:mb-12">
           Heute in deiner Naehe

@@ -11,8 +11,8 @@ const Index = () => {
         <HeroSection />
         
         {/* Discovery CTA */}
-        <div className="bg-background py-16 text-center">
-          <h2 className="font-serif text-4xl md:text-5xl text-[#1f1f1f] italic lg:text-4xl font-normal text-center">
+        <div className="bg-background py-8 text-center">
+          <h2 className="font-serif text-4xl md:text-5xl text-[#1f1f1f] italic font-normal text-center">
             Oder entdecke unsere Auswahl ↓
           </h2>
         </div>
