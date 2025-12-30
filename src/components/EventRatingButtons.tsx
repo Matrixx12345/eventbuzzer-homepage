@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ThumbsDown } from 'lucide-react';
+import { Flag } from 'lucide-react';
 import { useSessionId } from '@/hooks/useSessionId';
 import { FeedbackModal } from './FeedbackModal';
 
@@ -10,17 +10,16 @@ interface EventRatingButtonsProps {
 
 export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsProps) {
   const sessionId = useSessionId();
-  const [userRating, setUserRating] = useState<'dislike' | null>(null);
-  const [dislikesCount, setDislikesCount] = useState(0);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasReported, setHasReported] = useState(false);
 
   const API_URL = 'https://tfkiyvhfhvkejpljsnrk.supabase.co/functions/v1/rate-event';
 
-  const handleDislike = (e: React.MouseEvent) => {
+  const handleReport = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!sessionId || isLoading) return;
+    if (!sessionId || isLoading || hasReported) return;
     setShowFeedbackModal(true);
   };
 
@@ -42,8 +41,7 @@ export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsPr
 
       const data = await response.json();
       if (data.success) {
-        setUserRating('dislike');
-        setDislikesCount(data.stats?.dislikes_count || dislikesCount + 1);
+        setHasReported(true);
       }
     } catch (error) {
       console.error('Feedback error:', error);
@@ -56,20 +54,19 @@ export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsPr
   return (
     <>
       <button
-        onClick={handleDislike}
-        disabled={isLoading || !sessionId}
-        title="Problem melden"
+        onClick={handleReport}
+        disabled={isLoading || !sessionId || hasReported}
         className={`
-          flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs font-medium backdrop-blur-sm
-          ${userRating === 'dislike' 
-            ? 'bg-neutral-400 text-white shadow-sm' 
-            : 'bg-white/90 hover:bg-white text-neutral-600 shadow-sm'
+          inline-flex items-center gap-1.5 text-xs transition-colors
+          ${hasReported 
+            ? 'text-neutral-400 cursor-default' 
+            : 'text-neutral-400 hover:text-neutral-600'
           }
-          disabled:opacity-50 disabled:cursor-not-allowed
+          disabled:cursor-not-allowed
         `}
       >
-        <ThumbsDown className={`w-3 h-3 ${userRating === 'dislike' ? 'fill-current' : ''}`} strokeWidth={2.5} />
-        {dislikesCount > 0 && <span>{dislikesCount}</span>}
+        <Flag className="w-3.5 h-3.5" strokeWidth={1.5} />
+        <span>{hasReported ? 'Gemeldet' : 'Fehler melden'}</span>
       </button>
 
       {showFeedbackModal && (
