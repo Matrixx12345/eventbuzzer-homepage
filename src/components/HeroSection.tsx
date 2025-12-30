@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react";
 import heroImage from "@/assets/hero-mountains.jpg";
 import HeroFilterBar from "./HeroFilterBar";
 
@@ -23,14 +22,6 @@ const HeroSection = () => {
         
         {/* Filter Bar positioned at bottom of hero */}
         <HeroFilterBar />
-      </div>
-
-      {/* Text under hero image */}
-      <div className="bg-background py-8 text-center">
-        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-muted-foreground italic flex items-center justify-center gap-3">
-          Oder entdecke unsere Auswahl
-          <ChevronDown size={28} className="text-primary animate-bounce" />
-        </p>
       </div>
     </section>
   );
