@@ -521,7 +521,7 @@ const Listings = () => {
                         <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
                           <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
                             <div className="relative w-full h-full bg-slate-50 rounded overflow-hidden">
-                              <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-30" alt="Map" />
+                              <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-60" alt="Map" />
                               <div
                                 className="absolute w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow"
                                 style={{
