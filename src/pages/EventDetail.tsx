@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Clock, Plus, ArrowRight, Navigation, Loader2, ExternalLink } from "lucide-react";
+import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus } from "lucide-react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -548,34 +548,30 @@ const EventDetail = () => {
             {event.title}
           </h1>
 
-          {/* Meta Info */}
-          <div className="space-y-3 mb-6">
+          {/* Meta Info - All icons on one row */}
+          <div className="flex flex-wrap items-center gap-4 mb-6 text-neutral-600">
             {event.date && (
-              <div className="flex items-center gap-3 text-neutral-600">
+              <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-neutral-400" />
-                <span className="text-base">{event.date}</span>
-              </div>
-            )}
-            {event.time && (
-              <div className="flex items-center gap-3 text-neutral-600">
-                <Clock size={18} className="text-neutral-400" />
-                <span className="text-base">{event.time}</span>
+                <span className="text-base">
+                  {event.date}{event.time ? `, ${event.time}` : ''}
+                </span>
               </div>
             )}
             {event.venue && (
-              <div className="flex items-center gap-3 text-neutral-600">
+              <div className="flex items-center gap-2">
                 <MapPin size={18} className="text-neutral-400" />
                 <span className="text-base">{event.venue}</span>
               </div>
             )}
             {event.address && (
-              <div className="flex items-center gap-3 text-neutral-600">
+              <div className="flex items-center gap-2">
                 <Navigation size={18} className="text-neutral-400" />
                 <span className="text-base">{event.address}</span>
               </div>
             )}
             {(event.priceLabel || event.priceFrom) && (
-              <div className="flex items-center gap-3 text-neutral-900 font-medium">
+              <div className="flex items-center gap-2 text-neutral-900 font-medium">
                 <span className="text-base">
                   {event.priceLabel 
                     ? event.priceLabel 
@@ -586,7 +582,7 @@ const EventDetail = () => {
               </div>
             )}
             {event.distance && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Navigation size={18} className="text-neutral-900" />
                 <span className="text-base font-medium text-neutral-900">{event.distance}</span>
               </div>
@@ -625,8 +621,60 @@ const EventDetail = () => {
                 date: event.date
               })}
               className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+              title="Zu Favoriten hinzufügen"
             >
               <Heart size={20} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
+            </button>
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: event.title,
+                    text: `Schau dir dieses Event an: ${event.title}`,
+                    url: window.location.href,
+                  });
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Link kopiert!");
+                }
+              }}
+              className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+              title="Teilen"
+            >
+              <Share2 size={20} className="text-neutral-400" />
+            </button>
+            <button
+              onClick={() => {
+                const startDate = dynamicEvent?.start_date ? new Date(dynamicEvent.start_date) : new Date();
+                const endDate = dynamicEvent?.end_date ? new Date(dynamicEvent.end_date) : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+                
+                const formatICSDate = (date: Date) => {
+                  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                };
+                
+                const icsContent = [
+                  'BEGIN:VCALENDAR',
+                  'VERSION:2.0',
+                  'BEGIN:VEVENT',
+                  `DTSTART:${formatICSDate(startDate)}`,
+                  `DTEND:${formatICSDate(endDate)}`,
+                  `SUMMARY:${event.title}`,
+                  `DESCRIPTION:${event.description?.substring(0, 200) || ''}`,
+                  `LOCATION:${event.venue}${event.address ? ', ' + event.address : ''}`,
+                  'END:VEVENT',
+                  'END:VCALENDAR'
+                ].join('\r\n');
+                
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+                link.click();
+              }}
+              className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+              title="In Kalender exportieren"
+            >
+              <CalendarPlus size={20} className="text-neutral-400" />
             </button>
           </div>
 
