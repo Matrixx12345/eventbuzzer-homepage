@@ -157,7 +157,7 @@ const Listings = () => {
         } else setLoadingMore(true);
         const offset = isInitial ? 0 : nextOffset;
         const { data, error } = await supabase.functions.invoke("get-external-events", {
-          body: { offset, limit: 30, initialLoad: isInitial, filters: buildFilters() },
+          body: { offset, limit: 30, filters: buildFilters() },
         });
         if (error) throw error;
         if (data?.events) setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
@@ -166,7 +166,6 @@ const Listings = () => {
           setNextOffset(data.pagination.nextOffset || offset + 30);
           setTotalEvents(data.pagination.total);
         }
-        if (isInitial && data?.taxonomy) setTaxonomy(data.taxonomy);
       } catch (err) {
         console.error(err);
       } finally {
@@ -177,9 +176,22 @@ const Listings = () => {
     [nextOffset, buildFilters],
   );
 
-  // Taxonomy aus Supabase laden
+  // Taxonomy aus Supabase laden - mit sessionStorage Cache
   useEffect(() => {
     const loadTaxonomy = async () => {
+      // Check sessionStorage cache first
+      const cached = sessionStorage.getItem("taxonomy_cache");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed.timestamp && Date.now() - parsed.timestamp < 5 * 60 * 1000) { // 5 min cache
+            setTaxonomy(parsed.data);
+            setTaxonomyLoaded(true);
+            return;
+          }
+        } catch {}
+      }
+
       try {
         const { data, error } = await supabase
           .from("taxonomy")
@@ -189,21 +201,23 @@ const Listings = () => {
 
         if (error) {
           console.error("Taxonomy load error:", error);
+          setTaxonomyLoaded(true);
           return;
         }
 
         if (data && data.length > 0) {
-          setTaxonomy(
-            data.map((t: any) => ({
-              id: t.id,
-              slug: t.slug,
-              name: t.name,
-              type: t.type as "main" | "sub",
-              parent_id: t.parent_id,
-              display_order: t.display_order,
-              is_active: t.is_active,
-            })),
-          );
+          const mapped = data.map((t: any) => ({
+            id: t.id,
+            slug: t.slug,
+            name: t.name,
+            type: t.type as "main" | "sub",
+            parent_id: t.parent_id,
+            display_order: t.display_order,
+            is_active: t.is_active,
+          }));
+          setTaxonomy(mapped);
+          // Cache in sessionStorage
+          sessionStorage.setItem("taxonomy_cache", JSON.stringify({ data: mapped, timestamp: Date.now() }));
         }
         setTaxonomyLoaded(true);
       } catch (err) {
