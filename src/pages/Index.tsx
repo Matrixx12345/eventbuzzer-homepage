@@ -11,6 +11,14 @@ const Index = () => {
       <Navbar />
       <main>
         <HeroSection />
+        
+        {/* Discovery CTA */}
+        <div className="bg-background py-16 text-center">
+          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[#1f1f1f] italic">
+            Oder entdecke unsere Auswahl ↓
+          </h2>
+        </div>
+        
         <EventsSection />
         <WeekendSection />
         <SwitzerlandSection />
