@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
+import ImageAttribution from "@/components/ImageAttribution";
 import {
   Heart,
   MapPin,
@@ -48,6 +49,8 @@ interface ExternalEvent {
   date_range_end?: string;
   show_count?: number;
   available_months?: number[];
+  image_author?: string | null;
+  image_license?: string | null;
 }
 
 interface TaxonomyItem {
@@ -517,6 +520,12 @@ const Listings = () => {
                           className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
                         />
                       </button>
+                      
+                      {/* Image Attribution - only shows on hover */}
+                      <ImageAttribution 
+                        author={event.image_author} 
+                        license={event.image_license} 
+                      />
                     </div>
                   </Link>
 
