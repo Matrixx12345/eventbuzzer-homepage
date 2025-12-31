@@ -579,7 +579,7 @@ const Listings = () => {
                     {/* Price, Popular Badge & Rating Row */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
                       <div className="flex items-center gap-2">
-                        {/* Price: show actual price if available, otherwise price_label estimate */}
+                        {/* Price: show actual price if available, otherwise price_label estimate, otherwise nothing */}
                         {event.price_from && event.price_from > 1 ? (
                           <span className="text-sm font-medium text-neutral-600">
                             ab CHF {event.price_from}
@@ -595,9 +595,7 @@ const Listings = () => {
                           )}>
                             {event.price_label}
                           </span>
-                        ) : (
-                          <span className="text-sm text-neutral-400">–</span>
-                        )}
+                        ) : null}
                         {/* Populär Badge - shows when show_count > 10 */}
                         {event.show_count && event.show_count > 10 && (
                           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
