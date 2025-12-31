@@ -98,33 +98,54 @@ const Impressum = () => {
         <section className="mb-10">
           <h2 className="text-xl font-bold mb-4">3. BILDNACHWEISE UND QUELLEN</h2>
 
-          <h3 className="font-semibold mt-6 mb-2">Bilder aus Datenfeeds (API)</h3>
+          <h3 className="font-semibold mt-6 mb-2">Event-Bilder & APIs</h3>
           <p className="mb-4 leading-relaxed">
-            Diese Webseite nutzt automatisierte Schnittstellen zu Partnerplattformen. Die dargestellten Bilder, Plakate
-            und Event-Informationen werden direkt von den jeweiligen Veranstaltern bzw. Plattformbetreibern
-            bereitgestellt. Die Urheberrechte liegen bei den jeweiligen Veranstaltern.
+            Die Bilder auf dieser Plattform stammen von Veranstaltern oder über Schnittstellen wie MySwitzerland Tourism API und Ticketmaster API. Die Urheberrechte liegen bei den jeweiligen Partnern.
           </p>
 
-          <h3 className="font-semibold mt-6 mb-2">Kartografisches Material</h3>
+          <h3 className="font-semibold mt-6 mb-2">Wikimedia Commons</h3>
           <p className="mb-4 leading-relaxed">
-            Karte "Switzerland adm location map.svg": Erstellt von NordNordWest, Quelle: Wikimedia Commons. Lizenz:
-            Creative Commons by-sa-3.0 de.
+            Viele Bilder (insbesondere Museen) stammen von Wikimedia Commons (Creative Commons Lizenzen). Die spezifische Attribution (Autor & Lizenz) ist direkt am jeweiligen Bild über das Info-Icon abrufbar.
+          </p>
+          <p className="mb-2 leading-relaxed">
+            <strong>Quellen:</strong>{" "}
+            <a 
+              href="https://commons.wikimedia.org" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              https://commons.wikimedia.org
+            </a>
+          </p>
+          <p className="mb-4 leading-relaxed">
+            <strong>Lizenzen:</strong>{" "}
+            <a 
+              href="https://creativecommons.org/licenses/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              https://creativecommons.org/licenses/
+            </a>
           </p>
 
-          <h3 className="font-semibold mt-6 mb-2">Sonstige Bilder</h3>
-          <p className="mb-4 leading-relaxed">
-            Teile der bildlichen Gestaltung (Symbolbilder für Kategorien) stammen aus freien Quellen wie Unsplash
-            (Unsplash License) oder wurden mittels KI generiert.
-          </p>
+          <h3 className="font-semibold mt-6 mb-2">Sonstige Quellen</h3>
+          <ul className="mb-4 leading-relaxed list-disc list-inside space-y-1">
+            <li>
+              <strong>Unsplash:</strong> Bilder unterliegen der Unsplash License.
+            </li>
+            <li>
+              <strong>Kartografie:</strong> "Switzerland adm location map.svg" von NordNordWest via Wikimedia (CC BY-SA 3.0 DE).
+            </li>
+          </ul>
         </section>
 
         <section className="mb-10">
           <h2 className="text-xl font-bold mb-4">4. KONTAKT</h2>
 
-          <h3 className="font-semibold mt-6 mb-2">Zusatz (Empfehlung für DE-Betreiberanschrift – ausfüllen)</h3>
+          <h3 className="font-semibold mt-6 mb-2">Betreiber der Webseite (Anschrift in Deutschland)</h3>
           <p className="mb-4 leading-relaxed">
-            Betreiber der Webseite (Anschrift in Deutschland):
-            <br />
             Jenny Stratonowitsch
             <br />
             Spitalstraße 56A

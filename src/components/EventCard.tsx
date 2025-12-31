@@ -2,6 +2,7 @@ import { Heart, Flame } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { EventRatingButtons } from "./EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
+import ImageAttribution from "./ImageAttribution";
 
 interface EventCardProps {
   id: string;
@@ -16,6 +17,8 @@ interface EventCardProps {
   external_id?: string;
   latitude?: number;
   longitude?: number;
+  image_author?: string | null;
+  image_license?: string | null;
 }
 
 const EventCard = ({
@@ -31,6 +34,8 @@ const EventCard = ({
   external_id,
   latitude,
   longitude,
+  image_author,
+  image_license,
 }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
@@ -69,6 +74,8 @@ const EventCard = ({
         >
           <Heart size={18} className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-white"} />
         </button>
+        {/* Image Attribution - only shows on hover */}
+        <ImageAttribution author={image_author} license={image_license} />
       </div>
 
       {/* Content Section */}

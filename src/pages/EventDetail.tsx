@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag } from "lucide-react";
+import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info } from "lucide-react";
+import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -373,6 +374,8 @@ interface DynamicEvent {
   start_date?: string;
   end_date?: string;
   image_url?: string;
+  image_author?: string | null;
+  image_license?: string | null;
   price_from?: number;
   price_to?: number;
   price_label?: string;
@@ -548,6 +551,8 @@ const EventDetail = () => {
     priceLabel?: string;
     latitude?: number;
     longitude?: number;
+    imageAuthor?: string | null;
+    imageLicense?: string | null;
   };
 
   if (isStaticEvent) {
@@ -600,6 +605,8 @@ const EventDetail = () => {
       priceLabel: dynamicEvent.price_label,
       latitude: dynamicEvent.latitude,
       longitude: dynamicEvent.longitude,
+      imageAuthor: dynamicEvent.image_author,
+      imageLicense: dynamicEvent.image_license,
     };
   } else {
     event = {
@@ -632,7 +639,7 @@ const EventDetail = () => {
       {/* HERO SECTION - 50/50 Split Layout */}
       <section className="min-h-[80vh] grid grid-cols-1 lg:grid-cols-2">
         {/* Left - Event Image */}
-        <div className="relative h-[50vh] lg:h-[80vh] overflow-hidden">
+        <div className="relative h-[50vh] lg:h-[80vh] overflow-hidden group">
           <img
             src={event.image}
             alt={event.title}
@@ -641,6 +648,12 @@ const EventDetail = () => {
               const target = e.target as HTMLImageElement;
               target.src = weekendJazz;
             }}
+          />
+          {/* Image Attribution - always visible on detail page */}
+          <ImageAttribution 
+            author={event.imageAuthor} 
+            license={event.imageLicense} 
+            alwaysVisible 
           />
         </div>
 
