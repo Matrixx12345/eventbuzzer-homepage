@@ -3,6 +3,8 @@ import Navbar from "@/components/Navbar";
 import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info } from "lucide-react";
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
+import { VibeBadge, VibeFlames, computeAutoVibe, type VibeLabel } from "@/components/VibeBadge";
+import { ImageGallery } from "@/components/ImageGallery";
 import { useState, useEffect } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -383,6 +385,8 @@ interface DynamicEvent {
   latitude?: number;
   longitude?: number;
   category_sub_id?: string;
+  created_at?: string;
+  gallery_urls?: string[];
 }
 
 // Country name list for filtering
@@ -555,6 +559,9 @@ const EventDetail = () => {
     imageAuthor?: string | null;
     imageLicense?: string | null;
     isMuseum?: boolean;
+    vibeLabel?: VibeLabel;
+    vibeLevel?: 1 | 2 | 3;
+    galleryUrls?: string[];
   };
 
   if (isStaticEvent) {
@@ -598,6 +605,12 @@ const EventDetail = () => {
       ? getDistanceInfo(dynamicEvent.latitude, dynamicEvent.longitude)
       : null;
     
+    // Compute auto vibe if no manual override (placeholder for future DB lookup)
+    const autoVibe = computeAutoVibe({
+      created_at: dynamicEvent.created_at,
+      category_sub_id: dynamicEvent.category_sub_id,
+    });
+    
     event = {
       image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
       title: dynamicEvent.title,
@@ -617,6 +630,9 @@ const EventDetail = () => {
       imageAuthor: dynamicEvent.image_author,
       imageLicense: dynamicEvent.image_license,
       isMuseum: isMuseum,
+      vibeLabel: autoVibe?.label,
+      vibeLevel: autoVibe?.level,
+      galleryUrls: dynamicEvent.gallery_urls || [],
     };
   } else {
     event = {
@@ -669,6 +685,14 @@ const EventDetail = () => {
 
         {/* Right - Content Panel */}
         <div className="bg-white flex flex-col justify-between px-6 py-10 lg:px-12 xl:px-16 lg:h-[80vh]">
+          {/* Vibe Badge + Flames */}
+          {event.vibeLabel && (
+            <div className="flex items-center gap-3 mb-4">
+              <VibeBadge label={event.vibeLabel} level={event.vibeLevel} size="md" />
+              {event.vibeLevel && <VibeFlames level={event.vibeLevel} size="md" />}
+            </div>
+          )}
+
           {/* Title */}
           <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6">
             {event.title}
@@ -963,6 +987,26 @@ const EventDetail = () => {
             {/* Report Error - Subtle maintenance function */}
             <div className="mt-6 pt-4 border-t border-neutral-100">
               <EventRatingButtons eventId={eventId} eventTitle={event.title} />
+            </div>
+
+            {/* Image Gallery - only show if there are gallery images */}
+            {event.galleryUrls && event.galleryUrls.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-neutral-100">
+                <ImageGallery images={event.galleryUrls} alt={event.title} />
+              </div>
+            )}
+
+            {/* Contact Link for Venues */}
+            <div className="mt-8 pt-4 border-t border-neutral-100">
+              <p className="text-xs text-neutral-400 italic">
+                Event verwalten oder Bilder ergänzen?{" "}
+                <a 
+                  href={`mailto:hello@eventbuzzer.ch?subject=Event: ${encodeURIComponent(event.title)}`}
+                  className="text-neutral-500 hover:text-neutral-700 underline transition-colors"
+                >
+                  Kontakt aufnehmen
+                </a>
+              </p>
             </div>
           </div>
         </div>
