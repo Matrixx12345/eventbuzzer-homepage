@@ -483,143 +483,228 @@ const Listings = () => {
           </div>
         )}
 
-        {/* Events Grid - Clean 3-Column Layout */}
+        {/* Events Grid - Alternating Layout with Featured Cards */}
         {loading && !loadingMore ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {events.map((event, index) => {
-              const locationName = getEventLocation(event);
-              const distanceInfo =
-                event.latitude && event.longitude
-                  ? getDistanceInfo(event.latitude, event.longitude).distance
-                  : null;
-              // Check if museum for date pill display
-              const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
+          <div className="space-y-5">
+            {/* Group events into blocks of 5 with alternating featured position */}
+            {(() => {
+              const blocks: Array<{ events: typeof events; featuredRight: boolean }> = [];
+              let currentIndex = 0;
+              let blockIndex = 0;
+              
+              while (currentIndex < events.length) {
+                const blockEvents = events.slice(currentIndex, currentIndex + 5);
+                blocks.push({
+                  events: blockEvents,
+                  featuredRight: blockIndex % 2 === 0, // First block: right, second: left, etc.
+                });
+                currentIndex += 5;
+                blockIndex++;
+              }
+              
+              return blocks.map((block, bIdx) => {
+                const regularEvents = block.events.slice(0, 4);
+                const featuredEvent = block.events[4]; // 5th event becomes featured
+                
+                // Calculate the actual index offset for this block
+                const indexOffset = bIdx * 5;
+                
+                const renderEventCard = (event: typeof events[0], idx: number, isFeatured: boolean = false) => {
+                  const actualIndex = indexOffset + idx;
+                  const locationName = getEventLocation(event);
+                  const distanceInfo =
+                    event.latitude && event.longitude
+                      ? getDistanceInfo(event.latitude, event.longitude).distance
+                      : null;
+                  const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
 
-              return (
-                <article 
-                  key={event.id}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
-                >
-                  <Link to={`/event/${event.id}`} className="block">
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={event.image_url || getPlaceholderImage(index)}
-                        alt={event.title}
-                        loading="lazy"
-                        className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      
-                      {/* Date or Museum Badge - Clean White Pill */}
-                      <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
-                        <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
-                          {isMuseum ? 'MUSEUM' : formatEventDate(
-                            event.start_date,
-                            event.external_id,
-                            event.date_range_start,
-                            event.date_range_end,
-                            event.show_count,
-                          )}
-                        </p>
-                      </div>
-                      
-                      {/* Favorite Button - Top Right */}
-                      <button
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          
-                          toggleFavorite({
-                            id: event.id,
-                            slug: event.id,
-                            title: event.title,
-                            venue: event.venue_name || "",
-                            image: event.image_url || getPlaceholderImage(index),
-                            location: locationName,
-                            date: formatEventDate(event.start_date),
-                          });
-                          
-                          try {
-                            const numericId = parseInt(event.id, 10);
-                            if (!isNaN(numericId)) {
-                              const result = await toggleFavoriteApi(numericId);
-                              setEvents(prev => prev.map(e => 
-                                e.id === event.id 
-                                  ? { ...e, favorite_count: result.favoriteCount }
-                                  : e
-                              ));
-                            }
-                          } catch (error) {
-                            console.error('Failed to toggle favorite:', error);
-                          }
-                        }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
-                        aria-label="Add to favorites"
-                      >
-                        <Heart
-                          size={14}
-                          className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
-                        />
-                      </button>
-                      
-                      {/* Image Attribution - only shows on hover */}
-                      <ImageAttribution 
-                        author={event.image_author} 
-                        license={event.image_license} 
-                      />
-                    </div>
-                  </Link>
-
-                  {/* Content Section - Compact */}
-                  <div className="p-3 flex flex-col flex-grow">
-                    {/* Location Eyebrow */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
-                      <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                      <span className="truncate">
-                        {locationName || "Schweiz"}
-                        {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
-                      </span>
-                    </div>
-                    
-                    {/* Title - Compact */}
-                    <Link 
-                      to={`/event/${event.id}`}
-                      onClick={() => trackEventClick(event.id)}
+                  return (
+                    <article 
+                      key={event.id}
+                      className={cn(
+                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col",
+                        isFeatured ? "h-full" : "h-full"
+                      )}
                     >
-                      <h3 className="font-serif text-base font-bold text-foreground leading-tight line-clamp-2 hover:text-primary/80 transition-colors">
-                        {event.title}
-                      </h3>
-                    </Link>
-                    
-                    {/* Short Description - Single line, compact */}
-                    <p className="text-xs text-muted-foreground line-clamp-1 leading-normal mt-1 flex-grow">
-                      {event.short_description || "Entdecke dieses einzigartige Event."}
-                    </p>
-                    
-                    {/* Footer Row - always at bottom */}
-                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
-                      <span className="text-neutral-500">
-                        {event.price_from && event.price_from >= 15 
-                          ? `ab CHF ${event.price_from}`
-                          : event.price_label 
-                            ? event.price_label
-                            : event.price_from !== null && event.price_from !== undefined
-                              ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
-                              : ''
-                        }
-                      </span>
-                      <BuzzTracker buzzScore={event.buzz_score} />
-                      <div className="ml-auto">
-                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                      </div>
+                      <Link to={`/event/${event.id}`} className="block flex-grow">
+                        <div className={cn("relative overflow-hidden", isFeatured ? "h-full" : "")}>
+                          <img
+                            src={event.image_url || getPlaceholderImage(actualIndex)}
+                            alt={event.title}
+                            loading="lazy"
+                            className={cn(
+                              "w-full object-cover group-hover:scale-105 transition-transform duration-500",
+                              isFeatured ? "h-full min-h-[200px]" : "aspect-[4/3]"
+                            )}
+                          />
+                          
+                          {/* Date or Museum Badge */}
+                          <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
+                            <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
+                              {isMuseum ? 'MUSEUM' : formatEventDate(
+                                event.start_date,
+                                event.external_id,
+                                event.date_range_start,
+                                event.date_range_end,
+                                event.show_count,
+                              )}
+                            </p>
+                          </div>
+                          
+                          {/* Favorite Button */}
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              toggleFavorite({
+                                id: event.id,
+                                slug: event.id,
+                                title: event.title,
+                                venue: event.venue_name || "",
+                                image: event.image_url || getPlaceholderImage(actualIndex),
+                                location: locationName,
+                                date: formatEventDate(event.start_date),
+                              });
+                              
+                              try {
+                                const numericId = parseInt(event.id, 10);
+                                if (!isNaN(numericId)) {
+                                  const result = await toggleFavoriteApi(numericId);
+                                  setEvents(prev => prev.map(e => 
+                                    e.id === event.id 
+                                      ? { ...e, favorite_count: result.favoriteCount }
+                                      : e
+                                  ));
+                                }
+                              } catch (error) {
+                                console.error('Failed to toggle favorite:', error);
+                              }
+                            }}
+                            className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
+                            aria-label="Add to favorites"
+                          >
+                            <Heart
+                              size={14}
+                              className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
+                            />
+                          </button>
+                          
+                          <ImageAttribution 
+                            author={event.image_author} 
+                            license={event.image_license} 
+                          />
+                          
+                          {/* Featured card: overlay content at bottom */}
+                          {isFeatured && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
+                              <div className="flex items-center gap-1.5 text-[11px] text-white/80 uppercase tracking-wider font-medium mb-1">
+                                <MapPin size={11} className="text-white/60 flex-shrink-0" />
+                                <span className="truncate">
+                                  {locationName || "Schweiz"}
+                                  {distanceInfo && <span className="text-white/50 ml-1">• {distanceInfo}</span>}
+                                </span>
+                              </div>
+                              <h3 className="font-serif text-lg font-bold text-white leading-tight line-clamp-2">
+                                {event.title}
+                              </h3>
+                              <p className="text-xs text-white/70 line-clamp-1 mt-1">
+                                {event.short_description || "Entdecke dieses einzigartige Event."}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+
+                      {/* Content Section - only for non-featured cards */}
+                      {!isFeatured && (
+                        <div className="p-3 flex flex-col flex-grow">
+                          <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
+                            <MapPin size={11} className="text-primary/60 flex-shrink-0" />
+                            <span className="truncate">
+                              {locationName || "Schweiz"}
+                              {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
+                            </span>
+                          </div>
+                          
+                          <Link 
+                            to={`/event/${event.id}`}
+                            onClick={() => trackEventClick(event.id)}
+                          >
+                            <h3 className="font-serif text-base font-bold text-foreground leading-tight line-clamp-2 hover:text-primary/80 transition-colors">
+                              {event.title}
+                            </h3>
+                          </Link>
+                          
+                          <p className="text-xs text-muted-foreground line-clamp-1 leading-normal mt-1 flex-grow">
+                            {event.short_description || "Entdecke dieses einzigartige Event."}
+                          </p>
+                          
+                          <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
+                            <span className="text-neutral-500">
+                              {event.price_from && event.price_from >= 15 
+                                ? `ab CHF ${event.price_from}`
+                                : event.price_label 
+                                  ? event.price_label
+                                  : event.price_from !== null && event.price_from !== undefined
+                                    ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
+                                    : ''
+                              }
+                            </span>
+                            <BuzzTracker buzzScore={event.buzz_score} />
+                            <div className="ml-auto">
+                              <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                };
+                
+                // If we don't have a featured event (less than 5 events in block), render normally
+                if (!featuredEvent) {
+                  return (
+                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {block.events.map((event, idx) => renderEventCard(event, idx, false))}
                     </div>
+                  );
+                }
+                
+                // Render block with featured card
+                return (
+                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {block.featuredRight ? (
+                      <>
+                        {/* First row: 2 regular cards */}
+                        {regularEvents.slice(0, 2).map((event, idx) => renderEventCard(event, idx, false))}
+                        {/* Featured card spanning 2 rows */}
+                        <div className="row-span-2">
+                          {renderEventCard(featuredEvent, 4, true)}
+                        </div>
+                        {/* Second row: 2 regular cards */}
+                        {regularEvents.slice(2, 4).map((event, idx) => renderEventCard(event, idx + 2, false))}
+                      </>
+                    ) : (
+                      <>
+                        {/* Featured card spanning 2 rows on the left */}
+                        <div className="row-span-2">
+                          {renderEventCard(featuredEvent, 4, true)}
+                        </div>
+                        {/* First row: 2 regular cards */}
+                        {regularEvents.slice(0, 2).map((event, idx) => renderEventCard(event, idx, false))}
+                        {/* Second row: 2 regular cards */}
+                        {regularEvents.slice(2, 4).map((event, idx) => renderEventCard(event, idx + 2, false))}
+                      </>
+                    )}
                   </div>
-                </article>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
         <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
