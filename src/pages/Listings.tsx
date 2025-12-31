@@ -579,23 +579,33 @@ const Listings = () => {
                     {/* Price, Popular Badge & Rating Row */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
                       <div className="flex items-center gap-2">
-                        {/* Price: show actual price if available, otherwise price_label estimate, otherwise nothing */}
-                        {event.price_from && event.price_from > 1 ? (
-                          <span className="text-sm font-medium text-neutral-600">
-                            ab CHF {event.price_from}
-                          </span>
-                        ) : event.price_label ? (
-                          <span className={cn(
-                            "text-sm font-semibold",
-                            event.price_label === "Gratis" ? "text-emerald-600" :
-                            event.price_label === "$" ? "text-emerald-600" :
-                            event.price_label === "$$" ? "text-amber-600" :
-                            event.price_label === "$$$" ? "text-rose-600" :
-                            "text-neutral-400"
-                          )}>
-                            {event.price_label}
-                          </span>
-                        ) : null}
+                        {/* Price: show actual price if >= 15, otherwise derive price category */}
+                        {(() => {
+                          // Only show real price if it's >= 15 CHF (not placeholder values)
+                          if (event.price_from && event.price_from >= 15) {
+                            return (
+                              <span className="text-sm text-neutral-500">
+                                ab CHF {event.price_from}
+                              </span>
+                            );
+                          }
+                          // Show price_label if available
+                          if (event.price_label) {
+                            return (
+                              <span className="text-sm text-neutral-500">
+                                {event.price_label}
+                              </span>
+                            );
+                          }
+                          // Derive from price_from if available but no label
+                          if (event.price_from !== null && event.price_from !== undefined) {
+                            if (event.price_from === 0) return <span className="text-sm text-neutral-500">Gratis</span>;
+                            if (event.price_from < 50) return <span className="text-sm text-neutral-500">$</span>;
+                            if (event.price_from < 120) return <span className="text-sm text-neutral-500">$$</span>;
+                            return <span className="text-sm text-neutral-500">$$$</span>;
+                          }
+                          return null;
+                        })()}
                         {/* Populär Badge - shows when show_count > 10 */}
                         {event.show_count && event.show_count > 10 && (
                           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
