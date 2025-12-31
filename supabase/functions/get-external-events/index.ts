@@ -6,6 +6,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Konvertiert ASCII-Umlaute zu echten deutschen Umlauten
+function convertToUmlauts(text: string | null | undefined): string | null {
+  if (!text) return text as null;
+  return text
+    .replace(/Ae/g, "Ä")
+    .replace(/Oe/g, "Ö")
+    .replace(/Ue/g, "Ü")
+    .replace(/ae/g, "ä")
+    .replace(/oe/g, "ö")
+    .replace(/ue/g, "ü");
+}
+
+// Wendet Umlaut-Konvertierung auf relevante Event-Felder an
+function processEventUmlauts(event: any): any {
+  return {
+    ...event,
+    title: convertToUmlauts(event.title),
+    short_description: convertToUmlauts(event.short_description),
+    description: convertToUmlauts(event.description),
+    venue_name: convertToUmlauts(event.venue_name),
+    address_city: convertToUmlauts(event.address_city),
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -62,7 +86,7 @@ serve(async (req) => {
       }
       
       return new Response(
-        JSON.stringify({ events: event ? [event] : [], pagination: { total: event ? 1 : 0, hasMore: false } }),
+        JSON.stringify({ events: event ? [processEventUmlauts(event)] : [], pagination: { total: event ? 1 : 0, hasMore: false } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -240,9 +264,12 @@ serve(async (req) => {
 
     console.log(`Returning ${filteredEvents.length} events (total: ${count})`);
 
+    // Umlaute konvertieren für alle Events
+    const processedEvents = filteredEvents.map(processEventUmlauts);
+
     return new Response(
       JSON.stringify({
-        events: filteredEvents,
+        events: processedEvents,
         pagination: {
           total: count || 0,
           hasMore: (count || 0) > offset + limit,
