@@ -690,43 +690,33 @@ const EventDetail = () => {
         {/* Right - Content Panel */}
         <div className="bg-white flex flex-col justify-between px-6 py-10 lg:px-12 xl:px-16 lg:h-[80vh]">
           {/* Title */}
-          <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-3">
+          <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-4">
             {event.title}
           </h1>
-          
-          {/* Buzz Tracker under title */}
-          <div className="mb-6">
-            <BuzzTracker buzzScore={event.buzzScore} />
-          </div>
 
-          {/* Meta Info - All icons on one row */}
-          <div className="flex flex-wrap items-center gap-4 mb-6 text-neutral-600">
-            {/* Show Museum badge instead of date for museums */}
-            {event.isMuseum ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                  Museum
-                </span>
-              </div>
-            ) : event.date && (
-              <div className="flex items-center gap-2">
-                <Calendar size={18} className="text-neutral-400" />
-                <span className="text-base">
-                  {event.date}{event.time ? `, ${event.time}` : ''}
-                </span>
+          {/* Meta Info - flat row with plain text labels */}
+          <div className="flex flex-wrap items-center gap-4 mb-6 text-[12px] text-gray-500">
+            {/* Museum label - plain text, no badge */}
+            {event.isMuseum && (
+              <span className="uppercase tracking-wide">Museum</span>
+            )}
+            
+            {/* Date & Time - only for non-museums */}
+            {!event.isMuseum && event.date && (
+              <div className="flex items-center gap-1.5">
+                <Calendar size={14} className="text-gray-400" />
+                <span>{event.date}{event.time ? `, ${event.time}` : ''}</span>
               </div>
             )}
             
-            {/* Location with Swiss Map Hover */}
+            {/* Location */}
             {event.location && (
-              <div className="group/map relative cursor-pointer">
-                <div className="flex items-center gap-2">
-                  <MapPin size={18} className="text-neutral-400" />
-                  <span className="text-base">
-                    {event.location}
-                    {event.distance && <span className="text-neutral-400 ml-1">• {event.distance}</span>}
-                  </span>
-                </div>
+              <div className="group/map relative cursor-pointer flex items-center gap-1.5">
+                <MapPin size={14} className="text-gray-400" />
+                <span>
+                  {event.location}
+                  {event.distance && <span className="text-gray-400 ml-1">• {event.distance}</span>}
+                </span>
                 {event.latitude && event.longitude && (
                   <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
                     <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
@@ -746,24 +736,27 @@ const EventDetail = () => {
               </div>
             )}
             
+            {/* Venue */}
             {event.venue && event.venue !== event.location && (
-              <div className="flex items-center gap-2">
-                <Navigation size={18} className="text-neutral-400" />
-                <span className="text-base">{event.venue}</span>
+              <div className="flex items-center gap-1.5">
+                <Navigation size={14} className="text-gray-400" />
+                <span>{event.venue}</span>
               </div>
             )}
             
+            {/* Price */}
             {(event.priceLabel || event.priceFrom) && (
-              <div className="flex items-center gap-2 text-neutral-900 font-medium">
-                <span className="text-base">
-                  {event.priceLabel 
-                    ? event.priceLabel 
-                    : event.priceTo && event.priceTo !== event.priceFrom
-                      ? `CHF ${event.priceFrom} – ${event.priceTo}`
-                      : `ab CHF ${event.priceFrom}`}
-                </span>
-              </div>
+              <span className="text-gray-700 font-medium">
+                {event.priceLabel 
+                  ? event.priceLabel 
+                  : event.priceTo && event.priceTo !== event.priceFrom
+                    ? `CHF ${event.priceFrom} – ${event.priceTo}`
+                    : `ab CHF ${event.priceFrom}`}
+              </span>
             )}
+            
+            {/* Buzz Tracker - inline */}
+            <BuzzTracker buzzScore={event.buzzScore} />
           </div>
 
 
