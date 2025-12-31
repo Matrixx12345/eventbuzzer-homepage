@@ -233,111 +233,248 @@ const ListingsFilterBar = ({
   }, [categories, initialCategory]);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={containerRef} className="w-full relative">
       {/* Main Filter Bar - White bar with dark text */}
-      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-visible">
         {/* Kategorie */}
-        <button
-          onClick={() => toggleSection("category")}
-          className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0 rounded-l-2xl",
-            selectedCategory.slug
-              ? "bg-blue-900 text-white"
-              : openSection === "category"
-              ? "bg-gray-50"
-              : "hover:bg-gray-50"
+        <div className="relative flex-1 min-w-0">
+          <button
+            onClick={() => toggleSection("category")}
+            className={cn(
+              "flex items-center gap-3 px-5 py-4 transition-colors w-full rounded-l-2xl",
+              selectedCategory.slug
+                ? "bg-blue-900 text-white"
+                : openSection === "category"
+                ? "bg-gray-50"
+                : "hover:bg-gray-50"
+            )}
+          >
+            <LayoutGrid className={cn("w-5 h-5 flex-shrink-0", selectedCategory.slug ? "text-white" : "text-gray-400")} />
+            <span className={cn("font-medium text-sm truncate", selectedCategory.slug ? "text-white" : "text-gray-900")}>
+              {selectedCategory.slug ? selectedCategory.name : "Alle Kategorien"}
+            </span>
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "category" && "rotate-180", selectedCategory.slug ? "text-white" : "text-gray-400")} />
+          </button>
+          
+          {/* Category Dropdown */}
+          {openSection === "category" && (
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[280px] animate-fade-in">
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.slug || "all"}
+                    onClick={() => handleCategorySelect(cat)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                      selectedCategory.slug === cat.slug
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                    )}
+                  >
+                    <cat.icon size={14} />
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
-        >
-          <LayoutGrid className={cn("w-5 h-5 flex-shrink-0", selectedCategory.slug ? "text-white" : "text-gray-400")} />
-          <span className={cn("font-medium text-sm truncate", selectedCategory.slug ? "text-white" : "text-gray-900")}>
-            {selectedCategory.slug ? selectedCategory.name : "Alle Kategorien"}
-          </span>
-        </button>
+        </div>
 
         <div className="w-px bg-gray-200 self-stretch my-3" />
 
         {/* Stimmung */}
-        <button
-          onClick={() => toggleSection("mood")}
-          className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0",
-            selectedMood.slug
-              ? "bg-blue-900 text-white"
-              : openSection === "mood"
-              ? "bg-gray-50"
-              : "hover:bg-gray-50"
+        <div className="relative flex-1 min-w-0">
+          <button
+            onClick={() => toggleSection("mood")}
+            className={cn(
+              "flex items-center gap-3 px-5 py-4 transition-colors w-full",
+              selectedMood.slug
+                ? "bg-blue-900 text-white"
+                : openSection === "mood"
+                ? "bg-gray-50"
+                : "hover:bg-gray-50"
+            )}
+          >
+            <Smile className={cn("w-5 h-5 flex-shrink-0", selectedMood.slug ? "text-white" : "text-gray-400")} />
+            <span className={cn("font-medium text-sm truncate", selectedMood.slug ? "text-white" : "text-gray-900")}>
+              {selectedMood.slug ? selectedMood.name : "Jede Stimmung"}
+            </span>
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "mood" && "rotate-180", selectedMood.slug ? "text-white" : "text-gray-400")} />
+          </button>
+          
+          {/* Mood Dropdown */}
+          {openSection === "mood" && (
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[280px] animate-fade-in">
+              <div className="flex flex-wrap gap-2">
+                {moods.map((mood) => (
+                  <button
+                    key={mood.slug || "all"}
+                    onClick={() => handleMoodSelect(mood)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                      selectedMood.slug === mood.slug
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                    )}
+                  >
+                    <mood.icon size={14} />
+                    {mood.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
-        >
-          <Smile className={cn("w-5 h-5 flex-shrink-0", selectedMood.slug ? "text-white" : "text-gray-400")} />
-          <span className={cn("font-medium text-sm truncate", selectedMood.slug ? "text-white" : "text-gray-900")}>
-            {selectedMood.slug ? selectedMood.name : "Jede Stimmung"}
-          </span>
-        </button>
+        </div>
 
         <div className="w-px bg-gray-200 self-stretch my-3" />
 
         {/* Ort */}
-        <button
-          onClick={() => toggleSection("location")}
-          className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0",
-            cityInput
-              ? "bg-blue-900 text-white"
-              : openSection === "location"
-              ? "bg-gray-50"
-              : "hover:bg-gray-50"
-          )}
-        >
-          <MapPin className={cn("w-5 h-5 flex-shrink-0", cityInput ? "text-white" : "text-gray-400")} />
-          <div className="text-left min-w-0">
-            <div className={cn("font-medium text-sm truncate", cityInput ? "text-white" : "text-gray-900")}>
-              {cityInput || "Ort"}
-            </div>
-            {!cityInput && (
-              <div className="text-xs text-gray-400">Ort eingeben</div>
+        <div className="relative flex-1 min-w-0">
+          <button
+            onClick={() => toggleSection("location")}
+            className={cn(
+              "flex items-center gap-3 px-5 py-4 transition-colors w-full",
+              cityInput
+                ? "bg-blue-900 text-white"
+                : openSection === "location"
+                ? "bg-gray-50"
+                : "hover:bg-gray-50"
             )}
-          </div>
-        </button>
+          >
+            <MapPin className={cn("w-5 h-5 flex-shrink-0", cityInput ? "text-white" : "text-gray-400")} />
+            <div className="text-left min-w-0 flex-1">
+              <div className={cn("font-medium text-sm truncate", cityInput ? "text-white" : "text-gray-900")}>
+                {cityInput || "Ort"}
+              </div>
+            </div>
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "location" && "rotate-180", cityInput ? "text-white" : "text-gray-400")} />
+          </button>
+          
+          {/* Location Dropdown */}
+          {openSection === "location" && (
+            <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-xl shadow-xl z-50 min-w-[300px] animate-fade-in">
+              <div className="space-y-3">
+                <div className="relative">
+                  <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    ref={cityInputRef}
+                    type="text"
+                    placeholder="Stadt eingeben..."
+                    value={cityInput}
+                    onChange={(e) => handleCityInputChange(e.target.value)}
+                    autoFocus
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-100 text-sm text-gray-900 border-0 outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+                
+                {filteredCities.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => handleCitySelect(city)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                          cityInput === city
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        )}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {cityInput && (
+                  <div className="pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-500">Umkreis</span>
+                      <span className="text-xs font-semibold text-gray-900">{radius[0]} km</span>
+                    </div>
+                    <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="w-px bg-gray-200 self-stretch my-3" />
 
         {/* Datum */}
-        <button
-          onClick={() => toggleSection("date")}
-          className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0",
-            (selectedDate || selectedTimePill)
-              ? "bg-blue-900 text-white"
-              : openSection === "date"
-              ? "bg-gray-50"
-              : "hover:bg-gray-50"
+        <div className="relative flex-1 min-w-0">
+          <button
+            onClick={() => toggleSection("date")}
+            className={cn(
+              "flex items-center gap-3 px-5 py-4 transition-colors w-full",
+              (selectedDate || selectedTimePill)
+                ? "bg-blue-900 text-white"
+                : openSection === "date"
+                ? "bg-gray-50"
+                : "hover:bg-gray-50"
+            )}
+          >
+            <CalendarIcon className={cn("w-5 h-5 flex-shrink-0", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-400")} />
+            <span className={cn("font-medium text-sm truncate", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-900")}>
+              {getDateDisplayText()}
+            </span>
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "date" && "rotate-180", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-400")} />
+          </button>
+          
+          {/* Date Dropdown */}
+          {openSection === "date" && (
+            <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-xl shadow-xl z-50 animate-fade-in">
+              <div className="space-y-3">
+                {/* Time Pills */}
+                <div className="flex flex-wrap gap-2">
+                  {timePills.map((pill) => (
+                    <button
+                      key={pill.id}
+                      onClick={() => handleTimePillClick(pill.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2",
+                        selectedTimePill === pill.id
+                          ? "bg-blue-900 text-white border-blue-900"
+                          : pill.id === "now"
+                          ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
+                          : "bg-gray-100 text-gray-700 border-gray-100 hover:bg-gray-200"
+                      )}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Calendar */}
+                <div className="bg-gray-50 rounded-lg overflow-hidden">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    locale={de}
+                    className="p-2"
+                  />
+                </div>
+              </div>
+            </div>
           )}
-        >
-          <CalendarIcon className={cn("w-5 h-5 flex-shrink-0", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-400")} />
-          <span className={cn("font-medium text-sm truncate", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-900")}>
-            {getDateDisplayText()}
-          </span>
-        </button>
+        </div>
 
         <div className="w-px bg-gray-200 self-stretch my-3" />
 
         {/* Suche Input */}
         <div className="flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
-          <div className="text-left min-w-0 w-full">
-            <input
-              type="text"
-              placeholder="Suchen"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              onBlur={handleSearchBlur}
-              className="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none"
-            />
-            {!searchInput && (
-              <div className="text-xs text-gray-400">Event suchen</div>
-            )}
-          </div>
+          <input
+            type="text"
+            placeholder="Suchen..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            onBlur={handleSearchBlur}
+            className="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none"
+          />
         </div>
 
         {/* SUCHEN Button */}
@@ -351,136 +488,6 @@ const ListingsFilterBar = ({
           </button>
         </div>
       </div>
-
-      {/* Expandable Panel */}
-      {openSection && (
-        <div className="mt-3 p-5 bg-white rounded-2xl shadow-xl animate-fade-in">
-          {/* Category */}
-          {openSection === "category" && (
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.slug || "all"}
-                  onClick={() => handleCategorySelect(cat)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-                    selectedCategory.slug === cat.slug
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                  )}
-                >
-                  <cat.icon size={16} />
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Mood */}
-          {openSection === "mood" && (
-            <div className="flex flex-wrap gap-2">
-              {moods.map((mood) => (
-                <button
-                  key={mood.slug || "all"}
-                  onClick={() => handleMoodSelect(mood)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-                    selectedMood.slug === mood.slug
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                  )}
-                >
-                  <mood.icon size={16} />
-                  {mood.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Location */}
-          {openSection === "location" && (
-            <div className="space-y-4">
-              <div className="relative max-w-sm">
-                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  ref={cityInputRef}
-                  type="text"
-                  placeholder="Stadt eingeben..."
-                  value={cityInput}
-                  onChange={(e) => handleCityInputChange(e.target.value)}
-                  autoFocus
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-100 text-sm text-gray-900 border-0 outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
-              
-              {filteredCities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {filteredCities.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => handleCitySelect(city)}
-                      className={cn(
-                        "px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                        cityInput === city
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                      )}
-                    >
-                      {city}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {cityInput && (
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-500">Umkreis</span>
-                    <span className="text-sm font-semibold text-gray-900">{radius[0]} km</span>
-                  </div>
-                  <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Date */}
-          {openSection === "date" && (
-            <div className="space-y-4">
-              {/* Time Pills - Above Calendar, Yellow Style */}
-              <div className="flex flex-wrap gap-2">
-              {timePills.map((pill) => (
-                  <button
-                    key={pill.id}
-                    onClick={() => handleTimePillClick(pill.id)}
-                    className={cn(
-                      "px-4 py-2 rounded-full text-sm font-medium transition-all border-2",
-                      selectedTimePill === pill.id
-                        ? "bg-blue-900 text-white border-blue-900"
-                        : pill.id === "now"
-                        ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
-                        : "bg-gray-100 text-gray-700 border-gray-100 hover:bg-gray-200"
-                    )}
-                  >
-                    {pill.label}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Calendar */}
-              <div className="bg-gray-50 rounded-xl overflow-hidden inline-block">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  locale={de}
-                  className="p-3"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
