@@ -603,7 +603,7 @@ const Listings = () => {
 
                       {/* Content Section - same for all cards */}
                       <div className={cn("p-3 flex flex-col", isFeatured ? "flex-shrink-0" : "flex-grow")}>
-                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-help w-fit">
+                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
                             {locationName || "Schweiz"}
