@@ -18,7 +18,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Grosse Schweizer Staedte
+// Große Schweizer Städte
 const SWISS_CITIES = [
   { name: "Zurich", lat: 47.3769, lon: 8.5417 },
   { name: "Geneva", lat: 46.2044, lon: 6.1432 },
@@ -97,7 +97,7 @@ const EventsSection = () => {
           throw error;
         }
 
-        // 3. Naechste Stadt finden
+        // 3. Nächste Stadt finden
         let nearestCity = SWISS_CITIES[0];
         let minDistance = Infinity;
 
@@ -109,7 +109,7 @@ const EventsSection = () => {
           }
         }
 
-        // Wenn User > 50km von allen Staedten entfernt -> Zeige Zurich
+        // Wenn User > 50km von allen Städten entfernt -> Zeige Zurich
         if (minDistance > 50) {
           nearestCity = SWISS_CITIES[0];
         }
@@ -159,7 +159,7 @@ const EventsSection = () => {
     return (
       <section className="bg-background py-24 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16 italic">Laedt...</h2>
+          <h2 className="font-serif text-4xl md:text-5xl text-foreground text-center mb-16 italic">Lädt...</h2>
         </div>
       </section>
     );
@@ -174,7 +174,7 @@ const EventsSection = () => {
       <div className="max-w-7xl mx-auto">
         {/* Title - links wie Weekend */}
         <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-muted-foreground mb-8 sm:mb-12">
-          Heute in deiner Naehe
+          Heute in deiner Nähe
         </h2>
 
         {/* Horizontal Scrollable Carousel */}
