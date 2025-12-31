@@ -589,9 +589,9 @@ const Listings = () => {
                                 : ''
                           }
                         </span>
-                        {/* Populär - gray pill */}
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
-                          <Flame size={10} className="fill-neutral-400" />
+                        {/* Populär - subtle pill with fiery flame */}
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/80 border border-neutral-200/50 text-neutral-500">
+                          <Flame size={10} className="text-orange-500 fill-amber-400" />
                           <span className="text-[10px]">Populär</span>
                         </span>
                       </div>
