@@ -590,13 +590,11 @@ const Listings = () => {
                                 : ''
                           }
                         </span>
-                        {/* Populär - icon + text, no pill */}
-                        {event.show_count && event.show_count > 10 && (
-                          <span className="flex items-center gap-0.5 text-amber-500">
-                            <Flame size={11} className="fill-amber-400" />
-                            <span className="text-[10px] font-medium">Populär</span>
-                          </span>
-                        )}
+                        {/* Populär - temporarily shown on ALL events for preview */}
+                        <span className="flex items-center gap-0.5 text-amber-500">
+                          <Flame size={11} className="fill-amber-400" />
+                          <span className="text-[10px] font-medium">Populär</span>
+                        </span>
                       </div>
                       <div className="opacity-40 hover:opacity-100 transition-opacity">
                         <EventRatingButtons eventId={event.id} eventTitle={event.title} />
