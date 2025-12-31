@@ -3,12 +3,12 @@ import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
-// VibeBadge removed from listings - keeping clean museum look
+import { BuzzTracker } from "@/components/BuzzTracker";
+import { trackEventClick } from "@/services/buzzTracking";
 import {
   Heart,
   MapPin,
   Loader2,
-  Flame,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -58,6 +58,7 @@ interface ExternalEvent {
   category_sub_id?: string;
   created_at?: string;
   favorite_count?: number;
+  buzz_score?: number | null;
 }
 
 interface TaxonomyItem {
@@ -586,20 +587,28 @@ const Listings = () => {
                     </div>
                     
                     {/* Title - Serif Bold */}
-                    <Link to={`/event/${event.id}`}>
+                    <Link 
+                      to={`/event/${event.id}`}
+                      onClick={() => trackEventClick(event.id)}
+                    >
                       <h3 className="font-serif text-lg font-bold text-foreground leading-snug line-clamp-2 hover:text-primary/80 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
                     
+                    {/* Buzz Tracker - horizontal barometer under title */}
+                    <div className="mt-1.5 mb-2">
+                      <BuzzTracker buzzScore={event.buzz_score} />
+                    </div>
+                    
                     {/* Short Description - Always 2 lines */}
-                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed min-h-[2.5rem]">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem]">
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
                     {/* Price & Rating Row */}
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center gap-6 text-xs text-neutral-400">
+                      <div className="flex items-center gap-4 text-xs text-neutral-400">
                         <span>
                           {event.price_from && event.price_from >= 15 
                             ? `ab ${event.price_from}`
@@ -610,80 +619,12 @@ const Listings = () => {
                                 : ''
                           }
                         </span>
-                        {/* Vibe Label - one per event based on data */}
-                        {(() => {
-                          const createdAt = event.created_at ? new Date(event.created_at) : null;
-                          const daysSinceCreation = createdAt 
-                            ? Math.floor((new Date().getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
-                            : null;
-                          
-                          // PRIORITY 1: Populär - 10+ favorites
-                          if (event.favorite_count && event.favorite_count >= 10) {
-                            return (
-                              <span className="flex items-center gap-1 text-neutral-400">
-                                <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
-                                  <path d="M12 2C6.5 9 4 14 4 17a8 8 0 0 0 16 0c0-3-2.5-8-8-15z" fill="#f97316" />
-                                  <path d="M12 6C8.5 11 7 14.5 7 16.5a5 5 0 0 0 10 0c0-2-1.5-5.5-5-10.5z" fill="#fb923c" />
-                                  <path d="M12 10C10 13 9 15 9 16.5a3 3 0 0 0 6 0c0-1.5-1-3.5-3-6.5z" fill="#fbbf24" />
-                                  <path d="M12 14c-1 1.5-1.5 2.5-1.5 3.2a1.5 1.5 0 0 0 3 0c0-.7-.5-1.7-1.5-3.2z" fill="#fef3c7" />
-                                </svg>
-                                <span className="text-[10px]">Populär</span>
-                              </span>
-                            );
-                          }
-                          
-                          // Must-See: Blockbuster venues
-                          const mustSeeVenues = ['beyeler', 'kunsthaus', 'kunstmuseum', 'landesmuseum', 'museum rietberg'];
-                          const venueLower = (event.venue_name || '').toLowerCase();
-                          const titleLower = (event.title || '').toLowerCase();
-                          if (mustSeeVenues.some(v => venueLower.includes(v) || titleLower.includes(v))) {
-                            return (
-                              <span className="flex items-center gap-1 text-neutral-400">
-                                <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
-                                  <path d="M7 21h10v-1H7v1z" fill="#b45309" />
-                                  <path d="M9 20h6v-3H9v3z" fill="#d97706" />
-                                  <path d="M5 3h14v2c0 3-2 6-5 7v2h-4v-2c-3-1-5-4-5-7V3z" fill="#f59e0b" />
-                                  <path d="M7 4h10v1.5c0 2.5-1.5 4.5-4 5.5h-2c-2.5-1-4-3-4-5.5V4z" fill="#fbbf24" />
-                                  <path d="M5 4H3v3c0 1.5 1 2.5 2 3V4zM19 4h2v3c0 1.5-1 2.5-2 3V4z" fill="#d97706" />
-                                  <path d="M9 5.5c0 1.5.8 2.8 2 3.5V5.5H9z" fill="#fef3c7" opacity="0.6" />
-                                </svg>
-                                <span className="text-[10px]">Must-See</span>
-                              </span>
-                            );
-                          }
-                          
-                          // Neu: Less than 7 days old
-                          if (daysSinceCreation !== null && daysSinceCreation < 7) {
-                            return (
-                              <span className="flex items-center gap-1 text-emerald-500">
-                                <Flame size={12} className="flex-shrink-0" />
-                                <span className="text-[10px]">Neu</span>
-                              </span>
-                            );
-                          }
-                          
-                          // Geheimtipp: Smaller museums, less clicks
-                          const isSmallVenue = !event.show_count || event.show_count < 5;
-                          const geheimtippCategories = ['museum-kunst', 'museum-history', 'galerie'];
-                          const isGeheimtippCategory = event.category_sub_id && geheimtippCategories.includes(event.category_sub_id);
-                          if (isSmallVenue || isGeheimtippCategory) {
-                            return (
-                              <span className="flex items-center gap-1 text-neutral-400">
-                                <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
-                                  <path d="M12 2L2 9l10 13 10-13L12 2z" fill="#3b82f6" />
-                                  <path d="M12 2L4 9h16L12 2z" fill="#60a5fa" />
-                                  <path d="M12 22L4 9h4l4 10 4-10h4L12 22z" fill="#2563eb" />
-                                  <path d="M8 9l4 10 4-10H8z" fill="#3b82f6" />
-                                  <path d="M12 2l-4 7h8l-4-7z" fill="#93c5fd" />
-                                  <path d="M10 4l-2 4h3l-1-4z" fill="#dbeafe" opacity="0.7" />
-                                </svg>
-                                <span className="text-[10px]">Geheimtipp</span>
-                              </span>
-                            );
-                          }
-                          
-                          return null;
-                        })()}
+                        {/* Museum badge */}
+                        {isMuseum && (
+                          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-medium">
+                            Museum
+                          </span>
+                        )}
                       </div>
                       <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                     </div>
