@@ -6,38 +6,35 @@ interface BuzzTrackerProps {
 }
 
 /**
- * Temperature-style buzz barometer with gradient
- * Blue -> Yellow -> Red gradient with floating white ring indicator
- * Shows 🔥 only when buzz > 80
+ * Premium Buzz Barometer - Luxury Gauge Design
+ * Monochrome base with color accent only for high buzz (>85)
  */
 export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   // Default to 20 if no score (seed buzz)
   const score = buzzScore ?? 20;
-  const isHot = score >= 80;
+  const normalizedScore = Math.min(100, Math.max(0, score));
+  const isHot = score > 85;
+
+  // Active bar color: anthracite by default, electric blue/gold when hot
+  const activeColor = isHot ? '#2563eb' : '#404040';
 
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      {/* Gradient track - Blue -> Yellow -> Red */}
-      <span 
-        className="relative w-20 h-[3px] rounded-full"
-        style={{ 
-          background: 'linear-gradient(to right, #3b82f6, #facc15, #ef4444)' 
-        }}
-      >
-        {/* White circle indicator with dark border */}
+      {/* Barometer container */}
+      <span className="relative w-[100px] h-1 bg-neutral-200 rounded-full overflow-hidden">
+        {/* Filled portion - clean end, no indicator dot */}
         <span
-          className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border border-neutral-400 shadow-sm transition-all duration-300"
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
           style={{ 
-            left: `calc(${Math.min(100, Math.max(0, score))}% - 5px)`
+            width: `${normalizedScore}%`,
+            backgroundColor: activeColor
           }}
         />
       </span>
-      {/* Buzz score text - uppercase, bold */}
-      <span className="text-[10px] font-bold text-neutral-500 tracking-wide">
+      {/* Buzz score text - premium typography */}
+      <span className="text-[10px] font-medium text-neutral-600 tracking-tight uppercase">
         BUZZ {Math.round(score)}
       </span>
-      {/* Fire emoji only for hot events (>=80) */}
-      {isHot && <span className="text-xs">🔥</span>}
     </span>
   );
 };
