@@ -117,16 +117,82 @@ const ListingsFilterBar = ({
   >([{ id: null, slug: null, name: "Alle", icon: LayoutGrid }]);
   const [selectedTimePill, setSelectedTimePill] = useState<string | null>(initialTime || null);
   const [searchInput, setSearchInput] = useState(initialSearch);
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ id: string; title: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Which dropdown is open
   const [openSection, setOpenSection] = useState<"category" | "mood" | "location" | "date" | null>(null);
 
   const cityInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const filteredCities = citySuggestions
     .filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
     .slice(0, 6);
+
+  // Debounced search for suggestions
+  const fetchSearchSuggestions = async (query: string) => {
+    if (query.length < 2) {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    setLoadingSuggestions(true);
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title")
+        .ilike("title", `%${query}%`)
+        .limit(6);
+      
+      if (error) {
+        console.error("Search suggestions error:", error);
+        setSearchSuggestions([]);
+      } else if (data) {
+        setSearchSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      }
+    } catch (err) {
+      console.error("Search suggestions fetch error:", err);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Debounce the API call
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchSearchSuggestions(value);
+    }, 300);
+  };
+
+  const handleSuggestionClick = (suggestion: { id: string; title: string }) => {
+    setSearchInput(suggestion.title);
+    setShowSuggestions(false);
+    onSearchChange(suggestion.title);
+  };
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Handlers
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -478,18 +544,43 @@ const ListingsFilterBar = ({
 
         <div className="w-px bg-gray-200 self-stretch my-3" />
 
-        {/* Suche Input */}
-        <div className="relative flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
+        {/* Suche Input mit Vorschlägen */}
+        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
           <input
             type="text"
             placeholder="Konzert, Festival, Ort..."
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => handleSearchInputChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             onBlur={handleSearchBlur}
+            onFocus={() => searchInput.length >= 2 && searchSuggestions.length > 0 && setShowSuggestions(true)}
             className="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none"
           />
+          
+          {/* Search Suggestions Dropdown */}
+          {showSuggestions && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+              {loadingSuggestions ? (
+                <div className="px-4 py-3 text-sm text-gray-500">Suche...</div>
+              ) : searchSuggestions.length > 0 ? (
+                <div className="py-1">
+                  {searchSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.id}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-3"
+                    >
+                      <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="truncate">{suggestion.title}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-500">Keine Ergebnisse</div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* SUCHEN Button */}
