@@ -62,36 +62,6 @@ interface ExternalEvent {
   click_count?: number;
 }
 
-// Vibe Label Helper basierend auf buzz_score
-const getVibeLabel = (event: ExternalEvent): { label: string; color: string } | null => {
-  const buzz = event.buzz_score || 0;
-  const favs = event.favorite_count || 0;
-  const clicks = event.click_count || 0;
-
-  // POPULÄR: Hoher Buzz Score ODER viele Favoriten
-  if (buzz >= 85 || favs >= 10) {
-    return { label: 'POPULÄR', color: 'text-orange-600 bg-orange-50 border-orange-200' };
-  }
-
-  // MUST-SEE: Hohe Qualität + bekannte Location
-  const mustSeeVenues = [
-    'Fondation Beyeler', 'Kunsthaus Zürich', 'Kunstmuseum Basel',
-    'Landesmuseum', 'Verkehrshaus', 'Olympisches Museum',
-    'Hallenstadion', 'Stade de Suisse', 'Theater Basel',
-    'Opernhaus Zürich', 'Tonhalle Zürich', 'KKL Luzern'
-  ];
-  if (buzz >= 70 && event.venue_name && mustSeeVenues.some(v => event.venue_name?.includes(v))) {
-    return { label: 'MUST-SEE', color: 'text-amber-700 bg-amber-50 border-amber-200' };
-  }
-
-  // GEHEIMTIPP: Gute Qualität aber wenig bekannt
-  if (buzz >= 50 && clicks < 20) {
-    return { label: 'GEHEIMTIPP', color: 'text-blue-600 bg-blue-50 border-blue-200' };
-  }
-
-  return null;
-};
-
 interface TaxonomyItem {
   id: number;
   slug: string;
@@ -632,24 +602,8 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Footer Row: Vibe Label + Price + Buzz + Rating */}
-                    <div className="flex items-center gap-3 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
-                      {/* Vibe Label - based on buzz_score */}
-                      {(() => {
-                        const vibe = getVibeLabel(event);
-                        if (vibe) {
-                          return (
-                            <span className={cn(
-                              "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide border",
-                              vibe.color
-                            )}>
-                              {vibe.label === 'POPULÄR' && '🔥 '}{vibe.label}
-                            </span>
-                          );
-                        }
-                        return null;
-                      })()}
-                      
+                    {/* Footer Row: Price + Buzz + Rating - minimal */}
+                    <div className="flex items-center gap-6 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
                       {/* Price */}
                       <span className="text-neutral-500">
                         {event.price_from && event.price_from >= 15 
