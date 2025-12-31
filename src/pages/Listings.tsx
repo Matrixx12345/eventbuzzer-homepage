@@ -576,21 +576,26 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price & Rating Row - Compact */}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
-                      <div className="flex items-center gap-1.5 text-xs text-neutral-400">
+                    {/* Price & Rating Row - Compact height */}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
+                      <div className="flex items-center gap-2 text-xs text-neutral-400">
                         {/* Price indicator */}
-                        {event.price_from && event.price_from >= 15 
-                          ? `ab ${event.price_from}`
-                          : event.price_label 
-                            ? event.price_label
-                            : event.price_from !== null && event.price_from !== undefined
-                              ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
-                              : null
-                        }
-                        {/* Populär - just flame icon, no pill */}
+                        <span>
+                          {event.price_from && event.price_from >= 15 
+                            ? `ab ${event.price_from}`
+                            : event.price_label 
+                              ? event.price_label
+                              : event.price_from !== null && event.price_from !== undefined
+                                ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
+                                : ''
+                          }
+                        </span>
+                        {/* Populär - icon + text, no pill */}
                         {event.show_count && event.show_count > 10 && (
-                          <Flame size={12} className="text-amber-500 fill-amber-400 ml-1" />
+                          <span className="flex items-center gap-0.5 text-amber-500">
+                            <Flame size={11} className="fill-amber-400" />
+                            <span className="text-[10px] font-medium">Populär</span>
+                          </span>
                         )}
                       </div>
                       <div className="opacity-40 hover:opacity-100 transition-opacity">
