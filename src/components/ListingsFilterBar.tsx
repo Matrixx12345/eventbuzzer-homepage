@@ -55,11 +55,12 @@ const moods = [
 ];
 
 const timePills = [
+  { id: "any", label: "Egal wann" },
   { id: "now", label: "Jetzt" },
   { id: "today", label: "Heute" },
   { id: "tomorrow", label: "Morgen" },
-  { id: "thisWeek", label: "Wochenende" },
-  { id: "thisMonth", label: "Monat" },
+  { id: "thisWeek", label: "Dieses WE" },
+  { id: "thisMonth", label: "Dieser Monat" },
 ];
 
 const citySuggestions = swissPlaces.slice(0, 50).map((p) => p.name);
