@@ -1,7 +1,7 @@
 import { Flame, Diamond, Trophy, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type VibeLabel = 'must-see' | 'geheimtipp' | 'trending' | 'neu';
+export type VibeLabel = 'must-see' | 'geheimtipp' | 'trending' | 'neu' | 'populaer';
 
 interface VibeBadgeProps {
   label: VibeLabel;
@@ -39,6 +39,12 @@ const vibeConfig: Record<VibeLabel, {
     icon: Sparkles,
     bgClass: 'bg-emerald-100 border-emerald-300',
     textClass: 'text-emerald-800',
+  },
+  'populaer': {
+    text: 'Populär',
+    icon: Flame,
+    bgClass: 'bg-orange-100 border-orange-300',
+    textClass: 'text-orange-700',
   },
 };
 
@@ -95,34 +101,43 @@ export const VibeFlames = ({ level, size = 'sm', className }: VibeFlamesProps) =
 // Helper to compute auto vibe based on event data
 export const computeAutoVibe = (event: {
   created_at?: string;
-  favorites_count?: number;
+  favorite_count?: number;
+  favorites_count?: number; // Legacy support
   click_count?: number;
   category_sub_id?: string;
+  venue_name?: string;
 }): { label: VibeLabel; level: 1 | 2 | 3 } | null => {
   const now = new Date();
   const createdAt = event.created_at ? new Date(event.created_at) : null;
   const daysSinceCreation = createdAt 
     ? Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
     : null;
+  
+  // Use favorite_count (from DB) or favorites_count (legacy)
+  const favoriteCount = event.favorite_count ?? event.favorites_count ?? 0;
+
+  // "Populär" - 10+ Favoriten (PRIORITY 1)
+  if (favoriteCount >= 10) {
+    const level = favoriteCount >= 50 ? 3 : favoriteCount >= 25 ? 2 : 1;
+    return { label: 'populaer', level: level as 1 | 2 | 3 };
+  }
+
+  // "Must-See" - Top Museums/Venues
+  const mustSeeVenues = [
+    'Fondation Beyeler', 'Kunsthaus Zürich', 'Kunstmuseum Basel', 
+    'Hallenstadion', 'Stade de Suisse', 'Theater Basel',
+    'Opernhaus Zürich', 'Tonhalle Zürich', 'KKL Luzern'
+  ];
+  if (event.venue_name && mustSeeVenues.some(v => event.venue_name?.includes(v))) {
+    return { label: 'must-see', level: 2 };
+  }
 
   // "Neu" - less than 7 days old
   if (daysSinceCreation !== null && daysSinceCreation < 7) {
     return { label: 'neu', level: 2 };
   }
 
-  // "Trending" - high click count (simulated threshold)
-  if (event.click_count && event.click_count > 50) {
-    const level = event.click_count > 200 ? 3 : event.click_count > 100 ? 2 : 1;
-    return { label: 'trending', level: level as 1 | 2 | 3 };
-  }
-
-  // "Must-See" - many favorites
-  if (event.favorites_count && event.favorites_count > 20) {
-    const level = event.favorites_count > 100 ? 3 : event.favorites_count > 50 ? 2 : 1;
-    return { label: 'must-see', level: level as 1 | 2 | 3 };
-  }
-
-  // "Geheimtipp" - smaller venues/museums with few clicks but good ratings
+  // "Geheimtipp" - smaller venues/museums with few clicks
   if (event.category_sub_id === 'museum-kunst' && (!event.click_count || event.click_count < 20)) {
     return { label: 'geheimtipp', level: 2 };
   }
