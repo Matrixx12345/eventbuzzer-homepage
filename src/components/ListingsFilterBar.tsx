@@ -449,7 +449,7 @@ const ListingsFilterBar = ({
             <div className="space-y-4">
               {/* Time Pills - Above Calendar, Yellow Style */}
               <div className="flex flex-wrap gap-2">
-                {timePills.map((pill) => (
+              {timePills.map((pill) => (
                   <button
                     key={pill.id}
                     onClick={() => handleTimePillClick(pill.id)}
@@ -457,7 +457,9 @@ const ListingsFilterBar = ({
                       "px-4 py-2 rounded-full text-sm font-medium transition-all border-2",
                       selectedTimePill === pill.id
                         ? "bg-blue-900 text-white border-blue-900"
-                        : "bg-transparent border-amber-400 text-gray-700 hover:bg-amber-50"
+                        : pill.id === "now"
+                        ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
+                        : "bg-gray-100 text-gray-700 border-gray-100 hover:bg-gray-200"
                     )}
                   >
                     {pill.label}
