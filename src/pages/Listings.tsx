@@ -578,7 +578,7 @@ const Listings = () => {
                     
                     {/* Price & Rating Row */}
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center gap-3 text-xs text-neutral-400">
+                      <div className="flex items-center gap-6 text-xs text-neutral-400">
                         <span>
                           {event.price_from && event.price_from >= 15 
                             ? `ab ${event.price_from}`
