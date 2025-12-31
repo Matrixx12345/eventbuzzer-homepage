@@ -258,21 +258,21 @@ const ListingsFilterBar = ({
           
           {/* Category Dropdown */}
           {openSection === "category" && (
-            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[280px] animate-fade-in">
-              <div className="flex flex-wrap gap-2">
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[220px] animate-fade-in">
+              <div className="grid gap-1">
                 {categories.map((cat) => (
                   <button
                     key={cat.slug || "all"}
                     onClick={() => handleCategorySelect(cat)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
                       selectedCategory.slug === cat.slug
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        : "hover:bg-gray-100 text-gray-900"
                     )}
                   >
-                    <cat.icon size={14} />
-                    {cat.name}
+                    <cat.icon size={16} className="flex-shrink-0" />
+                    <span>{cat.name}</span>
                   </button>
                 ))}
               </div>
@@ -304,21 +304,21 @@ const ListingsFilterBar = ({
           
           {/* Mood Dropdown */}
           {openSection === "mood" && (
-            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[280px] animate-fade-in">
-              <div className="flex flex-wrap gap-2">
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[200px] animate-fade-in">
+              <div className="grid grid-cols-2 gap-1">
                 {moods.map((mood) => (
                   <button
                     key={mood.slug || "all"}
                     onClick={() => handleMoodSelect(mood)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                      "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left",
                       selectedMood.slug === mood.slug
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        : "hover:bg-gray-100 text-gray-900"
                     )}
                   >
-                    <mood.icon size={14} />
-                    {mood.name}
+                    <mood.icon size={14} className="flex-shrink-0" />
+                    <span className="truncate">{mood.name}</span>
                   </button>
                 ))}
               </div>
