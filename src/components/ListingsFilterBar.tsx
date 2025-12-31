@@ -292,9 +292,9 @@ const ListingsFilterBar = ({
   };
 
   return (
-    <div className="w-full mb-6">
-      {/* Clean Filter Container */}
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+    <div className="w-full mb-8">
+      {/* Elegant Filter Container */}
+      <div className="bg-secondary/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-lg">
         {/* Filter Pills Row */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Kategorie Button */}
@@ -305,17 +305,17 @@ const ListingsFilterBar = ({
               setDateOpen(false);
             }}
             className={cn(
-              "px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium",
+              "group px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 text-sm font-medium shadow-sm",
               categoryOpen 
-                ? "bg-primary text-primary-foreground border-primary" 
-                : "bg-background border-border hover:border-foreground/30 text-foreground",
+                ? "bg-foreground text-background shadow-md" 
+                : "bg-background/90 hover:bg-background text-foreground hover:shadow-md border border-border/30",
             )}
           >
-            <selectedCategory.icon size={16} className={categoryOpen ? "text-primary-foreground" : "text-muted-foreground"} />
+            <selectedCategory.icon size={18} className={cn("transition-colors", categoryOpen ? "text-background" : "text-muted-foreground group-hover:text-foreground")} />
             <span>{selectedCategory.name}</span>
             <ChevronDown
               size={14}
-              className={cn("transition-transform", categoryOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground")}
+              className={cn("transition-all duration-200", categoryOpen ? "rotate-180 text-background" : "text-muted-foreground")}
             />
           </button>
 
@@ -327,31 +327,31 @@ const ListingsFilterBar = ({
               setDateOpen(false);
             }}
             className={cn(
-              "px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium",
+              "group px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 text-sm font-medium shadow-sm",
               moodOpen 
-                ? "bg-primary text-primary-foreground border-primary" 
-                : "bg-background border-border hover:border-foreground/30 text-foreground",
+                ? "bg-foreground text-background shadow-md" 
+                : "bg-background/90 hover:bg-background text-foreground hover:shadow-md border border-border/30",
             )}
           >
-            <selectedMood.icon size={16} className={moodOpen ? "text-primary-foreground" : "text-muted-foreground"} />
+            <selectedMood.icon size={18} className={cn("transition-colors", moodOpen ? "text-background" : "text-muted-foreground group-hover:text-foreground")} />
             <span>{selectedMood.name}</span>
             <ChevronDown
               size={14}
-              className={cn("transition-transform", moodOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground")}
+              className={cn("transition-all duration-200", moodOpen ? "rotate-180 text-background" : "text-muted-foreground")}
             />
           </button>
 
           {/* Stadt Input */}
           <div className="relative">
-            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               ref={cityInputRef}
               type="text"
-              placeholder="Stadt"
+              placeholder="Stadt eingeben..."
               value={cityInput}
               onChange={(e) => handleCityInputChange(e.target.value)}
               onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
-              className="w-36 md:w-44 pl-9 pr-4 py-2 rounded-lg bg-background border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+              className="w-40 md:w-48 pl-10 pr-4 py-2.5 rounded-xl bg-background/90 border border-border/30 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:bg-background transition-all shadow-sm hover:shadow-md"
             />
           </div>
 
@@ -363,38 +363,39 @@ const ListingsFilterBar = ({
               setMoodOpen(false);
             }}
             className={cn(
-              "px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium",
+              "group px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 text-sm font-medium shadow-sm",
               dateOpen 
-                ? "bg-primary text-primary-foreground border-primary" 
-                : "bg-background border-border hover:border-foreground/30 text-foreground",
+                ? "bg-foreground text-background shadow-md" 
+                : "bg-background/90 hover:bg-background text-foreground hover:shadow-md border border-border/30",
             )}
           >
-            <CalendarIcon size={16} className={dateOpen ? "text-primary-foreground" : "text-muted-foreground"} />
+            <CalendarIcon size={18} className={cn("transition-colors", dateOpen ? "text-background" : "text-muted-foreground group-hover:text-foreground")} />
             <span>{getDateDisplayText()}</span>
             <ChevronDown
               size={14}
-              className={cn("transition-transform", dateOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground")}
+              className={cn("transition-all duration-200", dateOpen ? "rotate-180 text-background" : "text-muted-foreground")}
             />
           </button>
 
-          {/* Suche Input */}
-          <div className="relative flex items-center gap-2">
+          {/* Suche Input mit Button */}
+          <div className="relative flex items-center gap-0 ml-auto">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 placeholder="Name, Künstler..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                className="w-40 md:w-48 pl-9 pr-4 py-2 rounded-lg bg-background border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                className="w-44 md:w-56 pl-10 pr-4 py-2.5 rounded-l-xl bg-background/90 border border-border/30 border-r-0 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:bg-background transition-all"
               />
             </div>
             <button
               onClick={() => onSearchChange(searchInput)}
-              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
+              className="px-5 py-2.5 rounded-r-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
             >
-              Suchen
+              <Search size={16} />
+              <span className="hidden md:inline">Suchen</span>
             </button>
           </div>
 
@@ -402,33 +403,33 @@ const ListingsFilterBar = ({
           {isAnyDropdownOpen() && (
             <button
               onClick={closeAllDropdowns}
-              className="ml-auto px-4 py-2 rounded-lg bg-muted text-muted-foreground font-medium text-sm hover:bg-muted/80 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-muted/80 text-muted-foreground font-medium text-sm hover:bg-muted transition-all flex items-center gap-2 shadow-sm"
             >
               <ChevronUp size={16} />
-              <span>Schließen</span>
+              <span className="hidden md:inline">Schließen</span>
             </button>
           )}
         </div>
 
         {/* Expandable Dropdowns */}
         {(categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen) && (
-          <div className="bg-muted/50 rounded-lg p-4 mt-4 border border-border/50">
+          <div className="bg-background/95 backdrop-blur-sm rounded-xl p-5 mt-4 border border-border/30 shadow-inner">
             {/* Category Dropdown */}
             {categoryOpen && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {categories.map((cat) => (
                   <button
                     key={cat.slug || "all"}
                     onClick={() => handleCategorySelect(cat)}
                     className={cn(
-                      "flex flex-col items-center gap-2 p-3 rounded-lg transition-all",
+                      "group flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all duration-200",
                       selectedCategory.slug === cat.slug
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-background hover:bg-background/80 text-foreground border border-border",
+                        ? "bg-foreground text-background shadow-lg scale-[1.02]"
+                        : "bg-secondary/50 hover:bg-secondary text-foreground hover:shadow-md border border-transparent hover:border-border/30",
                     )}
                   >
-                    <cat.icon size={22} />
-                    <span className="text-xs font-medium text-center">{cat.name}</span>
+                    <cat.icon size={24} className={selectedCategory.slug === cat.slug ? "" : "text-muted-foreground group-hover:text-foreground transition-colors"} />
+                    <span className="text-xs font-medium text-center leading-tight">{cat.name}</span>
                   </button>
                 ))}
               </div>
@@ -436,19 +437,19 @@ const ListingsFilterBar = ({
 
             {/* Mood Dropdown */}
             {moodOpen && (
-              <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
+              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2">
                 {moods.map((mood) => (
                   <button
                     key={mood.slug || "all"}
                     onClick={() => handleMoodSelect(mood)}
                     className={cn(
-                      "flex flex-col items-center gap-2 p-3 rounded-lg transition-all",
+                      "group flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200",
                       selectedMood.slug === mood.slug
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-background hover:bg-background/80 text-foreground border border-border",
+                        ? "bg-foreground text-background shadow-lg scale-[1.02]"
+                        : "bg-secondary/50 hover:bg-secondary text-foreground hover:shadow-md border border-transparent hover:border-border/30",
                     )}
                   >
-                    <mood.icon size={18} />
+                    <mood.icon size={20} className={selectedMood.slug === mood.slug ? "" : "text-muted-foreground group-hover:text-foreground transition-colors"} />
                     <span className="text-[11px] font-medium text-center leading-tight">{mood.name}</span>
                   </button>
                 ))}
@@ -457,17 +458,17 @@ const ListingsFilterBar = ({
 
             {/* City Suggestions */}
             {showCitySuggestions && filteredCities.length > 0 && (
-              <div ref={citySuggestionsRef} className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">Vorschläge</p>
+              <div ref={citySuggestionsRef} className="space-y-3">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Vorschläge</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {filteredCities.map((city) => (
                     <button
                       key={city}
                       onClick={() => handleCitySelect(city)}
-                      className="px-4 py-2 text-sm text-left bg-background hover:bg-background/80 rounded-lg transition-colors flex items-center gap-2 border border-border"
+                      className="px-4 py-2.5 text-sm text-left bg-secondary/50 hover:bg-secondary rounded-xl transition-all flex items-center gap-2.5 hover:shadow-md border border-transparent hover:border-border/30"
                     >
                       <MapPin size={14} className="text-muted-foreground" />
-                      {city}
+                      <span className="font-medium">{city}</span>
                     </button>
                   ))}
                 </div>
@@ -477,9 +478,9 @@ const ListingsFilterBar = ({
             {/* Radius Slider */}
             {radiusOpen && cityInput && !showCitySuggestions && (
               <div className="max-w-md">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-muted-foreground font-medium">Umkreis</span>
-                  <span className="text-sm font-semibold bg-background px-3 py-1 rounded-lg border border-border">{radius[0]} km</span>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">Umkreis</span>
+                  <span className="text-sm font-bold bg-foreground text-background px-4 py-1.5 rounded-lg shadow-sm">{radius[0]} km</span>
                 </div>
                 <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} className="w-full" />
               </div>
@@ -487,7 +488,7 @@ const ListingsFilterBar = ({
 
             {/* Date Dropdown */}
             {dateOpen && (
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-5">
                 {/* Time Pills */}
                 <div className="flex flex-wrap gap-2">
                   {timePills.map((pill) => (
@@ -495,10 +496,10 @@ const ListingsFilterBar = ({
                       key={pill.id}
                       onClick={() => handleTimePillClick(pill.id)}
                       className={cn(
-                        "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                        "px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                         selectedTimePill === pill.id
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-background hover:bg-background/80 text-foreground border border-border",
+                          ? "bg-foreground text-background shadow-lg"
+                          : "bg-secondary/50 hover:bg-secondary text-foreground hover:shadow-md border border-transparent hover:border-border/30",
                       )}
                     >
                       {pill.label}
@@ -507,7 +508,7 @@ const ListingsFilterBar = ({
                 </div>
 
                 {/* Calendar */}
-                <div className="bg-background rounded-lg shadow-sm border border-border">
+                <div className="bg-secondary/30 rounded-xl shadow-sm border border-border/20 overflow-hidden">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
