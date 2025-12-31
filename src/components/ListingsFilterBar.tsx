@@ -165,10 +165,12 @@ const ListingsFilterBar = ({
     
     setLoadingSuggestions(true);
     try {
+      // Search for words that START with the query (not just contain it anywhere)
+      // Matches: title starts with query OR any word in title starts with query
       const { data, error } = await supabase
         .from("events")
         .select("id, title")
-        .ilike("title", `%${query}%`)
+        .or(`title.ilike.${query}%,title.ilike.% ${query}%`)
         .limit(6);
       
       if (error) {
