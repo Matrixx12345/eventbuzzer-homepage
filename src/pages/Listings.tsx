@@ -639,12 +639,12 @@ const Listings = () => {
                             return (
                               <span className="flex items-center gap-1 text-neutral-400">
                                 <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
-                                  <path d="M12 2L2 9l10 13 10-13L12 2z" fill="#a855f7" />
-                                  <path d="M12 2L4 9h16L12 2z" fill="#c084fc" />
-                                  <path d="M12 22L4 9h4l4 10 4-10h4L12 22z" fill="#9333ea" />
-                                  <path d="M8 9l4 10 4-10H8z" fill="#a855f7" />
-                                  <path d="M12 2l-4 7h8l-4-7z" fill="#d8b4fe" />
-                                  <path d="M10 4l-2 4h3l-1-4z" fill="#f3e8ff" opacity="0.7" />
+                                  <path d="M12 2L2 9l10 13 10-13L12 2z" fill="#3b82f6" />
+                                  <path d="M12 2L4 9h16L12 2z" fill="#60a5fa" />
+                                  <path d="M12 22L4 9h4l4 10 4-10h4L12 22z" fill="#2563eb" />
+                                  <path d="M8 9l4 10 4-10H8z" fill="#3b82f6" />
+                                  <path d="M12 2l-4 7h8l-4-7z" fill="#93c5fd" />
+                                  <path d="M10 4l-2 4h3l-1-4z" fill="#dbeafe" opacity="0.7" />
                                 </svg>
                                 <span className="text-[10px]">Geheimtipp</span>
                               </span>
