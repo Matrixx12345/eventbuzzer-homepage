@@ -20,7 +20,6 @@ import {
   Mountain,
   Search,
   X,
-  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { swissPlaces } from "@/utils/swissPlaces";
@@ -31,7 +30,6 @@ import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-// Icon mapping
 const getCategoryIcon = (slug: string | null) => {
   if (!slug) return LayoutGrid;
   if (slug === "musik-party") return Music;
@@ -42,7 +40,6 @@ const getCategoryIcon = (slug: string | null) => {
   return LayoutGrid;
 };
 
-// Stimmungen mit Icons
 const moods = [
   { id: null, slug: null, name: "Alle", icon: Smile },
   { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
@@ -56,7 +53,6 @@ const moods = [
   { id: "natur", slug: "natur", name: "Natur", icon: Mountain },
 ];
 
-// Zeit-Quick-Pills
 const timePills = [
   { id: "now", label: "Jetzt" },
   { id: "today", label: "Heute" },
@@ -64,7 +60,6 @@ const timePills = [
   { id: "thisMonth", label: "Monat" },
 ];
 
-// City suggestions
 const citySuggestions = swissPlaces.slice(0, 50).map((p) => p.name);
 
 interface ListingsFilterBarProps {
@@ -100,11 +95,10 @@ const ListingsFilterBar = ({
   onDateChange,
   onSearchChange,
 }: ListingsFilterBarProps) => {
-  // Filter states
   const [selectedCategory, setSelectedCategory] = useState({
     id: null as number | null,
     slug: null as string | null,
-    name: "Alle",
+    name: "Kategorie",
     icon: LayoutGrid,
   });
 
@@ -123,13 +117,15 @@ const ListingsFilterBar = ({
   const [selectedTimePill, setSelectedTimePill] = useState<string | null>(initialTime || null);
   const [searchInput, setSearchInput] = useState(initialSearch);
 
-  // Panel state - single expandable block
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  // Which dropdown is open
+  const [openSection, setOpenSection] = useState<"category" | "mood" | "location" | "date" | null>(null);
 
   const cityInputRef = useRef<HTMLInputElement>(null);
-  const citySuggestionsRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filteredCities = citySuggestions
+    .filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
+    .slice(0, 6);
 
   // Handlers
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -140,19 +136,13 @@ const ListingsFilterBar = ({
     if (searchInput.length >= 3 || searchInput.length === 0) onSearchChange(searchInput);
   };
 
-  const filteredCities = citySuggestions
-    .filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
-    .slice(0, 8);
-
   const handleCitySelect = (city: string) => {
     setCityInput(city);
-    setShowCitySuggestions(false);
     onCityChange(city);
   };
 
   const handleCityInputChange = (value: string) => {
     setCityInput(value);
-    setShowCitySuggestions(value.length > 0);
     onCityChange(value);
   };
 
@@ -162,6 +152,7 @@ const ListingsFilterBar = ({
     setSelectedDate(undefined);
     onTimeChange(newValue);
     onDateChange(undefined);
+    setOpenSection(null);
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -169,16 +160,19 @@ const ListingsFilterBar = ({
     setSelectedTimePill(null);
     onDateChange(date);
     onTimeChange(null);
+    setOpenSection(null);
   };
 
   const handleCategorySelect = (cat: (typeof categories)[0]) => {
     setSelectedCategory(cat);
     onCategoryChange(cat.id, cat.slug);
+    setOpenSection(null);
   };
 
   const handleMoodSelect = (mood: (typeof moods)[0]) => {
     setSelectedMood(mood);
     onMoodChange(mood.slug);
+    setOpenSection(null);
   };
 
   const handleRadiusChange = (value: number[]) => {
@@ -186,45 +180,21 @@ const ListingsFilterBar = ({
     onRadiusChange(value[0]);
   };
 
-  const togglePanel = () => {
-    setIsPanelOpen(!isPanelOpen);
-    setShowCitySuggestions(false);
+  const toggleSection = (section: typeof openSection) => {
+    setOpenSection(openSection === section ? null : section);
   };
 
-  const closePanel = () => {
-    setIsPanelOpen(false);
-    setShowCitySuggestions(false);
+  const getDateDisplayText = () => {
+    if (selectedDate) return format(selectedDate, "d. MMM", { locale: de });
+    if (selectedTimePill) return timePills.find((p) => p.id === selectedTimePill)?.label || "Wann";
+    return "Wann";
   };
 
-  const clearAllFilters = () => {
-    setSelectedCategory(categories[0]);
-    setSelectedMood(moods[0]);
-    setCityInput("");
-    setRadius([25]);
-    setSelectedDate(undefined);
-    setSelectedTimePill(null);
-    setSearchInput("");
-    onCategoryChange(null, null);
-    onMoodChange(null);
-    onCityChange("");
-    onRadiusChange(25);
-    onTimeChange(null);
-    onDateChange(undefined);
-    onSearchChange("");
-  };
-
-  const hasActiveFilters = selectedCategory.slug || selectedMood.slug || cityInput || selectedDate || selectedTimePill || searchInput;
-
-  // Effects
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        citySuggestionsRef.current &&
-        !citySuggestionsRef.current.contains(e.target as Node) &&
-        cityInputRef.current &&
-        !cityInputRef.current.contains(e.target as Node)
-      ) {
-        setShowCitySuggestions(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenSection(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -240,10 +210,7 @@ const ListingsFilterBar = ({
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
-      if (error) {
-        console.error("Failed to load categories:", error);
-        return;
-      }
+      if (error) return;
 
       if (data) {
         const loadedCategories = data.map((cat: any) => ({
@@ -265,72 +232,76 @@ const ListingsFilterBar = ({
     }
   }, [categories, initialCategory]);
 
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (selectedCategory.slug) count++;
-    if (selectedMood.slug) count++;
-    if (cityInput) count++;
-    if (selectedDate || selectedTimePill) count++;
-    if (searchInput) count++;
-    return count;
-  };
-
-  const getDateDisplayText = () => {
-    if (selectedDate) return format(selectedDate, "d. MMM", { locale: de });
-    if (selectedTimePill) return timePills.find((p) => p.id === selectedTimePill)?.label || "";
-    return "";
-  };
-
   return (
-    <div className="w-full mb-8">
-      {/* Compact Trigger Bar */}
-      <div className="flex items-center gap-3">
-        {/* Main Filter Toggle */}
+    <div ref={containerRef} className="w-full mb-8">
+      {/* Main Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 p-2 bg-secondary/80 backdrop-blur-sm rounded-2xl border border-border/30">
+        {/* Kategorie */}
         <button
-          onClick={togglePanel}
+          onClick={() => toggleSection("category")}
           className={cn(
-            "group flex items-center gap-3 px-5 py-3 rounded-full transition-all duration-300",
-            "bg-foreground text-background hover:bg-foreground/90",
-            isPanelOpen && "ring-2 ring-foreground/20 ring-offset-2 ring-offset-background"
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+            openSection === "category" || selectedCategory.slug
+              ? "bg-foreground text-background"
+              : "bg-background/60 hover:bg-background text-foreground"
           )}
         >
-          <SlidersHorizontal size={16} className="transition-transform duration-300 group-hover:rotate-12" />
-          <span className="font-medium text-sm">Filter</span>
-          {getActiveFilterCount() > 0 && (
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background text-foreground text-xs font-bold">
-              {getActiveFilterCount()}
-            </span>
-          )}
-          <ChevronDown 
-            size={14} 
-            className={cn(
-              "transition-transform duration-300",
-              isPanelOpen && "rotate-180"
-            )} 
-          />
+          <selectedCategory.icon size={16} />
+          <span>{selectedCategory.slug ? selectedCategory.name : "Kategorie"}</span>
+          <ChevronDown size={14} className={cn("transition-transform", openSection === "category" && "rotate-180")} />
         </button>
 
-        {/* Quick Time Pills */}
-        <div className="hidden md:flex items-center gap-1.5">
-          {timePills.map((pill) => (
-            <button
-              key={pill.id}
-              onClick={() => handleTimePillClick(pill.id)}
-              className={cn(
-                "px-4 py-2 rounded-full text-xs font-medium transition-all duration-200",
-                selectedTimePill === pill.id
-                  ? "bg-foreground text-background"
-                  : "bg-secondary hover:bg-secondary/80 text-foreground"
-              )}
-            >
-              {pill.label}
-            </button>
-          ))}
-        </div>
+        {/* Stimmung */}
+        <button
+          onClick={() => toggleSection("mood")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+            openSection === "mood" || selectedMood.slug
+              ? "bg-foreground text-background"
+              : "bg-background/60 hover:bg-background text-foreground"
+          )}
+        >
+          <selectedMood.icon size={16} />
+          <span>{selectedMood.slug ? selectedMood.name : "Stimmung"}</span>
+          <ChevronDown size={14} className={cn("transition-transform", openSection === "mood" && "rotate-180")} />
+        </button>
 
-        {/* Search Input */}
-        <div className="flex-1 max-w-xs relative">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        {/* Ort */}
+        <button
+          onClick={() => toggleSection("location")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+            openSection === "location" || cityInput
+              ? "bg-foreground text-background"
+              : "bg-background/60 hover:bg-background text-foreground"
+          )}
+        >
+          <MapPin size={16} />
+          <span>{cityInput || "Ort"}</span>
+          <ChevronDown size={14} className={cn("transition-transform", openSection === "location" && "rotate-180")} />
+        </button>
+
+        {/* Datum */}
+        <button
+          onClick={() => toggleSection("date")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+            openSection === "date" || selectedDate || selectedTimePill
+              ? "bg-foreground text-background"
+              : "bg-background/60 hover:bg-background text-foreground"
+          )}
+        >
+          <CalendarIcon size={16} />
+          <span>{getDateDisplayText()}</span>
+          <ChevronDown size={14} className={cn("transition-transform", openSection === "date" && "rotate-180")} />
+        </button>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Search */}
+        <div className="relative flex items-center">
+          <Search size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             placeholder="Suchen..."
@@ -338,264 +309,135 @@ const ListingsFilterBar = ({
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             onBlur={handleSearchBlur}
-            className={cn(
-              "w-full pl-10 pr-4 py-2.5 rounded-full",
-              "bg-secondary text-foreground placeholder:text-muted-foreground",
-              "text-sm font-medium",
-              "border-2 border-transparent focus:border-foreground/20 outline-none",
-              "transition-all duration-200"
-            )}
+            className="w-32 md:w-44 pl-9 pr-3 py-2.5 rounded-xl bg-background/60 text-sm placeholder:text-muted-foreground border-0 outline-none focus:bg-background transition-all"
           />
         </div>
-
-        {/* Clear All */}
-        {hasActiveFilters && (
-          <button
-            onClick={clearAllFilters}
-            className="p-2.5 rounded-full bg-secondary hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all duration-200"
-          >
-            <X size={16} />
-          </button>
-        )}
       </div>
 
-      {/* Active Filter Tags */}
-      {hasActiveFilters && !isPanelOpen && (
-        <div className="flex flex-wrap items-center gap-2 mt-4">
-          {selectedCategory.slug && (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-foreground/5 border border-foreground/10 rounded-full text-xs font-medium">
-              <selectedCategory.icon size={12} />
-              {selectedCategory.name}
-              <button onClick={() => handleCategorySelect(categories[0])} className="hover:text-destructive">
-                <X size={10} />
-              </button>
-            </span>
-          )}
-          {selectedMood.slug && (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-foreground/5 border border-foreground/10 rounded-full text-xs font-medium">
-              <selectedMood.icon size={12} />
-              {selectedMood.name}
-              <button onClick={() => handleMoodSelect(moods[0])} className="hover:text-destructive">
-                <X size={10} />
-              </button>
-            </span>
-          )}
-          {cityInput && (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-foreground/5 border border-foreground/10 rounded-full text-xs font-medium">
-              <MapPin size={12} />
-              {cityInput} · {radius[0]}km
-              <button onClick={() => { setCityInput(""); onCityChange(""); }} className="hover:text-destructive">
-                <X size={10} />
-              </button>
-            </span>
-          )}
-          {(selectedDate || selectedTimePill) && (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-foreground/5 border border-foreground/10 rounded-full text-xs font-medium">
-              <CalendarIcon size={12} />
-              {getDateDisplayText()}
-              <button onClick={() => { setSelectedDate(undefined); setSelectedTimePill(null); onDateChange(undefined); onTimeChange(null); }} className="hover:text-destructive">
-                <X size={10} />
-              </button>
-            </span>
-          )}
-          {searchInput && (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-foreground/5 border border-foreground/10 rounded-full text-xs font-medium">
-              <Search size={12} />
-              "{searchInput}"
-              <button onClick={() => { setSearchInput(""); onSearchChange(""); }} className="hover:text-destructive">
-                <X size={10} />
-              </button>
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Expandable Filter Panel */}
-      <div
-        ref={panelRef}
-        className={cn(
-          "overflow-hidden transition-all duration-500 ease-out",
-          isPanelOpen ? "max-h-[800px] opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"
-        )}
-      >
-        <div className="bg-secondary/60 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-border/30 relative">
-          {/* Close Button */}
-          <button
-            onClick={closePanel}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X size={20} />
-          </button>
-
-          <div className="space-y-8">
-            {/* Kategorien */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Kategorie</h3>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.slug || "all"}
-                    onClick={() => handleCategorySelect(cat)}
-                    className={cn(
-                      "group flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200",
-                      selectedCategory.slug === cat.slug
-                        ? "bg-foreground text-background"
-                        : "bg-background hover:bg-foreground/5 text-foreground border border-border/40"
-                    )}
-                  >
-                    <cat.icon size={14} />
-                    <span className="text-sm font-medium">{cat.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Stimmung */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Stimmung</h3>
-              <div className="flex flex-wrap gap-2">
-                {moods.map((mood) => (
-                  <button
-                    key={mood.slug || "all"}
-                    onClick={() => handleMoodSelect(mood)}
-                    className={cn(
-                      "group flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200",
-                      selectedMood.slug === mood.slug
-                        ? "bg-foreground text-background"
-                        : "bg-background hover:bg-foreground/5 text-foreground border border-border/40"
-                    )}
-                  >
-                    <mood.icon size={14} />
-                    <span className="text-sm font-medium">{mood.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Ort & Umkreis */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Ort</h3>
-                <div className="relative">
-                  <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                  <input
-                    ref={cityInputRef}
-                    type="text"
-                    placeholder="Stadt eingeben..."
-                    value={cityInput}
-                    onChange={(e) => handleCityInputChange(e.target.value)}
-                    onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
-                    className={cn(
-                      "w-full pl-11 pr-4 py-3 rounded-2xl",
-                      "bg-background text-foreground placeholder:text-muted-foreground",
-                      "text-sm font-medium",
-                      "border border-border/40 focus:border-foreground/30 outline-none",
-                      "transition-all duration-200"
-                    )}
-                  />
-                  {/* City Suggestions */}
-                  {showCitySuggestions && filteredCities.length > 0 && (
-                    <div 
-                      ref={citySuggestionsRef}
-                      className="absolute top-full left-0 right-0 mt-2 bg-background border border-border/40 rounded-2xl shadow-xl z-50 overflow-hidden"
-                    >
-                      {filteredCities.map((city) => (
-                        <button
-                          key={city}
-                          onClick={() => handleCitySelect(city)}
-                          className="w-full px-4 py-3 text-sm text-left hover:bg-foreground/5 transition-colors flex items-center gap-3"
-                        >
-                          <MapPin size={14} className="text-muted-foreground" />
-                          {city}
-                        </button>
-                      ))}
-                    </div>
+      {/* Expandable Panel */}
+      {openSection && (
+        <div className="mt-3 p-5 bg-secondary/60 backdrop-blur-md rounded-2xl border border-border/30 animate-fade-in">
+          {/* Category */}
+          {openSection === "category" && (
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.slug || "all"}
+                  onClick={() => handleCategorySelect(cat)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+                    selectedCategory.slug === cat.slug
+                      ? "bg-foreground text-background"
+                      : "bg-background hover:bg-background/80 text-foreground border border-border/40"
                   )}
-                </div>
-              </div>
-
-              {cityInput && (
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-                    Umkreis: <span className="text-foreground">{radius[0]} km</span>
-                  </h3>
-                  <div className="pt-2">
-                    <Slider 
-                      value={radius} 
-                      onValueChange={handleRadiusChange} 
-                      max={100} 
-                      step={5} 
-                      className="w-full" 
-                    />
-                    <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                      <span>0 km</span>
-                      <span>100 km</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+                >
+                  <cat.icon size={16} />
+                  {cat.name}
+                </button>
+              ))}
             </div>
+          )}
 
-            {/* Datum */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Zeitraum</h3>
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Quick Time Pills */}
+          {/* Mood */}
+          {openSection === "mood" && (
+            <div className="flex flex-wrap gap-2">
+              {moods.map((mood) => (
+                <button
+                  key={mood.slug || "all"}
+                  onClick={() => handleMoodSelect(mood)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+                    selectedMood.slug === mood.slug
+                      ? "bg-foreground text-background"
+                      : "bg-background hover:bg-background/80 text-foreground border border-border/40"
+                  )}
+                >
+                  <mood.icon size={16} />
+                  {mood.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Location */}
+          {openSection === "location" && (
+            <div className="space-y-4">
+              <div className="relative max-w-sm">
+                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  ref={cityInputRef}
+                  type="text"
+                  placeholder="Stadt eingeben..."
+                  value={cityInput}
+                  onChange={(e) => handleCityInputChange(e.target.value)}
+                  autoFocus
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-background text-sm border border-border/40 outline-none focus:border-foreground/30"
+                />
+              </div>
+              
+              {filteredCities.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {timePills.map((pill) => (
+                  {filteredCities.map((city) => (
                     <button
-                      key={pill.id}
-                      onClick={() => handleTimePillClick(pill.id)}
+                      key={city}
+                      onClick={() => handleCitySelect(city)}
                       className={cn(
-                        "px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200",
-                        selectedTimePill === pill.id
+                        "px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                        cityInput === city
                           ? "bg-foreground text-background"
-                          : "bg-background hover:bg-foreground/5 text-foreground border border-border/40"
+                          : "bg-background hover:bg-background/80 text-foreground border border-border/40"
                       )}
                     >
-                      {pill.label}
+                      {city}
                     </button>
                   ))}
                 </div>
+              )}
 
-                {/* Calendar */}
-                <div className="bg-background rounded-2xl border border-border/40 overflow-hidden shadow-sm">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    locale={de}
-                    className="p-3"
-                  />
+              {cityInput && (
+                <div className="pt-4 border-t border-border/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-muted-foreground">Umkreis</span>
+                    <span className="text-sm font-semibold">{radius[0]} km</span>
+                  </div>
+                  <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} />
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Date - Pills appear here */}
+          {openSection === "date" && (
+            <div className="flex flex-col lg:flex-row gap-5">
+              <div className="flex flex-wrap gap-2">
+                {timePills.map((pill) => (
+                  <button
+                    key={pill.id}
+                    onClick={() => handleTimePillClick(pill.id)}
+                    className={cn(
+                      "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      selectedTimePill === pill.id
+                        ? "bg-foreground text-background"
+                        : "bg-background hover:bg-background/80 text-foreground border border-border/40"
+                    )}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+              <div className="bg-background rounded-xl border border-border/40 overflow-hidden">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  locale={de}
+                  className="p-3"
+                />
               </div>
             </div>
-          </div>
-
-          {/* Apply Button */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/30">
-            <button
-              onClick={clearAllFilters}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Alle zurücksetzen
-            </button>
-            <button
-              onClick={closePanel}
-              className={cn(
-                "px-8 py-3 rounded-full",
-                "bg-foreground text-background",
-                "text-sm font-semibold",
-                "hover:bg-foreground/90 transition-all duration-200",
-                "flex items-center gap-2"
-              )}
-            >
-              <Search size={16} />
-              Ergebnisse anzeigen
-            </button>
-          </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };
