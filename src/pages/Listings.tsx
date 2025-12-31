@@ -485,7 +485,7 @@ const Listings = () => {
               return (
                 <article 
                   key={event.id}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
                 >
                   <Link to={`/event/${event.id}`} className="block">
                     <div className="relative overflow-hidden">
@@ -515,7 +515,6 @@ const Listings = () => {
                           e.preventDefault();
                           e.stopPropagation();
                           
-                          // Toggle local state immediately for better UX
                           toggleFavorite({
                             id: event.id,
                             slug: event.id,
@@ -526,12 +525,10 @@ const Listings = () => {
                             date: formatEventDate(event.start_date),
                           });
                           
-                          // Call API to persist favorite and update count
                           try {
                             const numericId = parseInt(event.id, 10);
                             if (!isNaN(numericId)) {
                               const result = await toggleFavoriteApi(numericId);
-                              // Update the event's favorite_count in local state
                               setEvents(prev => prev.map(e => 
                                 e.id === event.id 
                                   ? { ...e, favorite_count: result.favoriteCount }
@@ -559,8 +556,8 @@ const Listings = () => {
                     </div>
                   </Link>
 
-                  {/* Content Section - Compact & Elegant */}
-                  <div className="p-4">
+                  {/* Content Section - Flex grow to push footer down */}
+                  <div className="p-4 flex flex-col flex-grow">
                     {/* Location Eyebrow with Map Hover */}
                     <div className="group/map relative cursor-pointer mb-2">
                       <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium">
@@ -588,23 +585,23 @@ const Listings = () => {
                       )}
                     </div>
                     
-                    {/* Title - Serif Bold */}
+                    {/* Title - Serif Bold, fixed 2 lines */}
                     <Link 
                       to={`/event/${event.id}`}
                       onClick={() => trackEventClick(event.id)}
                     >
-                      <h3 className="font-serif text-lg font-bold text-foreground leading-snug line-clamp-2 hover:text-primary/80 transition-colors">
+                      <h3 className="font-serif text-lg font-bold text-foreground leading-snug line-clamp-2 min-h-[3.25rem] hover:text-primary/80 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
                     
-                    {/* Short Description - Always 2 lines */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem] mt-1.5">
+                    {/* Short Description - Fixed 2 lines, grows to fill space */}
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem] mt-1.5 flex-grow">
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Footer Row: Price + Buzz + Rating - minimal */}
-                    <div className="flex items-center gap-6 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
+                    {/* Footer Row: Price + Buzz + Rating - always at bottom */}
+                    <div className="flex items-center gap-6 mt-auto pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
                       {/* Price */}
                       <span className="text-neutral-500">
                         {event.price_from && event.price_from >= 15 
