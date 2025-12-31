@@ -192,7 +192,7 @@ const BentoCard = ({
 };
 const SwitzerlandSection = () => {
   return <section className="bg-background py-24 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-0 py-0 my-0">
         <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
           Highlights diesen Monat in der Schweiz:
         </h2>
