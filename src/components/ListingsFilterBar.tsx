@@ -19,6 +19,7 @@ import {
   PartyPopper,
   Waves,
   Mountain,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { swissPlaces } from "@/utils/swissPlaces";
@@ -74,6 +75,7 @@ interface ListingsFilterBarProps {
   initialRadius?: number;
   initialTime?: string | null;
   initialDate?: Date | undefined;
+  initialSearch?: string;
   // Callbacks
   onCategoryChange: (categoryId: number | null, categorySlug: string | null) => void;
   onMoodChange: (moodSlug: string | null) => void;
@@ -81,6 +83,7 @@ interface ListingsFilterBarProps {
   onRadiusChange: (radius: number) => void;
   onTimeChange: (time: string | null) => void;
   onDateChange: (date: Date | undefined) => void;
+  onSearchChange: (search: string) => void;
 }
 
 const ListingsFilterBar = ({
@@ -90,12 +93,14 @@ const ListingsFilterBar = ({
   initialRadius = 25,
   initialTime,
   initialDate,
+  initialSearch = "",
   onCategoryChange,
   onMoodChange,
   onCityChange,
   onRadiusChange,
   onTimeChange,
   onDateChange,
+  onSearchChange,
 }: ListingsFilterBarProps) => {
   // Check if any dropdown is open (determines if we show collapse option)
   const isAnyDropdownOpen = () => categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen;
@@ -127,6 +132,7 @@ const ListingsFilterBar = ({
     }>
   >([{ id: null, slug: null, name: "Alle Kategorien", icon: LayoutGrid }]);
   const [selectedTimePill, setSelectedTimePill] = useState<string | null>(initialTime || null);
+  const [searchInput, setSearchInput] = useState(initialSearch);
 
   // Dropdown states for inline expansion
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -136,6 +142,19 @@ const ListingsFilterBar = ({
 
   const cityInputRef = useRef<HTMLInputElement>(null);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Handle search - only trigger on Enter or when 3+ characters
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      onSearchChange(searchInput);
+    }
+  };
+
+  const handleSearchBlur = () => {
+    if (searchInput.length >= 3 || searchInput.length === 0) {
+      onSearchChange(searchInput);
+    }
+  };
 
   // Filter city suggestions
   const filteredCities = citySuggestions
@@ -357,6 +376,20 @@ const ListingsFilterBar = ({
               className={cn("transition-transform", dateOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground")}
             />
           </button>
+
+          {/* Suche Input */}
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Name, Künstler..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onBlur={handleSearchBlur}
+              className="w-40 md:w-48 pl-9 pr-4 py-2 rounded-lg bg-background border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+            />
+          </div>
 
           {/* Einklappen Button - nur sichtbar wenn ein Dropdown offen ist */}
           {isAnyDropdownOpen() && (
