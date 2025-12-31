@@ -576,11 +576,19 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price, Popular Badge & Rating Row */}
+                    {/* Price Label, Popular Badge & Rating Row */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-neutral-500 font-medium">
-                          {event.price_from ? `ab CHF ${event.price_from}` : "Preis auf Anfrage"}
+                        {/* Price Category Badge */}
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          event.price_label === "Gratis" ? "text-emerald-600" :
+                          event.price_label === "$" ? "text-emerald-600" :
+                          event.price_label === "$$" ? "text-amber-600" :
+                          event.price_label === "$$$" ? "text-rose-600" :
+                          "text-neutral-400"
+                        )}>
+                          {event.price_label || "–"}
                         </span>
                         {/* Populär Badge - shows when show_count > 10 */}
                         {event.show_count && event.show_count > 10 && (
