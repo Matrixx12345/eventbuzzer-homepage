@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.get-event-ratings]
 verify_jwt = false
+
+[functions.track-event-buzz]
+verify_jwt = false

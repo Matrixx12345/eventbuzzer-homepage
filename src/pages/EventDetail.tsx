@@ -3,13 +3,14 @@ import Navbar from "@/components/Navbar";
 import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info } from "lucide-react";
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
-import { VibeBadge, VibeFlames, computeAutoVibe, type VibeLabel } from "@/components/VibeBadge";
+import { BuzzTracker } from "@/components/BuzzTracker";
 import { ImageGallery } from "@/components/ImageGallery";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import {
   Popover,
@@ -387,6 +388,7 @@ interface DynamicEvent {
   category_sub_id?: string;
   created_at?: string;
   gallery_urls?: string[];
+  buzz_score?: number | null;
 }
 
 // Country name list for filtering
@@ -482,6 +484,7 @@ const EventDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
+  const referralTrackedRef = useRef(false);
 
   // Check if slug is a static event or needs to be fetched from Supabase
   const isStaticEvent = slug && eventsData[slug];
@@ -510,6 +513,14 @@ const EventDetail = () => {
       fetchEvent();
     }
   }, [slug, isDynamicEvent]);
+
+  // Track referral visits (once per page load)
+  useEffect(() => {
+    if (dynamicEvent && !referralTrackedRef.current && isExternalReferral()) {
+      referralTrackedRef.current = true;
+      trackEventReferral(dynamicEvent.id);
+    }
+  }, [dynamicEvent]);
 
   // Format date nicely
   const formatDate = (dateStr?: string) => {
@@ -559,8 +570,7 @@ const EventDetail = () => {
     imageAuthor?: string | null;
     imageLicense?: string | null;
     isMuseum?: boolean;
-    vibeLabel?: VibeLabel;
-    vibeLevel?: 1 | 2 | 3;
+    buzzScore?: number | null;
     galleryUrls?: string[];
   };
 
@@ -605,11 +615,6 @@ const EventDetail = () => {
       ? getDistanceInfo(dynamicEvent.latitude, dynamicEvent.longitude)
       : null;
     
-    // Compute auto vibe if no manual override (placeholder for future DB lookup)
-    const autoVibe = computeAutoVibe({
-      created_at: dynamicEvent.created_at,
-      category_sub_id: dynamicEvent.category_sub_id,
-    });
     
     event = {
       image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
@@ -630,8 +635,7 @@ const EventDetail = () => {
       imageAuthor: dynamicEvent.image_author,
       imageLicense: dynamicEvent.image_license,
       isMuseum: isMuseum,
-      vibeLabel: autoVibe?.label,
-      vibeLevel: autoVibe?.level,
+      buzzScore: dynamicEvent.buzz_score,
       galleryUrls: dynamicEvent.gallery_urls || [],
     };
   } else {
@@ -685,18 +689,15 @@ const EventDetail = () => {
 
         {/* Right - Content Panel */}
         <div className="bg-white flex flex-col justify-between px-6 py-10 lg:px-12 xl:px-16 lg:h-[80vh]">
-          {/* Vibe Badge + Flames */}
-          {event.vibeLabel && (
-            <div className="flex items-center gap-3 mb-4">
-              <VibeBadge label={event.vibeLabel} level={event.vibeLevel} size="md" />
-              {event.vibeLevel && <VibeFlames level={event.vibeLevel} size="md" />}
-            </div>
-          )}
-
           {/* Title */}
-          <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6">
+          <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-3">
             {event.title}
           </h1>
+          
+          {/* Buzz Tracker under title */}
+          <div className="mb-6">
+            <BuzzTracker buzzScore={event.buzzScore} />
+          </div>
 
           {/* Meta Info - All icons on one row */}
           <div className="flex flex-wrap items-center gap-4 mb-6 text-neutral-600">

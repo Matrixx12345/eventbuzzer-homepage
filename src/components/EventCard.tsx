@@ -3,7 +3,8 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { EventRatingButtons } from "./EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ImageAttribution from "./ImageAttribution";
-import { VibeBadge, VibeFlames, computeAutoVibe, type VibeLabel } from "./VibeBadge";
+import { BuzzTracker } from "./BuzzTracker";
+import { trackEventClick } from "@/services/buzzTracking";
 
 interface EventCardProps {
   id: string;
@@ -22,8 +23,7 @@ interface EventCardProps {
   image_license?: string | null;
   category_sub_id?: string;
   created_at?: string;
-  vibeLabel?: VibeLabel;
-  vibeLevel?: 1 | 2 | 3;
+  buzz_score?: number | null;
 }
 
 const EventCard = ({
@@ -43,8 +43,7 @@ const EventCard = ({
   image_license,
   category_sub_id,
   created_at,
-  vibeLabel: propVibeLabel,
-  vibeLevel: propVibeLevel,
+  buzz_score,
 }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
@@ -54,11 +53,6 @@ const EventCard = ({
   const isYearRound = availableMonths?.length === 12;
   // Check if museum: either by category_sub_id OR by external_id pattern (manual_ entries are museums)
   const isMuseum = category_sub_id === 'museum-kunst' || external_id?.startsWith('manual_');
-
-  // Compute auto vibe if no manual override provided
-  const autoVibe = propVibeLabel ? null : computeAutoVibe({ created_at, category_sub_id });
-  const vibeLabel = propVibeLabel || autoVibe?.label;
-  const vibeLevel = propVibeLevel || autoVibe?.level;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -70,8 +64,16 @@ const EventCard = ({
     }
   };
 
+  const handleCardClick = () => {
+    // Track click silently (fire-and-forget)
+    trackEventClick(id);
+  };
+
   return (
-    <article className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100">
+    <article 
+      onClick={handleCardClick}
+      className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 cursor-pointer"
+    >
       {/* Image Section */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
@@ -79,12 +81,6 @@ const EventCard = ({
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {/* Vibe Badge on image - replaces isPopular badge */}
-        {vibeLabel && (
-          <div className="absolute top-3 left-3">
-            <VibeBadge label={vibeLabel} level={vibeLevel} size="sm" />
-          </div>
-        )}
         <button
           onClick={handleFavoriteClick}
           className="absolute top-3 right-3 p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-black/40 transition-colors"
@@ -101,6 +97,9 @@ const EventCard = ({
         <h3 className="text-[15px] font-bold text-card-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
           {title}
         </h3>
+
+        {/* Buzz Tracker - horizontal barometer under title */}
+        <BuzzTracker buzzScore={buzz_score} />
 
         {/* Venue */}
         <p className="text-[12px] text-muted-foreground truncate opacity-80">{venue}</p>
@@ -141,7 +140,7 @@ const EventCard = ({
           </div>
         </div>
 
-        {/* Footer with Badge, Vibe Flames and Rating */}
+        {/* Footer with Badge and Rating */}
         <div className="mt-auto pt-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isMuseum ? (
@@ -153,7 +152,6 @@ const EventCard = ({
                 Ganzjährig
               </span>
             ) : null}
-            {vibeLevel && <VibeFlames level={vibeLevel} size="sm" />}
           </div>
           <EventRatingButtons eventId={id} eventTitle={title} />
         </div>
