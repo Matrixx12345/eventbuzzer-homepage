@@ -538,7 +538,7 @@ const Listings = () => {
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[3/4]" : "aspect-[4/3]"
+                              isFeatured ? "aspect-[2/3]" : "aspect-[4/3]"
                             )}
                           />
                           
