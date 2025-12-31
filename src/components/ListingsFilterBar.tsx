@@ -20,6 +20,7 @@ import {
   Mountain,
   Search,
   X,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { swissPlaces } from "@/utils/swissPlaces";
@@ -304,21 +305,21 @@ const ListingsFilterBar = ({
           
           {/* Mood Dropdown */}
           {openSection === "mood" && (
-            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[200px] animate-fade-in">
-              <div className="grid grid-cols-2 gap-1">
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[180px] animate-fade-in">
+              <div className="grid gap-1">
                 {moods.map((mood) => (
                   <button
                     key={mood.slug || "all"}
                     onClick={() => handleMoodSelect(mood)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
                       selectedMood.slug === mood.slug
                         ? "bg-blue-600 text-white"
                         : "hover:bg-gray-100 text-gray-900"
                     )}
                   >
                     <mood.icon size={14} className="flex-shrink-0" />
-                    <span className="truncate">{mood.name}</span>
+                    <span>{mood.name}</span>
                   </button>
                 ))}
               </div>
@@ -419,7 +420,22 @@ const ListingsFilterBar = ({
             <span className={cn("font-medium text-sm truncate", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-900")}>
               {getDateDisplayText()}
             </span>
-            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "date" && "rotate-180", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-400")} />
+            {(selectedDate || selectedTimePill) ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedDate(undefined);
+                  setSelectedTimePill(null);
+                  onDateChange(undefined);
+                  onTimeChange(null);
+                }}
+                className="ml-auto p-1 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            ) : (
+              <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "date" && "rotate-180", "text-gray-400")} />
+            )}
           </button>
           
           {/* Date Dropdown */}
@@ -433,14 +449,13 @@ const ListingsFilterBar = ({
                       key={pill.id}
                       onClick={() => handleTimePillClick(pill.id)}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2",
+                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2 flex items-center gap-1.5",
                         selectedTimePill === pill.id
                           ? "bg-blue-900 text-white border-blue-900"
-                          : pill.id === "now"
-                          ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
                           : "bg-gray-100 text-gray-700 border-gray-100 hover:bg-gray-200"
                       )}
                     >
+                      {pill.id === "now" && <Zap className="w-3.5 h-3.5 text-amber-500" />}
                       {pill.label}
                     </button>
                   ))}
@@ -464,11 +479,11 @@ const ListingsFilterBar = ({
         <div className="w-px bg-gray-200 self-stretch my-3" />
 
         {/* Suche Input */}
-        <div className="flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
+        <div className="relative flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Suchen..."
+            placeholder="Konzert, Festival, Ort..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={handleSearchKeyDown}
