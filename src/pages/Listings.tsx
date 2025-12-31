@@ -8,6 +8,7 @@ import {
   Heart,
   MapPin,
   Loader2,
+  Flame,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -575,11 +576,20 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price & Rating Row */}
+                    {/* Price, Popular Badge & Rating Row */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
-                      <span className="text-sm text-neutral-500 font-medium">
-                        {event.price_from ? `ab CHF ${event.price_from}` : "Preis auf Anfrage"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-neutral-500 font-medium">
+                          {event.price_from ? `ab CHF ${event.price_from}` : "Preis auf Anfrage"}
+                        </span>
+                        {/* Populär Badge - shows when show_count > 10 */}
+                        {event.show_count && event.show_count > 10 && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
+                            <Flame size={11} className="text-amber-500 fill-amber-400" />
+                            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Populär</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="opacity-40 hover:opacity-100 transition-opacity">
                         <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                       </div>
