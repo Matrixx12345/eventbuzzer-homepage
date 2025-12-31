@@ -133,11 +133,33 @@ const ListingsFilterBar = ({
     .filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
     .slice(0, 6);
 
-  // Debounced search for suggestions
+  // Fetch initial/popular events for empty search
+  const fetchInitialSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (error) {
+        console.error("Initial suggestions error:", error);
+      } else if (data) {
+        setSearchSuggestions(data);
+        setShowSuggestions(true);
+      }
+    } catch (err) {
+      console.error("Initial suggestions fetch error:", err);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  // Search for suggestions (from 1 character)
   const fetchSearchSuggestions = async (query: string) => {
-    if (query.length < 2) {
-      setSearchSuggestions([]);
-      setShowSuggestions(false);
+    if (query.length < 1) {
+      fetchInitialSuggestions();
       return;
     }
     
@@ -154,7 +176,7 @@ const ListingsFilterBar = ({
         setSearchSuggestions([]);
       } else if (data) {
         setSearchSuggestions(data);
-        setShowSuggestions(data.length > 0);
+        setShowSuggestions(true);
       }
     } catch (err) {
       console.error("Search suggestions fetch error:", err);
@@ -174,7 +196,15 @@ const ListingsFilterBar = ({
     // Debounce the API call
     searchTimeoutRef.current = setTimeout(() => {
       fetchSearchSuggestions(value);
-    }, 300);
+    }, 200);
+  };
+
+  const handleSearchFocus = () => {
+    if (searchInput.length >= 1 && searchSuggestions.length > 0) {
+      setShowSuggestions(true);
+    } else if (searchInput.length === 0) {
+      fetchInitialSuggestions();
+    }
   };
 
   const handleSuggestionClick = (suggestion: { id: string; title: string }) => {
@@ -554,7 +584,7 @@ const ListingsFilterBar = ({
             onChange={(e) => handleSearchInputChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             onBlur={handleSearchBlur}
-            onFocus={() => searchInput.length >= 2 && searchSuggestions.length > 0 && setShowSuggestions(true)}
+            onFocus={handleSearchFocus}
             className="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none"
           />
           
@@ -565,6 +595,9 @@ const ListingsFilterBar = ({
                 <div className="px-4 py-3 text-sm text-gray-500">Suche...</div>
               ) : searchSuggestions.length > 0 ? (
                 <div className="py-1">
+                  {searchInput.length === 0 && (
+                    <div className="px-4 py-2 text-xs text-gray-400 font-medium uppercase tracking-wide">Beliebte Events</div>
+                  )}
                   {searchSuggestions.map((suggestion) => (
                     <button
                       key={suggestion.id}
