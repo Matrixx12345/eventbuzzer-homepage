@@ -530,15 +530,15 @@ const Listings = () => {
                         isFeatured ? "h-full" : "h-full"
                       )}
                     >
-                      <Link to={`/event/${event.id}`} className="block">
-                        <div className="relative overflow-hidden">
+                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
+                        <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[2/3]" : "aspect-[4/3]"
+                              isFeatured ? "h-full" : "aspect-[4/3]"
                             )}
                           />
                           
@@ -602,7 +602,7 @@ const Listings = () => {
                       </Link>
 
                       {/* Content Section - same for all cards */}
-                      <div className={cn("p-3 flex flex-col", isFeatured ? "flex-grow" : "flex-grow")}>
+                      <div className={cn("p-3 flex flex-col", isFeatured ? "flex-shrink-0" : "flex-grow")}>
                         <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate">
