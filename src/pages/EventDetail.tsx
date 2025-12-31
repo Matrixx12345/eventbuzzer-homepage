@@ -382,6 +382,7 @@ interface DynamicEvent {
   ticket_link?: string;
   latitude?: number;
   longitude?: number;
+  category_sub_id?: string;
 }
 
 // Country name list for filtering
@@ -553,6 +554,7 @@ const EventDetail = () => {
     longitude?: number;
     imageAuthor?: string | null;
     imageLicense?: string | null;
+    isMuseum?: boolean;
   };
 
   if (isStaticEvent) {
@@ -567,15 +569,21 @@ const EventDetail = () => {
     // Use real image if available, otherwise fallback to placeholder
     const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';
     
+    // Check if it's a museum (permanent attraction without date display)
+    const isMuseum = dynamicEvent.category_sub_id === 'museum-kunst';
+    
     // Check if it's a MySwitzerland event (permanent attraction without date)
     const isMySwitzerland = dynamicEvent.external_id?.startsWith('mys_');
     const isPermanentAttraction = !dynamicEvent.start_date;
     
-    // Determine date and time display
+    // Determine date and time display - hide for museums
     let dateDisplay: string;
     let timeDisplay: string;
     
-    if (isPermanentAttraction) {
+    if (isMuseum) {
+      dateDisplay = "";  // Don't show date for museums
+      timeDisplay = "";
+    } else if (isPermanentAttraction) {
       dateDisplay = "Jederzeit verfügbar";
       timeDisplay = "";  // Don't show time for permanent attractions
     } else {
@@ -607,6 +615,7 @@ const EventDetail = () => {
       longitude: dynamicEvent.longitude,
       imageAuthor: dynamicEvent.image_author,
       imageLicense: dynamicEvent.image_license,
+      isMuseum: isMuseum,
     };
   } else {
     event = {
@@ -666,7 +675,14 @@ const EventDetail = () => {
 
           {/* Meta Info - All icons on one row */}
           <div className="flex flex-wrap items-center gap-4 mb-6 text-neutral-600">
-            {event.date && (
+            {/* Show Museum badge instead of date for museums */}
+            {event.isMuseum ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                  Museum
+                </span>
+              </div>
+            ) : event.date && (
               <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-neutral-400" />
                 <span className="text-base">

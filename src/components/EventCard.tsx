@@ -19,6 +19,7 @@ interface EventCardProps {
   longitude?: number;
   image_author?: string | null;
   image_license?: string | null;
+  category_sub_id?: string;
 }
 
 const EventCard = ({
@@ -36,6 +37,7 @@ const EventCard = ({
   longitude,
   image_author,
   image_license,
+  category_sub_id,
 }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
@@ -43,6 +45,7 @@ const EventCard = ({
 
   const isMySwitzerland = external_id?.startsWith("mys_");
   const isYearRound = availableMonths?.length === 12;
+  const isMuseum = category_sub_id === 'museum-kunst';
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -126,11 +129,15 @@ const EventCard = ({
 
         {/* Footer with Badge and Rating */}
         <div className="mt-auto pt-2 flex items-center justify-between">
-          {isMySwitzerland && isYearRound && (
+          {isMuseum ? (
+            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+              Museum
+            </span>
+          ) : isMySwitzerland && isYearRound ? (
             <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
               Ganzjährig
             </span>
-          )}
+          ) : null}
           <EventRatingButtons eventId={id} eventTitle={title} />
         </div>
       </div>

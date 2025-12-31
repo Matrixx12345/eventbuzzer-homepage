@@ -51,6 +51,7 @@ interface ExternalEvent {
   available_months?: number[];
   image_author?: string | null;
   image_license?: string | null;
+  category_sub_id?: string;
 }
 
 interface TaxonomyItem {
@@ -470,6 +471,7 @@ const Listings = () => {
                 event.latitude && event.longitude
                   ? getDistanceInfo(event.latitude, event.longitude).distance
                   : null;
+              const isMuseum = event.category_sub_id === 'museum-kunst';
 
               return (
                 <article 
@@ -484,10 +486,10 @@ const Listings = () => {
                         className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
-                      {/* Date Badge - Elegant Glassmorphism */}
+                      {/* Date Badge or Museum Badge - Elegant Glassmorphism */}
                       <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
                         <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
-                          {formatEventDate(
+                          {isMuseum ? 'MUSEUM' : formatEventDate(
                             event.start_date,
                             event.external_id,
                             event.date_range_start,

@@ -215,6 +215,7 @@ const EventsSection = () => {
                     isPopular={true}
                     latitude={event.latitude}
                     longitude={event.longitude}
+                    category_sub_id={event.category_sub_id}
                   />
                 </div>
               ))}
