@@ -19,7 +19,6 @@ import {
   PartyPopper,
   Waves,
   Mountain,
-  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { swissPlaces } from "@/utils/swissPlaces";
@@ -98,8 +97,8 @@ const ListingsFilterBar = ({
   onTimeChange,
   onDateChange,
 }: ListingsFilterBarProps) => {
-  // Collapsed state
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Check if any dropdown is open (determines if we show collapse option)
+  const isAnyDropdownOpen = () => categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen;
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState({
@@ -264,14 +263,13 @@ const ListingsFilterBar = ({
     return "Jederzeit";
   };
 
-  // Summary for collapsed state
-  const getFilterSummary = () => {
-    const parts: string[] = [];
-    if (selectedCategory.id) parts.push(selectedCategory.name);
-    if (selectedMood.id) parts.push(selectedMood.name);
-    if (cityInput) parts.push(cityInput);
-    if (selectedTimePill || selectedDate) parts.push(getDateDisplayText());
-    return parts.length > 0 ? parts.join(" • ") : "Alle Events";
+  // Function to close all dropdowns
+  const closeAllDropdowns = () => {
+    setCategoryOpen(false);
+    setMoodOpen(false);
+    setDateOpen(false);
+    setRadiusOpen(false);
+    setShowCitySuggestions(false);
   };
 
   return (
@@ -283,227 +281,210 @@ const ListingsFilterBar = ({
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
-        {/* Collapsed Bar */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-6 py-4 flex items-center justify-between backdrop-blur-xl bg-white/25 border-b border-white/20"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-white/90 font-medium text-sm">{getFilterSummary()}</span>
+      <div className="relative z-10 p-4 md:p-6">
+        {/* Glassmorphism Container */}
+        <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl p-4 md:p-6 shadow-xl">
+          {/* Filter Pills Row */}
+          <div className="flex flex-wrap gap-3 mb-4">
+            {/* Kategorie Button */}
+            <button
+              onClick={() => {
+                setCategoryOpen(!categoryOpen);
+                setMoodOpen(false);
+                setDateOpen(false);
+              }}
+              className={cn(
+                "px-4 py-2.5 rounded-xl bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center gap-2 text-sm font-medium",
+                categoryOpen ? "ring-2 ring-primary/50" : "",
+              )}
+            >
+              <selectedCategory.icon size={16} className="text-foreground/60" />
+              <span className="text-foreground/80">{selectedCategory.name}</span>
+              <ChevronDown
+                size={14}
+                className={cn("transition-transform text-foreground/60", categoryOpen && "rotate-180")}
+              />
+            </button>
+
+            {/* Stimmung Button */}
+            <button
+              onClick={() => {
+                setMoodOpen(!moodOpen);
+                setCategoryOpen(false);
+                setDateOpen(false);
+              }}
+              className={cn(
+                "px-4 py-2.5 rounded-xl bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center gap-2 text-sm font-medium",
+                moodOpen ? "ring-2 ring-primary/50" : "",
+              )}
+            >
+              <selectedMood.icon size={16} className="text-foreground/60" />
+              <span className="text-foreground/80">{selectedMood.name}</span>
+              <ChevronDown
+                size={14}
+                className={cn("transition-transform text-foreground/60", moodOpen && "rotate-180")}
+              />
+            </button>
+
+            {/* Stadt Input */}
+            <div className="relative">
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" />
+                <input
+                  ref={cityInputRef}
+                  type="text"
+                  placeholder="Stadt"
+                  value={cityInput}
+                  onChange={(e) => handleCityInputChange(e.target.value)}
+                  onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
+                  className="w-36 md:w-44 pl-9 pr-4 py-2.5 rounded-xl bg-white/90 border border-white/60 text-sm placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Datum Button */}
+            <button
+              onClick={() => {
+                setDateOpen(!dateOpen);
+                setCategoryOpen(false);
+                setMoodOpen(false);
+              }}
+              className={cn(
+                "px-4 py-2.5 rounded-xl bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center gap-2 text-sm font-medium",
+                dateOpen ? "ring-2 ring-primary/50" : "",
+              )}
+            >
+              <CalendarIcon size={16} className="text-foreground/60" />
+              <span className="text-foreground/80">{getDateDisplayText()}</span>
+              <ChevronDown
+                size={14}
+                className={cn("transition-transform text-foreground/60", dateOpen && "rotate-180")}
+              />
+            </button>
+
+            {/* Einklappen Button - nur sichtbar wenn ein Dropdown offen ist */}
+            {isAnyDropdownOpen() && (
+              <button
+                onClick={closeAllDropdowns}
+                className="ml-auto px-5 py-2.5 rounded-xl bg-foreground text-background font-semibold text-sm hover:bg-foreground/90 transition-all flex items-center gap-2 shadow-lg"
+              >
+                <ChevronUp size={16} />
+                <span>Einklappen</span>
+              </button>
+            )}
           </div>
-          <div className="flex items-center gap-2 text-white/80">
-            <span className="text-xs font-medium">{isExpanded ? "Einklappen" : "Filter anpassen"}</span>
-            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </div>
-        </button>
 
-        {/* Expanded Content */}
-        {isExpanded && (
-          <div className="p-4 md:p-6">
-            {/* Glassmorphism Container */}
-            <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl p-4 md:p-6 shadow-xl">
-              {/* Filter Pills Row */}
-              <div className="flex flex-wrap gap-3 mb-4">
-                {/* Kategorie Button */}
-                <button
-                  onClick={() => {
-                    setCategoryOpen(!categoryOpen);
-                    setMoodOpen(false);
-                    setDateOpen(false);
-                  }}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center gap-2 text-sm font-medium",
-                    categoryOpen ? "ring-2 ring-primary/50" : "",
-                  )}
-                >
-                  <selectedCategory.icon size={16} className="text-foreground/60" />
-                  <span className="text-foreground/80">{selectedCategory.name}</span>
-                  <ChevronDown
-                    size={14}
-                    className={cn("transition-transform text-foreground/60", categoryOpen && "rotate-180")}
-                  />
-                </button>
+          {/* Expandable Dropdowns - All in one glassmorphism block */}
+          {(categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen) && (
+            <div className="backdrop-blur-xl bg-white/70 border border-white/60 rounded-xl p-4 mt-2 shadow-lg">
+              {/* Category Dropdown */}
+              {categoryOpen && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.slug || "all"}
+                      onClick={() => handleCategorySelect(cat)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
+                        selectedCategory.slug === cat.slug
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-white/80 hover:bg-white text-foreground/80 border border-white/60",
+                      )}
+                    >
+                      <cat.icon size={24} />
+                      <span className="text-xs font-medium text-center">{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
-                {/* Stimmung Button */}
-                <button
-                  onClick={() => {
-                    setMoodOpen(!moodOpen);
-                    setCategoryOpen(false);
-                    setDateOpen(false);
-                  }}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center gap-2 text-sm font-medium",
-                    moodOpen ? "ring-2 ring-primary/50" : "",
-                  )}
-                >
-                  <selectedMood.icon size={16} className="text-foreground/60" />
-                  <span className="text-foreground/80">{selectedMood.name}</span>
-                  <ChevronDown
-                    size={14}
-                    className={cn("transition-transform text-foreground/60", moodOpen && "rotate-180")}
-                  />
-                </button>
+              {/* Mood Dropdown */}
+              {moodOpen && (
+                <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
+                  {moods.map((mood) => (
+                    <button
+                      key={mood.slug || "all"}
+                      onClick={() => handleMoodSelect(mood)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-3 rounded-xl transition-all",
+                        selectedMood.slug === mood.slug
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-white/80 hover:bg-white text-foreground/80 border border-white/60",
+                      )}
+                    >
+                      <mood.icon size={20} />
+                      <span className="text-[11px] font-medium text-center leading-tight">{mood.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
-                {/* Stadt Input */}
-                <div className="relative">
-                  <div className="relative">
-                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" />
-                    <input
-                      ref={cityInputRef}
-                      type="text"
-                      placeholder="Stadt"
-                      value={cityInput}
-                      onChange={(e) => handleCityInputChange(e.target.value)}
-                      onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
-                      className="w-36 md:w-44 pl-9 pr-4 py-2.5 rounded-xl bg-white/90 border border-white/60 text-sm placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all"
+              {/* City Suggestions */}
+              {showCitySuggestions && filteredCities.length > 0 && (
+                <div ref={citySuggestionsRef} className="space-y-1">
+                  <p className="text-xs text-foreground/60 font-medium mb-2">Vorschläge</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {filteredCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => handleCitySelect(city)}
+                        className="px-4 py-2.5 text-sm text-left bg-white/80 hover:bg-white rounded-lg transition-colors flex items-center gap-2 border border-white/60"
+                      >
+                        <MapPin size={14} className="text-foreground/40" />
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Radius Slider */}
+              {radiusOpen && cityInput && !showCitySuggestions && (
+                <div className="max-w-md">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-foreground/70 font-medium">Umkreis</span>
+                    <span className="text-sm font-semibold bg-white/80 px-3 py-1 rounded-lg">{radius[0]} km</span>
+                  </div>
+                  <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} className="w-full" />
+                </div>
+              )}
+
+              {/* Date Dropdown */}
+              {dateOpen && (
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Time Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {timePills.map((pill) => (
+                      <button
+                        key={pill.id}
+                        onClick={() => handleTimePillClick(pill.id)}
+                        className={cn(
+                          "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                          selectedTimePill === pill.id
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "bg-white/80 hover:bg-white text-foreground/70 border border-white/60",
+                        )}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Calendar */}
+                  <div className="bg-white rounded-xl shadow-sm">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      locale={de}
+                      className="p-3 pointer-events-auto"
                     />
                   </div>
                 </div>
-
-                {/* Datum Button */}
-                <button
-                  onClick={() => {
-                    setDateOpen(!dateOpen);
-                    setCategoryOpen(false);
-                    setMoodOpen(false);
-                  }}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center gap-2 text-sm font-medium",
-                    dateOpen ? "ring-2 ring-primary/50" : "",
-                  )}
-                >
-                  <CalendarIcon size={16} className="text-foreground/60" />
-                  <span className="text-foreground/80">{getDateDisplayText()}</span>
-                  <ChevronDown
-                    size={14}
-                    className={cn("transition-transform text-foreground/60", dateOpen && "rotate-180")}
-                  />
-                </button>
-
-                {/* Aktualisieren Button */}
-                <button
-                  onClick={() => setIsExpanded(false)}
-                  className="ml-auto px-5 py-2.5 rounded-xl bg-foreground text-background font-semibold text-sm hover:bg-foreground/90 transition-all flex items-center gap-2 shadow-lg"
-                >
-                  <Check size={16} />
-                  <span>Übernehmen</span>
-                </button>
-              </div>
-
-              {/* Expandable Dropdowns - All in one glassmorphism block */}
-              {(categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen) && (
-                <div className="backdrop-blur-xl bg-white/70 border border-white/60 rounded-xl p-4 mt-2 shadow-lg">
-                  {/* Category Dropdown */}
-                  {categoryOpen && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                      {categories.map((cat) => (
-                        <button
-                          key={cat.slug || "all"}
-                          onClick={() => handleCategorySelect(cat)}
-                          className={cn(
-                            "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
-                            selectedCategory.slug === cat.slug
-                              ? "bg-primary text-primary-foreground shadow-md"
-                              : "bg-white/80 hover:bg-white text-foreground/80 border border-white/60",
-                          )}
-                        >
-                          <cat.icon size={24} />
-                          <span className="text-xs font-medium text-center">{cat.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Mood Dropdown */}
-                  {moodOpen && (
-                    <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
-                      {moods.map((mood) => (
-                        <button
-                          key={mood.slug || "all"}
-                          onClick={() => handleMoodSelect(mood)}
-                          className={cn(
-                            "flex flex-col items-center gap-2 p-3 rounded-xl transition-all",
-                            selectedMood.slug === mood.slug
-                              ? "bg-primary text-primary-foreground shadow-md"
-                              : "bg-white/80 hover:bg-white text-foreground/80 border border-white/60",
-                          )}
-                        >
-                          <mood.icon size={20} />
-                          <span className="text-[11px] font-medium text-center leading-tight">{mood.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* City Suggestions */}
-                  {showCitySuggestions && filteredCities.length > 0 && (
-                    <div ref={citySuggestionsRef} className="space-y-1">
-                      <p className="text-xs text-foreground/60 font-medium mb-2">Vorschläge</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {filteredCities.map((city) => (
-                          <button
-                            key={city}
-                            onClick={() => handleCitySelect(city)}
-                            className="px-4 py-2.5 text-sm text-left bg-white/80 hover:bg-white rounded-lg transition-colors flex items-center gap-2 border border-white/60"
-                          >
-                            <MapPin size={14} className="text-foreground/40" />
-                            {city}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Radius Slider */}
-                  {radiusOpen && cityInput && !showCitySuggestions && (
-                    <div className="max-w-md">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm text-foreground/70 font-medium">Umkreis</span>
-                        <span className="text-sm font-semibold bg-white/80 px-3 py-1 rounded-lg">{radius[0]} km</span>
-                      </div>
-                      <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} className="w-full" />
-                    </div>
-                  )}
-
-                  {/* Date Dropdown */}
-                  {dateOpen && (
-                    <div className="flex flex-col md:flex-row gap-4">
-                      {/* Time Pills */}
-                      <div className="flex flex-wrap gap-2">
-                        {timePills.map((pill) => (
-                          <button
-                            key={pill.id}
-                            onClick={() => handleTimePillClick(pill.id)}
-                            className={cn(
-                              "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                              selectedTimePill === pill.id
-                                ? "bg-primary text-primary-foreground shadow-md"
-                                : "bg-white/80 hover:bg-white text-foreground/70 border border-white/60",
-                            )}
-                          >
-                            {pill.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Calendar */}
-                      <div className="bg-white rounded-xl shadow-sm">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={handleDateSelect}
-                          locale={de}
-                          className="p-3 pointer-events-auto"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
