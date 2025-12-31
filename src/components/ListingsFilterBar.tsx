@@ -453,7 +453,7 @@ const ListingsFilterBar = ({
           
           {/* Location Dropdown */}
           {openSection === "location" && (
-            <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-xl shadow-xl z-50 min-w-[300px] animate-fade-in">
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 w-[220px] animate-fade-in">
               <div className="space-y-3">
                 <div className="relative">
                   <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
