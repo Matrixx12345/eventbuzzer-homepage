@@ -576,10 +576,9 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price & Rating Row - Compact height */}
+                    {/* Price & Rating Row */}
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center gap-2 text-xs text-neutral-400">
-                        {/* Price indicator */}
+                      <div className="flex items-center gap-3 text-xs text-neutral-400">
                         <span>
                           {event.price_from && event.price_from >= 15 
                             ? `ab ${event.price_from}`
@@ -590,15 +589,13 @@ const Listings = () => {
                                 : ''
                           }
                         </span>
-                        {/* Populär - temporarily shown on ALL events for preview */}
-                        <span className="flex items-center gap-0.5 text-amber-500">
-                          <Flame size={11} className="fill-amber-400" />
-                          <span className="text-[10px] font-medium">Populär</span>
+                        {/* Populär - gray pill */}
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
+                          <Flame size={10} className="fill-neutral-400" />
+                          <span className="text-[10px]">Populär</span>
                         </span>
                       </div>
-                      <div className="opacity-40 hover:opacity-100 transition-opacity">
-                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                      </div>
+                      <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                     </div>
                   </div>
                 </article>
