@@ -55,7 +55,7 @@ const moods = [
 
 const timePills = [
   { id: "now", label: "Jetzt" },
-  { id: "today", label: "Heute" },
+  { id: "tomorrow", label: "Morgen" },
   { id: "thisWeek", label: "Wochenende" },
   { id: "thisMonth", label: "Monat" },
 ];
@@ -240,12 +240,16 @@ const ListingsFilterBar = ({
         <button
           onClick={() => toggleSection("category")}
           className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50 flex-1 min-w-0",
-            openSection === "category" && "bg-gray-50"
+            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0 rounded-l-2xl",
+            selectedCategory.slug
+              ? "bg-blue-900 text-white"
+              : openSection === "category"
+              ? "bg-gray-50"
+              : "hover:bg-gray-50"
           )}
         >
-          <LayoutGrid className="w-5 h-5 text-gray-400 flex-shrink-0" />
-          <span className="font-medium text-gray-900 text-sm truncate">
+          <LayoutGrid className={cn("w-5 h-5 flex-shrink-0", selectedCategory.slug ? "text-white" : "text-gray-400")} />
+          <span className={cn("font-medium text-sm truncate", selectedCategory.slug ? "text-white" : "text-gray-900")}>
             {selectedCategory.slug ? selectedCategory.name : "Alle Kategorien"}
           </span>
         </button>
@@ -256,12 +260,16 @@ const ListingsFilterBar = ({
         <button
           onClick={() => toggleSection("mood")}
           className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50 flex-1 min-w-0",
-            openSection === "mood" && "bg-gray-50"
+            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0",
+            selectedMood.slug
+              ? "bg-blue-900 text-white"
+              : openSection === "mood"
+              ? "bg-gray-50"
+              : "hover:bg-gray-50"
           )}
         >
-          <Smile className="w-5 h-5 text-gray-400 flex-shrink-0" />
-          <span className="font-medium text-gray-900 text-sm truncate">
+          <Smile className={cn("w-5 h-5 flex-shrink-0", selectedMood.slug ? "text-white" : "text-gray-400")} />
+          <span className={cn("font-medium text-sm truncate", selectedMood.slug ? "text-white" : "text-gray-900")}>
             {selectedMood.slug ? selectedMood.name : "Jede Stimmung"}
           </span>
         </button>
@@ -272,13 +280,17 @@ const ListingsFilterBar = ({
         <button
           onClick={() => toggleSection("location")}
           className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50 flex-1 min-w-0",
-            openSection === "location" && "bg-gray-50"
+            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0",
+            cityInput
+              ? "bg-blue-900 text-white"
+              : openSection === "location"
+              ? "bg-gray-50"
+              : "hover:bg-gray-50"
           )}
         >
-          <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
+          <MapPin className={cn("w-5 h-5 flex-shrink-0", cityInput ? "text-white" : "text-gray-400")} />
           <div className="text-left min-w-0">
-            <div className="font-medium text-gray-900 text-sm truncate">
+            <div className={cn("font-medium text-sm truncate", cityInput ? "text-white" : "text-gray-900")}>
               {cityInput || "Ort"}
             </div>
             {!cityInput && (
@@ -293,12 +305,16 @@ const ListingsFilterBar = ({
         <button
           onClick={() => toggleSection("date")}
           className={cn(
-            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50 flex-1 min-w-0",
-            openSection === "date" && "bg-gray-50"
+            "flex items-center gap-3 px-5 py-4 transition-colors flex-1 min-w-0",
+            (selectedDate || selectedTimePill)
+              ? "bg-blue-900 text-white"
+              : openSection === "date"
+              ? "bg-gray-50"
+              : "hover:bg-gray-50"
           )}
         >
-          <CalendarIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-          <span className="font-medium text-gray-900 text-sm truncate">
+          <CalendarIcon className={cn("w-5 h-5 flex-shrink-0", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-400")} />
+          <span className={cn("font-medium text-sm truncate", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-900")}>
             {getDateDisplayText()}
           </span>
         </button>
@@ -430,24 +446,27 @@ const ListingsFilterBar = ({
 
           {/* Date */}
           {openSection === "date" && (
-            <div className="flex flex-col lg:flex-row gap-5">
+            <div className="space-y-4">
+              {/* Time Pills - Above Calendar, Yellow Style */}
               <div className="flex flex-wrap gap-2">
                 {timePills.map((pill) => (
                   <button
                     key={pill.id}
                     onClick={() => handleTimePillClick(pill.id)}
                     className={cn(
-                      "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      "px-4 py-2 rounded-full text-sm font-medium transition-all border-2",
                       selectedTimePill === pill.id
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        ? "bg-blue-900 text-white border-blue-900"
+                        : "bg-transparent border-amber-400 text-gray-700 hover:bg-amber-50"
                     )}
                   >
                     {pill.label}
                   </button>
                 ))}
               </div>
-              <div className="bg-gray-50 rounded-xl overflow-hidden">
+              
+              {/* Calendar */}
+              <div className="bg-gray-50 rounded-xl overflow-hidden inline-block">
                 <Calendar
                   mode="single"
                   selected={selectedDate}

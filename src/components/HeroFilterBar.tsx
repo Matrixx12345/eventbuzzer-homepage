@@ -56,7 +56,7 @@ const moods = [
 // Zeit-Quick-Pills
 const timePills = [
   { id: "now", label: "Jetzt" },
-  { id: "today", label: "Heute" },
+  { id: "tomorrow", label: "Morgen" },
   { id: "thisWeek", label: "Wochenende" },
   { id: "thisMonth", label: "Dieser Monat" },
 ];
@@ -336,10 +336,10 @@ const HeroFilterBar = () => {
                         setDateOpen(false);
                       }}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2",
                         selectedTimePill === pill.id
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80 text-foreground/70"
+                          ? "bg-blue-900 text-white border-blue-900"
+                          : "bg-transparent border-amber-400 text-foreground/70 hover:bg-amber-50"
                       )}
                     >
                       {pill.label}
