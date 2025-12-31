@@ -17,7 +17,8 @@ const Index = () => {
           </h2>
         </div>
         
-        <EventsSection />
+        {/* TEMPORARILY HIDDEN - EventsSection (heute in deiner Nähe) - sag mir wenn du es reaktivieren möchtest */}
+        {/* <EventsSection /> */}
         <WeekendSection />
         <SwitzerlandSection />
         <RainyDaySection />
