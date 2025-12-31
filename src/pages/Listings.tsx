@@ -576,42 +576,21 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price, Popular Badge & Rating Row */}
+                    {/* Price & Rating Row - Compact */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
-                      <div className="flex items-center gap-2">
-                        {/* Price: show actual price if >= 15, otherwise derive price category */}
-                        {(() => {
-                          // Only show real price if it's >= 15 CHF (not placeholder values)
-                          if (event.price_from && event.price_from >= 15) {
-                            return (
-                              <span className="text-sm text-neutral-500">
-                                ab CHF {event.price_from}
-                              </span>
-                            );
-                          }
-                          // Show price_label if available
-                          if (event.price_label) {
-                            return (
-                              <span className="text-sm text-neutral-500">
-                                {event.price_label}
-                              </span>
-                            );
-                          }
-                          // Derive from price_from if available but no label
-                          if (event.price_from !== null && event.price_from !== undefined) {
-                            if (event.price_from === 0) return <span className="text-sm text-neutral-500">Gratis</span>;
-                            if (event.price_from < 50) return <span className="text-sm text-neutral-500">$</span>;
-                            if (event.price_from < 120) return <span className="text-sm text-neutral-500">$$</span>;
-                            return <span className="text-sm text-neutral-500">$$$</span>;
-                          }
-                          return null;
-                        })()}
-                        {/* Populär Badge - shows when show_count > 10 */}
+                      <div className="flex items-center gap-1.5 text-xs text-neutral-400">
+                        {/* Price indicator */}
+                        {event.price_from && event.price_from >= 15 
+                          ? `ab ${event.price_from}`
+                          : event.price_label 
+                            ? event.price_label
+                            : event.price_from !== null && event.price_from !== undefined
+                              ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
+                              : null
+                        }
+                        {/* Populär - just flame icon, no pill */}
                         {event.show_count && event.show_count > 10 && (
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
-                            <Flame size={11} className="text-amber-500 fill-amber-400" />
-                            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Populär</span>
-                          </div>
+                          <Flame size={12} className="text-amber-500 fill-amber-400 ml-1" />
                         )}
                       </div>
                       <div className="opacity-40 hover:opacity-100 transition-opacity">
