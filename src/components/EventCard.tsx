@@ -45,7 +45,8 @@ const EventCard = ({
 
   const isMySwitzerland = external_id?.startsWith("mys_");
   const isYearRound = availableMonths?.length === 12;
-  const isMuseum = category_sub_id === 'museum-kunst';
+  // Check if museum: either by category_sub_id OR by external_id pattern (manual_ entries are museums)
+  const isMuseum = category_sub_id === 'museum-kunst' || external_id?.startsWith('manual_');
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();

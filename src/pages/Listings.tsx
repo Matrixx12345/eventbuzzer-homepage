@@ -471,7 +471,8 @@ const Listings = () => {
                 event.latitude && event.longitude
                   ? getDistanceInfo(event.latitude, event.longitude).distance
                   : null;
-              const isMuseum = event.category_sub_id === 'museum-kunst';
+              // Check if museum: either by category_sub_id OR by external_id pattern (manual_ entries are museums)
+              const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
 
               return (
                 <article 

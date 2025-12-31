@@ -570,7 +570,8 @@ const EventDetail = () => {
     const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';
     
     // Check if it's a museum (permanent attraction without date display)
-    const isMuseum = dynamicEvent.category_sub_id === 'museum-kunst';
+    // Either by category_sub_id OR by external_id pattern (manual_ entries are museums)
+    const isMuseum = dynamicEvent.category_sub_id === 'museum-kunst' || dynamicEvent.external_id?.startsWith('manual_');
     
     // Check if it's a MySwitzerland event (permanent attraction without date)
     const isMySwitzerland = dynamicEvent.external_id?.startsWith('mys_');
