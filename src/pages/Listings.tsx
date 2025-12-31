@@ -603,12 +603,35 @@ const Listings = () => {
 
                       {/* Content Section - same for all cards */}
                       <div className={cn("p-3 flex flex-col", isFeatured ? "flex-shrink-0" : "flex-grow")}>
-                        <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
+                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-help w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                          <span className="truncate">
+                          <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
                             {locationName || "Schweiz"}
                             {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
                           </span>
+                          
+                          {/* Mini-Map Tooltip */}
+                          {event.latitude && event.longitude && (
+                            <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                              <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
+                                <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                                  <img 
+                                    src="/swiss-outline.svg" 
+                                    className="w-full h-full object-contain opacity-30 p-2" 
+                                    alt="Switzerland Map" 
+                                  />
+                                  <div
+                                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
+                                    style={{
+                                      left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                                      top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+                            </div>
+                          )}
                         </div>
                         
                         <Link 
