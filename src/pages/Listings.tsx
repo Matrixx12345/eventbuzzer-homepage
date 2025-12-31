@@ -104,6 +104,7 @@ const Listings = () => {
   const urlRadius = searchParams.get("radius");
   const urlTime = searchParams.get("time");
   const urlDate = searchParams.get("date");
+  const urlSearch = searchParams.get("search");
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState(urlCity || "");
@@ -116,6 +117,7 @@ const Listings = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     urlDate ? new Date(urlDate) : undefined
   );
+  const [searchQuery, setSearchQuery] = useState(urlSearch || "");
 
   const buildFilters = useCallback(() => {
     const filters: Record<string, any> = {};
@@ -123,6 +125,7 @@ const Listings = () => {
     if (selectedSubcategoryId !== null) filters.subcategoryId = selectedSubcategoryId;
     if (selectedTimeFilter) filters.timeFilter = selectedTimeFilter;
     if (selectedDate) filters.singleDate = selectedDate.toISOString();
+    if (searchQuery.trim().length >= 3) filters.search = searchQuery.trim();
 
     if (selectedCity) {
       filters.city = selectedCity;
@@ -157,6 +160,7 @@ const Listings = () => {
     radius,
     selectedQuickFilters,
     selectedDate,
+    searchQuery,
   ]);
 
   const fetchEvents = useCallback(
@@ -420,12 +424,14 @@ const Listings = () => {
           initialRadius={urlRadius ? parseInt(urlRadius) : 25}
           initialTime={urlTime}
           initialDate={urlDate ? new Date(urlDate) : undefined}
+          initialSearch={urlSearch || ""}
           onCategoryChange={handleCategoryChange}
           onMoodChange={handleMoodChange}
           onCityChange={handleCityChange}
           onRadiusChange={handleRadiusChange}
           onTimeChange={handleTimeChange}
           onDateChange={handleDateChange}
+          onSearchChange={(search) => setSearchQuery(search)}
         />
 
         {/* Results Count */}

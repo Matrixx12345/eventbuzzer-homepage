@@ -69,7 +69,8 @@ serve(async (req) => {
     
     const { 
       tags = [], 
-      searchQuery, 
+      searchQuery,
+      search, 
       categoryId, 
       subcategoryId, 
       priceTier, 
@@ -82,6 +83,9 @@ serve(async (req) => {
       dateFrom,
       dateTo
     } = filters;
+    
+    // Support both "search" and "searchQuery" parameter names
+    const searchTerm = search || searchQuery;
 
     console.log("Received filters:", JSON.stringify(filters));
 
@@ -143,9 +147,9 @@ serve(async (req) => {
     }
 
     // Suchtext-Filter
-    if (searchQuery && searchQuery.trim()) {
-      const search = searchQuery.trim().toLowerCase();
-      query = query.or(`title.ilike.%${search}%,short_description.ilike.%${search}%,venue_name.ilike.%${search}%`);
+    if (searchTerm && searchTerm.trim()) {
+      const s = searchTerm.trim().toLowerCase();
+      query = query.or(`title.ilike.%${s}%,short_description.ilike.%${s}%,venue_name.ilike.%${s}%,description.ilike.%${s}%`);
     }
 
     // Preis-Filter
