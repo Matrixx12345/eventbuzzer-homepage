@@ -5,7 +5,6 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   ChevronDown,
-  ChevronUp,
   Music,
   Palette,
   UtensilsCrossed,
@@ -20,6 +19,8 @@ import {
   Waves,
   Mountain,
   Search,
+  X,
+  Gem,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { swissPlaces } from "@/utils/swissPlaces";
@@ -30,8 +31,7 @@ import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-
-// NEU: Icon mapping (außerhalb der Komponente)
+// Icon mapping
 const getCategoryIcon = (slug: string | null) => {
   if (!slug) return LayoutGrid;
   if (slug === "musik-party") return Music;
@@ -64,11 +64,10 @@ const timePills = [
   { id: "thisMonth", label: "Dieser Monat" },
 ];
 
-// City suggestions for autocomplete
+// City suggestions
 const citySuggestions = swissPlaces.slice(0, 50).map((p) => p.name);
 
 interface ListingsFilterBarProps {
-  // Initial values from URL params
   initialCategory?: string | null;
   initialMood?: string | null;
   initialCity?: string | null;
@@ -76,7 +75,6 @@ interface ListingsFilterBarProps {
   initialTime?: string | null;
   initialDate?: Date | undefined;
   initialSearch?: string;
-  // Callbacks
   onCategoryChange: (categoryId: number | null, categorySlug: string | null) => void;
   onMoodChange: (moodSlug: string | null) => void;
   onCityChange: (city: string) => void;
@@ -102,9 +100,6 @@ const ListingsFilterBar = ({
   onDateChange,
   onSearchChange,
 }: ListingsFilterBarProps) => {
-  // Check if any dropdown is open (determines if we show collapse option)
-  const isAnyDropdownOpen = () => categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen;
-
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState({
     id: null,
@@ -124,17 +119,12 @@ const ListingsFilterBar = ({
   const [radius, setRadius] = useState([initialRadius]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate);
   const [categories, setCategories] = useState<
-    Array<{
-      id: number | null;
-      slug: string | null;
-      name: string;
-      icon: any;
-    }>
+    Array<{ id: number | null; slug: string | null; name: string; icon: any }>
   >([{ id: null, slug: null, name: "Alle Kategorien", icon: LayoutGrid }]);
   const [selectedTimePill, setSelectedTimePill] = useState<string | null>(initialTime || null);
   const [searchInput, setSearchInput] = useState(initialSearch);
 
-  // Dropdown states for inline expansion
+  // Dropdown states
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [moodOpen, setMoodOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -143,25 +133,21 @@ const ListingsFilterBar = ({
   const cityInputRef = useRef<HTMLInputElement>(null);
   const citySuggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Handle search - only trigger on Enter or when 3+ characters
+  const isAnyDropdownOpen = () => categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen;
+
+  // Handlers
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      onSearchChange(searchInput);
-    }
+    if (e.key === "Enter") onSearchChange(searchInput);
   };
 
   const handleSearchBlur = () => {
-    if (searchInput.length >= 3 || searchInput.length === 0) {
-      onSearchChange(searchInput);
-    }
+    if (searchInput.length >= 3 || searchInput.length === 0) onSearchChange(searchInput);
   };
 
-  // Filter city suggestions
   const filteredCities = citySuggestions
     .filter((city) => city.toLowerCase().includes(cityInput.toLowerCase()))
     .slice(0, 8);
 
-  // Handle city selection
   const handleCitySelect = (city: string) => {
     setCityInput(city);
     setShowCitySuggestions(false);
@@ -169,17 +155,13 @@ const ListingsFilterBar = ({
     onCityChange(city);
   };
 
-  // Handle city input change
   const handleCityInputChange = (value: string) => {
     setCityInput(value);
     setShowCitySuggestions(value.length > 0);
     onCityChange(value);
-    if (value.length > 0) {
-      setRadiusOpen(true);
-    }
+    if (value.length > 0) setRadiusOpen(true);
   };
 
-  // Handle time pill click
   const handleTimePillClick = (pillId: string) => {
     const newValue = selectedTimePill === pillId ? null : pillId;
     setSelectedTimePill(newValue);
@@ -189,7 +171,6 @@ const ListingsFilterBar = ({
     setDateOpen(false);
   };
 
-  // Handle date selection
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTimePill(null);
@@ -198,27 +179,32 @@ const ListingsFilterBar = ({
     setDateOpen(false);
   };
 
-  // Handle category selection
   const handleCategorySelect = (cat: (typeof categories)[0]) => {
     setSelectedCategory(cat);
     onCategoryChange(cat.id, cat.slug);
     setCategoryOpen(false);
   };
 
-  // Handle mood selection
   const handleMoodSelect = (mood: (typeof moods)[0]) => {
     setSelectedMood(mood);
     onMoodChange(mood.slug);
     setMoodOpen(false);
   };
 
-  // Handle radius change
   const handleRadiusChange = (value: number[]) => {
     setRadius(value);
     onRadiusChange(value[0]);
   };
 
-  // Close city suggestions on outside click
+  const closeAllDropdowns = () => {
+    setCategoryOpen(false);
+    setMoodOpen(false);
+    setDateOpen(false);
+    setRadiusOpen(false);
+    setShowCitySuggestions(false);
+  };
+
+  // Effects
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -233,7 +219,7 @@ const ListingsFilterBar = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  // Load categories from taxonomy
+
   useEffect(() => {
     const loadCategories = async () => {
       const { data, error } = await supabase
@@ -255,220 +241,367 @@ const ListingsFilterBar = ({
           name: cat.name,
           icon: getCategoryIcon(cat.slug),
         }));
-
         setCategories([{ id: null, slug: null, name: "Alle Kategorien", icon: LayoutGrid }, ...loadedCategories]);
       }
     };
-
     loadCategories();
   }, []);
+
   useEffect(() => {
     if (initialCategory && categories.length > 1) {
       const found = categories.find((c) => c.slug === initialCategory);
-      if (found) {
-        setSelectedCategory(found);
-      }
+      if (found) setSelectedCategory(found);
     }
   }, [categories, initialCategory]);
 
-  // Get date display text
   const getDateDisplayText = () => {
-    if (selectedDate) {
-      return format(selectedDate, "d. MMM", { locale: de });
-    }
-    if (selectedTimePill) {
-      return timePills.find((p) => p.id === selectedTimePill)?.label || "Jederzeit";
-    }
+    if (selectedDate) return format(selectedDate, "d. MMM", { locale: de });
+    if (selectedTimePill) return timePills.find((p) => p.id === selectedTimePill)?.label || "Jederzeit";
     return "Jederzeit";
   };
 
-  // Function to close all dropdowns
-  const closeAllDropdowns = () => {
-    setCategoryOpen(false);
-    setMoodOpen(false);
-    setDateOpen(false);
-    setRadiusOpen(false);
-    setShowCitySuggestions(false);
-  };
-
   return (
-    <div className="w-full mb-8">
-      {/* Elegant Filter Container */}
-      <div className="bg-secondary/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-lg">
-        {/* Filter Pills Row */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Kategorie Button */}
-          <button
-            onClick={() => {
-              setCategoryOpen(!categoryOpen);
-              setMoodOpen(false);
-              setDateOpen(false);
-            }}
-            className={cn(
-              "group px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 text-sm font-medium shadow-sm",
-              categoryOpen 
-                ? "bg-foreground text-background shadow-md" 
-                : "bg-background/90 hover:bg-background text-foreground hover:shadow-md border border-border/30",
-            )}
-          >
-            <selectedCategory.icon size={18} className={cn("transition-colors", categoryOpen ? "text-background" : "text-muted-foreground group-hover:text-foreground")} />
-            <span>{selectedCategory.name}</span>
-            <ChevronDown
-              size={14}
-              className={cn("transition-all duration-200", categoryOpen ? "rotate-180 text-background" : "text-muted-foreground")}
-            />
-          </button>
-
-          {/* Stimmung Button */}
-          <button
-            onClick={() => {
-              setMoodOpen(!moodOpen);
-              setCategoryOpen(false);
-              setDateOpen(false);
-            }}
-            className={cn(
-              "group px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 text-sm font-medium shadow-sm",
-              moodOpen 
-                ? "bg-foreground text-background shadow-md" 
-                : "bg-background/90 hover:bg-background text-foreground hover:shadow-md border border-border/30",
-            )}
-          >
-            <selectedMood.icon size={18} className={cn("transition-colors", moodOpen ? "text-background" : "text-muted-foreground group-hover:text-foreground")} />
-            <span>{selectedMood.name}</span>
-            <ChevronDown
-              size={14}
-              className={cn("transition-all duration-200", moodOpen ? "rotate-180 text-background" : "text-muted-foreground")}
-            />
-          </button>
-
-          {/* Stadt Input */}
-          <div className="relative">
-            <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <input
-              ref={cityInputRef}
-              type="text"
-              placeholder="Stadt eingeben..."
-              value={cityInput}
-              onChange={(e) => handleCityInputChange(e.target.value)}
-              onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
-              className="w-40 md:w-48 pl-10 pr-4 py-2.5 rounded-xl bg-background/90 border border-border/30 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:bg-background transition-all shadow-sm hover:shadow-md"
-            />
+    <div className="w-full mb-10">
+      {/* Premium Editorial Header */}
+      <div className="relative">
+        {/* Decorative Line */}
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+        
+        {/* Main Filter Container */}
+        <div className="pt-8 pb-6">
+          {/* Premium Label */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-gold/60" />
+            <div className="flex items-center gap-2 text-gold">
+              <Gem size={14} className="animate-pulse" />
+              <span className="text-[11px] font-medium tracking-[0.25em] uppercase">Kuratierte Auswahl</span>
+              <Gem size={14} className="animate-pulse" />
+            </div>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-gold/60" />
           </div>
 
-          {/* Datum Button */}
-          <button
-            onClick={() => {
-              setDateOpen(!dateOpen);
-              setCategoryOpen(false);
-              setMoodOpen(false);
-            }}
-            className={cn(
-              "group px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 text-sm font-medium shadow-sm",
-              dateOpen 
-                ? "bg-foreground text-background shadow-md" 
-                : "bg-background/90 hover:bg-background text-foreground hover:shadow-md border border-border/30",
-            )}
-          >
-            <CalendarIcon size={18} className={cn("transition-colors", dateOpen ? "text-background" : "text-muted-foreground group-hover:text-foreground")} />
-            <span>{getDateDisplayText()}</span>
-            <ChevronDown
-              size={14}
-              className={cn("transition-all duration-200", dateOpen ? "rotate-180 text-background" : "text-muted-foreground")}
-            />
-          </button>
+          {/* Filter Pills - Elegant Horizontal Layout */}
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+            {/* Kategorie */}
+            <button
+              onClick={() => {
+                setCategoryOpen(!categoryOpen);
+                setMoodOpen(false);
+                setDateOpen(false);
+              }}
+              className={cn(
+                "group relative px-5 py-3 transition-all duration-300 flex items-center gap-2.5",
+                "border-b-2 hover:border-gold/60",
+                categoryOpen ? "border-gold" : "border-transparent"
+              )}
+            >
+              <selectedCategory.icon 
+                size={16} 
+                className={cn(
+                  "transition-colors duration-300",
+                  categoryOpen ? "text-gold" : "text-muted-foreground group-hover:text-foreground"
+                )} 
+              />
+              <span className={cn(
+                "font-serif text-sm tracking-wide transition-colors duration-300",
+                categoryOpen ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+              )}>
+                {selectedCategory.name}
+              </span>
+              <ChevronDown
+                size={12}
+                className={cn(
+                  "transition-all duration-300 ml-1",
+                  categoryOpen ? "rotate-180 text-gold" : "text-muted-foreground"
+                )}
+              />
+            </button>
 
-          {/* Suche Input mit Button */}
-          <div className="relative flex items-center gap-0 ml-auto">
-            <div className="relative">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            {/* Vertical Divider */}
+            <div className="hidden md:block w-px h-6 bg-border/50" />
+
+            {/* Stimmung */}
+            <button
+              onClick={() => {
+                setMoodOpen(!moodOpen);
+                setCategoryOpen(false);
+                setDateOpen(false);
+              }}
+              className={cn(
+                "group relative px-5 py-3 transition-all duration-300 flex items-center gap-2.5",
+                "border-b-2 hover:border-gold/60",
+                moodOpen ? "border-gold" : "border-transparent"
+              )}
+            >
+              <selectedMood.icon 
+                size={16} 
+                className={cn(
+                  "transition-colors duration-300",
+                  moodOpen ? "text-gold" : "text-muted-foreground group-hover:text-foreground"
+                )} 
+              />
+              <span className={cn(
+                "font-serif text-sm tracking-wide transition-colors duration-300",
+                moodOpen ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+              )}>
+                {selectedMood.name}
+              </span>
+              <ChevronDown
+                size={12}
+                className={cn(
+                  "transition-all duration-300 ml-1",
+                  moodOpen ? "rotate-180 text-gold" : "text-muted-foreground"
+                )}
+              />
+            </button>
+
+            {/* Vertical Divider */}
+            <div className="hidden md:block w-px h-6 bg-border/50" />
+
+            {/* Stadt Input - Premium Style */}
+            <div className="relative group">
+              <MapPin 
+                size={14} 
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-gold transition-colors duration-300 pointer-events-none" 
+              />
               <input
+                ref={cityInputRef}
                 type="text"
-                placeholder="Name, Künstler..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                className="w-44 md:w-56 pl-10 pr-4 py-2.5 rounded-l-xl bg-background/90 border border-border/30 border-r-0 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:bg-background transition-all"
+                placeholder="Ort wählen"
+                value={cityInput}
+                onChange={(e) => handleCityInputChange(e.target.value)}
+                onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
+                className={cn(
+                  "w-32 md:w-40 pl-10 pr-4 py-3 bg-transparent",
+                  "font-serif text-sm tracking-wide text-foreground placeholder:text-muted-foreground/60",
+                  "border-b-2 border-transparent focus:border-gold outline-none",
+                  "transition-all duration-300"
+                )}
               />
             </div>
+
+            {/* Vertical Divider */}
+            <div className="hidden md:block w-px h-6 bg-border/50" />
+
+            {/* Datum */}
             <button
-              onClick={() => onSearchChange(searchInput)}
-              className="px-5 py-2.5 rounded-r-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
+              onClick={() => {
+                setDateOpen(!dateOpen);
+                setCategoryOpen(false);
+                setMoodOpen(false);
+              }}
+              className={cn(
+                "group relative px-5 py-3 transition-all duration-300 flex items-center gap-2.5",
+                "border-b-2 hover:border-gold/60",
+                dateOpen ? "border-gold" : "border-transparent"
+              )}
             >
-              <Search size={16} />
-              <span className="hidden md:inline">Suchen</span>
+              <CalendarIcon 
+                size={16} 
+                className={cn(
+                  "transition-colors duration-300",
+                  dateOpen ? "text-gold" : "text-muted-foreground group-hover:text-foreground"
+                )} 
+              />
+              <span className={cn(
+                "font-serif text-sm tracking-wide transition-colors duration-300",
+                dateOpen ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+              )}>
+                {getDateDisplayText()}
+              </span>
+              <ChevronDown
+                size={12}
+                className={cn(
+                  "transition-all duration-300 ml-1",
+                  dateOpen ? "rotate-180 text-gold" : "text-muted-foreground"
+                )}
+              />
             </button>
+
+            {/* Vertical Divider */}
+            <div className="hidden md:block w-px h-6 bg-border/50" />
+
+            {/* Premium Search */}
+            <div className="relative flex items-center">
+              <div className="relative group">
+                <Search 
+                  size={14} 
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-gold transition-colors duration-300 pointer-events-none" 
+                />
+                <input
+                  type="text"
+                  placeholder="Suche..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  onBlur={handleSearchBlur}
+                  className={cn(
+                    "w-36 md:w-48 pl-10 pr-4 py-3 bg-transparent",
+                    "font-serif text-sm tracking-wide text-foreground placeholder:text-muted-foreground/60",
+                    "border-b-2 border-transparent focus:border-gold outline-none",
+                    "transition-all duration-300"
+                  )}
+                />
+              </div>
+              <button
+                onClick={() => onSearchChange(searchInput)}
+                className={cn(
+                  "ml-2 px-4 py-2.5 rounded-full",
+                  "bg-foreground text-background",
+                  "font-sans text-xs font-semibold tracking-wide uppercase",
+                  "hover:bg-gold hover:text-foreground",
+                  "transition-all duration-300",
+                  "flex items-center gap-2"
+                )}
+              >
+                <Search size={12} />
+                <span className="hidden md:inline">Finden</span>
+              </button>
+            </div>
           </div>
 
-          {/* Einklappen Button - nur sichtbar wenn ein Dropdown offen ist */}
-          {isAnyDropdownOpen() && (
-            <button
-              onClick={closeAllDropdowns}
-              className="px-4 py-2.5 rounded-xl bg-muted/80 text-muted-foreground font-medium text-sm hover:bg-muted transition-all flex items-center gap-2 shadow-sm"
-            >
-              <ChevronUp size={16} />
-              <span className="hidden md:inline">Schließen</span>
-            </button>
+          {/* Active Filters Chips */}
+          {(selectedCategory.slug || selectedMood.slug || cityInput || selectedDate || selectedTimePill || searchInput) && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-6 pt-6 border-t border-border/30">
+              <span className="text-[10px] font-medium tracking-widest uppercase text-muted-foreground mr-2">Filter:</span>
+              
+              {selectedCategory.slug && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-xs font-medium text-foreground">
+                  {selectedCategory.name}
+                  <button onClick={() => handleCategorySelect(categories[0])} className="text-muted-foreground hover:text-foreground">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              
+              {selectedMood.slug && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-xs font-medium text-foreground">
+                  {selectedMood.name}
+                  <button onClick={() => handleMoodSelect(moods[0])} className="text-muted-foreground hover:text-foreground">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              
+              {cityInput && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-xs font-medium text-foreground">
+                  <MapPin size={10} /> {cityInput} ({radius[0]} km)
+                  <button onClick={() => { setCityInput(""); onCityChange(""); setRadiusOpen(false); }} className="text-muted-foreground hover:text-foreground">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              
+              {(selectedDate || selectedTimePill) && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-xs font-medium text-foreground">
+                  <CalendarIcon size={10} /> {getDateDisplayText()}
+                  <button onClick={() => { setSelectedDate(undefined); setSelectedTimePill(null); onDateChange(undefined); onTimeChange(null); }} className="text-muted-foreground hover:text-foreground">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              
+              {searchInput && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-xs font-medium text-foreground">
+                  "{searchInput}"
+                  <button onClick={() => { setSearchInput(""); onSearchChange(""); }} className="text-muted-foreground hover:text-foreground">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Expandable Dropdowns */}
-        {(categoryOpen || moodOpen || dateOpen || showCitySuggestions || radiusOpen) && (
-          <div className="bg-background/95 backdrop-blur-sm rounded-xl p-5 mt-4 border border-border/30 shadow-inner">
-            {/* Category Dropdown */}
+        {/* Decorative Line */}
+        <div className="absolute left-0 right-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      </div>
+
+      {/* Expandable Panels - Premium Style */}
+      {isAnyDropdownOpen() && (
+        <div className="mt-6 animate-fade-in">
+          <div className="relative bg-secondary/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+            {/* Close Button */}
+            <button
+              onClick={closeAllDropdowns}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Category Grid */}
             {categoryOpen && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.slug || "all"}
-                    onClick={() => handleCategorySelect(cat)}
-                    className={cn(
-                      "group flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all duration-200",
-                      selectedCategory.slug === cat.slug
-                        ? "bg-foreground text-background shadow-lg scale-[1.02]"
-                        : "bg-secondary/50 hover:bg-secondary text-foreground hover:shadow-md border border-transparent hover:border-border/30",
-                    )}
-                  >
-                    <cat.icon size={24} className={selectedCategory.slug === cat.slug ? "" : "text-muted-foreground group-hover:text-foreground transition-colors"} />
-                    <span className="text-xs font-medium text-center leading-tight">{cat.name}</span>
-                  </button>
-                ))}
+              <div>
+                <h3 className="font-serif text-lg mb-5 text-foreground">Kategorie wählen</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.slug || "all"}
+                      onClick={() => handleCategorySelect(cat)}
+                      className={cn(
+                        "group flex flex-col items-center gap-3 p-5 rounded-xl transition-all duration-300",
+                        selectedCategory.slug === cat.slug
+                          ? "bg-foreground text-background shadow-lg shadow-foreground/10"
+                          : "bg-background/80 hover:bg-background text-foreground hover:shadow-md border border-border/20 hover:border-gold/30"
+                      )}
+                    >
+                      <cat.icon 
+                        size={24} 
+                        className={cn(
+                          "transition-all duration-300",
+                          selectedCategory.slug === cat.slug ? "text-gold-light" : "text-muted-foreground group-hover:text-gold"
+                        )} 
+                      />
+                      <span className="font-serif text-xs text-center leading-tight">{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Mood Dropdown */}
+            {/* Mood Grid */}
             {moodOpen && (
-              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2">
-                {moods.map((mood) => (
-                  <button
-                    key={mood.slug || "all"}
-                    onClick={() => handleMoodSelect(mood)}
-                    className={cn(
-                      "group flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200",
-                      selectedMood.slug === mood.slug
-                        ? "bg-foreground text-background shadow-lg scale-[1.02]"
-                        : "bg-secondary/50 hover:bg-secondary text-foreground hover:shadow-md border border-transparent hover:border-border/30",
-                    )}
-                  >
-                    <mood.icon size={20} className={selectedMood.slug === mood.slug ? "" : "text-muted-foreground group-hover:text-foreground transition-colors"} />
-                    <span className="text-[11px] font-medium text-center leading-tight">{mood.name}</span>
-                  </button>
-                ))}
+              <div>
+                <h3 className="font-serif text-lg mb-5 text-foreground">Stimmung wählen</h3>
+                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2">
+                  {moods.map((mood) => (
+                    <button
+                      key={mood.slug || "all"}
+                      onClick={() => handleMoodSelect(mood)}
+                      className={cn(
+                        "group flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300",
+                        selectedMood.slug === mood.slug
+                          ? "bg-foreground text-background shadow-lg shadow-foreground/10"
+                          : "bg-background/80 hover:bg-background text-foreground hover:shadow-md border border-border/20 hover:border-gold/30"
+                      )}
+                    >
+                      <mood.icon 
+                        size={20} 
+                        className={cn(
+                          "transition-all duration-300",
+                          selectedMood.slug === mood.slug ? "text-gold-light" : "text-muted-foreground group-hover:text-gold"
+                        )} 
+                      />
+                      <span className="font-serif text-[10px] text-center leading-tight">{mood.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* City Suggestions */}
             {showCitySuggestions && filteredCities.length > 0 && (
-              <div ref={citySuggestionsRef} className="space-y-3">
-                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Vorschläge</p>
+              <div ref={citySuggestionsRef}>
+                <h3 className="font-serif text-lg mb-5 text-foreground">Ort wählen</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {filteredCities.map((city) => (
                     <button
                       key={city}
                       onClick={() => handleCitySelect(city)}
-                      className="px-4 py-2.5 text-sm text-left bg-secondary/50 hover:bg-secondary rounded-xl transition-all flex items-center gap-2.5 hover:shadow-md border border-transparent hover:border-border/30"
+                      className="group px-4 py-3 text-left bg-background/80 hover:bg-background rounded-xl transition-all duration-300 flex items-center gap-3 hover:shadow-md border border-border/20 hover:border-gold/30"
                     >
-                      <MapPin size={14} className="text-muted-foreground" />
-                      <span className="font-medium">{city}</span>
+                      <MapPin size={14} className="text-muted-foreground group-hover:text-gold transition-colors" />
+                      <span className="font-serif text-sm">{city}</span>
                     </button>
                   ))}
                 </div>
@@ -478,50 +611,61 @@ const ListingsFilterBar = ({
             {/* Radius Slider */}
             {radiusOpen && cityInput && !showCitySuggestions && (
               <div className="max-w-md">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">Umkreis</span>
-                  <span className="text-sm font-bold bg-foreground text-background px-4 py-1.5 rounded-lg shadow-sm">{radius[0]} km</span>
+                <h3 className="font-serif text-lg mb-5 text-foreground">Umkreis: {cityInput}</h3>
+                <div className="flex items-center gap-4">
+                  <Slider 
+                    value={radius} 
+                    onValueChange={handleRadiusChange} 
+                    max={100} 
+                    step={5} 
+                    className="flex-1" 
+                  />
+                  <span className="font-serif text-lg font-medium text-gold min-w-[60px] text-right">
+                    {radius[0]} km
+                  </span>
                 </div>
-                <Slider value={radius} onValueChange={handleRadiusChange} max={100} step={5} className="w-full" />
               </div>
             )}
 
-            {/* Date Dropdown */}
+            {/* Date Picker */}
             {dateOpen && (
-              <div className="flex flex-col md:flex-row gap-5">
-                {/* Time Pills */}
-                <div className="flex flex-wrap gap-2">
-                  {timePills.map((pill) => (
-                    <button
-                      key={pill.id}
-                      onClick={() => handleTimePillClick(pill.id)}
-                      className={cn(
-                        "px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                        selectedTimePill === pill.id
-                          ? "bg-foreground text-background shadow-lg"
-                          : "bg-secondary/50 hover:bg-secondary text-foreground hover:shadow-md border border-transparent hover:border-border/30",
-                      )}
-                    >
-                      {pill.label}
-                    </button>
-                  ))}
-                </div>
+              <div>
+                <h3 className="font-serif text-lg mb-5 text-foreground">Zeitraum wählen</h3>
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Quick Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {timePills.map((pill) => (
+                      <button
+                        key={pill.id}
+                        onClick={() => handleTimePillClick(pill.id)}
+                        className={cn(
+                          "px-5 py-2.5 rounded-full font-serif text-sm transition-all duration-300",
+                          selectedTimePill === pill.id
+                            ? "bg-foreground text-background shadow-lg"
+                            : "bg-background/80 hover:bg-background text-foreground border border-border/20 hover:border-gold/30 hover:shadow-md"
+                        )}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
 
-                {/* Calendar */}
-                <div className="bg-secondary/30 rounded-xl shadow-sm border border-border/20 overflow-hidden">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    locale={de}
-                    className="p-3 pointer-events-auto"
-                  />
+                  {/* Calendar */}
+                  <div className="bg-background rounded-xl shadow-sm border border-border/20 overflow-hidden">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      locale={de}
+                      className="p-3"
+                    />
+                  </div>
                 </div>
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

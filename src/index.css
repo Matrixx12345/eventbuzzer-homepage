@@ -43,6 +43,11 @@
  
     --favorite: 0 75% 55%;
     --favorite-foreground: 0 0% 100%;
+
+    /* Premium Gold Accents */
+    --gold: 38 65% 50%;
+    --gold-light: 40 60% 70%;
+    --gold-dark: 36 70% 35%;
  
     --border: 0 0% 88%;
     --input: 0 0% 88%;
