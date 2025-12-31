@@ -485,19 +485,23 @@ const Listings = () => {
               return (
                 <article 
                   key={event.id}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+                  className="group rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative"
                 >
                   <Link to={`/event/${event.id}`} className="block">
-                    <div className="relative overflow-hidden">
+                    {/* Full card is the image */}
+                    <div className="relative overflow-hidden aspect-[3/4]">
                       <img
                         src={event.image_url || getPlaceholderImage(index)}
                         alt={event.title}
                         loading="lazy"
-                        className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
-                      {/* Date or Museum Badge - Clean White Pill */}
-                      <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
+                      {/* Gradient overlay for text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      
+                      {/* Date or Museum Badge - Top Left */}
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
                         <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
                           {isMuseum ? 'MUSEUM' : formatEventDate(
                             event.start_date,
@@ -539,7 +543,7 @@ const Listings = () => {
                             console.error('Failed to toggle favorite:', error);
                           }
                         }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-md hover:bg-white transition-all shadow-sm"
                         aria-label="Add to favorites"
                       >
                         <Heart
@@ -548,6 +552,46 @@ const Listings = () => {
                         />
                       </button>
                       
+                      {/* Content - Bottom of image */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                        {/* Location */}
+                        <div className="flex items-center gap-1.5 text-[11px] text-white/70 uppercase tracking-wider font-medium mb-1">
+                          <MapPin size={11} className="flex-shrink-0" />
+                          <span className="truncate">{locationName || "Schweiz"}</span>
+                        </div>
+                        
+                        {/* Title */}
+                        <h3 
+                          className="font-serif text-lg font-bold text-white leading-tight line-clamp-2"
+                          onClick={() => trackEventClick(event.id)}
+                        >
+                          {event.title}
+                        </h3>
+                        
+                        {/* Description */}
+                        <p className="text-xs text-white/80 line-clamp-1 leading-normal mt-1">
+                          {event.short_description || "Entdecke dieses einzigartige Event."}
+                        </p>
+                        
+                        {/* Footer */}
+                        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-white/20 text-[10px] text-white/60">
+                          <span>
+                            {event.price_from && event.price_from >= 15 
+                              ? `ab CHF ${event.price_from}`
+                              : event.price_label 
+                                ? event.price_label
+                                : event.price_from !== null && event.price_from !== undefined
+                                  ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
+                                  : ''
+                            }
+                          </span>
+                          <BuzzTracker buzzScore={event.buzz_score} className="[&_span]:text-white/60 [&_.bg-neutral-200]:bg-white/30" />
+                          <div className="ml-auto">
+                            <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                          </div>
+                        </div>
+                      </div>
+                      
                       {/* Image Attribution - only shows on hover */}
                       <ImageAttribution 
                         author={event.image_author} 
@@ -555,51 +599,6 @@ const Listings = () => {
                       />
                     </div>
                   </Link>
-
-                  {/* Content Section - Compact */}
-                  <div className="p-3 flex flex-col flex-grow">
-                    {/* Location Eyebrow */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
-                      <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                      <span className="truncate">
-                        {locationName || "Schweiz"}
-                        {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
-                      </span>
-                    </div>
-                    
-                    {/* Title - Compact */}
-                    <Link 
-                      to={`/event/${event.id}`}
-                      onClick={() => trackEventClick(event.id)}
-                    >
-                      <h3 className="font-serif text-base font-bold text-foreground leading-tight line-clamp-2 hover:text-primary/80 transition-colors">
-                        {event.title}
-                      </h3>
-                    </Link>
-                    
-                    {/* Short Description - Single line, compact */}
-                    <p className="text-xs text-muted-foreground line-clamp-1 leading-normal mt-1 flex-grow">
-                      {event.short_description || "Entdecke dieses einzigartige Event."}
-                    </p>
-                    
-                    {/* Footer Row - always at bottom */}
-                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
-                      <span className="text-neutral-500">
-                        {event.price_from && event.price_from >= 15 
-                          ? `ab CHF ${event.price_from}`
-                          : event.price_label 
-                            ? event.price_label
-                            : event.price_from !== null && event.price_from !== undefined
-                              ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
-                              : ''
-                        }
-                      </span>
-                      <BuzzTracker buzzScore={event.buzz_score} />
-                      <div className="ml-auto">
-                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
-                      </div>
-                    </div>
-                  </div>
                 </article>
               );
             })}
