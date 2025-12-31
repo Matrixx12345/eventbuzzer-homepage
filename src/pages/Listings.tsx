@@ -492,6 +492,7 @@ const Listings = () => {
                       <img
                         src={event.image_url || getPlaceholderImage(index)}
                         alt={event.title}
+                        loading="lazy"
                         className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
