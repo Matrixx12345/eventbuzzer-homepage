@@ -589,10 +589,19 @@ const Listings = () => {
                                 : ''
                           }
                         </span>
-                        {/* Populär - subtle pill with fiery flame */}
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/80 border border-neutral-200/50 text-neutral-500">
-                          <Flame size={10} className="text-orange-500 fill-amber-400" />
-                          <span className="text-[10px]">Populär</span>
+                        {/* Trending - vibrant multi-color flame */}
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-700">
+                          <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
+                            {/* Outer flame - red/orange */}
+                            <path d="M12 2C6.5 9 4 14 4 17a8 8 0 0 0 16 0c0-3-2.5-8-8-15z" fill="#f97316" />
+                            {/* Middle flame - orange/yellow */}
+                            <path d="M12 6C8.5 11 7 14.5 7 16.5a5 5 0 0 0 10 0c0-2-1.5-5.5-5-10.5z" fill="#fb923c" />
+                            {/* Inner flame - yellow core */}
+                            <path d="M12 10C10 13 9 15 9 16.5a3 3 0 0 0 6 0c0-1.5-1-3.5-3-6.5z" fill="#fbbf24" />
+                            {/* Hot center - bright yellow/white */}
+                            <path d="M12 14c-1 1.5-1.5 2.5-1.5 3.2a1.5 1.5 0 0 0 3 0c0-.7-.5-1.7-1.5-3.2z" fill="#fef3c7" />
+                          </svg>
+                          <span className="text-[10px] font-medium">Trending</span>
                         </span>
                       </div>
                       <EventRatingButtons eventId={event.id} eventTitle={event.title} />
