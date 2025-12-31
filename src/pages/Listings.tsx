@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { getNearestPlace } from "@/utils/swissPlaces";
+import { toggleFavoriteApi } from "@/services/favorites";
+import { toast } from "sonner";
 
 // Nutze den zentralen externen Supabase Client
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
@@ -55,6 +57,7 @@ interface ExternalEvent {
   image_license?: string | null;
   category_sub_id?: string;
   created_at?: string;
+  favorite_count?: number;
 }
 
 interface TaxonomyItem {
@@ -505,9 +508,11 @@ const Listings = () => {
                       
                       {/* Favorite Button - Top Right */}
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          
+                          // Toggle local state immediately for better UX
                           toggleFavorite({
                             id: event.id,
                             slug: event.id,
@@ -517,6 +522,22 @@ const Listings = () => {
                             location: locationName,
                             date: formatEventDate(event.start_date),
                           });
+                          
+                          // Call API to persist favorite and update count
+                          try {
+                            const numericId = parseInt(event.id, 10);
+                            if (!isNaN(numericId)) {
+                              const result = await toggleFavoriteApi(numericId);
+                              // Update the event's favorite_count in local state
+                              setEvents(prev => prev.map(e => 
+                                e.id === event.id 
+                                  ? { ...e, favorite_count: result.favoriteCount }
+                                  : e
+                              ));
+                            }
+                          } catch (error) {
+                            console.error('Failed to toggle favorite:', error);
+                          }
                         }}
                         className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
                         aria-label="Add to favorites"
@@ -596,8 +617,8 @@ const Listings = () => {
                             ? Math.floor((new Date().getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
                             : null;
                           
-                          // Trending: more than 10 clicks/views
-                          if (event.show_count && event.show_count > 10) {
+                          // PRIORITY 1: Populär - 10+ favorites
+                          if (event.favorite_count && event.favorite_count >= 10) {
                             return (
                               <span className="flex items-center gap-1 text-neutral-400">
                                 <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
@@ -606,7 +627,7 @@ const Listings = () => {
                                   <path d="M12 10C10 13 9 15 9 16.5a3 3 0 0 0 6 0c0-1.5-1-3.5-3-6.5z" fill="#fbbf24" />
                                   <path d="M12 14c-1 1.5-1.5 2.5-1.5 3.2a1.5 1.5 0 0 0 3 0c0-.7-.5-1.7-1.5-3.2z" fill="#fef3c7" />
                                 </svg>
-                                <span className="text-[10px]">Trending</span>
+                                <span className="text-[10px]">Populär</span>
                               </span>
                             );
                           }
@@ -627,6 +648,16 @@ const Listings = () => {
                                   <path d="M9 5.5c0 1.5.8 2.8 2 3.5V5.5H9z" fill="#fef3c7" opacity="0.6" />
                                 </svg>
                                 <span className="text-[10px]">Must-See</span>
+                              </span>
+                            );
+                          }
+                          
+                          // Neu: Less than 7 days old
+                          if (daysSinceCreation !== null && daysSinceCreation < 7) {
+                            return (
+                              <span className="flex items-center gap-1 text-emerald-500">
+                                <Flame size={12} className="flex-shrink-0" />
+                                <span className="text-[10px]">Neu</span>
                               </span>
                             );
                           }
