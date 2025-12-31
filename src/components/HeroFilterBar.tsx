@@ -339,7 +339,9 @@ const HeroFilterBar = () => {
                         "px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2",
                         selectedTimePill === pill.id
                           ? "bg-blue-900 text-white border-blue-900"
-                          : "bg-transparent border-amber-400 text-foreground/70 hover:bg-amber-50"
+                          : pill.id === "now"
+                          ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
+                          : "bg-gray-100 text-foreground/70 border-gray-100 hover:bg-gray-200"
                       )}
                     >
                       {pill.label}
