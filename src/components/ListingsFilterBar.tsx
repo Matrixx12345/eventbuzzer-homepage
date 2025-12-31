@@ -56,9 +56,10 @@ const moods = [
 
 const timePills = [
   { id: "now", label: "Jetzt" },
+  { id: "today", label: "Heute" },
   { id: "tomorrow", label: "Morgen" },
-  { id: "thisWeek", label: "Wochenende" },
-  { id: "thisMonth", label: "Monat" },
+  { id: "thisWeek", label: "Dieses Wochenende" },
+  { id: "thisMonth", label: "Dieser Monat" },
 ];
 
 const citySuggestions = swissPlaces.slice(0, 50).map((p) => p.name);
@@ -538,37 +539,23 @@ const ListingsFilterBar = ({
           
           {/* Date Dropdown */}
           {openSection === "date" && (
-            <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-xl shadow-xl z-50 animate-fade-in">
-              <div className="space-y-3">
-                {/* Time Pills */}
-                <div className="flex flex-wrap gap-2">
-                  {timePills.map((pill) => (
-                    <button
-                      key={pill.id}
-                      onClick={() => handleTimePillClick(pill.id)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2 flex items-center gap-1.5",
-                        selectedTimePill === pill.id
-                          ? "bg-blue-900 text-white border-blue-900"
-                          : "bg-gray-100 text-gray-700 border-gray-100 hover:bg-gray-200"
-                      )}
-                    >
-                      {pill.id === "now" && <Zap className="w-3.5 h-3.5 text-amber-500" />}
-                      {pill.label}
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Calendar */}
-                <div className="bg-gray-50 rounded-lg overflow-hidden">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    locale={de}
-                    className="p-2"
-                  />
-                </div>
+            <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-xl shadow-xl z-50 animate-fade-in min-w-[280px]">
+              <div className="flex flex-col gap-2">
+                {timePills.map((pill) => (
+                  <button
+                    key={pill.id}
+                    onClick={() => handleTimePillClick(pill.id)}
+                    className={cn(
+                      "px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-left flex items-center gap-2",
+                      selectedTimePill === pill.id
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    )}
+                  >
+                    {pill.id === "now" && <Zap className="w-4 h-4 text-amber-500" />}
+                    {pill.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
