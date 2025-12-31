@@ -71,8 +71,8 @@ const EventCard = ({
       onClick={handleCardClick}
       className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 cursor-pointer"
     >
-      {/* Image Section */}
-      <div className="relative aspect-[4/3] overflow-hidden">
+      {/* Image Section - 16:9 for compact layout */}
+      <div className="relative aspect-video overflow-hidden">
         <img
           src={image}
           alt={title}
@@ -129,12 +129,15 @@ const EventCard = ({
           </div>
         </div>
 
-        {/* Footer: Buzz + Rating in one flat row */}
-        <div className="mt-auto pt-2 flex items-center gap-3 text-[10px] text-gray-500">
+        {/* Footer: Price indicator + Buzz + Rating */}
+        <div className="mt-auto pt-2 flex items-center gap-8 text-[10px] text-gray-500">
+          {/* Price indicator */}
+          <span className="text-sm font-medium text-neutral-700">$</span>
+          
           {/* Buzz Tracker - inline in footer */}
           <BuzzTracker buzzScore={buzz_score} />
           
-          {/* Rating buttons */}
+          {/* Rating flag icon */}
           <div className="ml-auto">
             <EventRatingButtons eventId={id} eventTitle={title} />
           </div>

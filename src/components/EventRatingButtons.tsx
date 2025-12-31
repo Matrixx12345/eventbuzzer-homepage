@@ -57,7 +57,7 @@ export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsPr
         onClick={handleReport}
         disabled={isLoading || !sessionId || hasReported}
         className={`
-          inline-flex items-center gap-1.5 text-xs transition-colors
+          group/flag inline-flex items-center gap-1 text-xs transition-colors
           ${hasReported 
             ? 'text-neutral-400 cursor-default' 
             : 'text-neutral-400 hover:text-neutral-600'
@@ -65,8 +65,10 @@ export function EventRatingButtons({ eventId, eventTitle }: EventRatingButtonsPr
           disabled:cursor-not-allowed
         `}
       >
-        <Flag className="w-3.5 h-3.5" strokeWidth={1.5} />
-        <span>{hasReported ? 'Gemeldet' : 'Fehler melden'}</span>
+        <Flag className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
+        <span className={hasReported ? '' : 'hidden group-hover/flag:inline'}>
+          {hasReported ? 'Gemeldet' : 'Melden'}
+        </span>
       </button>
 
       {showFeedbackModal && (
