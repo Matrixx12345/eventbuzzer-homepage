@@ -415,24 +415,35 @@ const Listings = () => {
   return (
     <div className="min-h-screen bg-stone-100">
       <Navbar />
+      
+      {/* Hero Section with Filter Bar */}
+      <div 
+        className="relative w-full py-16 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80')`,
+        }}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <ListingsFilterBar
+            initialCategory={urlCategory}
+            initialMood={urlQuickFilter}
+            initialCity={urlCity}
+            initialRadius={urlRadius ? parseInt(urlRadius) : 25}
+            initialTime={urlTime}
+            initialDate={urlDate ? new Date(urlDate) : undefined}
+            initialSearch={urlSearch || ""}
+            onCategoryChange={handleCategoryChange}
+            onMoodChange={handleMoodChange}
+            onCityChange={handleCityChange}
+            onRadiusChange={handleRadiusChange}
+            onTimeChange={handleTimeChange}
+            onDateChange={handleDateChange}
+            onSearchChange={(search) => setSearchQuery(search)}
+          />
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Top Filter Bar */}
-        <ListingsFilterBar
-          initialCategory={urlCategory}
-          initialMood={urlQuickFilter}
-          initialCity={urlCity}
-          initialRadius={urlRadius ? parseInt(urlRadius) : 25}
-          initialTime={urlTime}
-          initialDate={urlDate ? new Date(urlDate) : undefined}
-          initialSearch={urlSearch || ""}
-          onCategoryChange={handleCategoryChange}
-          onMoodChange={handleMoodChange}
-          onCityChange={handleCityChange}
-          onRadiusChange={handleRadiusChange}
-          onTimeChange={handleTimeChange}
-          onDateChange={handleDateChange}
-          onSearchChange={(search) => setSearchQuery(search)}
-        />
 
         {/* Results Count */}
         <div className="mb-4 text-sm text-neutral-500">
