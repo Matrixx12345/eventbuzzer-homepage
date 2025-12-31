@@ -132,15 +132,8 @@ const EventCard = ({
           </div>
         </div>
 
-        {/* Footer: Labels + Buzz in one flat row */}
-        <div className="mt-auto pt-2 flex items-center gap-4 text-[10px] text-gray-500">
-          {/* Category label - plain text, no badge */}
-          {isMuseum ? (
-            <span className="uppercase tracking-wide">Museum</span>
-          ) : isMySwitzerland && isYearRound ? (
-            <span className="uppercase tracking-wide">Ganzjährig</span>
-          ) : null}
-          
+        {/* Footer: Buzz + Rating in one flat row */}
+        <div className="mt-auto pt-2 flex items-center gap-3 text-[10px] text-gray-500">
           {/* Buzz Tracker - inline in footer */}
           <BuzzTracker buzzScore={buzz_score} />
           

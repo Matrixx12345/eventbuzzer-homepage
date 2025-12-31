@@ -16,12 +16,12 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   const isHot = score > 80;
 
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      {/* Gradient track */}
+    <span className={cn("inline-flex items-center gap-1.5", className)}>
+      {/* Gradient track - clean blue to red */}
       <span 
-        className="relative w-[80px] h-[3px] rounded-full"
+        className="relative w-[100px] h-[3px] rounded-full"
         style={{ 
-          background: 'linear-gradient(to right, #3b82f6, #eab308, #ef4444)' 
+          background: 'linear-gradient(to right, #60a5fa, #f87171)' 
         }}
       >
         {/* White ring indicator */}
