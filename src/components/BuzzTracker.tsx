@@ -6,31 +6,38 @@ interface BuzzTrackerProps {
 }
 
 /**
- * Minimalist horizontal buzz barometer
- * Shows a thin line (80px) with a positioned indicator dot
- * Gold + 🔥 when buzz >= 80
+ * Temperature-style buzz barometer with gradient
+ * Blue -> Yellow -> Red gradient with floating white ring indicator
+ * Shows 🔥 only when buzz > 80
  */
 export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   // Default to 20 if no score (seed buzz)
   const score = buzzScore ?? 20;
-  const isHot = score >= 80;
+  const isHot = score > 80;
 
   return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
-      {/* Track container */}
-      <span className="relative w-[80px] h-[2px] bg-gray-200 rounded-full">
-        {/* Indicator dot */}
+    <span className={cn("inline-flex items-center gap-2", className)}>
+      {/* Gradient track */}
+      <span 
+        className="relative w-[80px] h-[3px] rounded-full"
+        style={{ 
+          background: 'linear-gradient(to right, #3b82f6, #eab308, #ef4444)' 
+        }}
+      >
+        {/* White ring indicator */}
         <span
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full transition-all duration-300",
-            isHot 
-              ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" 
-              : "bg-gray-400"
-          )}
-          style={{ left: `calc(${Math.min(100, Math.max(0, score))}% - 4px)` }}
+          className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white bg-transparent shadow-sm transition-all duration-300"
+          style={{ 
+            left: `calc(${Math.min(100, Math.max(0, score))}% - 5px)`,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+          }}
         />
       </span>
-      {/* Fire emoji for hot events */}
+      {/* Buzz score text */}
+      <span className="text-[10px] text-gray-500">
+        Buzz {Math.round(score)}
+      </span>
+      {/* Fire emoji only for hot events */}
       {isHot && <span className="text-xs">🔥</span>}
     </span>
   );

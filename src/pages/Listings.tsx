@@ -596,37 +596,37 @@ const Listings = () => {
                       </h3>
                     </Link>
                     
-                    {/* Buzz Tracker - horizontal barometer under title */}
-                    <div className="mt-1.5 mb-2">
-                      <BuzzTracker buzzScore={event.buzz_score} />
-                    </div>
-                    
                     {/* Short Description - Always 2 lines */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem]">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem] mt-1.5">
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price & Rating Row */}
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center gap-4 text-xs text-neutral-400">
-                        <span>
-                          {event.price_from && event.price_from >= 15 
-                            ? `ab ${event.price_from}`
-                            : event.price_label 
-                              ? event.price_label
-                              : event.price_from !== null && event.price_from !== undefined
-                                ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
-                                : ''
-                          }
-                        </span>
-                        {/* Museum badge */}
-                        {isMuseum && (
-                          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-medium">
-                            Museum
-                          </span>
-                        )}
+                    {/* Footer Row: Labels + Buzz + Rating - all flat */}
+                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
+                      {/* Price */}
+                      <span>
+                        {event.price_from && event.price_from >= 15 
+                          ? `ab ${event.price_from}`
+                          : event.price_label 
+                            ? event.price_label
+                            : event.price_from !== null && event.price_from !== undefined
+                              ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
+                              : ''
+                        }
+                      </span>
+                      
+                      {/* Museum label - plain text, no badge */}
+                      {isMuseum && (
+                        <span className="uppercase tracking-wide">Museum</span>
+                      )}
+                      
+                      {/* Buzz Tracker - inline in footer */}
+                      <BuzzTracker buzzScore={event.buzz_score} />
+                      
+                      {/* Rating buttons pushed to right */}
+                      <div className="ml-auto">
+                        <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                       </div>
-                      <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                     </div>
                   </div>
                 </article>
