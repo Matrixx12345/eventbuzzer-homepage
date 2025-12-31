@@ -31,6 +31,76 @@ import swissZurich from "@/assets/swiss-zurich.jpg";
 const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
 
+// Konvertiert ASCII-Umlaute zu echten deutschen Umlauten
+const convertToUmlauts = (text: string | null | undefined): string => {
+  if (!text) return "";
+  const replacements: [string, string][] = [
+    ["fuer", "für"], ["Fuer", "Für"],
+    ["ueber", "über"], ["Ueber", "Über"],
+    ["Aelteste", "Älteste"], ["aelteste", "älteste"],
+    ["Aeltestes", "Ältestes"], ["aeltestes", "ältestes"],
+    ["Aeltere", "Ältere"], ["aeltere", "ältere"],
+    ["aelter", "älter"], ["Aelter", "Älter"],
+    ["oeffentliche", "öffentliche"], ["Oeffentliche", "Öffentliche"],
+    ["oeffentlichen", "öffentlichen"], ["Oeffentlichen", "Öffentlichen"],
+    ["oeffentlicher", "öffentlicher"], ["Oeffentlicher", "Öffentlicher"],
+    ["beruehmte", "berühmte"], ["Beruehmte", "Berühmte"],
+    ["beruehmten", "berühmten"], ["Beruehmten", "Berühmten"],
+    ["Weltberuehmte", "Weltberühmte"], ["weltberuehmte", "weltberühmte"],
+    ["Weltberuehmten", "Weltberühmten"], ["weltberuehmten", "weltberühmten"],
+    ["schoene", "schöne"], ["Schoene", "Schöne"],
+    ["schoenen", "schönen"], ["Schoenen", "Schönen"],
+    ["schoenste", "schönste"], ["Schoenste", "Schönste"],
+    ["grossartige", "großartige"], ["Grossartige", "Großartige"],
+    ["groesste", "größte"], ["Groesste", "Größte"],
+    ["groessere", "größere"], ["Groessere", "Größere"],
+    ["hoechste", "höchste"], ["Hoechste", "Höchste"],
+    ["fruehere", "frühere"], ["Fruehere", "Frühere"],
+    ["taeglich", "täglich"], ["Taeglich", "Täglich"],
+    ["jaehrlich", "jährlich"], ["Jaehrlich", "Jährlich"],
+    ["natuerlich", "natürlich"], ["Natuerlich", "Natürlich"],
+    ["kuenstlerische", "künstlerische"], ["Kuenstlerische", "Künstlerische"],
+    ["Kuenstler", "Künstler"], ["kuenstler", "künstler"],
+    ["Kuenstlern", "Künstlern"], ["kuenstlern", "künstlern"],
+    ["Gemaelde", "Gemälde"], ["gemaelde", "gemälde"],
+    ["Stueck", "Stück"], ["stueck", "stück"],
+    ["Stuecke", "Stücke"], ["stuecke", "stücke"],
+    ["Fuehrung", "Führung"], ["fuehrung", "führung"],
+    ["Fuehrungen", "Führungen"], ["fuehrungen", "führungen"],
+    ["Eroeffnung", "Eröffnung"], ["eroeffnung", "eröffnung"],
+    ["Ausfluege", "Ausflüge"], ["ausfluege", "ausflüge"],
+    ["Laerm", "Lärm"], ["laerm", "lärm"],
+    ["Geraeusch", "Geräusch"], ["geraeusch", "geräusch"],
+    ["Geraeusche", "Geräusche"], ["geraeusche", "geräusche"],
+    ["Gebaeude", "Gebäude"], ["gebaeude", "gebäude"],
+    ["Naehe", "Nähe"], ["naehe", "nähe"],
+    ["Gaeste", "Gäste"], ["gaeste", "gäste"],
+    ["Staedte", "Städte"], ["staedte", "städte"],
+    ["Plaetze", "Plätze"], ["plaetze", "plätze"],
+    ["Spaziergaenge", "Spaziergänge"], ["spaziergaenge", "spaziergänge"],
+    ["Anfaenger", "Anfänger"], ["anfaenger", "anfänger"],
+    ["Sehenswuerdigkeiten", "Sehenswürdigkeiten"], ["sehenswuerdigkeiten", "sehenswürdigkeiten"],
+    ["Zuerich", "Zürich"], ["zuerich", "zürich"],
+    ["Muenchen", "München"], ["muenchen", "münchen"],
+    ["koennen", "können"], ["Koennen", "Können"],
+    ["moechten", "möchten"], ["Moechten", "Möchten"],
+    ["wuerden", "würden"], ["Wuerden", "Würden"],
+    ["muessen", "müssen"], ["Muessen", "Müssen"],
+    ["hoeren", "hören"], ["Hoeren", "Hören"],
+    ["gehoert", "gehört"], ["Gehoert", "Gehört"],
+    ["fuehrt", "führt"], ["Fuehrt", "Führt"],
+    ["praesentiert", "präsentiert"], ["Praesentiert", "Präsentiert"],
+    ["beruehrt", "berührt"], ["Beruehrt", "Berührt"],
+    ["eroeffnet", "eröffnet"], ["Eroeffnet", "Eröffnet"],
+    ["waehrend", "während"], ["Waehrend", "Während"],
+  ];
+  let result = text;
+  for (const [from, to] of replacements) {
+    result = result.split(from).join(to);
+  }
+  return result;
+};
+
 interface ExternalEvent {
   id: string;
   external_id?: string;
@@ -642,7 +712,7 @@ const Listings = () => {
                             "font-serif font-bold text-foreground leading-tight hover:text-primary/80 transition-colors",
                             isFeatured ? "text-lg line-clamp-2" : "text-base line-clamp-2"
                           )}>
-                            {event.title}
+                            {convertToUmlauts(event.title)}
                           </h3>
                         </Link>
                         
@@ -650,7 +720,7 @@ const Listings = () => {
                           "text-xs text-muted-foreground leading-normal mt-1 flex-grow",
                           isFeatured ? "line-clamp-2" : "line-clamp-1"
                         )}>
-                          {event.short_description || "Entdecke dieses einzigartige Event."}
+                          {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
                         <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
