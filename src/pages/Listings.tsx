@@ -556,53 +556,34 @@ const Listings = () => {
                     </div>
                   </Link>
 
-                  {/* Content Section - Flex grow to push footer down */}
-                  <div className="p-4 flex flex-col flex-grow">
-                    {/* Location Eyebrow with Map Hover */}
-                    <div className="group/map relative cursor-pointer mb-2">
-                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium">
-                        <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                        <span className="truncate">
-                          {locationName || "Schweiz"}
-                          {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
-                        </span>
-                      </div>
-                      {event.latitude && event.longitude && (
-                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                          <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
-                            <div className="relative w-full h-full bg-slate-50 rounded overflow-hidden">
-                              <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-60" alt="Map" />
-                              <div
-                                className="absolute w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow"
-                                style={{
-                                  left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
-                                  top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                  {/* Content Section - Compact */}
+                  <div className="p-3 flex flex-col flex-grow">
+                    {/* Location Eyebrow */}
+                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
+                      <MapPin size={11} className="text-primary/60 flex-shrink-0" />
+                      <span className="truncate">
+                        {locationName || "Schweiz"}
+                        {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
+                      </span>
                     </div>
                     
-                    {/* Title - Serif Bold, fixed 2 lines */}
+                    {/* Title - Compact */}
                     <Link 
                       to={`/event/${event.id}`}
                       onClick={() => trackEventClick(event.id)}
                     >
-                      <h3 className="font-serif text-lg font-bold text-foreground leading-snug line-clamp-2 min-h-[3.25rem] hover:text-primary/80 transition-colors">
+                      <h3 className="font-serif text-base font-bold text-foreground leading-tight line-clamp-2 hover:text-primary/80 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
                     
-                    {/* Short Description - Fixed 2 lines, grows to fill space */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem] mt-1.5 flex-grow">
-                      {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
+                    {/* Short Description - Single line, compact */}
+                    <p className="text-xs text-muted-foreground line-clamp-1 leading-normal mt-1 flex-grow">
+                      {event.short_description || "Entdecke dieses einzigartige Event."}
                     </p>
                     
-                    {/* Footer Row: Price + Buzz + Rating - always at bottom */}
-                    <div className="flex items-center gap-6 mt-auto pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
-                      {/* Price */}
+                    {/* Footer Row - always at bottom */}
+                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
                       <span className="text-neutral-500">
                         {event.price_from && event.price_from >= 15 
                           ? `ab CHF ${event.price_from}`
@@ -613,11 +594,7 @@ const Listings = () => {
                               : ''
                         }
                       </span>
-                      
-                      {/* Buzz Tracker - premium barometer */}
                       <BuzzTracker buzzScore={event.buzz_score} />
-                      
-                      {/* Rating buttons pushed to right */}
                       <div className="ml-auto">
                         <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                       </div>
