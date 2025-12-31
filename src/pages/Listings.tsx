@@ -589,20 +589,79 @@ const Listings = () => {
                                 : ''
                           }
                         </span>
-                        {/* Trending - vibrant multi-color flame */}
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-700">
-                          <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
-                            {/* Outer flame - red/orange */}
-                            <path d="M12 2C6.5 9 4 14 4 17a8 8 0 0 0 16 0c0-3-2.5-8-8-15z" fill="#f97316" />
-                            {/* Middle flame - orange/yellow */}
-                            <path d="M12 6C8.5 11 7 14.5 7 16.5a5 5 0 0 0 10 0c0-2-1.5-5.5-5-10.5z" fill="#fb923c" />
-                            {/* Inner flame - yellow core */}
-                            <path d="M12 10C10 13 9 15 9 16.5a3 3 0 0 0 6 0c0-1.5-1-3.5-3-6.5z" fill="#fbbf24" />
-                            {/* Hot center - bright yellow/white */}
-                            <path d="M12 14c-1 1.5-1.5 2.5-1.5 3.2a1.5 1.5 0 0 0 3 0c0-.7-.5-1.7-1.5-3.2z" fill="#fef3c7" />
-                          </svg>
-                          <span className="text-[10px] font-medium">Trending</span>
-                        </span>
+                        {/* Vibe Label - one per event based on data */}
+                        {(() => {
+                          // Determine which vibe label to show (max 1 per event)
+                          const createdAt = event.created_at ? new Date(event.created_at) : null;
+                          const daysSinceCreation = createdAt 
+                            ? Math.floor((new Date().getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
+                            : null;
+                          
+                          // Priority: Trending > Must-See > Geheimtipp
+                          // Trending: more than 10 clicks/views
+                          if (event.show_count && event.show_count > 10) {
+                            return (
+                              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-700">
+                                <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
+                                  <path d="M12 2C6.5 9 4 14 4 17a8 8 0 0 0 16 0c0-3-2.5-8-8-15z" fill="#f97316" />
+                                  <path d="M12 6C8.5 11 7 14.5 7 16.5a5 5 0 0 0 10 0c0-2-1.5-5.5-5-10.5z" fill="#fb923c" />
+                                  <path d="M12 10C10 13 9 15 9 16.5a3 3 0 0 0 6 0c0-1.5-1-3.5-3-6.5z" fill="#fbbf24" />
+                                  <path d="M12 14c-1 1.5-1.5 2.5-1.5 3.2a1.5 1.5 0 0 0 3 0c0-.7-.5-1.7-1.5-3.2z" fill="#fef3c7" />
+                                </svg>
+                                <span className="text-[10px] font-medium">Trending</span>
+                              </span>
+                            );
+                          }
+                          
+                          // Must-See: Blockbuster venues (Beyeler, Kunsthaus, etc.)
+                          const mustSeeVenues = ['beyeler', 'kunsthaus', 'kunstmuseum', 'landesmuseum', 'museum rietberg'];
+                          const venueLower = (event.venue_name || '').toLowerCase();
+                          const titleLower = (event.title || '').toLowerCase();
+                          if (mustSeeVenues.some(v => venueLower.includes(v) || titleLower.includes(v))) {
+                            return (
+                              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-300/60 text-amber-800">
+                                <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
+                                  {/* Trophy base */}
+                                  <path d="M7 21h10v-1H7v1z" fill="#b45309" />
+                                  <path d="M9 20h6v-3H9v3z" fill="#d97706" />
+                                  {/* Trophy cup */}
+                                  <path d="M5 3h14v2c0 3-2 6-5 7v2h-4v-2c-3-1-5-4-5-7V3z" fill="#f59e0b" />
+                                  <path d="M7 4h10v1.5c0 2.5-1.5 4.5-4 5.5h-2c-2.5-1-4-3-4-5.5V4z" fill="#fbbf24" />
+                                  {/* Trophy handles */}
+                                  <path d="M5 4H3v3c0 1.5 1 2.5 2 3V4zM19 4h2v3c0 1.5-1 2.5-2 3V4z" fill="#d97706" />
+                                  {/* Shine */}
+                                  <path d="M9 5.5c0 1.5.8 2.8 2 3.5V5.5H9z" fill="#fef3c7" opacity="0.6" />
+                                </svg>
+                                <span className="text-[10px] font-medium">Must-See</span>
+                              </span>
+                            );
+                          }
+                          
+                          // Geheimtipp: Smaller museums, less clicks, or specific categories
+                          const isSmallVenue = !event.show_count || event.show_count < 5;
+                          const geheimtippCategories = ['museum-kunst', 'museum-history', 'galerie'];
+                          const isGeheimtippCategory = event.category_sub_id && geheimtippCategories.includes(event.category_sub_id);
+                          if (isSmallVenue || isGeheimtippCategory) {
+                            return (
+                              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-50 to-purple-50 border border-purple-200/60 text-purple-700">
+                                <svg width="12" height="12" viewBox="0 0 24 24" className="flex-shrink-0">
+                                  {/* Diamond shape with gradient fill */}
+                                  <path d="M12 2L2 9l10 13 10-13L12 2z" fill="#a855f7" />
+                                  <path d="M12 2L4 9h16L12 2z" fill="#c084fc" />
+                                  <path d="M12 22L4 9h4l4 10 4-10h4L12 22z" fill="#9333ea" />
+                                  {/* Facets */}
+                                  <path d="M8 9l4 10 4-10H8z" fill="#a855f7" />
+                                  <path d="M12 2l-4 7h8l-4-7z" fill="#d8b4fe" />
+                                  {/* Shine */}
+                                  <path d="M10 4l-2 4h3l-1-4z" fill="#f3e8ff" opacity="0.7" />
+                                </svg>
+                                <span className="text-[10px] font-medium">Geheimtipp</span>
+                              </span>
+                            );
+                          }
+                          
+                          return null;
+                        })()}
                       </div>
                       <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                     </div>
