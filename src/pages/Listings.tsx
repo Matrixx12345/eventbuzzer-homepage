@@ -576,20 +576,28 @@ const Listings = () => {
                       {event.short_description || "Entdecke dieses einzigartige Event in der Schweiz."}
                     </p>
                     
-                    {/* Price Label, Popular Badge & Rating Row */}
+                    {/* Price, Popular Badge & Rating Row */}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
                       <div className="flex items-center gap-2">
-                        {/* Price Category Badge */}
-                        <span className={cn(
-                          "text-sm font-semibold",
-                          event.price_label === "Gratis" ? "text-emerald-600" :
-                          event.price_label === "$" ? "text-emerald-600" :
-                          event.price_label === "$$" ? "text-amber-600" :
-                          event.price_label === "$$$" ? "text-rose-600" :
-                          "text-neutral-400"
-                        )}>
-                          {event.price_label || "–"}
-                        </span>
+                        {/* Price: show actual price if available, otherwise price_label estimate */}
+                        {event.price_from && event.price_from > 1 ? (
+                          <span className="text-sm font-medium text-neutral-600">
+                            ab CHF {event.price_from}
+                          </span>
+                        ) : event.price_label ? (
+                          <span className={cn(
+                            "text-sm font-semibold",
+                            event.price_label === "Gratis" ? "text-emerald-600" :
+                            event.price_label === "$" ? "text-emerald-600" :
+                            event.price_label === "$$" ? "text-amber-600" :
+                            event.price_label === "$$$" ? "text-rose-600" :
+                            "text-neutral-400"
+                          )}>
+                            {event.price_label}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-neutral-400">–</span>
+                        )}
                         {/* Populär Badge - shows when show_count > 10 */}
                         {event.show_count && event.show_count > 10 && (
                           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
