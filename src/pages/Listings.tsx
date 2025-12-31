@@ -409,9 +409,69 @@ const Listings = () => {
   }, [taxonomy, selectedCategoryId]);
 
   return (
-    <div className="min-h-screen bg-stone-100">
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Starry Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-black to-gray-900" />
+        {/* Stars layer */}
+        <div 
+          className="absolute inset-0 opacity-70"
+          style={{
+            backgroundImage: `
+              radial-gradient(1px 1px at 20px 30px, white, transparent),
+              radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.8), transparent),
+              radial-gradient(1.5px 1.5px at 50px 160px, white, transparent),
+              radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.9), transparent),
+              radial-gradient(1.5px 1.5px at 130px 80px, white, transparent),
+              radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.7), transparent),
+              radial-gradient(2px 2px at 200px 50px, white, transparent),
+              radial-gradient(1px 1px at 220px 130px, rgba(255,255,255,0.8), transparent),
+              radial-gradient(1.5px 1.5px at 280px 90px, white, transparent),
+              radial-gradient(1px 1px at 320px 160px, rgba(255,255,255,0.6), transparent),
+              radial-gradient(1px 1px at 350px 30px, white, transparent),
+              radial-gradient(1.5px 1.5px at 400px 110px, rgba(255,255,255,0.9), transparent),
+              radial-gradient(1px 1px at 450px 60px, white, transparent),
+              radial-gradient(2px 2px at 500px 140px, rgba(255,255,255,0.8), transparent)
+            `,
+            backgroundRepeat: 'repeat',
+            backgroundSize: '550px 200px'
+          }}
+        />
+        {/* Additional stars layer for density */}
+        <div 
+          className="absolute inset-0 opacity-50"
+          style={{
+            backgroundImage: `
+              radial-gradient(1px 1px at 10px 10px, white, transparent),
+              radial-gradient(1px 1px at 60px 90px, rgba(255,255,255,0.6), transparent),
+              radial-gradient(1px 1px at 100px 50px, white, transparent),
+              radial-gradient(1.5px 1.5px at 140px 140px, rgba(255,255,255,0.8), transparent),
+              radial-gradient(1px 1px at 180px 20px, white, transparent),
+              radial-gradient(1px 1px at 230px 70px, rgba(255,255,255,0.7), transparent),
+              radial-gradient(1px 1px at 270px 120px, white, transparent),
+              radial-gradient(1.5px 1.5px at 310px 45px, rgba(255,255,255,0.9), transparent)
+            `,
+            backgroundRepeat: 'repeat',
+            backgroundSize: '350px 170px'
+          }}
+        />
+        {/* Subtle twinkling effect via animation */}
+        <div 
+          className="absolute inset-0 opacity-30 animate-pulse"
+          style={{
+            backgroundImage: `
+              radial-gradient(2px 2px at 100px 100px, rgba(200,220,255,1), transparent),
+              radial-gradient(2px 2px at 300px 200px, rgba(255,230,200,1), transparent),
+              radial-gradient(2px 2px at 500px 80px, rgba(200,255,230,1), transparent)
+            `,
+            backgroundRepeat: 'repeat',
+            backgroundSize: '600px 300px',
+            animationDuration: '3s'
+          }}
+        />
+      </div>
       <Navbar />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
         {/* Top Filter Bar */}
         <ListingsFilterBar
           initialCategory={urlCategory}
@@ -429,21 +489,21 @@ const Listings = () => {
         />
 
         {/* Results Count */}
-        <div className="mb-4 text-sm text-neutral-500">
+        <div className="mb-4 text-sm text-neutral-400">
           {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
         </div>
 
         {/* Subcategory Sticky Bar */}
         {selectedCategoryId && subCategories.length > 0 && (
-          <div className="sticky top-0 z-10 bg-stone-100/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
+          <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto border-b border-white/10">
             <div className="flex gap-2 min-w-max">
               <button
                 onClick={() => setSelectedSubcategoryId(null)}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                   selectedSubcategoryId === null
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-white text-gray-700 border hover:bg-gray-50",
+                    ? "bg-white text-gray-900 shadow-md"
+                    : "bg-white/10 text-white/80 border border-white/20 hover:bg-white/20",
                 )}
               >
                 Alle
@@ -455,8 +515,8 @@ const Listings = () => {
                   className={cn(
                     "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                     selectedSubcategoryId === sub.id
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "bg-white text-gray-700 border hover:bg-gray-50",
+                      ? "bg-white text-gray-900 shadow-md"
+                      : "bg-white/10 text-white/80 border border-white/20 hover:bg-white/20",
                   )}
                 >
                   {sub.name}
