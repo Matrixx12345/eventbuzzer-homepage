@@ -234,89 +234,111 @@ const ListingsFilterBar = ({
 
   return (
     <div ref={containerRef} className="w-full mb-8">
-      {/* Main Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 p-2 bg-secondary/80 backdrop-blur-sm rounded-2xl border border-border/30">
+      {/* Main Filter Bar - Clean horizontal design */}
+      <div className="flex items-stretch bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden">
         {/* Kategorie */}
         <button
           onClick={() => toggleSection("category")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-            openSection === "category" || selectedCategory.slug
-              ? "bg-foreground text-background"
-              : "bg-background/60 hover:bg-background text-foreground"
+            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-muted/50 flex-1 min-w-0",
+            openSection === "category" && "bg-muted/50"
           )}
         >
-          <selectedCategory.icon size={16} />
-          <span>{selectedCategory.slug ? selectedCategory.name : "Kategorie"}</span>
-          <ChevronDown size={14} className={cn("transition-transform", openSection === "category" && "rotate-180")} />
+          <LayoutGrid className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <span className="font-medium text-foreground text-sm truncate">
+            {selectedCategory.slug ? selectedCategory.name : "Alle Kategorien"}
+          </span>
         </button>
+
+        <div className="w-px bg-border self-stretch my-3" />
 
         {/* Stimmung */}
         <button
           onClick={() => toggleSection("mood")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-            openSection === "mood" || selectedMood.slug
-              ? "bg-foreground text-background"
-              : "bg-background/60 hover:bg-background text-foreground"
+            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-muted/50 flex-1 min-w-0",
+            openSection === "mood" && "bg-muted/50"
           )}
         >
-          <selectedMood.icon size={16} />
-          <span>{selectedMood.slug ? selectedMood.name : "Stimmung"}</span>
-          <ChevronDown size={14} className={cn("transition-transform", openSection === "mood" && "rotate-180")} />
+          <Smile className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <span className="font-medium text-foreground text-sm truncate">
+            {selectedMood.slug ? selectedMood.name : "Jede Stimmung"}
+          </span>
         </button>
+
+        <div className="w-px bg-border self-stretch my-3" />
 
         {/* Ort */}
         <button
           onClick={() => toggleSection("location")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-            openSection === "location" || cityInput
-              ? "bg-foreground text-background"
-              : "bg-background/60 hover:bg-background text-foreground"
+            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-muted/50 flex-1 min-w-0",
+            openSection === "location" && "bg-muted/50"
           )}
         >
-          <MapPin size={16} />
-          <span>{cityInput || "Ort"}</span>
-          <ChevronDown size={14} className={cn("transition-transform", openSection === "location" && "rotate-180")} />
+          <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <div className="text-left min-w-0">
+            <div className="font-medium text-foreground text-sm truncate">
+              {cityInput || "Ort"}
+            </div>
+            {!cityInput && (
+              <div className="text-xs text-muted-foreground">Ort eingeben</div>
+            )}
+          </div>
         </button>
+
+        <div className="w-px bg-border self-stretch my-3" />
 
         {/* Datum */}
         <button
           onClick={() => toggleSection("date")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-            openSection === "date" || selectedDate || selectedTimePill
-              ? "bg-foreground text-background"
-              : "bg-background/60 hover:bg-background text-foreground"
+            "flex items-center gap-3 px-5 py-4 transition-colors hover:bg-muted/50 flex-1 min-w-0",
+            openSection === "date" && "bg-muted/50"
           )}
         >
-          <CalendarIcon size={16} />
-          <span>{getDateDisplayText()}</span>
-          <ChevronDown size={14} className={cn("transition-transform", openSection === "date" && "rotate-180")} />
+          <CalendarIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <span className="font-medium text-foreground text-sm truncate">
+            {getDateDisplayText()}
+          </span>
         </button>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        <div className="w-px bg-border self-stretch my-3" />
 
-        {/* Search */}
-        <div className="relative flex items-center">
-          <Search size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Suchen..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            onBlur={handleSearchBlur}
-            className="w-32 md:w-44 pl-9 pr-3 py-2.5 rounded-xl bg-background/60 text-sm placeholder:text-muted-foreground border-0 outline-none focus:bg-background transition-all"
-          />
+        {/* Suche Input */}
+        <div className="flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
+          <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <div className="text-left min-w-0 w-full">
+            <input
+              type="text"
+              placeholder="Suchen"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onBlur={handleSearchBlur}
+              className="w-full bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            {!searchInput && (
+              <div className="text-xs text-muted-foreground">Event suchen</div>
+            )}
+          </div>
+        </div>
+
+        {/* SUCHEN Button */}
+        <div className="p-2 flex-shrink-0">
+          <button
+            onClick={() => onSearchChange(searchInput)}
+            className="h-full px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold flex items-center gap-2 transition-colors"
+          >
+            <Search className="w-4 h-4" />
+            <span>SUCHEN</span>
+          </button>
         </div>
       </div>
 
       {/* Expandable Panel */}
       {openSection && (
-        <div className="mt-3 p-5 bg-secondary/60 backdrop-blur-md rounded-2xl border border-border/30 animate-fade-in">
+        <div className="mt-3 p-5 bg-card rounded-2xl shadow-lg border border-border/50 animate-fade-in">
           {/* Category */}
           {openSection === "category" && (
             <div className="flex flex-wrap gap-2">
@@ -327,8 +349,8 @@ const ListingsFilterBar = ({
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
                     selectedCategory.slug === cat.slug
-                      ? "bg-foreground text-background"
-                      : "bg-background hover:bg-background/80 text-foreground border border-border/40"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-foreground"
                   )}
                 >
                   <cat.icon size={16} />
@@ -348,8 +370,8 @@ const ListingsFilterBar = ({
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
                     selectedMood.slug === mood.slug
-                      ? "bg-foreground text-background"
-                      : "bg-background hover:bg-background/80 text-foreground border border-border/40"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-foreground"
                   )}
                 >
                   <mood.icon size={16} />
@@ -371,7 +393,7 @@ const ListingsFilterBar = ({
                   value={cityInput}
                   onChange={(e) => handleCityInputChange(e.target.value)}
                   autoFocus
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-background text-sm border border-border/40 outline-none focus:border-foreground/30"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted text-sm border-0 outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
               
@@ -384,8 +406,8 @@ const ListingsFilterBar = ({
                       className={cn(
                         "px-4 py-2 rounded-xl text-sm font-medium transition-all",
                         cityInput === city
-                          ? "bg-foreground text-background"
-                          : "bg-background hover:bg-background/80 text-foreground border border-border/40"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted hover:bg-muted/80 text-foreground"
                       )}
                     >
                       {city}
@@ -406,7 +428,7 @@ const ListingsFilterBar = ({
             </div>
           )}
 
-          {/* Date - Pills appear here */}
+          {/* Date */}
           {openSection === "date" && (
             <div className="flex flex-col lg:flex-row gap-5">
               <div className="flex flex-wrap gap-2">
@@ -417,15 +439,15 @@ const ListingsFilterBar = ({
                     className={cn(
                       "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
                       selectedTimePill === pill.id
-                        ? "bg-foreground text-background"
-                        : "bg-background hover:bg-background/80 text-foreground border border-border/40"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-foreground"
                     )}
                   >
                     {pill.label}
                   </button>
                 ))}
               </div>
-              <div className="bg-background rounded-xl border border-border/40 overflow-hidden">
+              <div className="bg-muted rounded-xl overflow-hidden">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
