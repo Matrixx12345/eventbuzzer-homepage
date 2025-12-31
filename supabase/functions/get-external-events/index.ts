@@ -17,34 +17,48 @@ serve(async (req) => {
     
     // Fast path: Single event lookup by ID
     if (eventId) {
-      console.log("Fetching single event by ID:", eventId);
+      console.log("=== SINGLE EVENT LOOKUP ===");
+      console.log("Requested eventId:", eventId, "Type:", typeof eventId);
       
-      // Try to find by external_id first, then by numeric id
-      // Select all columns for single event detail view
-      const detailColumns = "id,external_id,title,short_description,description,venue_name,address_city,address_full,location,start_date,end_date,date_range_start,date_range_end,show_count,image_url,image_author,image_license,price_from,price_to,price_label,latitude,longitude,tags,category_main_id,category_sub_id,available_months,ticket_url,source_url,source";
+      // Use SELECT * for detail view to avoid column mismatch issues
+      // Try to find by external_id first
       let { data: event, error } = await supabase
         .from("events")
-        .select(detailColumns)
+        .select("*")
         .eq("external_id", eventId)
         .maybeSingle();
+      
+      console.log("Query by external_id result:", event ? `Found: ${event.title}` : "Not found");
       
       if (!event && !error) {
         // Try numeric ID
         const numericId = parseInt(eventId, 10);
+        console.log("Trying numeric ID:", numericId);
         if (!isNaN(numericId)) {
           const result = await supabase
             .from("events")
-            .select(detailColumns)
+            .select("*")
             .eq("id", numericId)
             .maybeSingle();
           event = result.data;
           error = result.error;
+          console.log("Query by numeric id result:", event ? `Found: ${event.title}` : "Not found");
         }
       }
       
       if (error) {
         console.error("Error fetching event:", error);
         throw error;
+      }
+      
+      // Log the attribution fields specifically
+      if (event) {
+        console.log("=== ATTRIBUTION DEBUG ===");
+        console.log("Event ID:", event.id);
+        console.log("External ID:", event.external_id);
+        console.log("Title:", event.title);
+        console.log("image_author:", event.image_author, "| Type:", typeof event.image_author);
+        console.log("image_license:", event.image_license, "| Type:", typeof event.image_license);
       }
       
       return new Response(
@@ -91,9 +105,8 @@ serve(async (req) => {
       "freunde-gruppen": ["freunde-gruppen"],
     };
 
-    // Select only needed columns for better performance
-    const columns = "id,external_id,title,short_description,venue_name,address_city,location,start_date,end_date,date_range_start,date_range_end,show_count,image_url,image_author,image_license,price_from,price_to,price_label,latitude,longitude,tags,category_main_id,category_sub_id,available_months";
-    let query = supabase.from("events").select(columns, { count: "exact" });
+    // Use SELECT * to avoid column mismatch issues, then filter in response
+    let query = supabase.from("events").select("*", { count: "exact" });
 
     // ✅ TAG-FILTER: Direkt mit .contains() auf der tags-Spalte filtern
     if (tags.length > 0) {
