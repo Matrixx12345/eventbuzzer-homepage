@@ -1,8 +1,9 @@
-import { Heart, Flame } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { EventRatingButtons } from "./EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ImageAttribution from "./ImageAttribution";
+import { VibeBadge, VibeFlames, computeAutoVibe, type VibeLabel } from "./VibeBadge";
 
 interface EventCardProps {
   id: string;
@@ -20,6 +21,9 @@ interface EventCardProps {
   image_author?: string | null;
   image_license?: string | null;
   category_sub_id?: string;
+  created_at?: string;
+  vibeLabel?: VibeLabel;
+  vibeLevel?: 1 | 2 | 3;
 }
 
 const EventCard = ({
@@ -38,6 +42,9 @@ const EventCard = ({
   image_author,
   image_license,
   category_sub_id,
+  created_at,
+  vibeLabel: propVibeLabel,
+  vibeLevel: propVibeLevel,
 }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
@@ -47,6 +54,11 @@ const EventCard = ({
   const isYearRound = availableMonths?.length === 12;
   // Check if museum: either by category_sub_id OR by external_id pattern (manual_ entries are museums)
   const isMuseum = category_sub_id === 'museum-kunst' || external_id?.startsWith('manual_');
+
+  // Compute auto vibe if no manual override provided
+  const autoVibe = propVibeLabel ? null : computeAutoVibe({ created_at, category_sub_id });
+  const vibeLabel = propVibeLabel || autoVibe?.label;
+  const vibeLevel = propVibeLevel || autoVibe?.level;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -67,9 +79,10 @@ const EventCard = ({
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {isPopular && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-full uppercase">
-            <Flame size={12} /> Popular
+        {/* Vibe Badge on image - replaces isPopular badge */}
+        {vibeLabel && (
+          <div className="absolute top-3 left-3">
+            <VibeBadge label={vibeLabel} level={vibeLevel} size="sm" />
           </div>
         )}
         <button
@@ -128,17 +141,20 @@ const EventCard = ({
           </div>
         </div>
 
-        {/* Footer with Badge and Rating */}
+        {/* Footer with Badge, Vibe Flames and Rating */}
         <div className="mt-auto pt-2 flex items-center justify-between">
-          {isMuseum ? (
-            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-              Museum
-            </span>
-          ) : isMySwitzerland && isYearRound ? (
-            <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-              Ganzjährig
-            </span>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {isMuseum ? (
+              <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                Museum
+              </span>
+            ) : isMySwitzerland && isYearRound ? (
+              <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                Ganzjährig
+              </span>
+            ) : null}
+            {vibeLevel && <VibeFlames level={vibeLevel} size="sm" />}
+          </div>
           <EventRatingButtons eventId={id} eventTitle={title} />
         </div>
       </div>

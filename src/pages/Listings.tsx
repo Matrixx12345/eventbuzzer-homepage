@@ -3,6 +3,7 @@ import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
+import { VibeBadge, VibeFlames, computeAutoVibe } from "@/components/VibeBadge";
 import {
   Heart,
   MapPin,
@@ -52,6 +53,7 @@ interface ExternalEvent {
   image_author?: string | null;
   image_license?: string | null;
   category_sub_id?: string;
+  created_at?: string;
 }
 
 interface TaxonomyItem {
@@ -473,6 +475,12 @@ const Listings = () => {
                   : null;
               // Check if museum: either by category_sub_id OR by external_id pattern (manual_ entries are museums)
               const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
+              
+              // Compute auto vibe
+              const autoVibe = computeAutoVibe({ 
+                created_at: event.created_at, 
+                category_sub_id: event.category_sub_id 
+              });
 
               return (
                 <article 
@@ -487,18 +495,24 @@ const Listings = () => {
                         className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       
-                      {/* Date Badge or Museum Badge - Elegant Glassmorphism */}
-                      <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
-                        <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
-                          {isMuseum ? 'MUSEUM' : formatEventDate(
-                            event.start_date,
-                            event.external_id,
-                            event.date_range_start,
-                            event.date_range_end,
-                            event.show_count,
-                          )}
-                        </p>
-                      </div>
+                      {/* Vibe Badge or Date Badge */}
+                      {autoVibe ? (
+                        <div className="absolute top-3 left-3">
+                          <VibeBadge label={autoVibe.label} level={autoVibe.level} size="sm" />
+                        </div>
+                      ) : (
+                        <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
+                          <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
+                            {isMuseum ? 'MUSEUM' : formatEventDate(
+                              event.start_date,
+                              event.external_id,
+                              event.date_range_start,
+                              event.date_range_end,
+                              event.show_count,
+                            )}
+                          </p>
+                        </div>
+                      )}
                       
                       {/* Favorite Button - Top Right */}
                       <button

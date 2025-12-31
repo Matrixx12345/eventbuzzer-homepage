@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_vibe_overrides: {
+        Row: {
+          created_at: string
+          external_id: string
+          gallery_urls: string[] | null
+          id: string
+          updated_at: string
+          vibe_label: string | null
+          vibe_level: number | null
+        }
+        Insert: {
+          created_at?: string
+          external_id: string
+          gallery_urls?: string[] | null
+          id?: string
+          updated_at?: string
+          vibe_label?: string | null
+          vibe_level?: number | null
+        }
+        Update: {
+          created_at?: string
+          external_id?: string
+          gallery_urls?: string[] | null
+          id?: string
+          updated_at?: string
+          vibe_label?: string | null
+          vibe_level?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
