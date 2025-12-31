@@ -29,7 +29,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import filterBg from "@/assets/filter-bg.jpg";
+import heroImage from "@/assets/hero-mountains.jpg";
 
 // NEU: Icon mapping (außerhalb der Komponente)
 const getCategoryIcon = (slug: string | null) => {
@@ -275,34 +275,34 @@ const ListingsFilterBar = ({
   };
 
   return (
-    <div className="relative w-full mb-6">
-      {/* Background Image - compact hero */}
-      <div className="relative h-40 sm:h-48 overflow-hidden rounded-2xl">
-        <img src={filterBg} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
+    <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl mb-6">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img src={heroImage} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40" />
       </div>
 
-      {/* Floating Filter Bar */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10 w-[calc(100%-2rem)] max-w-4xl">
-        {/* Glassmorphism Container */}
-        <div className="backdrop-blur-xl bg-white/90 border border-white/60 rounded-2xl shadow-xl">
-          {/* Collapsed Bar */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full px-5 py-3 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-foreground/80 font-medium text-sm">{getFilterSummary()}</span>
-            </div>
-            <div className="flex items-center gap-2 text-foreground/60">
-              <span className="text-xs font-medium">{isExpanded ? "Einklappen" : "Filter anpassen"}</span>
-              {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
-          </button>
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Collapsed Bar */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-6 py-4 flex items-center justify-between backdrop-blur-xl bg-white/25 border-b border-white/20"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-white/90 font-medium text-sm">{getFilterSummary()}</span>
+          </div>
+          <div className="flex items-center gap-2 text-white/80">
+            <span className="text-xs font-medium">{isExpanded ? "Einklappen" : "Filter anpassen"}</span>
+            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </button>
 
-          {/* Expanded Content */}
-          {isExpanded && (
-            <div className="px-4 pb-4 pt-2 border-t border-neutral-100">
+        {/* Expanded Content */}
+        {isExpanded && (
+          <div className="p-4 md:p-6">
+            {/* Glassmorphism Container */}
+            <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl p-4 md:p-6 shadow-xl">
               {/* Filter Pills Row */}
               <div className="flex flex-wrap gap-3 mb-4">
                 {/* Kategorie Button */}
@@ -502,8 +502,8 @@ const ListingsFilterBar = ({
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
