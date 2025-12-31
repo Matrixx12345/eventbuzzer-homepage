@@ -556,14 +556,14 @@ const Listings = () => {
                     </div>
                   </Link>
 
-                  {/* Content Section - Compact */}
-                  <div className="p-3 flex flex-col flex-grow">
+                  {/* Content Section - Dark Style Test */}
+                  <div className="p-3 flex flex-col flex-grow bg-neutral-900">
                     {/* Location Eyebrow */}
                     <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1">
-                      <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                      <span className="truncate">
+                      <MapPin size={11} className="text-white/60 flex-shrink-0" />
+                      <span className="truncate text-neutral-400">
                         {locationName || "Schweiz"}
-                        {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
+                        {distanceInfo && <span className="text-neutral-500 ml-1">• {distanceInfo}</span>}
                       </span>
                     </div>
                     
@@ -572,19 +572,19 @@ const Listings = () => {
                       to={`/event/${event.id}`}
                       onClick={() => trackEventClick(event.id)}
                     >
-                      <h3 className="font-serif text-base font-bold text-foreground leading-tight line-clamp-2 hover:text-primary/80 transition-colors">
+                      <h3 className="font-serif text-base font-bold text-white leading-tight line-clamp-2 hover:text-white/80 transition-colors">
                         {event.title}
                       </h3>
                     </Link>
                     
                     {/* Short Description - Single line, compact */}
-                    <p className="text-xs text-muted-foreground line-clamp-1 leading-normal mt-1 flex-grow">
+                    <p className="text-xs text-neutral-400 line-clamp-1 leading-normal mt-1 flex-grow">
                       {event.short_description || "Entdecke dieses einzigartige Event."}
                     </p>
                     
                     {/* Footer Row - always at bottom */}
-                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
-                      <span className="text-neutral-500">
+                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-700 text-[10px] text-neutral-400">
+                      <span className="text-neutral-400">
                         {event.price_from && event.price_from >= 15 
                           ? `ab CHF ${event.price_from}`
                           : event.price_label 
