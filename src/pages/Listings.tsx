@@ -605,7 +605,7 @@ const Listings = () => {
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[2.8/4]" : "aspect-[2/1]"
+                              isFeatured ? "aspect-[2.4/4]" : "aspect-[2/1]"
                             )}
                           />
                           
@@ -750,7 +750,7 @@ const Listings = () => {
                 // 5 events: 4 regular in 2x2 + 1 featured spanning 2 rows
                 // Grid: 3 columns, 2 rows
                 return (
-                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-5">
+                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-5 lg:gap-y-3">
                     {block.featuredRight ? (
                       <>
                         {/* Row 1: Card 1, Card 2 */}
