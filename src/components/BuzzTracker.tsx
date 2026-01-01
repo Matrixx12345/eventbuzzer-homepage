@@ -26,13 +26,8 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
     return '#ef4444'; // red-500
   };
 
-  // Text color matches the bar color for cohesion
-  const getTextColor = () => {
-    if (score <= 35) return '#737373'; // neutral-500 for low scores
-    if (score <= 55) return '#d97706'; // amber-600
-    if (score <= 75) return '#ea580c'; // orange-600
-    return '#dc2626'; // red-600
-  };
+  // Text color matches the bar color exactly
+  const getTextColor = () => getBarColor();
 
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
