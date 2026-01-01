@@ -753,30 +753,30 @@ const Listings = () => {
                   );
                 }
                 
-                // Render block with featured card
+                // Render block with featured card - use flex layout to avoid height stretching
                 return (
-                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5">
                     {block.featuredRight ? (
                       <>
-                        {/* First row: 2 regular cards */}
-                        {regularEvents.slice(0, 2).map((event, idx) => renderEventCard(event, idx, false))}
-                        {/* Featured card spanning 2 rows */}
-                        <div className="row-span-2">
+                        {/* Left side: 2x2 grid of regular cards */}
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
+                          {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
+                        </div>
+                        {/* Right side: Featured card */}
+                        <div className="lg:w-1/3">
                           {renderEventCard(featuredEvent, 4, true)}
                         </div>
-                        {/* Second row: 2 regular cards */}
-                        {regularEvents.slice(2, 4).map((event, idx) => renderEventCard(event, idx + 2, false))}
                       </>
                     ) : (
                       <>
-                        {/* Featured card spanning 2 rows on the left */}
-                        <div className="row-span-2">
+                        {/* Left side: Featured card */}
+                        <div className="lg:w-1/3">
                           {renderEventCard(featuredEvent, 4, true)}
                         </div>
-                        {/* First row: 2 regular cards */}
-                        {regularEvents.slice(0, 2).map((event, idx) => renderEventCard(event, idx, false))}
-                        {/* Second row: 2 regular cards */}
-                        {regularEvents.slice(2, 4).map((event, idx) => renderEventCard(event, idx + 2, false))}
+                        {/* Right side: 2x2 grid of regular cards */}
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
+                          {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
+                        </div>
                       </>
                     )}
                   </div>
