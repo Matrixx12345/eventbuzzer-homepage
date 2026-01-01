@@ -64,6 +64,11 @@ export default {
           DEFAULT: "hsl(var(--navbar-background))",
           foreground: "hsl(var(--navbar-foreground))",
         },
+        listings: {
+          DEFAULT: "hsl(var(--listings-bg))",
+          card: "hsl(var(--listings-card))",
+          text: "hsl(var(--listings-text))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
