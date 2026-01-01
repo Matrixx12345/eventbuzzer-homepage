@@ -604,7 +604,7 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
+                      className="group rounded-xl overflow-hidden bg-listings-card shadow-md hover:shadow-lg border border-stone-200/50 hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col"
                     >
                       <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
                         <div className="relative overflow-hidden flex-grow">

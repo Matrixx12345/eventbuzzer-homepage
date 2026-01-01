@@ -13,16 +13,16 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   const normalizedScore = Math.min(100, Math.max(0, score));
   const isHot = score >= 80;
 
-  // Smooth interpolation from gray → yellow → orange → red
+  // Smooth interpolation from gray → yellow → orange → red (darker grays for visibility)
   const getBarColor = () => {
-    if (score <= 20) return '#d4d4d4'; // neutral-300 (light gray)
-    if (score <= 35) return '#e5e5e5'; // neutral-200 (lighter gray transitioning)
-    if (score <= 45) return '#fde68a'; // amber-200 (pale yellow)
-    if (score <= 55) return '#fcd34d'; // amber-300 (yellow)
-    if (score <= 65) return '#fbbf24'; // amber-400 (warm yellow)
-    if (score <= 75) return '#f59e0b'; // amber-500 (orange-yellow)
-    if (score <= 85) return '#f97316'; // orange-500
-    if (score <= 92) return '#ea580c'; // orange-600
+    if (score <= 20) return '#9ca3af'; // gray-400 (visible gray)
+    if (score <= 35) return '#a8a29e'; // stone-400 (warm gray)
+    if (score <= 45) return '#facc15'; // yellow-400 (vibrant)
+    if (score <= 55) return '#fbbf24'; // amber-400
+    if (score <= 65) return '#f59e0b'; // amber-500
+    if (score <= 75) return '#f97316'; // orange-500
+    if (score <= 85) return '#ea580c'; // orange-600
+    if (score <= 92) return '#dc2626'; // red-600
     return '#ef4444'; // red-500
   };
 
@@ -31,8 +31,8 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
 
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      {/* Thermometer capsule container - extended width */}
-      <span className="relative w-[140px] h-1.5 bg-neutral-200/50 rounded-full overflow-hidden">
+      {/* Thermometer capsule container - extended width with visible background */}
+      <span className="relative w-[140px] h-1.5 bg-stone-300/60 rounded-full overflow-hidden">
         {/* Active bar */}
         <span
           className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
