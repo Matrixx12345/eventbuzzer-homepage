@@ -6,101 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Konvertiert typische deutsche ASCII-Umlaut-Kombinationen zu echten Umlauten
-function convertToUmlauts(text: string | null | undefined): string | null {
-  if (!text) return text as null;
-  
-  // Direkte Wort-für-Wort Ersetzungen für häufige deutsche Wörter
-  const replacements: [string, string][] = [
-    // Präpositionen und Artikel
-    ["fuer", "für"], ["Fuer", "Für"],
-    ["ueber", "über"], ["Ueber", "Über"],
-    // Adjektive (häufig)
-    ["Aelteste", "Älteste"], ["aelteste", "älteste"],
-    ["Aeltere", "Ältere"], ["aeltere", "ältere"],
-    ["aelter", "älter"], ["Aelter", "Älter"],
-    ["oeffentliche", "öffentliche"], ["Oeffentliche", "Öffentliche"],
-    ["oeffentlichen", "öffentlichen"], ["Oeffentlichen", "Öffentlichen"],
-    ["oeffentlicher", "öffentlicher"], ["Oeffentlicher", "Öffentlicher"],
-    ["beruehmte", "berühmte"], ["Beruehmte", "Berühmte"],
-    ["beruehmten", "berühmten"], ["Beruehmten", "Berühmten"],
-    ["Weltberuehmte", "Weltberühmte"], ["weltberuehmte", "weltberühmte"],
-    ["Weltberuehmten", "Weltberühmten"], ["weltberuehmten", "weltberühmten"],
-    ["schoene", "schöne"], ["Schoene", "Schöne"],
-    ["schoenen", "schönen"], ["Schoenen", "Schönen"],
-    ["schoenste", "schönste"], ["Schoenste", "Schönste"],
-    ["grossartige", "großartige"], ["Grossartige", "Großartige"],
-    ["groesste", "größte"], ["Groesste", "Größte"],
-    ["groessere", "größere"], ["Groessere", "Größere"],
-    ["hoechste", "höchste"], ["Hoechste", "Höchste"],
-    ["fruehere", "frühere"], ["Fruehere", "Frühere"],
-    ["taeglich", "täglich"], ["Taeglich", "Täglich"],
-    ["jaehrlich", "jährlich"], ["Jaehrlich", "Jährlich"],
-    ["natuerlich", "natürlich"], ["Natuerlich", "Natürlich"],
-    ["kuenstlerische", "künstlerische"], ["Kuenstlerische", "Künstlerische"],
-    // Substantive (häufig)
-    ["Kuenstler", "Künstler"], ["kuenstler", "künstler"],
-    ["Kuenstlern", "Künstlern"], ["kuenstlern", "künstlern"],
-    ["Gemaelde", "Gemälde"], ["gemaelde", "gemälde"],
-    ["Stueck", "Stück"], ["stueck", "stück"],
-    ["Stuecke", "Stücke"], ["stuecke", "stücke"],
-    ["Fuehrung", "Führung"], ["fuehrung", "führung"],
-    ["Fuehrungen", "Führungen"], ["fuehrungen", "führungen"],
-    ["Eroeffnung", "Eröffnung"], ["eroeffnung", "eröffnung"],
-    ["Ausfluege", "Ausflüge"], ["ausfluege", "ausflüge"],
-    ["Laerm", "Lärm"], ["laerm", "lärm"],
-    ["Geraeusch", "Geräusch"], ["geraeusch", "geräusch"],
-    ["Geraeusche", "Geräusche"], ["geraeusche", "geräusche"],
-    ["Gebaude", "Gebäude"], ["gebaude", "gebäude"],
-    ["Gebaeude", "Gebäude"], ["gebaeude", "gebäude"],
-    ["Naehe", "Nähe"], ["naehe", "nähe"],
-    ["Gaeste", "Gäste"], ["gaeste", "gäste"],
-    ["Stadte", "Städte"], ["stadte", "städte"],
-    ["Staedte", "Städte"], ["staedte", "städte"],
-    ["Plaetze", "Plätze"], ["plaetze", "plätze"],
-    ["Spaziergang", "Spaziergang"], // korrekt
-    ["Spaziergaenge", "Spaziergänge"], ["spaziergaenge", "spaziergänge"],
-    ["Anfaenger", "Anfänger"], ["anfaenger", "anfänger"],
-    ["Erlebnisse", "Erlebnisse"], // korrekt
-    ["Sehenswuerdigkeiten", "Sehenswürdigkeiten"], ["sehenswuerdigkeiten", "sehenswürdigkeiten"],
-    // Städte
-    ["Zuerich", "Zürich"], ["zuerich", "zürich"],
-    ["Muenchen", "München"], ["muenchen", "münchen"],
-    // Verben
-    ["koennen", "können"], ["Koennen", "Können"],
-    ["moechten", "möchten"], ["Moechten", "Möchten"],
-    ["wuerden", "würden"], ["Wuerden", "Würden"],
-    ["muessen", "müssen"], ["Muessen", "Müssen"],
-    ["hoeren", "hören"], ["Hoeren", "Hören"],
-    ["gehoert", "gehört"], ["Gehoert", "Gehört"],
-    ["fuehrt", "führt"], ["Fuehrt", "Führt"],
-    ["praesentiert", "präsentiert"], ["Praesentiert", "Präsentiert"],
-    ["beruehrt", "berührt"], ["Beruehrt", "Berührt"],
-    ["eroeffnet", "eröffnet"], ["Eroeffnet", "Eröffnet"],
-    // Suffixe in Kontext
-    ["waehrend", "während"], ["Waehrend", "Während"],
-  ];
-  
-  let result = text;
-  for (const [from, to] of replacements) {
-    // Nur ganze Wörter oder Wortteile ersetzen, nicht in Eigennamen
-    result = result.split(from).join(to);
-  }
-  
-  return result;
-}
-
-// Wendet Umlaut-Konvertierung auf relevante Event-Felder an
-function processEventUmlauts(event: any): any {
-  return {
-    ...event,
-    title: convertToUmlauts(event.title),
-    short_description: convertToUmlauts(event.short_description),
-    description: convertToUmlauts(event.description),
-    venue_name: convertToUmlauts(event.venue_name),
-    address_city: convertToUmlauts(event.address_city),
-  };
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -158,7 +63,7 @@ serve(async (req) => {
       }
       
       return new Response(
-        JSON.stringify({ events: event ? [processEventUmlauts(event)] : [], pagination: { total: event ? 1 : 0, hasMore: false } }),
+        JSON.stringify({ events: event ? [event] : [], pagination: { total: event ? 1 : 0, hasMore: false } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -336,12 +241,9 @@ serve(async (req) => {
 
     console.log(`Returning ${filteredEvents.length} events (total: ${count})`);
 
-    // Umlaute konvertieren für alle Events
-    const processedEvents = filteredEvents.map(processEventUmlauts);
-
     return new Response(
       JSON.stringify({
-        events: processedEvents,
+        events: filteredEvents,
         pagination: {
           total: count || 0,
           hasMore: (count || 0) > offset + limit,
