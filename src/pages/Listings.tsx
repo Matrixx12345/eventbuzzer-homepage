@@ -704,7 +704,6 @@ const Listings = () => {
                         <Link 
                           to={`/event/${event.id}`}
                           onClick={() => trackEventClick(event.id)}
-                          className={isFeatured ? "block mt-1" : "block"}
                         >
                           <h3 className="font-serif font-bold text-foreground leading-tight hover:text-primary/80 transition-colors text-base line-clamp-1">
                             {convertToUmlauts(event.title)}
