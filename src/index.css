@@ -55,12 +55,12 @@
 
     --radius: 0.75rem;
 
-    /* Listings Page Colors - Elegant Dark Cards */
-    --listings-bg: 40 15% 94%;         /* Warm cream background */
-    --listings-card: 40 12% 92%;       /* Slightly warmer card outer */
-    --listings-card-content: 30 8% 18%; /* Dark charcoal/greige for text area */
-    --listings-text: 40 10% 92%;       /* Light cream text */
-    --listings-text-muted: 40 8% 65%;  /* Muted light text */
+    /* Listings Page Colors - Warm Sand Theme */
+    --listings-bg: 40 27% 96%;           /* Sand page background #F8F6F2 */
+    --listings-card: 40 33% 98%;         /* Warm cream card background #FDFBF7 */
+    --listings-card-content: 40 33% 98%; /* Same cream for content area #FDFBF7 */
+    --listings-text: 20 6% 10%;          /* Dark stone-gray text #1C1917 */
+    --listings-text-muted: 20 6% 35%;    /* Muted stone-gray */
 
     --font-serif: "Playfair Display", Georgia, serif;
     --font-sans: "Inter", system-ui, sans-serif;
