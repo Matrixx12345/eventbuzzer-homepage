@@ -17,13 +17,13 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
     <span className={cn("inline-flex items-center gap-2", className)}>
       {/* Thermometer track */}
       <span className="relative w-24 h-1 bg-neutral-200 rounded-full">
-        {/* Active bar with gradient */}
+        {/* Active bar with muted warm gradient */}
         <span
           className={cn(
             "absolute inset-y-0 left-0 rounded-full transition-all duration-300",
             isHot 
-              ? "bg-gradient-to-r from-neutral-400 via-rose-400 to-rose-500" 
-              : "bg-gradient-to-r from-neutral-300 to-neutral-500"
+              ? "bg-gradient-to-r from-amber-200 via-amber-300 to-red-400/80" 
+              : "bg-gradient-to-r from-neutral-300 via-amber-200/60 to-amber-300/70"
           )}
           style={{ width: `${normalizedScore}%` }}
         />
