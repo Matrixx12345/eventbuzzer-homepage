@@ -592,21 +592,24 @@ const Listings = () => {
                       : null;
                   const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
 
+                  // Fixed heights: regular card 280px, featured card = 2*280 + 20px gap = 580px
+                  const cardHeight = isFeatured ? "h-[580px]" : "h-[280px]";
+                  
                   return (
                     <article 
                       key={event.id}
-                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                      className={cn(
+                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col",
+                        cardHeight
+                      )}
                     >
-                      <Link to={`/event/${event.id}`} className="block">
-                        <div className="relative overflow-hidden">
+                      <Link to={`/event/${event.id}`} className="block flex-1 min-h-0 overflow-hidden">
+                        <div className="relative overflow-hidden h-full">
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
-                            className={cn(
-                              "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[2/3]" : "aspect-[2.5/1]"
-                            )}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                           
                           {/* Date or Museum Badge */}
@@ -668,8 +671,8 @@ const Listings = () => {
                         </div>
                       </Link>
 
-                      {/* Content Section - same for all cards */}
-                      <div className={cn("p-3", isFeatured && "flex-shrink-0")}>
+                      {/* Content Section - fixed height */}
+                      <div className="p-3 flex-shrink-0 h-[120px] overflow-hidden">
                         <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
