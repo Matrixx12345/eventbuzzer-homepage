@@ -600,15 +600,15 @@ const Listings = () => {
                         isFeatured && "flex flex-col h-full"
                       )}
                     >
-                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
-                        <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
+                      <Link to={`/event/${event.id}`} className="block">
+                        <div className="relative overflow-hidden">
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "h-full" : "aspect-[2.5/1]"
+                              isFeatured ? "aspect-[3/4]" : "aspect-[2.5/1]"
                             )}
                           />
                           
