@@ -710,7 +710,10 @@ const Listings = () => {
                           </h3>
                         </Link>
                         
-                        <p className="text-xs text-muted-foreground leading-normal mt-1 line-clamp-1">
+                        <p className={cn(
+                          "text-xs text-muted-foreground leading-normal mt-1",
+                          isFeatured ? "line-clamp-2" : "line-clamp-1"
+                        )}>
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
