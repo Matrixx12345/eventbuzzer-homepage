@@ -735,7 +735,7 @@ const Listings = () => {
                 // If less than 5 events, render simple 3-column grid
                 if (!featuredEvent) {
                   return (
-                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[260px] gap-4">
+                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[330px] gap-4">
                       {block.events.map((event, idx) => renderEventCard(event, idx, false))}
                     </div>
                   );
@@ -744,7 +744,7 @@ const Listings = () => {
                 // 5 events: 4 regular in 2x2 + 1 featured spanning 2 rows
                 // Grid: 3 columns, 2 rows with FIXED heights
                 return (
-                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[260px_260px] gap-4">
+                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[330px_330px] gap-4">
                     {block.featuredRight ? (
                       <>
                         {/* Row 1: Card 1, Card 2 */}
