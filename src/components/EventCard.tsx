@@ -71,8 +71,8 @@ const EventCard = ({
       onClick={handleCardClick}
       className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 cursor-pointer"
     >
-      {/* Image Section - 16:9 for compact layout */}
-      <div className="relative aspect-video overflow-hidden">
+      {/* Image Section - 2.5:1 ultra-compact */}
+      <div className="relative aspect-[2.5/1] overflow-hidden">
         <img
           src={image}
           alt={title}
