@@ -717,13 +717,13 @@ const Listings = () => {
                         </Link>
                         
                         <p className={cn(
-                          "text-xs text-muted-foreground leading-normal mt-1 flex-grow",
+                          "text-xs text-muted-foreground leading-normal mt-1",
                           isFeatured ? "line-clamp-2" : "line-clamp-1"
                         )}>
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
-                        <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
+                        <div className="flex items-center gap-4 mt-auto pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
                           <span className="text-neutral-500">
                             {event.price_from && event.price_from >= 15 
                               ? `ab CHF ${event.price_from}`
