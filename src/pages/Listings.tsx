@@ -595,20 +595,17 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className={cn(
-                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
-                        isFeatured && "h-full flex flex-col"
-                      )}
+                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                     >
-                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
-                        <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
+                      <Link to={`/event/${event.id}`} className="block">
+                        <div className="relative overflow-hidden">
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "h-full" : "aspect-[2.5/1]"
+                              isFeatured ? "aspect-[2/3]" : "aspect-[2.5/1]"
                             )}
                           />
                           
