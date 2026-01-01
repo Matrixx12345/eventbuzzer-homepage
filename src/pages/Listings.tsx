@@ -595,10 +595,7 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className={cn(
-                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
-                        isFeatured && "flex flex-col h-full"
-                      )}
+                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                     >
                       <Link to={`/event/${event.id}`} className="block">
                         <div className="relative overflow-hidden">
