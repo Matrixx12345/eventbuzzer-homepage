@@ -130,17 +130,18 @@ const EventCard = ({
         </div>
 
         {/* Footer: Price indicator + Buzz + Rating */}
-        <div className="mt-auto pt-2 flex items-center gap-8 text-[10px] text-gray-500">
-          {/* Price indicator */}
-          <span className="text-sm font-medium text-neutral-700">$</span>
-          
-          {/* Buzz Tracker - inline in footer */}
-          <BuzzTracker buzzScore={buzz_score} />
-          
-          {/* Rating flag icon */}
-          <div className="ml-auto">
-            <EventRatingButtons eventId={id} eventTitle={title} />
+        <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-gray-500">
+          {/* Left: Price + Buzz */}
+          <div className="flex items-center gap-3">
+            {/* Price indicator */}
+            <span className="text-base font-semibold text-neutral-800">$</span>
+            
+            {/* Buzz Tracker */}
+            <BuzzTracker buzzScore={buzz_score} />
           </div>
+          
+          {/* Right: Rating flag icon */}
+          <EventRatingButtons eventId={id} eventTitle={title} />
         </div>
       </div>
     </article>
