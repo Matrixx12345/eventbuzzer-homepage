@@ -55,10 +55,10 @@
 
     --radius: 0.75rem;
 
-    /* Listings Page Colors - Warm Sand Theme */
-    --listings-bg: 40 27% 96%;           /* Sand page background #F8F6F2 */
-    --listings-card: 40 33% 98%;         /* Warm cream card background #FDFBF7 */
-    --listings-card-content: 40 33% 98%; /* Same cream for content area #FDFBF7 */
+    /* Listings Page Colors - Refined Warm Sand Theme */
+    --listings-bg: 38 22% 93%;           /* Warmer sand #F4F1EC */
+    --listings-card: 45 40% 99%;         /* Warm white #FFFEF9 */
+    --listings-card-content: 45 40% 99%; /* Same warm white */
     --listings-text: 20 6% 10%;          /* Dark stone-gray text #1C1917 */
     --listings-text-muted: 20 6% 35%;    /* Muted stone-gray */
 
