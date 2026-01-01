@@ -5,6 +5,8 @@ import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
 import { BuzzTracker } from "@/components/BuzzTracker";
 import { trackEventClick } from "@/services/buzzTracking";
+import EventCardSkeleton from "@/components/EventCardSkeleton";
+import OptimizedEventImage from "@/components/OptimizedEventImage";
 import {
   Heart,
   MapPin,
@@ -555,8 +557,15 @@ const Listings = () => {
 
         {/* Events Grid - Alternating Layout with Featured Cards */}
         {loading && !loadingMore ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+          <div className="space-y-5">
+            {/* Skeleton Grid - 5 cards like real layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[330px_330px] gap-4">
+              <EventCardSkeleton />
+              <EventCardSkeleton />
+              <EventCardSkeleton />
+              <EventCardSkeleton />
+              <EventCardSkeleton isFeatured />
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
@@ -599,11 +608,11 @@ const Listings = () => {
                     >
                       <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
                         <div className="relative overflow-hidden flex-grow">
-                          <img
+                          <OptimizedEventImage
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            isFeatured={isFeatured}
+                            className="group-hover:scale-105"
                           />
                           
                           {/* Date or Museum Badge */}
