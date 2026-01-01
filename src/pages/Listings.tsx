@@ -596,8 +596,8 @@ const Listings = () => {
                     <article 
                       key={event.id}
                       className={cn(
-                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col",
-                        isFeatured ? "h-full" : "h-full"
+                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
+                        isFeatured && "flex flex-col h-full"
                       )}
                     >
                       <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
@@ -672,7 +672,7 @@ const Listings = () => {
                       </Link>
 
                       {/* Content Section - same for all cards */}
-                      <div className={cn("p-3 flex flex-col", isFeatured ? "flex-shrink-0" : "flex-grow")}>
+                      <div className={cn("p-3", isFeatured && "flex-shrink-0")}>
                         <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
