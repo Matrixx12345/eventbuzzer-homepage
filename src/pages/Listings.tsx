@@ -483,7 +483,7 @@ const Listings = () => {
   }, [taxonomy, selectedCategoryId]);
 
   return (
-    <div className="min-h-screen bg-stone-100">
+    <div className="min-h-screen bg-listings">
       <Navbar />
       
       {/* Hero Section with Filter Bar */}
@@ -516,21 +516,21 @@ const Listings = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Results Count */}
-        <div className="mb-4 text-sm text-neutral-500">
+        <div className="mb-4 text-sm text-listings-text/50">
           {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
         </div>
 
         {/* Subcategory Sticky Bar */}
         {selectedCategoryId && subCategories.length > 0 && (
-          <div className="sticky top-0 z-10 bg-stone-100/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
+          <div className="sticky top-0 z-10 bg-listings/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
             <div className="flex gap-2 min-w-max">
               <button
                 onClick={() => setSelectedSubcategoryId(null)}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                   selectedSubcategoryId === null
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-white text-gray-700 border hover:bg-gray-50",
+                    ? "bg-listings-text text-listings-card shadow-md"
+                    : "bg-listings-card text-listings-text border border-listings-text/10 hover:bg-listings-card/80",
                 )}
               >
                 Alle
@@ -542,8 +542,8 @@ const Listings = () => {
                   className={cn(
                     "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                     selectedSubcategoryId === sub.id
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "bg-white text-gray-700 border hover:bg-gray-50",
+                      ? "bg-listings-text text-listings-card shadow-md"
+                      : "bg-listings-card text-listings-text border border-listings-text/10 hover:bg-listings-card/80",
                   )}
                 >
                   {sub.name}
@@ -595,7 +595,7 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
+                      className="group bg-listings-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
                     >
                       <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
                         <div className="relative overflow-hidden flex-grow">
@@ -667,11 +667,11 @@ const Listings = () => {
 
                       {/* Content Section - fixed height, flex-shrink-0 */}
                       <div className="p-3 flex-shrink-0">
-                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
-                          <MapPin size={11} className="text-primary/60 flex-shrink-0" />
-                          <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
+                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-listings-text/50 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
+                          <MapPin size={11} className="text-listings-text/40 flex-shrink-0" />
+                          <span className="truncate border-b border-dotted border-listings-text/20 group-hover/map:text-listings-text/70 transition-colors">
                             {locationName || "Schweiz"}
-                            {distanceInfo && <span className="text-neutral-300 ml-1">• {distanceInfo}</span>}
+                            {distanceInfo && <span className="text-listings-text/30 ml-1">• {distanceInfo}</span>}
                           </span>
                           
                           {/* Mini-Map Tooltip */}
@@ -702,17 +702,17 @@ const Listings = () => {
                           to={`/event/${event.id}`}
                           onClick={() => trackEventClick(event.id)}
                         >
-                          <h3 className="font-serif font-bold text-foreground leading-tight hover:text-primary/80 transition-colors text-base line-clamp-1">
+                          <h3 className="font-serif font-bold text-listings-text leading-tight hover:text-listings-text/70 transition-colors text-base line-clamp-1">
                             {convertToUmlauts(event.title)}
                           </h3>
                         </Link>
                         
-                        <p className="text-xs text-muted-foreground leading-normal mt-1 line-clamp-1">
+                        <p className="text-xs text-listings-text/60 leading-normal mt-1 line-clamp-1">
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
-                        <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
-                          <span className="text-neutral-500">
+                        <div className="flex items-center gap-4 mt-2 pt-2 border-t border-listings-text/10 text-[10px] text-listings-text/50">
+                          <span className="text-listings-text/50">
                             {event.price_from && event.price_from >= 15 
                               ? `ab CHF ${event.price_from}`
                               : event.price_label 
