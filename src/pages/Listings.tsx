@@ -595,20 +595,17 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className={cn(
-                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
-                        isFeatured && "h-full flex flex-col"
-                      )}
+                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                     >
-                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0 overflow-hidden")}>
-                        <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
+                      <Link to={`/event/${event.id}`} className="block">
+                        <div className="relative overflow-hidden">
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "h-full" : "aspect-[2.5/1]"
+                              isFeatured ? "aspect-[3/4]" : "aspect-[2.5/1]"
                             )}
                           />
                           
@@ -744,10 +741,33 @@ const Listings = () => {
                   );
                 };
                 
-                // Simple 3-column grid - no featured cards for now
+                // If less than 5 events, render simple 3-column grid
+                if (!featuredEvent) {
+                  return (
+                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {block.events.map((event, idx) => renderEventCard(event, idx, false))}
+                    </div>
+                  );
+                }
+                
+                // 5 events: 4 regular cards in 2x2 grid + 1 featured card
                 return (
                   <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {block.events.map((event, idx) => renderEventCard(event, idx, false))}
+                    {block.featuredRight ? (
+                      <>
+                        {/* Regular cards: positions 1-4 */}
+                        {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
+                        {/* Featured card: position 5 (3rd column) */}
+                        {renderEventCard(featuredEvent, 4, true)}
+                      </>
+                    ) : (
+                      <>
+                        {/* Featured card: position 1 (1st column) */}
+                        {renderEventCard(featuredEvent, 4, true)}
+                        {/* Regular cards: positions 2-5 */}
+                        {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
+                      </>
+                    )}
                   </div>
                 );
               });
