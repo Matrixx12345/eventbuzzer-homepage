@@ -707,11 +707,11 @@ const Listings = () => {
                           </h3>
                         </Link>
                         
-                        <p className="text-xs text-listings-text-muted leading-normal mt-1 line-clamp-1">
+                        <p className="text-xs text-listings-text/90 leading-normal mt-1 line-clamp-1">
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
-                        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-listings-text/10 text-[10px] text-listings-text-muted">
+                        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-listings-text/10 text-[10px] text-listings-text/70">
                           <span>
                             {event.price_from && event.price_from >= 15 
                               ? `ab CHF ${event.price_from}`
