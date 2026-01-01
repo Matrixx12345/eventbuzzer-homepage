@@ -6,42 +6,45 @@ interface BuzzTrackerProps {
 }
 
 /**
- * Elegant Buzz Thermometer - Clean minimal design
+ * Premium Buzz Thermometer - Gray to Red gradient with position indicator
  */
 export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   const score = buzzScore ?? 20;
   const normalizedScore = Math.min(100, Math.max(0, score));
   const isHot = score >= 80;
 
+  // Interpolate color from gray to red based on score - gradual transition
+  const getBarColor = () => {
+    if (score < 40) return '#d4d4d4'; // neutral-300 (light gray)
+    if (score < 60) return '#fbbf24'; // amber-400 (warm yellow)
+    if (score < 80) return '#f97316'; // orange-500
+    return '#ef4444'; // red-500
+  };
+
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      {/* Thermometer track */}
-      <span className="relative w-24 h-1 bg-neutral-200 rounded-full">
-        {/* Active bar - warm elegant gradient */}
+      {/* Thermometer capsule container */}
+      <span className="relative w-[100px] h-1.5 bg-neutral-200/50 rounded-full overflow-hidden">
+        {/* Active bar */}
         <span
-          className={cn(
-            "absolute inset-y-0 left-0 rounded-full transition-all duration-300",
-            isHot 
-              ? "bg-gradient-to-r from-amber-400 via-orange-400 to-red-500" 
-              : "bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400"
-          )}
-          style={{ width: `${normalizedScore}%` }}
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
+          style={{ 
+            width: `${normalizedScore}%`,
+            backgroundColor: getBarColor()
+          }}
         />
-        {/* Indicator dot */}
+        {/* Position indicator dot */}
         <span
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 shadow-md transition-all duration-300",
-            isHot ? "border-red-500" : "border-orange-400"
+            "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 shadow-sm transition-all duration-300",
+            isHot ? "border-red-500 animate-pulse" : "border-neutral-500"
           )}
           style={{ left: `calc(${normalizedScore}% - 5px)` }}
         />
       </span>
-      {/* Score label */}
-      <span className={cn(
-        "text-[10px] font-medium tracking-wide uppercase",
-        isHot ? "text-rose-500" : "text-neutral-500"
-      )}>
-        {Math.round(score)}{isHot && ' 🔥'}
+      {/* Buzz score text + flame for hot */}
+      <span className="text-[10px] font-medium text-neutral-600 tracking-tight uppercase">
+        BUZZ {Math.round(score)}{isHot && ' 🔥'}
       </span>
     </span>
   );
