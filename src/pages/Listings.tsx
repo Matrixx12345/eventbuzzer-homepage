@@ -755,7 +755,7 @@ const Listings = () => {
                 
                 // Render block with featured card - featured card matches height of 2x2 grid
                 return (
-                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5">
+                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5 items-stretch">
                     {block.featuredRight ? (
                       <>
                         {/* Left side: 2x2 grid of regular cards - this defines the height */}
