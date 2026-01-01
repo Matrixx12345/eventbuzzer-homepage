@@ -762,15 +762,15 @@ const Listings = () => {
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
                           {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
                         </div>
-                        {/* Right side: Featured card - stretches to match */}
-                        <div className="lg:w-1/3 flex">
+                        {/* Right side: Featured card - stretches to match minus offset */}
+                        <div className="lg:w-1/3 flex" style={{ maxHeight: 'calc(100% - 50px)' }}>
                           <div className="w-full">{renderEventCard(featuredEvent, 4, true)}</div>
                         </div>
                       </>
                     ) : (
                       <>
-                        {/* Left side: Featured card - stretches to match */}
-                        <div className="lg:w-1/3 flex">
+                        {/* Left side: Featured card - stretches to match minus offset */}
+                        <div className="lg:w-1/3 flex" style={{ maxHeight: 'calc(100% - 50px)' }}>
                           <div className="w-full">{renderEventCard(featuredEvent, 4, true)}</div>
                         </div>
                         {/* Right side: 2x2 grid of regular cards */}
