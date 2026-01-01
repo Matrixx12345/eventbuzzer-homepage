@@ -595,18 +595,15 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
                     >
-                      <Link to={`/event/${event.id}`} className="block">
-                        <div className="relative overflow-hidden">
+                      <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
+                        <div className="relative overflow-hidden flex-grow">
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
-                            className={cn(
-                              "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[2.4/4]" : "aspect-[2/1]"
-                            )}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                           
                           {/* Date or Museum Badge */}
@@ -668,8 +665,8 @@ const Listings = () => {
                         </div>
                       </Link>
 
-                      {/* Content Section - compact, no empty space */}
-                      <div className={cn("p-3", isFeatured && "pt-5")}>
+                      {/* Content Section - fixed height, flex-shrink-0 */}
+                      <div className="p-3 flex-shrink-0">
                         <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
@@ -710,10 +707,7 @@ const Listings = () => {
                           </h3>
                         </Link>
                         
-                        <p className={cn(
-                          "text-xs text-muted-foreground leading-normal mt-1",
-                          isFeatured ? "line-clamp-2 min-h-[2.5rem]" : "line-clamp-1"
-                        )}>
+                        <p className="text-xs text-muted-foreground leading-normal mt-1 line-clamp-1">
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
@@ -741,16 +735,16 @@ const Listings = () => {
                 // If less than 5 events, render simple 3-column grid
                 if (!featuredEvent) {
                   return (
-                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[260px] gap-4">
                       {block.events.map((event, idx) => renderEventCard(event, idx, false))}
                     </div>
                   );
                 }
                 
                 // 5 events: 4 regular in 2x2 + 1 featured spanning 2 rows
-                // Grid: 3 columns, 2 rows
+                // Grid: 3 columns, 2 rows with FIXED heights
                 return (
-                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-5 lg:gap-y-3">
+                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[260px_260px] gap-4">
                     {block.featuredRight ? (
                       <>
                         {/* Row 1: Card 1, Card 2 */}
