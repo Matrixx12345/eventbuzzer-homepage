@@ -592,24 +592,21 @@ const Listings = () => {
                       : null;
                   const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
 
-                  // Fixed heights: regular card 300px, featured card = 2*300 + 20px gap = 620px
-                  const cardHeight = isFeatured ? "h-[620px]" : "h-[300px]";
-                  
                   return (
                     <article 
                       key={event.id}
-                      className={cn(
-                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col",
-                        cardHeight
-                      )}
+                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                     >
-                      <Link to={`/event/${event.id}`} className="block flex-1 min-h-0 overflow-hidden">
-                        <div className="relative overflow-hidden h-full">
+                      <Link to={`/event/${event.id}`} className="block">
+                        <div className="relative overflow-hidden">
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className={cn(
+                              "w-full object-cover group-hover:scale-105 transition-transform duration-500",
+                              isFeatured ? "aspect-[3/4]" : "aspect-[2/1]"
+                            )}
                           />
                           
                           {/* Date or Museum Badge */}
@@ -671,8 +668,8 @@ const Listings = () => {
                         </div>
                       </Link>
 
-                      {/* Content Section - fixed height */}
-                      <div className="p-3 flex-shrink-0 h-[140px] flex flex-col">
+                      {/* Content Section - compact, no empty space */}
+                      <div className="p-3">
                         <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
@@ -708,22 +705,16 @@ const Listings = () => {
                           to={`/event/${event.id}`}
                           onClick={() => trackEventClick(event.id)}
                         >
-                          <h3 className={cn(
-                            "font-serif font-bold text-foreground leading-tight hover:text-primary/80 transition-colors",
-                            isFeatured ? "text-lg line-clamp-2" : "text-base line-clamp-2"
-                          )}>
+                          <h3 className="font-serif font-bold text-foreground leading-tight hover:text-primary/80 transition-colors text-base line-clamp-1">
                             {convertToUmlauts(event.title)}
                           </h3>
                         </Link>
                         
-                        <p className={cn(
-                          "text-xs text-muted-foreground leading-normal mt-1",
-                          isFeatured ? "line-clamp-2" : "line-clamp-1"
-                        )}>
+                        <p className="text-xs text-muted-foreground leading-normal mt-1 line-clamp-1">
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
-                        <div className="flex items-center gap-4 mt-auto pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
+                        <div className="flex items-center gap-4 mt-2 pt-2 border-t border-neutral-100 text-[10px] text-gray-500">
                           <span className="text-neutral-500">
                             {event.price_from && event.price_from >= 15 
                               ? `ab CHF ${event.price_from}`
