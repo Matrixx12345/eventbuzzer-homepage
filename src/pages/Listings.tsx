@@ -744,41 +744,10 @@ const Listings = () => {
                   );
                 };
                 
-                // If we don't have a featured event (less than 5 events in block), render normally
-                if (!featuredEvent) {
-                  return (
-                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {block.events.map((event, idx) => renderEventCard(event, idx, false))}
-                    </div>
-                  );
-                }
-                
-                // Render block with featured card
+                // Simple 3-column grid - no featured cards for now
                 return (
-                  <div key={bIdx} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    {block.featuredRight ? (
-                      <>
-                        {/* Left side: 2x2 grid of regular cards in first 2 columns */}
-                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 auto-rows-min">
-                          {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
-                        </div>
-                        {/* Right side: Featured card spans both rows */}
-                        <div className="lg:row-span-2 lg:row-start-1">
-                          {renderEventCard(featuredEvent, 4, true)}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {/* Left side: Featured card spans both rows */}
-                        <div className="lg:row-span-2">
-                          {renderEventCard(featuredEvent, 4, true)}
-                        </div>
-                        {/* Right side: 2x2 grid of regular cards in last 2 columns */}
-                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 auto-rows-min">
-                          {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
-                        </div>
-                      </>
-                    )}
+                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {block.events.map((event, idx) => renderEventCard(event, idx, false))}
                   </div>
                 );
               });
