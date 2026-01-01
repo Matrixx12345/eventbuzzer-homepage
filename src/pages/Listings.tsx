@@ -597,8 +597,9 @@ const Listings = () => {
                       key={event.id}
                       className={cn(
                         "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
-                        isFeatured && "h-full flex flex-col"
+                        isFeatured && "flex flex-col"
                       )}
+                      style={isFeatured ? { height: 'calc(100% - 50px)' } : undefined}
                     >
                       <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
                         <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
@@ -608,7 +609,7 @@ const Listings = () => {
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "h-[calc(100%-50px)]" : "aspect-[2.5/1]"
+                              isFeatured ? "h-full" : "aspect-[2.5/1]"
                             )}
                           />
                           
