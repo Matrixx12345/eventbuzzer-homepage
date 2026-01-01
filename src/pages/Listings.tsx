@@ -516,7 +516,7 @@ const Listings = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Results Count */}
-        <div className="mb-4 text-sm text-listings-text/50">
+        <div className="mb-4 text-sm text-foreground/60">
           {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
         </div>
 
@@ -529,8 +529,8 @@ const Listings = () => {
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                   selectedSubcategoryId === null
-                    ? "bg-listings-text text-listings-card shadow-md"
-                    : "bg-listings-card text-listings-text border border-listings-text/10 hover:bg-listings-card/80",
+                    ? "bg-listings-card-content text-listings-text shadow-md"
+                    : "bg-white/80 text-foreground border border-foreground/10 hover:bg-white",
                 )}
               >
                 Alle
@@ -542,8 +542,8 @@ const Listings = () => {
                   className={cn(
                     "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                     selectedSubcategoryId === sub.id
-                      ? "bg-listings-text text-listings-card shadow-md"
-                      : "bg-listings-card text-listings-text border border-listings-text/10 hover:bg-listings-card/80",
+                      ? "bg-listings-card-content text-listings-text shadow-md"
+                      : "bg-white/80 text-foreground border border-foreground/10 hover:bg-white",
                   )}
                 >
                   {sub.name}
@@ -595,7 +595,7 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group bg-listings-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
+                      className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
                     >
                       <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
                         <div className="relative overflow-hidden flex-grow">
@@ -665,13 +665,13 @@ const Listings = () => {
                         </div>
                       </Link>
 
-                      {/* Content Section - fixed height, flex-shrink-0 */}
-                      <div className="p-3 flex-shrink-0">
-                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-listings-text/50 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
-                          <MapPin size={11} className="text-listings-text/40 flex-shrink-0" />
-                          <span className="truncate border-b border-dotted border-listings-text/20 group-hover/map:text-listings-text/70 transition-colors">
+                      {/* Content Section - Dark elegant background */}
+                      <div className="p-4 flex-shrink-0 bg-listings-card-content rounded-b-xl">
+                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-listings-text-muted uppercase tracking-wider font-medium mb-1.5 cursor-pointer w-fit">
+                          <MapPin size={11} className="text-listings-text-muted flex-shrink-0" />
+                          <span className="truncate border-b border-dotted border-listings-text/20 group-hover/map:text-listings-text transition-colors">
                             {locationName || "Schweiz"}
-                            {distanceInfo && <span className="text-listings-text/30 ml-1">• {distanceInfo}</span>}
+                            {distanceInfo && <span className="text-listings-text-muted/70 ml-1">• {distanceInfo}</span>}
                           </span>
                           
                           {/* Mini-Map Tooltip */}
@@ -702,17 +702,17 @@ const Listings = () => {
                           to={`/event/${event.id}`}
                           onClick={() => trackEventClick(event.id)}
                         >
-                          <h3 className="font-serif font-bold text-listings-text leading-tight hover:text-listings-text/70 transition-colors text-base line-clamp-1">
+                          <h3 className="font-serif font-bold text-listings-text leading-tight hover:text-white transition-colors text-base line-clamp-1">
                             {convertToUmlauts(event.title)}
                           </h3>
                         </Link>
                         
-                        <p className="text-xs text-listings-text/60 leading-normal mt-1 line-clamp-1">
+                        <p className="text-xs text-listings-text-muted leading-normal mt-1 line-clamp-1">
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
                         
-                        <div className="flex items-center gap-4 mt-2 pt-2 border-t border-listings-text/10 text-[10px] text-listings-text/50">
-                          <span className="text-listings-text/50">
+                        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-listings-text/10 text-[10px] text-listings-text-muted">
+                          <span>
                             {event.price_from && event.price_from >= 15 
                               ? `ab CHF ${event.price_from}`
                               : event.price_label 
