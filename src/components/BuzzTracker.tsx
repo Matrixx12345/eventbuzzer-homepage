@@ -17,23 +17,23 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
     <span className={cn("inline-flex items-center gap-2", className)}>
       {/* Thermometer track */}
       <span className="relative w-24 h-1 bg-neutral-200 rounded-full">
-        {/* Active bar with muted warm gradient */}
+        {/* Active bar - warm elegant gradient */}
         <span
           className={cn(
             "absolute inset-y-0 left-0 rounded-full transition-all duration-300",
             isHot 
-              ? "bg-gradient-to-r from-amber-200 via-amber-300 to-red-400/80" 
-              : "bg-gradient-to-r from-neutral-300 via-amber-200/60 to-amber-300/70"
+              ? "bg-gradient-to-r from-amber-400 via-orange-400 to-red-500" 
+              : "bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400"
           )}
           style={{ width: `${normalizedScore}%` }}
         />
         {/* Indicator dot */}
         <span
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border shadow-sm transition-all duration-300",
-            isHot ? "border-rose-400" : "border-neutral-400"
+            "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 shadow-md transition-all duration-300",
+            isHot ? "border-red-500" : "border-orange-400"
           )}
-          style={{ left: `calc(${normalizedScore}% - 4px)` }}
+          style={{ left: `calc(${normalizedScore}% - 5px)` }}
         />
       </span>
       {/* Score label */}
