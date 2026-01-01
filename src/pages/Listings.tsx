@@ -595,17 +595,20 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                      className={cn(
+                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
+                        isFeatured && "h-full flex flex-col"
+                      )}
                     >
-                      <Link to={`/event/${event.id}`} className="block">
-                        <div className="relative overflow-hidden">
+                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
+                        <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[9/10]" : "aspect-[2.5/1]"
+                              isFeatured ? "h-full" : "aspect-[2.5/1]"
                             )}
                           />
                           
@@ -750,25 +753,25 @@ const Listings = () => {
                   );
                 }
                 
-                // Render block with featured card - use flex layout to avoid height stretching
+                // Render block with featured card - featured card matches height of 2x2 grid
                 return (
-                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5">
+                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
                     {block.featuredRight ? (
                       <>
                         {/* Left side: 2x2 grid of regular cards */}
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
                           {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
                         </div>
-                        {/* Right side: Featured card */}
-                        <div className="lg:w-1/3">
-                          {renderEventCard(featuredEvent, 4, true)}
+                        {/* Right side: Featured card - stretches to match */}
+                        <div className="lg:w-1/3 flex">
+                          <div className="w-full">{renderEventCard(featuredEvent, 4, true)}</div>
                         </div>
                       </>
                     ) : (
                       <>
-                        {/* Left side: Featured card */}
-                        <div className="lg:w-1/3">
-                          {renderEventCard(featuredEvent, 4, true)}
+                        {/* Left side: Featured card - stretches to match */}
+                        <div className="lg:w-1/3 flex">
+                          <div className="w-full">{renderEventCard(featuredEvent, 4, true)}</div>
                         </div>
                         {/* Right side: 2x2 grid of regular cards */}
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
