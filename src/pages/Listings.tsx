@@ -605,7 +605,7 @@ const Listings = () => {
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[3/4]" : "aspect-[2/1]"
+                              isFeatured ? "aspect-[2.8/4]" : "aspect-[2/1]"
                             )}
                           />
                           
@@ -712,7 +712,7 @@ const Listings = () => {
                         
                         <p className={cn(
                           "text-xs text-muted-foreground leading-normal mt-1",
-                          isFeatured ? "line-clamp-2" : "line-clamp-1"
+                          isFeatured ? "line-clamp-2 min-h-[2.5rem]" : "line-clamp-1"
                         )}>
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
                         </p>
