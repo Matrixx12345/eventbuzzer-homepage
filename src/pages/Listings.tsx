@@ -597,11 +597,10 @@ const Listings = () => {
                       key={event.id}
                       className={cn(
                         "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
-                        isFeatured && "flex flex-col"
+                        isFeatured && "h-full flex flex-col"
                       )}
-                      style={isFeatured ? { height: 'calc(100% - 50px)' } : undefined}
                     >
-                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
+                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0 overflow-hidden")}>
                         <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
@@ -756,25 +755,25 @@ const Listings = () => {
                 
                 // Render block with featured card - featured card matches height of 2x2 grid
                 return (
-                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
+                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5">
                     {block.featuredRight ? (
                       <>
-                        {/* Left side: 2x2 grid of regular cards */}
+                        {/* Left side: 2x2 grid of regular cards - this defines the height */}
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
                           {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
                         </div>
-                        {/* Right side: Featured card - stretches to match minus offset */}
-                        <div className="lg:w-1/3 flex" style={{ maxHeight: 'calc(100% - 50px)' }}>
-                          <div className="w-full">{renderEventCard(featuredEvent, 4, true)}</div>
+                        {/* Right side: Featured card - takes full height of sibling */}
+                        <div className="lg:w-1/3 self-stretch">
+                          {renderEventCard(featuredEvent, 4, true)}
                         </div>
                       </>
                     ) : (
                       <>
-                        {/* Left side: Featured card - stretches to match minus offset */}
-                        <div className="lg:w-1/3 flex" style={{ maxHeight: 'calc(100% - 50px)' }}>
-                          <div className="w-full">{renderEventCard(featuredEvent, 4, true)}</div>
+                        {/* Left side: Featured card - takes full height of sibling */}
+                        <div className="lg:w-1/3 self-stretch">
+                          {renderEventCard(featuredEvent, 4, true)}
                         </div>
-                        {/* Right side: 2x2 grid of regular cards */}
+                        {/* Right side: 2x2 grid of regular cards - this defines the height */}
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
                           {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
                         </div>
