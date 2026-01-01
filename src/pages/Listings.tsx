@@ -595,17 +595,20 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                      className={cn(
+                        "group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
+                        isFeatured && "h-full flex flex-col"
+                      )}
                     >
-                      <Link to={`/event/${event.id}`} className="block">
-                        <div className="relative overflow-hidden">
+                      <Link to={`/event/${event.id}`} className={cn("block", isFeatured && "flex-1 min-h-0")}>
+                        <div className={cn("relative overflow-hidden", isFeatured && "h-full")}>
                           <img
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
                             className={cn(
                               "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[3/4]" : "aspect-[2.5/1]"
+                              isFeatured ? "h-full" : "aspect-[2.5/1]"
                             )}
                           />
                           
@@ -750,22 +753,31 @@ const Listings = () => {
                   );
                 }
                 
-                // 5 events: 4 regular cards in 2x2 grid + 1 featured card
+                // 5 events: 4 regular in 2x2 + 1 featured spanning 2 rows
+                // Grid: 3 columns, 2 rows
                 return (
-                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-5">
                     {block.featuredRight ? (
                       <>
-                        {/* Regular cards: positions 1-4 */}
-                        {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
-                        {/* Featured card: position 5 (3rd column) */}
-                        {renderEventCard(featuredEvent, 4, true)}
+                        {/* Row 1: Card 1, Card 2 */}
+                        <div className="lg:col-start-1 lg:row-start-1">{renderEventCard(regularEvents[0], 0, false)}</div>
+                        <div className="lg:col-start-2 lg:row-start-1">{renderEventCard(regularEvents[1], 1, false)}</div>
+                        {/* Featured: Column 3, spans both rows */}
+                        <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2">{renderEventCard(featuredEvent, 4, true)}</div>
+                        {/* Row 2: Card 3, Card 4 */}
+                        <div className="lg:col-start-1 lg:row-start-2">{renderEventCard(regularEvents[2], 2, false)}</div>
+                        <div className="lg:col-start-2 lg:row-start-2">{renderEventCard(regularEvents[3], 3, false)}</div>
                       </>
                     ) : (
                       <>
-                        {/* Featured card: position 1 (1st column) */}
-                        {renderEventCard(featuredEvent, 4, true)}
-                        {/* Regular cards: positions 2-5 */}
-                        {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
+                        {/* Featured: Column 1, spans both rows */}
+                        <div className="lg:col-start-1 lg:row-start-1 lg:row-span-2">{renderEventCard(featuredEvent, 4, true)}</div>
+                        {/* Row 1: Card 1, Card 2 */}
+                        <div className="lg:col-start-2 lg:row-start-1">{renderEventCard(regularEvents[0], 0, false)}</div>
+                        <div className="lg:col-start-3 lg:row-start-1">{renderEventCard(regularEvents[1], 1, false)}</div>
+                        {/* Row 2: Card 3, Card 4 */}
+                        <div className="lg:col-start-2 lg:row-start-2">{renderEventCard(regularEvents[2], 2, false)}</div>
+                        <div className="lg:col-start-3 lg:row-start-2">{renderEventCard(regularEvents[3], 3, false)}</div>
                       </>
                     )}
                   </div>
