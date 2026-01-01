@@ -67,7 +67,9 @@ export default {
         listings: {
           DEFAULT: "hsl(var(--listings-bg))",
           card: "hsl(var(--listings-card))",
+          "card-content": "hsl(var(--listings-card-content))",
           text: "hsl(var(--listings-text))",
+          "text-muted": "hsl(var(--listings-text-muted))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

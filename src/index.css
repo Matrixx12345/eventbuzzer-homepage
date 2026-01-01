@@ -55,10 +55,12 @@
 
     --radius: 0.75rem;
 
-    /* Listings Page Colors - Warm Clay & Stone */
-    --listings-bg: 30 4% 83%;          /* #D6D3D1 - Warm stone-gray */
-    --listings-card: 40 18% 93%;       /* #F2EFE9 - Warm clay tone */
-    --listings-text: 30 7% 25%;        /* #44403C - Dark mocha brown */
+    /* Listings Page Colors - Elegant Dark Cards */
+    --listings-bg: 40 15% 94%;         /* Warm cream background */
+    --listings-card: 40 12% 92%;       /* Slightly warmer card outer */
+    --listings-card-content: 30 8% 18%; /* Dark charcoal/greige for text area */
+    --listings-text: 40 10% 92%;       /* Light cream text */
+    --listings-text-muted: 40 8% 65%;  /* Muted light text */
 
     --font-serif: "Playfair Display", Georgia, serif;
     --font-sans: "Inter", system-ui, sans-serif;
