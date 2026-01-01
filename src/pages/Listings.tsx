@@ -592,8 +592,8 @@ const Listings = () => {
                       : null;
                   const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
 
-                  // Fixed heights: regular card 280px, featured card = 2*280 + 20px gap = 580px
-                  const cardHeight = isFeatured ? "h-[580px]" : "h-[280px]";
+                  // Fixed heights: regular card 300px, featured card = 2*300 + 20px gap = 620px
+                  const cardHeight = isFeatured ? "h-[620px]" : "h-[300px]";
                   
                   return (
                     <article 
@@ -672,7 +672,7 @@ const Listings = () => {
                       </Link>
 
                       {/* Content Section - fixed height */}
-                      <div className="p-3 flex-shrink-0 h-[120px] overflow-hidden">
+                      <div className="p-3 flex-shrink-0 h-[140px] flex flex-col">
                         <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-400 uppercase tracking-wider font-medium mb-1 cursor-pointer w-fit">
                           <MapPin size={11} className="text-primary/60 flex-shrink-0" />
                           <span className="truncate border-b border-dotted border-neutral-300 group-hover/map:text-neutral-600 transition-colors">
