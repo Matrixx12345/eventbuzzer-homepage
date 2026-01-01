@@ -55,10 +55,10 @@
 
     --radius: 0.75rem;
 
-    /* Listings Page Colors */
-    --listings-bg: 40 20% 96%;         /* #F8F6F2 - Sand background */
-    --listings-card: 43 50% 98%;       /* #FDFBF7 - Warm card background */
-    --listings-text: 24 10% 10%;       /* #1C1917 - Dark stone-gray */
+    /* Listings Page Colors - Warm Clay & Stone */
+    --listings-bg: 30 4% 83%;          /* #D6D3D1 - Warm stone-gray */
+    --listings-card: 40 18% 93%;       /* #F2EFE9 - Warm clay tone */
+    --listings-text: 30 7% 25%;        /* #44403C - Dark mocha brown */
 
     --font-serif: "Playfair Display", Georgia, serif;
     --font-sans: "Inter", system-ui, sans-serif;
