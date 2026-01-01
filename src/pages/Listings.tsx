@@ -753,28 +753,28 @@ const Listings = () => {
                   );
                 }
                 
-                // Render block with featured card - featured card matches height of 2x2 grid
+                // Render block with featured card
                 return (
-                  <div key={bIdx} className="flex flex-col lg:flex-row gap-5 items-stretch">
+                  <div key={bIdx} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     {block.featuredRight ? (
                       <>
-                        {/* Left side: 2x2 grid of regular cards - this defines the height */}
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
+                        {/* Left side: 2x2 grid of regular cards in first 2 columns */}
+                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 auto-rows-min">
                           {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
                         </div>
-                        {/* Right side: Featured card - takes full height of sibling */}
-                        <div className="lg:w-1/3 self-stretch">
+                        {/* Right side: Featured card spans both rows */}
+                        <div className="lg:row-span-2 lg:row-start-1">
                           {renderEventCard(featuredEvent, 4, true)}
                         </div>
                       </>
                     ) : (
                       <>
-                        {/* Left side: Featured card - takes full height of sibling */}
-                        <div className="lg:w-1/3 self-stretch">
+                        {/* Left side: Featured card spans both rows */}
+                        <div className="lg:row-span-2">
                           {renderEventCard(featuredEvent, 4, true)}
                         </div>
-                        {/* Right side: 2x2 grid of regular cards - this defines the height */}
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 content-start">
+                        {/* Right side: 2x2 grid of regular cards in last 2 columns */}
+                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 auto-rows-min">
                           {regularEvents.map((event, idx) => renderEventCard(event, idx, false))}
                         </div>
                       </>
