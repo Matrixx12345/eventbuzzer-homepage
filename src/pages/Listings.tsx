@@ -603,10 +603,7 @@ const Listings = () => {
                             src={event.image_url || getPlaceholderImage(actualIndex)}
                             alt={event.title}
                             loading="lazy"
-                            className={cn(
-                              "w-full object-cover group-hover:scale-105 transition-transform duration-500",
-                              isFeatured ? "aspect-[3/4]" : "aspect-[2.5/1]"
-                            )}
+                            className="w-full object-cover group-hover:scale-105 transition-transform duration-500 aspect-[2.5/1]"
                           />
                           
                           {/* Date or Museum Badge */}
