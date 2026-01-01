@@ -131,12 +131,41 @@ const Impressum = () => {
           </p>
 
           <h3 className="font-semibold mt-6 mb-2">Sonstige Quellen</h3>
-          <ul className="mb-4 leading-relaxed list-disc list-inside space-y-1">
+          <ul className="mb-4 leading-relaxed list-disc list-inside space-y-2">
             <li>
-              <strong>Unsplash:</strong> Bilder unterliegen der Unsplash License.
+              <strong>Unsplash:</strong> Bilder unterliegen der{" "}
+              <a 
+                href="https://unsplash.com/license" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Unsplash License
+              </a>.
             </li>
             <li>
-              <strong>Kartografie:</strong> "Switzerland adm location map.svg" von NordNordWest via Wikimedia (CC BY-SA 3.0 DE).
+              <strong>Google Places:</strong> Einige Bilder werden über die{" "}
+              <a 
+                href="https://developers.google.com/maps/documentation/places/web-service/photos" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Google Places API
+              </a>{" "}
+              bereitgestellt.
+            </li>
+            <li>
+              <strong>Kartografie:</strong> "Switzerland adm location map.svg" von NordNordWest via{" "}
+              <a 
+                href="https://commons.wikimedia.org" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Wikimedia
+              </a>{" "}
+              (CC BY-SA 3.0 DE).
             </li>
           </ul>
         </section>
