@@ -13,11 +13,11 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   const normalizedScore = Math.min(100, Math.max(0, score));
   const isHot = score >= 80;
 
-  // Interpolate color from gray to red based on score
+  // Interpolate color from gray to red based on score - gradual transition
   const getBarColor = () => {
-    if (score < 30) return '#a3a3a3'; // neutral-400
-    if (score < 50) return '#f97316'; // orange-500
-    if (score < 70) return '#ea580c'; // orange-600
+    if (score < 40) return '#d4d4d4'; // neutral-300 (light gray)
+    if (score < 60) return '#fbbf24'; // amber-400 (warm yellow)
+    if (score < 80) return '#f97316'; // orange-500
     return '#ef4444'; // red-500
   };
 
