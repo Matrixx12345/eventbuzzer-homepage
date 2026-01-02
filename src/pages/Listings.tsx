@@ -51,6 +51,13 @@ const ensureTagsArray = (tags: unknown): string[] => {
   return [];
 };
 
+// Helper: Konvertiert beliebige Werte sicher zu String (verhindert .includes() Crashes)
+const ensureString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  return '';
+};
+
 // Konvertiert ASCII-Umlaute zu echten deutschen Umlauten
 const convertToUmlauts = (text: string | null | undefined): string => {
   if (!text) return "";
@@ -632,8 +639,8 @@ const Listings = () => {
                   const getBadgeText = () => {
                     if (isMuseum) return 'MUSEUM';
                     if (isPermanentEvent) {
-                      // Kategorie-basierter Tag für permanente Attraktionen
-                      const subCat = event.category_sub_id || event.sub_category || '';
+                      // Kategorie-basierter Tag für permanente Attraktionen (mit sicherer String-Konvertierung)
+                      const subCat = ensureString(event.category_sub_id) || ensureString(event.sub_category) || '';
                       if (subCat.includes('museum') || subCat.includes('kunst') || subCat.includes('galer')) return 'MUSEUM';
                       if (subCat.includes('wanderung') || subCat.includes('outdoor') || subCat.includes('trail')) return 'WANDERUNG';
                       if (subCat.includes('natur') || subCat.includes('park') || subCat.includes('garten')) return 'NATUR';
