@@ -31,12 +31,28 @@ export const useFavorites = () => {
 
 export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   const [favorites, setFavorites] = useState<FavoriteEvent[]>(() => {
-    const stored = localStorage.getItem("eventbuzzer-favorites");
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem("eventbuzzer-favorites");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate that it's an array
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+      return [];
+    } catch (error) {
+      console.error("Error parsing favorites from localStorage:", error);
+      return [];
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem("eventbuzzer-favorites", JSON.stringify(favorites));
+    try {
+      localStorage.setItem("eventbuzzer-favorites", JSON.stringify(favorites));
+    } catch (error) {
+      console.error("Error saving favorites to localStorage:", error);
+    }
   }, [favorites]);
 
   const addFavorite = (event: Omit<FavoriteEvent, "addedAt">) => {
