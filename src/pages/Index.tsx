@@ -6,11 +6,13 @@ import SwitzerlandSection from "@/components/SwitzerlandSection";
 import RainyDaySection from "@/components/RainyDaySection";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Index = () => {
   const { isOpen, closeChatbot, openChatbot } = useChatbot();
 
-  return <div className="min-h-screen bg-background">
+  return (
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       {/* Chatbot Popup */}
@@ -27,10 +29,18 @@ const Index = () => {
         
         {/* TEMPORARILY HIDDEN - EventsSection (heute in deiner Nähe) - sag mir wenn du es reaktivieren möchtest */}
         {/* <EventsSection /> */}
-        <WeekendSection />
-        <SwitzerlandSection />
-        <RainyDaySection />
+        <ErrorBoundary>
+          <WeekendSection />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <SwitzerlandSection />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <RainyDaySection />
+        </ErrorBoundary>
       </main>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
