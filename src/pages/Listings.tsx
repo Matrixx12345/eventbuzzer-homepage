@@ -22,8 +22,10 @@ import { getNearestPlace } from "@/utils/swissPlaces";
 import { toggleFavoriteApi } from "@/services/favorites";
 import { toast } from "sonner";
 
-// Nutze den zentralen externen Supabase Client
-import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
+// Cloud Supabase für Edge Functions (incl. buzz_boost)
+import { supabase } from "@/integrations/supabase/client";
+// Externe Supabase nur für direkten Tabellenzugriff (nicht für Edge Functions)
+import { externalSupabase } from "@/integrations/supabase/externalClient";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -128,6 +130,7 @@ interface ExternalEvent {
   image_author?: string | null;
   image_license?: string | null;
   category_sub_id?: string;
+  sub_category?: string;
   category_main_id?: number;
   created_at?: string;
   favorite_count?: number;
@@ -283,7 +286,7 @@ const Listings = () => {
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await externalSupabase
           .from("taxonomy")
           .select("id, slug, name, type, parent_id, display_order, is_active")
           .eq("is_active", true)
@@ -601,28 +604,37 @@ const Listings = () => {
                     event.latitude && event.longitude
                       ? getDistanceInfo(event.latitude, event.longitude).distance
                       : null;
-                  const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
-                  const isMySwitzerland = event.source === 'myswitzerland';
+                  const isMuseum = event.category_sub_id === 'museum-kunst' || event.sub_category === 'museum-kunst' || event.external_id?.startsWith('manual_');
                   
-                  // Bestimme Badge-Text: MySwitzerland bekommt Kategorie-Tags statt Datum
+                  // Permanent-Events: source=manual/myswitzerland ODER start_date vor 2021 (= Placeholder-Datum)
+                  const isPermanentEvent = 
+                    event.source === 'myswitzerland' || 
+                    event.source === 'manual' ||
+                    (event.start_date && new Date(event.start_date).getFullYear() <= 2020);
+                  
+                  // Bestimme Badge-Text: Permanente Events bekommen Kategorie-Tags statt Datum
                   const getBadgeText = () => {
                     if (isMuseum) return 'MUSEUM';
-                    if (isMySwitzerland) {
-                      // Kategorie-basierter Tag für MySwitzerland
-                      const subCat = event.category_sub_id;
-                      if (subCat?.includes('museum')) return 'MUSEUM';
-                      if (subCat?.includes('wanderung') || subCat?.includes('outdoor')) return 'WANDERUNG';
-                      if (subCat?.includes('natur') || subCat?.includes('park')) return 'NATUR';
-                      if (subCat?.includes('sehenswuerdigkeit') || subCat?.includes('attraction')) return 'SEHENSWÜRDIGKEIT';
-                      if (subCat?.includes('wellness') || subCat?.includes('spa')) return 'WELLNESS';
-                      if (subCat?.includes('schloss') || subCat?.includes('burg')) return 'SCHLOSS';
-                      if (subCat?.includes('kirche') || subCat?.includes('kloster')) return 'KULTUR';
-                      if (subCat?.includes('zoo') || subCat?.includes('tier')) return 'TIERPARK';
+                    if (isPermanentEvent) {
+                      // Kategorie-basierter Tag für permanente Attraktionen
+                      const subCat = event.category_sub_id || event.sub_category || '';
+                      if (subCat.includes('museum') || subCat.includes('kunst') || subCat.includes('galer')) return 'MUSEUM';
+                      if (subCat.includes('wanderung') || subCat.includes('outdoor') || subCat.includes('trail')) return 'WANDERUNG';
+                      if (subCat.includes('natur') || subCat.includes('park') || subCat.includes('garten')) return 'NATUR';
+                      if (subCat.includes('sehenswuerdigkeit') || subCat.includes('attraction')) return 'SEHENSWÜRDIGKEIT';
+                      if (subCat.includes('wellness') || subCat.includes('spa') || subCat.includes('therm')) return 'WELLNESS';
+                      if (subCat.includes('schloss') || subCat.includes('burg') || subCat.includes('castle')) return 'SCHLOSS';
+                      if (subCat.includes('kirche') || subCat.includes('kloster') || subCat.includes('dom')) return 'KULTUR';
+                      if (subCat.includes('zoo') || subCat.includes('tier') || subCat.includes('aquar')) return 'TIERPARK';
+                      if (subCat.includes('familie') || subCat.includes('kinder')) return 'FAMILIENAUSFLUG';
+                      if (subCat.includes('wissenschaft') || subCat.includes('technik') || subCat.includes('science')) return 'SCIENCE';
                       // Fallback: versuche aus Tags zu lesen
                       const tags = event.tags || [];
-                      if (tags.includes('natur')) return 'NATUR';
-                      if (tags.includes('wellness')) return 'WELLNESS';
+                      if (tags.includes('natur') || tags.includes('natur-erlebnisse')) return 'NATUR';
+                      if (tags.includes('wellness') || tags.includes('wellness-selfcare')) return 'WELLNESS';
                       if (tags.includes('familie-kinder')) return 'FAMILIENAUSFLUG';
+                      if (tags.includes('wissenschaft') || tags.includes('technik')) return 'SCIENCE';
+                      if (tags.includes('kunst') || tags.includes('kultur')) return 'KULTUR';
                       return 'ERLEBNIS';
                     }
                     return formatEventDate(
