@@ -43,24 +43,24 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Optional: Fetch some events for context
+    // Fetch events from EXTERNAL Supabase for context
     let eventContext = "";
     try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL");
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const externalUrl = Deno.env.get("EXTERNAL_SUPABASE_URL");
+      const externalKey = Deno.env.get("EXTERNAL_SUPABASE_ANON_KEY");
       
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey);
+      if (externalUrl && externalKey) {
+        const supabase = createClient(externalUrl, externalKey);
         const { data: events } = await supabase
           .from("external_events")
-          .select("title, venue_name, city, event_date, category, tags, short_description")
-          .gte("event_date", new Date().toISOString())
-          .order("event_date", { ascending: true })
+          .select("title, venue_name, address_city, start_date, category, tags, short_description")
+          .gte("start_date", new Date().toISOString())
+          .order("start_date", { ascending: true })
           .limit(20);
         
         if (events && events.length > 0) {
           eventContext = `\n\nAktuelle Events in der Datenbank:\n${events.map(e => 
-            `- "${e.title}" am ${e.event_date?.split('T')[0]} in ${e.city || e.venue_name} (${e.category || 'Allgemein'})`
+            `- "${e.title}" am ${e.start_date?.split('T')[0]} in ${e.address_city || e.venue_name} (${e.category || 'Allgemein'})`
           ).join('\n')}`;
         }
       }
