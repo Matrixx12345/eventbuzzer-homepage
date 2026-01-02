@@ -4,6 +4,7 @@ import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
 import { BuzzTracker } from "@/components/BuzzTracker";
+import { BuzzSlider } from "@/components/BuzzSlider";
 import { trackEventClick } from "@/services/buzzTracking";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OptimizedEventImage from "@/components/OptimizedEventImage";
@@ -649,8 +650,22 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group rounded-xl overflow-hidden bg-listings-card shadow-md hover:shadow-lg border border-stone-200/50 hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col"
+                      className="group relative rounded-xl overflow-hidden bg-listings-card shadow-md hover:shadow-lg border border-stone-200/50 hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col"
                     >
+                      {/* Buzz Slider Overlay */}
+                      <BuzzSlider
+                        eventId={event.id}
+                        externalId={event.external_id}
+                        title={event.title}
+                        initialBuzzScore={event.buzz_score}
+                        onBuzzUpdated={(newScore) => {
+                          setEvents(prev => prev.map(e => 
+                            e.id === event.id 
+                              ? { ...e, buzz_score: newScore }
+                              : e
+                          ));
+                        }}
+                      />
                       <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
                         <div className="relative overflow-hidden flex-grow">
                           <OptimizedEventImage
