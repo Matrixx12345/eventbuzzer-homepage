@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, ChevronLeft, Send, Sparkles, Loader2, MapPin, Calendar, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,9 +48,9 @@ const TIME_OPTIONS = [
 ];
 
 const RADIUS_OPTIONS = [
-  { id: "10", label: "+ 10 km" },
-  { id: "25", label: "+ 25 km" },
-  { id: "all", label: "Ganze Schweiz" },
+  { id: "5", label: "< 5 km" },
+  { id: "50", label: "5-50 km" },
+  { id: "all", label: "Gesamte Schweiz" },
 ];
 
 const CITY_OPTIONS = [
@@ -85,7 +86,16 @@ const BOT_RESPONSES = {
   },
 };
 
+// Mission to quickFilter mapping
+const MISSION_TO_FILTER: Record<string, string> = {
+  couple: "romantik",
+  family: "mit-kind",
+  friends: "nightlife",
+  solo: "",
+};
+
 const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupProps) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<WizardStep>("mission");
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -250,30 +260,35 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
     
     addUserMessage(`${locationText}${radiusText ? ` ${radiusText}` : ''}`);
     
-    // Create filter object
-    const filters: WizardFilters = {
-      mission: selectedMission,
-      time: selectedTime,
-      date: selectedDate,
-      location: locationText,
-      radius: selectedRadius,
-    };
+    // Build URL params for navigation
+    const params = new URLSearchParams();
+    if (locationText && locationText !== "Schweiz") {
+      params.set("city", locationText);
+    }
+    if (selectedRadius && selectedRadius !== "all") {
+      params.set("radius", selectedRadius);
+    }
+    if (selectedTime) {
+      params.set("time", selectedTime);
+    }
+    if (selectedDate) {
+      params.set("date", format(selectedDate, "yyyy-MM-dd"));
+    }
+    if (selectedMission && MISSION_TO_FILTER[selectedMission]) {
+      params.set("quickFilter", MISSION_TO_FILTER[selectedMission]);
+    }
     
-    // Bot confirms and mentions list update
+    // Bot confirms and navigates
     setTimeout(() => {
-      addBotMessage("Ich habe die passenden Highlights für dich gefunden! Schau sie dir in der Liste an. 👇");
+      addBotMessage("Perfekt! Ich zeige dir jetzt die passenden Events. ✨");
       setStep("complete");
       
-      // Apply filters to main list (if callback provided)
-      if (onFilterApply) {
-        onFilterApply(filters);
-      }
-      
-      // Minimize panel after short delay
+      // Navigate to listings page with filters
       setTimeout(() => {
         onClose();
-        toast.success("Events gefiltert! Scroll nach unten für die Ergebnisse.");
-      }, 1500);
+        const queryString = params.toString();
+        navigate(`/listings${queryString ? `?${queryString}` : ''}`);
+      }, 800);
     }, 300);
   };
 
