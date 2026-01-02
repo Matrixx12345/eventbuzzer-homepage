@@ -84,7 +84,11 @@ export function BuzzSlider({
         Buzz: {baseScore} → <span className="text-orange-400 font-bold">{boostedScore}</span>
       </p>
       
-      <div className="flex items-center gap-3 w-full max-w-xs">
+      <div 
+        className="flex items-center gap-3 w-full max-w-xs"
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <span className="text-white/50 text-xs">0.5x</span>
         <input
           type="range"
@@ -92,8 +96,13 @@ export function BuzzSlider({
           max="3"
           step="0.1"
           value={boost}
-          onChange={(e) => setBoost(parseFloat(e.target.value))}
-          className="flex-1 h-2 accent-orange-500 cursor-pointer"
+          onChange={(e) => {
+            e.stopPropagation();
+            setBoost(parseFloat(e.target.value));
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="flex-1 h-2 accent-orange-500 cursor-pointer appearance-none bg-white/20 rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
         />
         <span className="text-white/50 text-xs">3x</span>
       </div>
