@@ -212,15 +212,43 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
+    // Step-abhängiges Verhalten
+    if (step === "mission") {
+      // Versuche Mission zu matchen
+      const input = inputValue.toLowerCase();
+      const matchedMission = MISSION_OPTIONS.find(m => 
+        input.includes(m.label.toLowerCase()) ||
+        (m.id === "couple" && (input.includes("date") || input.includes("zweit"))) ||
+        (m.id === "friends" && input.includes("freund")) ||
+        (m.id === "family" && input.includes("famili")) ||
+        (m.id === "solo" && input.includes("solo"))
+      );
+      if (matchedMission) {
+        handleMissionSelect(matchedMission.id);
+        setInputValue("");
+        return;
+      }
+      toast.info("Bitte wähle eine Mission oben aus!");
+      return;
+    }
+    
+    if (step === "time") {
+      toast.info("Bitte wähle eine Zeit-Option oben aus!");
+      return;
+    }
+    
+    if (step === "location") {
+      // Behandle als Ortseingabe
+      setLocationInput(inputValue);
+      setInputValue("");
+      return;
+    }
+
+    // Nur im Chat-Step: Freie AI-Anfrage
     const userMessage: ChatMessage = { role: "user", content: inputValue };
     setMessages((prev) => [...prev, userMessage]);
     const messageToSend = inputValue;
     setInputValue("");
-    
-    // If user types freely, skip to chat
-    if (step !== "chat") {
-      setStep("chat");
-    }
 
     await sendMessageToAI(messageToSend);
   };
@@ -471,26 +499,28 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               </div>
             )}
 
-            {/* Input Area - Always visible with more padding */}
-            <div className="p-6 pt-4 pb-8 border-t border-gray-200/50">
-              <div className="flex gap-3">
-                <Input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Schreibe eine Nachricht..."
-                  disabled={isLoading}
-                  className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-12"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading}
-                  className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-12"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
+            {/* Input Area - Only in chat step */}
+            {step === "chat" && (
+              <div className="p-6 pt-4 pb-8 border-t border-gray-200/50">
+                <div className="flex gap-3">
+                  <Input
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Frag mich nach weiteren Events..."
+                    disabled={isLoading}
+                    className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-12"
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!inputValue.trim() || isLoading}
+                    className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-12"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

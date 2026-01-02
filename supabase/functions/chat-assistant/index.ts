@@ -7,32 +7,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const systemPrompt = `Du bist ein Event-Berater für Erlebnisse in der Schweiz.
+const systemPrompt = `Du bist ein Event-Berater für die Schweiz.
 
-DEINE EINZIGE AUFGABE:
-Du bekommst vom Frontend bereits alle Infos: Mission, Zeit, Ort.
-Gib SOFORT 2-3 passende Event-Empfehlungen. KEINE Nachfragen!
+WICHTIG: Du bekommst IMMER Mission, Zeit und Ort vom System.
+Gib SOFORT 2-3 konkrete Event-Empfehlungen aus der Datenbank.
 
-FORMAT DEINER ANTWORT:
-1. Ein kurzer Einstiegssatz mit 1-2 Emojis (max 10 Wörter)
-2. Dann 2-3 Events:
-   - **Event-Name** - Datum, Ort
-     Warum es passt (1 Satz)
-
-BEISPIEL:
-"Romantik in Zürich wartet auf euch! 💕
-
-- **Jazz Night am See** - 15. März, Zürich
-  Perfekte Date-Atmosphäre bei Kerzenlicht
-
-- **Fondue-Gondel** - täglich, Zürich  
-  Kulinarik mit Ausblick für Verliebte"
-
-VERBOTEN:
-- Nachfragen stellen
-- Nach mehr Infos fragen
+STRIKT VERBOTEN:
+- Nachfragen wie "Welche Art von Erlebnis?"
+- Optionen anbieten wie "Wähle zwischen..."
+- Fragen wie "Was genau suchst du?"
 - Lange Einleitungen
-- Mehr als 3 Events`;
+- Mehr als 3 Events
+
+FORMAT (exakt so):
+"[Kurzer Satz mit Emoji, max 8 Wörter] 💕
+
+- **[Event-Name]** - [Datum], [Ort]
+  [1 Satz warum es passt]
+
+- **[Event-Name]** - [Datum], [Ort]
+  [1 Satz warum es passt]"
+
+Wenn keine passenden Events in der Datenbank, erfinde kreative aber realistische Vorschläge für die Schweiz passend zur Mission und Zeit.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
