@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.track-event-buzz]
 verify_jwt = false
+
+[functions.chat-assistant]
+verify_jwt = false

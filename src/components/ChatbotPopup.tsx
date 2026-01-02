@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { X, ChevronLeft, Send, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, ChevronLeft, Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { streamChat } from "@/services/chatService";
+import { toast } from "sonner";
 
 interface ChatMessage {
   role: "bot" | "user";
@@ -25,52 +27,97 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "bot",
-      content: "Hi! Schreib mir einfach, was du vorhast, oder wir finden es gemeinsam über ein kurzes Quiz heraus? ✨",
+      content: "Hi! 👋 Schreib mir einfach, was du vorhast, oder wir finden es gemeinsam über ein kurzes Quiz heraus? ✨",
     },
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const sendMessageToAI = async (userContent: string) => {
+    setIsLoading(true);
+    
+    // Convert messages to API format
+    const apiMessages = messages.map(m => ({
+      role: m.role === "bot" ? "assistant" as const : "user" as const,
+      content: m.content
+    }));
+    apiMessages.push({ role: "user" as const, content: userContent });
+
+    let assistantContent = "";
+
+    const updateAssistantMessage = (chunk: string) => {
+      assistantContent += chunk;
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "bot" && assistantContent.startsWith(chunk.slice(0, 10) || chunk)) {
+          // Update existing bot message
+          return prev.map((m, i) => 
+            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+          );
+        }
+        // Check if we already added an assistant message
+        if (last?.role === "bot" && prev.length > 1 && prev[prev.length - 2]?.role === "user") {
+          return prev.map((m, i) => 
+            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+          );
+        }
+        // Add new bot message
+        return [...prev, { role: "bot", content: assistantContent }];
+      });
+    };
+
+    await streamChat({
+      messages: apiMessages,
+      onDelta: updateAssistantMessage,
+      onDone: () => setIsLoading(false),
+      onError: (error) => {
+        setIsLoading(false);
+        toast.error(error);
+        setMessages(prev => [...prev, { 
+          role: "bot", 
+          content: "Entschuldigung, da ist etwas schiefgelaufen. Bitte versuche es nochmal! 🙏" 
+        }]);
+      }
+    });
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
 
     const userMessage: ChatMessage = { role: "user", content: inputValue };
     setMessages((prev) => [...prev, userMessage]);
+    const messageToSend = inputValue;
     setInputValue("");
 
-    // TODO: Hier später AI-Integration
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          content: "Danke für deine Nachricht! Diese Funktion wird bald verfügbar sein. 🎉",
-        },
-      ]);
-    }, 1000);
+    await sendMessageToAI(messageToSend);
   };
 
-  const handleQuizOptionClick = (optionId: string) => {
+  const handleQuizOptionClick = async (optionId: string) => {
+    if (isLoading) return;
+    
     const option = QUIZ_OPTIONS.find((o) => o.id === optionId);
-    if (option) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: option.label },
-      ]);
-      // TODO: Quiz-Logik hier
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "bot",
-            content: `Super Wahl! Ich suche passende ${option.label} für dich... 🔍`,
-          },
-        ]);
-      }, 500);
-    }
+    const label = option?.label || "Überrasche mich!";
+    
+    setMessages((prev) => [...prev, { role: "user", content: label }]);
+    
+    const prompt = optionId === "surprise" 
+      ? "Überrasche mich mit einem tollen Event-Vorschlag! Ich bin für alles offen."
+      : `Ich suche nach ${label}. Was kannst du mir empfehlen?`;
+    
+    await sendMessageToAI(prompt);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !isLoading) {
       handleSendMessage();
     }
   };
@@ -84,11 +131,11 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
       {/* Chevron Handle - visible when collapsed */}
       <button
         onClick={onOpen}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 w-6 h-16 flex items-center justify-center bg-white/80 backdrop-blur-md rounded-l-lg border border-r-0 border-gray-200/50 transition-opacity duration-300 ${
-          isOpen ? "opacity-0 pointer-events-none" : "opacity-100 hover:bg-white"
+        className={`absolute left-0 top-1/2 -translate-y-1/2 w-6 h-16 flex items-center justify-center bg-white/90 backdrop-blur-md rounded-l-lg border border-r-0 border-gray-200/50 shadow-lg transition-opacity duration-300 ${
+          isOpen ? "opacity-0 pointer-events-none" : "opacity-100 hover:bg-white hover:shadow-xl"
         }`}
       >
-        <ChevronLeft className="h-5 w-5 text-gray-600" />
+        <ChevronLeft className="h-6 w-6 text-gray-700" />
       </button>
 
       {/* Main Panel */}
@@ -119,7 +166,8 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               <button
                 key={option.id}
                 onClick={() => handleQuizOptionClick(option.id)}
-                className="w-full py-2.5 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.01] active:scale-[0.99] text-sm"
+                disabled={isLoading}
+                className="w-full py-2.5 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.01] active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {option.label}
               </button>
@@ -128,14 +176,15 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
             {/* Surprise Option */}
             <button
               onClick={() => handleQuizOptionClick("surprise")}
-              className="w-full py-1.5 px-4 text-center text-gray-500 hover:text-gray-700 text-xs flex items-center justify-center gap-1 transition-colors"
+              disabled={isLoading}
+              className="w-full py-1.5 px-4 text-center text-gray-500 hover:text-gray-700 text-xs flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
             >
               Noch unschlüssig? Lass dich überraschen
               <Sparkles className="h-3 w-3" />
             </button>
           </div>
 
-          {/* Chat Messages - compact */}
+          {/* Chat Messages */}
           <div className="overflow-y-auto p-3 space-y-2 max-h-[180px]">
             {messages.map((message, index) => (
               <div
@@ -153,6 +202,14 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                 </div>
               </div>
             ))}
+            {isLoading && messages[messages.length - 1]?.role === "user" && (
+              <div className="flex justify-start">
+                <div className="bg-white/80 text-gray-800 rounded-2xl rounded-bl-md shadow-sm px-3 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
@@ -163,14 +220,15 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Schreibe eine Nachricht..."
+                disabled={isLoading}
                 className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-orange-500/50 text-sm h-9"
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isLoading}
                 className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-3 h-9"
               >
-                <Send className="h-4 w-4" />
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </div>
