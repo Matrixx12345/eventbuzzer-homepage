@@ -562,23 +562,9 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
               {/* Step 3: Location Selection - Clean Design */}
               {step === "location" && (
                 <div className="px-5 pb-4 pt-2 space-y-4">
-                  {/* Prominent GPS Button */}
-                  <button
-                    onClick={handleGPSLocation}
-                    disabled={isLoadingGPS}
-                    className="w-full py-4 px-5 text-center rounded-xl bg-white/80 hover:bg-white border border-gray-200/60 text-gray-800 font-medium transition-all hover:shadow-lg text-sm flex items-center justify-center gap-3 disabled:opacity-50 backdrop-blur-sm"
-                  >
-                    {isLoadingGPS ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--wizard-accent))]" />
-                    ) : (
-                      <Navigation className="h-5 w-5 text-[hsl(var(--wizard-accent))]" />
-                    )}
-                    <span>📍 Meinen Standort nutzen</span>
-                  </button>
-
                   {/* City Chips - Clean Row */}
                   <div className="space-y-2">
-                    <span className="text-xs text-gray-500 font-medium px-1">Oder wähle eine Stadt:</span>
+                    <span className="text-xs text-gray-500 font-medium px-1">Wähle eine Stadt:</span>
                     <div className="flex flex-wrap gap-2">
                       {CITY_OPTIONS.map((city) => (
                         <button
@@ -595,8 +581,22 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
                       ))}
                     </div>
                   </div>
+
+                  {/* GPS Button - Below cities */}
+                  <button
+                    onClick={handleGPSLocation}
+                    disabled={isLoadingGPS}
+                    className="w-full py-3 px-4 text-center rounded-xl bg-white/60 hover:bg-white/90 border border-gray-200/50 text-gray-600 hover:text-gray-800 font-medium transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isLoadingGPS ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Navigation className="h-4 w-4" />
+                    )}
+                    <span>Oder Standort nutzen</span>
+                  </button>
                   
-                  {/* Radius Chips - Separate Row */}
+                  {/* Radius Chips - White/light styling */}
                   <div className="space-y-2">
                     <span className="text-xs text-gray-500 font-medium px-1">Umkreis:</span>
                     <div className="flex gap-2">
@@ -606,8 +606,8 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
                           onClick={() => setSelectedRadius(selectedRadius === option.id ? null : option.id)}
                           className={`flex-1 py-2 px-3 text-center rounded-full border text-xs font-medium transition-all ${
                             selectedRadius === option.id
-                              ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))] shadow-md"
-                              : "bg-white/60 hover:bg-white/90 border-gray-200/50 text-gray-700"
+                              ? "bg-white text-gray-900 border-gray-400 shadow-sm"
+                              : "bg-white/40 hover:bg-white/70 border-gray-200/60 text-gray-500"
                           }`}
                         >
                           {option.label}
