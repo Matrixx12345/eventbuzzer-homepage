@@ -58,6 +58,10 @@ export default {
         gold: {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
+        },
+        wizard: {
+          DEFAULT: "hsl(var(--wizard-accent))",
+          foreground: "hsl(var(--wizard-accent-foreground))",
           dark: "hsl(var(--gold-dark))",
         },
         navbar: {
