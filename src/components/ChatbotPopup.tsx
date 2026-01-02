@@ -218,16 +218,16 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
       {/* Main Panel */}
       <div
-        className={`fixed right-0 top-16 z-50 transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-16 bottom-8 z-50 transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="w-[380px] max-w-[calc(100vw-1rem)] flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
+        <div className="w-[380px] max-w-[calc(100vw-1rem)] h-full flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
           {/* Frosted Glass Background */}
           <div className="absolute inset-0 bg-white/75 backdrop-blur-xl rounded-l-2xl" />
           
           {/* Content */}
-          <div className="relative flex flex-col">
+          <div className="relative flex flex-col h-full">
             {/* Header - Fixed */}
             <div className="flex items-center justify-between p-5 border-b border-gray-200/50">
               <h2 className="font-serif text-lg text-gray-800">
@@ -338,7 +338,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
             {/* Chat Messages - Only in chat step or when there are more than initial message */}
             {(step === "chat" || messages.length > 1) && (
-              <div className="overflow-y-auto p-5 space-y-3 max-h-[240px]">
+              <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[120px]">
                 {messages.map((message, index) => (
                   <div
                     key={index}
