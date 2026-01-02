@@ -128,7 +128,8 @@ export const computeAutoVibe = (event: {
     'Hallenstadion', 'Stade de Suisse', 'Theater Basel',
     'Opernhaus Zürich', 'Tonhalle Zürich', 'KKL Luzern'
   ];
-  if (event.venue_name && mustSeeVenues.some(v => event.venue_name?.includes(v))) {
+  const venueName = typeof event.venue_name === 'string' ? event.venue_name : '';
+  if (venueName && mustSeeVenues.some(v => venueName.includes(v))) {
     return { label: 'must-see', level: 2 };
   }
 
