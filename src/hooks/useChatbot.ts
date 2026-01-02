@@ -7,16 +7,8 @@ export const useChatbot = () => {
   const [hasBeenDismissed, setHasBeenDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if user has dismissed the chatbot in this session
-    const dismissed = sessionStorage.getItem(CHATBOT_DISMISSED_KEY);
-    if (dismissed) {
-      setHasBeenDismissed(true);
-      return;
-    }
-
-    // Auto-open immediately on first visit
+    // Always auto-open on page load
     setIsOpen(true);
-
   }, []);
 
   const openChatbot = () => {

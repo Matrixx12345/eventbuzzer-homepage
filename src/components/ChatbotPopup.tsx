@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { streamChat } from "@/services/chatService";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -49,7 +50,7 @@ const TIME_OPTIONS = [
 
 const RADIUS_OPTIONS = [
   { id: "5", label: "< 5 km" },
-  { id: "50", label: "5-50 km" },
+  { id: "50", label: "< 50 km" },
   { id: "all", label: "Gesamte Schweiz" },
 ];
 
@@ -103,6 +104,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
   const [showCalendar, setShowCalendar] = useState(false);
   const [locationInput, setLocationInput] = useState("");
   const [selectedRadius, setSelectedRadius] = useState<string | null>(null);
+  const [customRadius, setCustomRadius] = useState<number[]>([25]);
   const [isLoadingGPS, setIsLoadingGPS] = useState(false);
   
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -253,20 +255,24 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
   };
 
   const handleLocationSubmit = async () => {
-    if (!locationInput.trim() && !selectedRadius) return;
+    if (!locationInput.trim() && !selectedRadius && customRadius[0] === 25) return;
     
     const locationText = locationInput.trim() || "Schweiz";
-    const radiusText = RADIUS_OPTIONS.find(r => r.id === selectedRadius)?.label || "";
+    // Use chip radius if selected, otherwise use custom slider value
+    const radiusValue = selectedRadius || String(customRadius[0]);
+    const radiusText = selectedRadius 
+      ? RADIUS_OPTIONS.find(r => r.id === selectedRadius)?.label || ""
+      : `${customRadius[0]} km`;
     
-    addUserMessage(`${locationText}${radiusText ? ` ${radiusText}` : ''}`);
+    addUserMessage(`${locationText}${radiusText ? ` (${radiusText})` : ''}`);
     
     // Build URL params for navigation
     const params = new URLSearchParams();
     if (locationText && locationText !== "Schweiz") {
       params.set("city", locationText);
     }
-    if (selectedRadius && selectedRadius !== "all") {
-      params.set("radius", selectedRadius);
+    if (radiusValue && radiusValue !== "all") {
+      params.set("radius", radiusValue);
     }
     if (selectedTime) {
       params.set("time", selectedTime);
@@ -603,7 +609,10 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
                       {RADIUS_OPTIONS.map((option) => (
                         <button
                           key={option.id}
-                          onClick={() => setSelectedRadius(selectedRadius === option.id ? null : option.id)}
+                          onClick={() => {
+                            setSelectedRadius(selectedRadius === option.id ? null : option.id);
+                            setCustomRadius([25]); // Reset custom slider when chip selected
+                          }}
                           className={`flex-1 py-2 px-3 text-center rounded-full border text-xs font-medium transition-all ${
                             selectedRadius === option.id
                               ? "bg-white text-gray-900 border-gray-400 shadow-sm"
@@ -613,6 +622,25 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
                           {option.label}
                         </button>
                       ))}
+                    </div>
+                    
+                    {/* Custom Radius Slider */}
+                    <div className="pt-2 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Eigener Radius:</span>
+                        <span className="text-xs font-semibold text-gray-700">{customRadius[0]} km</span>
+                      </div>
+                      <Slider 
+                        value={customRadius} 
+                        onValueChange={(val) => {
+                          setCustomRadius(val);
+                          setSelectedRadius(null); // Deselect chips when slider moved
+                        }} 
+                        min={1} 
+                        max={100} 
+                        step={1}
+                        className="w-full"
+                      />
                     </div>
                   </div>
                   
