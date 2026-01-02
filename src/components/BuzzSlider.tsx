@@ -63,10 +63,10 @@ export function BuzzSlider({
           e.stopPropagation();
           setIsOpen(true);
         }}
-        className="p-1.5 rounded-full bg-orange-500/20 hover:bg-orange-500/40 transition-colors"
+        className="absolute top-3 right-12 z-10 p-1.5 rounded-full bg-orange-500/80 hover:bg-orange-500 transition-colors shadow-md"
         title="Buzz anpassen"
       >
-        <Flame size={12} className="text-orange-500" />
+        <Flame size={14} className="text-white" />
       </button>
     );
   }
