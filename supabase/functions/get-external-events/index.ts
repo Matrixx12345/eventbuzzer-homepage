@@ -6,9 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Cloud Supabase für buzz_boost Overrides
-const cloudSupabaseUrl = Deno.env.get("SUPABASE_URL");
-const cloudSupabaseKey = Deno.env.get("SUPABASE_ANON_KEY");
+// Cloud Supabase für buzz_boost Overrides (Lovable Cloud)
+// Diese Edge Function läuft auf dem Cloud Supabase, also können wir direkt die Service Role verwenden
+const cloudSupabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const cloudSupabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
