@@ -335,14 +335,14 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="w-[380px] max-w-[calc(100vw-1rem)] max-h-[80vh] flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
+        <div className="w-[380px] max-w-[calc(100vw-1rem)] flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
           {/* Frosted Glass Background */}
           <div className="absolute inset-0 bg-white/75 backdrop-blur-xl rounded-l-2xl" />
           
-          {/* Content - grows with content */}
-          <div className="relative flex flex-col max-h-[80vh]">
-            {/* Header - Fixed, no divider */}
-            <div className="flex items-center justify-between p-5">
+          {/* Content - Auto height with max constraint */}
+          <div className="relative flex flex-col" style={{ maxHeight: '80vh' }}>
+            {/* Header - Clean, no divider */}
+            <div className="flex items-center justify-between p-5 pb-4">
               <h2 className="font-serif text-lg text-gray-800">
                 Was möchtest du erleben?
               </h2>
@@ -356,118 +356,151 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               </Button>
             </div>
 
-            {/* Step 1: Mission Selection */}
-            {step === "mission" && (
-              <div className="px-5 pb-3 space-y-3">
-                {MISSION_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleMissionSelect(option.id)}
-                    disabled={isLoading}
-                    className="w-full py-3 px-5 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.01] active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {option.label}
-                  </button>
-                ))}
-                
-                <button
-                  onClick={handleSurprise}
-                  disabled={isLoading}
-                  className="w-full py-2 px-4 text-center text-gray-500 hover:text-gray-700 text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 mt-2"
-                >
-                  Noch unschlüssig? Lass dich überraschen
-                  <Sparkles className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Step 2: Time Selection */}
-            {step === "time" && (
-              <div className="px-5 pb-3 space-y-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm font-medium">Wann soll es losgehen?</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {TIME_OPTIONS.map((option) => (
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Step 1: Mission Selection */}
+              {step === "mission" && (
+                <div className="px-5 pb-4 space-y-3">
+                  {MISSION_OPTIONS.map((option) => (
                     <button
                       key={option.id}
-                      onClick={() => handleTimeSelect(option.id)}
+                      onClick={() => handleMissionSelect(option.id)}
                       disabled={isLoading}
-                      className="py-4 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-3 px-5 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.01] active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {option.label}
                     </button>
                   ))}
+                  
+                  <button
+                    onClick={handleSurprise}
+                    disabled={isLoading}
+                    className="w-full py-2 px-4 text-center text-gray-500 hover:text-gray-700 text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 mt-2"
+                  >
+                    Noch unschlüssig? Lass dich überraschen
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Step 3: Location Selection */}
-            {step === "location" && (
-              <div className="px-5 pb-3 space-y-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  <span className="text-sm font-medium">Wo suchst du Erlebnisse?</span>
+              {/* Step 2: Time Selection */}
+              {step === "time" && (
+                <div className="px-5 pb-4 space-y-4">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-medium">Wann soll es losgehen?</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {TIME_OPTIONS.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => handleTimeSelect(option.id)}
+                        disabled={isLoading}
+                        className="py-4 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                {/* GPS Button */}
-                <button
-                  onClick={handleGPSLocation}
-                  disabled={isLoadingGPS}
-                  className="w-full py-3 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isLoadingGPS ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Navigation className="h-4 w-4" />
+              {/* Step 3: Location Selection */}
+              {step === "location" && (
+                <div className="px-5 pb-4 space-y-4">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-sm font-medium">Wo suchst du Erlebnisse?</span>
+                  </div>
+
+                  {/* GPS Button */}
+                  <button
+                    onClick={handleGPSLocation}
+                    disabled={isLoadingGPS}
+                    className="w-full py-3 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isLoadingGPS ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Navigation className="h-4 w-4" />
+                    )}
+                    Meinen Standort nutzen
+                  </button>
+
+                  {/* City Tiles */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {CITY_OPTIONS.map((city) => (
+                      <button
+                        key={city.id}
+                        onClick={() => handleCitySelect(city.label)}
+                        className={`py-2.5 px-2 text-center rounded-xl border text-xs font-medium transition-all ${
+                          locationInput === city.label
+                            ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
+                            : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700"
+                        }`}
+                      >
+                        {city.label}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {RADIUS_OPTIONS.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => setSelectedRadius(selectedRadius === option.id ? null : option.id)}
+                        className={`flex-1 py-2.5 px-3 text-center rounded-xl border text-xs font-medium transition-all ${
+                          selectedRadius === option.id
+                            ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
+                            : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700 backdrop-blur-sm"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    onClick={handleLocationSubmit}
+                    disabled={isLoading || !locationInput.trim()}
+                    className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-11"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Events finden"}
+                  </Button>
+                </div>
+              )}
+
+              {/* Chat Messages - After wizard completion */}
+              {messages.length > 1 && (
+                <div className="px-5 py-3 space-y-3">
+                  {messages.slice(1).map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm ${
+                          message.role === "user"
+                            ? "bg-[hsl(var(--wizard-accent))] text-white rounded-br-md"
+                            : "bg-white/80 text-gray-800 rounded-bl-md shadow-sm"
+                        }`}
+                      >
+                        {message.content}
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && messages[messages.length - 1]?.role === "user" && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/80 text-gray-800 rounded-2xl rounded-bl-md shadow-sm px-4 py-2.5">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    </div>
                   )}
-                  Meinen Standort nutzen
-                </button>
-
-                {/* City Tiles */}
-                <div className="grid grid-cols-3 gap-2">
-                  {CITY_OPTIONS.map((city) => (
-                    <button
-                      key={city.id}
-                      onClick={() => handleCitySelect(city.label)}
-                      className={`py-2.5 px-2 text-center rounded-xl border text-xs font-medium transition-all ${
-                        locationInput === city.label
-                          ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
-                          : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700"
-                      }`}
-                    >
-                      {city.label}
-                    </button>
-                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
-                
-                <div className="flex gap-2">
-                  {RADIUS_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setSelectedRadius(selectedRadius === option.id ? null : option.id)}
-                      className={`flex-1 py-2.5 px-3 text-center rounded-xl border text-xs font-medium transition-all ${
-                        selectedRadius === option.id
-                          ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
-                          : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700 backdrop-blur-sm"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-                
-                <Button
-                  onClick={handleLocationSubmit}
-                  disabled={isLoading || !locationInput.trim()}
-                  className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-11"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Events finden"}
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Calendar Dialog */}
             <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
@@ -483,38 +516,8 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               </DialogContent>
             </Dialog>
 
-            {/* Chat Messages - Only when there are more than initial message */}
-            {messages.length > 1 && (
-              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 max-h-[40vh]">
-                {messages.slice(1).map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm ${
-                        message.role === "user"
-                          ? "bg-[hsl(var(--wizard-accent))] text-white rounded-br-md"
-                          : "bg-white/80 text-gray-800 rounded-bl-md shadow-sm"
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.role === "user" && (
-                  <div className="flex justify-start">
-                    <div className="bg-white/80 text-gray-800 rounded-2xl rounded-bl-md shadow-sm px-4 py-2.5">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-
-            {/* Input Area - ALWAYS visible */}
-            <div className="p-5 pt-3">
+            {/* Input Area - ALWAYS VISIBLE in every step */}
+            <div className="p-5 pt-3 border-t border-gray-100/50">
               <div className="flex gap-3">
                 <Input
                   value={step === "location" ? locationInput : inputValue}
