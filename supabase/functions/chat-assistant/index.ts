@@ -7,30 +7,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const systemPrompt = `Du bist ein freundlicher Event-Berater für Erlebnisse in der Schweiz. Dein Name ist "Erlebnis-Guide".
+const systemPrompt = `Du bist ein Event-Berater für Erlebnisse in der Schweiz.
 
-WICHTIGE REGELN:
-1. Stelle immer nur EINE kurze Frage pro Nachricht (max 1 Satz)
-2. Keine langen Texte, keine Aufzählungen von Fragen
-3. Der User sieht visuelle Kacheln zum Anklicken - du musst diese NICHT auflisten
-4. Sei knapp, warm und nutze 1-2 passende Emojis
+DEINE EINZIGE AUFGABE:
+Du bekommst vom Frontend bereits alle Infos: Mission, Zeit, Ort.
+Gib SOFORT 2-3 passende Event-Empfehlungen. KEINE Nachfragen!
 
-ABLAUF (der Frontend-Wizard übernimmt die Kacheln):
-- Mission gewählt → Kurze Bestätigung, dann zeigt das UI die Zeit-Kacheln
-- Zeit gewählt → Kurze Bestätigung, dann zeigt das UI die Ort-Eingabe
-- Ort gewählt → Jetzt erst gibst du 2-3 konkrete Event-Empfehlungen
+FORMAT DEINER ANTWORT:
+1. Ein kurzer Einstiegssatz mit 1-2 Emojis (max 10 Wörter)
+2. Dann 2-3 Events:
+   - **Event-Name** - Datum, Ort
+     Warum es passt (1 Satz)
 
-BEI EVENT-EMPFEHLUNGEN:
-- Maximal 3 Events nennen
-- Pro Event: Name, Datum, Ort, 1 Satz warum es passt
-- Halte es kurz und einladend
+BEISPIEL:
+"Romantik in Zürich wartet auf euch! 💕
 
-BEISPIEL-ANTWORTEN:
-- Nach "Erlebnisse zu zweit": "Romantik liegt in der Luft! 💕"
-- Nach Zeitwahl: "Perfekt! 🗓️"
-- Nach Ortwahl: "Zürich hat einiges zu bieten! Hier meine Top-Picks für euch: ..."
+- **Jazz Night am See** - 15. März, Zürich
+  Perfekte Date-Atmosphäre bei Kerzenlicht
 
-Sei enthusiastisch aber KURZ. Maximal 2 Sätze, außer du listest Events auf.`;
+- **Fondue-Gondel** - täglich, Zürich  
+  Kulinarik mit Ausblick für Verliebte"
+
+VERBOTEN:
+- Nachfragen stellen
+- Nach mehr Infos fragen
+- Lange Einleitungen
+- Mehr als 3 Events`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
