@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       event_vibe_overrides: {
         Row: {
+          buzz_boost: number | null
           created_at: string
           external_id: string
           gallery_urls: string[] | null
@@ -25,6 +26,7 @@ export type Database = {
           vibe_level: number | null
         }
         Insert: {
+          buzz_boost?: number | null
           created_at?: string
           external_id: string
           gallery_urls?: string[] | null
@@ -34,6 +36,7 @@ export type Database = {
           vibe_level?: number | null
         }
         Update: {
+          buzz_boost?: number | null
           created_at?: string
           external_id?: string
           gallery_urls?: string[] | null

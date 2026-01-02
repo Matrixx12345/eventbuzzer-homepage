@@ -14,6 +14,7 @@ import SupabaseTest from "./pages/SupabaseTest";
 import AdminUpload from "./pages/AdminUpload";
 import AdminRatings from "./pages/AdminRatings";
 import AdminSpeedTagging from "./pages/AdminSpeedTagging";
+import AdminBuzzBoost from "./pages/AdminBuzzBoost";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import LegalFooter from "./components/LegalFooter";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/admin-upload" element={<AdminUpload />} />
               <Route path="/admin/ratings" element={<AdminRatings />} />
               <Route path="/admin/speed-tagging" element={<AdminSpeedTagging />} />
+              <Route path="/admin/buzz-boost" element={<AdminBuzzBoost />} />
               <Route path="/auth" element={<Auth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

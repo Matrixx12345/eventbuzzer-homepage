@@ -6,6 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Cloud Supabase für buzz_boost Overrides
+const cloudSupabaseUrl = Deno.env.get("SUPABASE_URL");
+const cloudSupabaseKey = Deno.env.get("SUPABASE_ANON_KEY");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -16,13 +19,45 @@ serve(async (req) => {
     
     const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
     
+    // Cloud Supabase für buzz_boost (optional)
+    let buzzBoostMap: Record<string, number> = {};
+    if (cloudSupabaseUrl && cloudSupabaseKey) {
+      try {
+        const cloudSupabase = createClient(cloudSupabaseUrl, cloudSupabaseKey);
+        const { data: boostData } = await cloudSupabase
+          .from("event_vibe_overrides")
+          .select("external_id, buzz_boost")
+          .not("buzz_boost", "is", null)
+          .neq("buzz_boost", 1);
+        
+        if (boostData) {
+          boostData.forEach((b: any) => {
+            if (b.buzz_boost && b.buzz_boost !== 1) {
+              buzzBoostMap[b.external_id] = b.buzz_boost;
+            }
+          });
+        }
+        console.log(`Loaded ${Object.keys(buzzBoostMap).length} buzz boosts`);
+      } catch (e) {
+        console.log("Could not load buzz boosts:", e);
+      }
+    }
+    
+    // Helper to apply buzz boost
+    const applyBuzzBoost = (event: any) => {
+      const externalId = event.external_id || String(event.id);
+      const boost = buzzBoostMap[externalId];
+      if (boost && boost !== 1 && event.buzz_score !== null && event.buzz_score !== undefined) {
+        event.buzz_score = Math.min(100, Math.round(event.buzz_score * boost));
+      }
+      return event;
+    };
+    
     // Fast path: Single event lookup by ID
     if (eventId) {
       console.log("=== SINGLE EVENT LOOKUP ===");
       console.log("Requested eventId:", eventId, "Type:", typeof eventId);
       
-      // Use SELECT * for detail view to avoid column mismatch issues
-      // Try to find by external_id first
       let { data: event, error } = await supabase
         .from("events")
         .select("*")
@@ -32,7 +67,6 @@ serve(async (req) => {
       console.log("Query by external_id result:", event ? `Found: ${event.title}` : "Not found");
       
       if (!event && !error) {
-        // Try numeric ID
         const numericId = parseInt(eventId, 10);
         console.log("Trying numeric ID:", numericId);
         if (!isNaN(numericId)) {
@@ -52,14 +86,14 @@ serve(async (req) => {
         throw error;
       }
       
-      // Log the attribution fields specifically
+      // Apply buzz boost
       if (event) {
+        event = applyBuzzBoost(event);
         console.log("=== ATTRIBUTION DEBUG ===");
         console.log("Event ID:", event.id);
         console.log("External ID:", event.external_id);
         console.log("Title:", event.title);
-        console.log("image_author:", event.image_author, "| Type:", typeof event.image_author);
-        console.log("image_license:", event.image_license, "| Type:", typeof event.image_license);
+        console.log("Buzz Score (after boost):", event.buzz_score);
       }
       
       return new Response(
@@ -238,6 +272,9 @@ serve(async (req) => {
         return dist <= radius;
       });
     }
+
+    // Apply buzz boosts to all events
+    filteredEvents = filteredEvents.map(applyBuzzBoost);
 
     console.log(`Returning ${filteredEvents.length} events (total: ${count})`);
 
