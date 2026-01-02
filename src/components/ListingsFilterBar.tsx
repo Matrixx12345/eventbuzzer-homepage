@@ -336,7 +336,7 @@ const ListingsFilterBar = ({
   return (
     <div ref={containerRef} className="w-full relative">
       {/* Main Filter Bar - White bar with dark text */}
-      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-visible">
         {/* Kategorie */}
         <div className="relative flex-1 min-w-0">
           <button
@@ -390,7 +390,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               selectedMood.slug
-                ? "bg-amber-700 text-white rounded-xl"
+                ? "bg-amber-700 text-white"
                 : openSection === "mood"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -436,7 +436,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               cityInput
-                ? "bg-amber-700 text-white rounded-xl"
+                ? "bg-amber-700 text-white"
                 : openSection === "location"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -510,7 +510,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               (selectedDate || selectedTimePill)
-                ? "bg-amber-700 text-white rounded-xl"
+                ? "bg-amber-700 text-white"
                 : openSection === "date"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
