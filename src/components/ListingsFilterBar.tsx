@@ -344,7 +344,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full rounded-l-2xl",
               selectedCategory.slug
-                ? "bg-blue-900 text-white"
+                ? "bg-amber-700 text-white"
                 : openSection === "category"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -368,7 +368,7 @@ const ListingsFilterBar = ({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
                       selectedCategory.slug === cat.slug
-                        ? "bg-blue-600 text-white"
+                        ? "bg-amber-600 text-white"
                         : "hover:bg-gray-100 text-gray-900"
                     )}
                   >
@@ -390,7 +390,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               selectedMood.slug
-                ? "bg-blue-900 text-white"
+                ? "bg-amber-700 text-white"
                 : openSection === "mood"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -414,7 +414,7 @@ const ListingsFilterBar = ({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
                       selectedMood.slug === mood.slug
-                        ? "bg-blue-600 text-white"
+                        ? "bg-amber-600 text-white"
                         : "hover:bg-gray-100 text-gray-900"
                     )}
                   >
@@ -436,7 +436,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               cityInput
-                ? "bg-blue-900 text-white"
+                ? "bg-amber-700 text-white"
                 : openSection === "location"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -474,10 +474,10 @@ const ListingsFilterBar = ({
                       <button
                         key={city}
                         onClick={() => handleCitySelect(city)}
-                        className={cn(
+                      className={cn(
                           "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
                           cityInput === city
-                            ? "bg-blue-600 text-white"
+                            ? "bg-amber-600 text-white"
                             : "bg-gray-100 hover:bg-gray-200 text-gray-900"
                         )}
                       >
@@ -510,7 +510,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               (selectedDate || selectedTimePill)
-                ? "bg-blue-900 text-white"
+                ? "bg-amber-700 text-white"
                 : openSection === "date"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -551,7 +551,7 @@ const ListingsFilterBar = ({
                       className={cn(
                         "px-3 py-2 rounded-lg text-sm font-medium transition-all text-center flex items-center justify-center gap-1.5",
                         selectedTimePill === pill.id
-                          ? "bg-blue-600 text-white"
+                          ? "bg-amber-600 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       )}
                     >
@@ -624,7 +624,7 @@ const ListingsFilterBar = ({
         <div className="p-2 flex-shrink-0">
           <button
             onClick={() => onSearchChange(searchInput)}
-            className="h-full px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-2 transition-colors"
+            className="h-full px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold flex items-center gap-2 transition-colors"
           >
             <Search className="w-4 h-4" />
             <span>SUCHEN</span>
