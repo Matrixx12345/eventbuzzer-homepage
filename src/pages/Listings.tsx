@@ -128,10 +128,12 @@ interface ExternalEvent {
   image_author?: string | null;
   image_license?: string | null;
   category_sub_id?: string;
+  category_main_id?: number;
   created_at?: string;
   favorite_count?: number;
   buzz_score?: number | null;
   click_count?: number;
+  source?: string;
 }
 
 interface TaxonomyItem {
@@ -600,6 +602,37 @@ const Listings = () => {
                       ? getDistanceInfo(event.latitude, event.longitude).distance
                       : null;
                   const isMuseum = event.category_sub_id === 'museum-kunst' || event.external_id?.startsWith('manual_');
+                  const isMySwitzerland = event.source === 'myswitzerland';
+                  
+                  // Bestimme Badge-Text: MySwitzerland bekommt Kategorie-Tags statt Datum
+                  const getBadgeText = () => {
+                    if (isMuseum) return 'MUSEUM';
+                    if (isMySwitzerland) {
+                      // Kategorie-basierter Tag für MySwitzerland
+                      const subCat = event.category_sub_id;
+                      if (subCat?.includes('museum')) return 'MUSEUM';
+                      if (subCat?.includes('wanderung') || subCat?.includes('outdoor')) return 'WANDERUNG';
+                      if (subCat?.includes('natur') || subCat?.includes('park')) return 'NATUR';
+                      if (subCat?.includes('sehenswuerdigkeit') || subCat?.includes('attraction')) return 'SEHENSWÜRDIGKEIT';
+                      if (subCat?.includes('wellness') || subCat?.includes('spa')) return 'WELLNESS';
+                      if (subCat?.includes('schloss') || subCat?.includes('burg')) return 'SCHLOSS';
+                      if (subCat?.includes('kirche') || subCat?.includes('kloster')) return 'KULTUR';
+                      if (subCat?.includes('zoo') || subCat?.includes('tier')) return 'TIERPARK';
+                      // Fallback: versuche aus Tags zu lesen
+                      const tags = event.tags || [];
+                      if (tags.includes('natur')) return 'NATUR';
+                      if (tags.includes('wellness')) return 'WELLNESS';
+                      if (tags.includes('familie-kinder')) return 'FAMILIENAUSFLUG';
+                      return 'ERLEBNIS';
+                    }
+                    return formatEventDate(
+                      event.start_date,
+                      event.external_id,
+                      event.date_range_start,
+                      event.date_range_end,
+                      event.show_count,
+                    );
+                  };
 
                   return (
                     <article 
@@ -615,16 +648,10 @@ const Listings = () => {
                             className="group-hover:scale-105"
                           />
                           
-                          {/* Date or Museum Badge */}
+                          {/* Date or Category Badge */}
                           <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
                             <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
-                              {isMuseum ? 'MUSEUM' : formatEventDate(
-                                event.start_date,
-                                event.external_id,
-                                event.date_range_start,
-                                event.date_range_end,
-                                event.show_count,
-                              )}
+                              {getBadgeText()}
                             </p>
                           </div>
                           
