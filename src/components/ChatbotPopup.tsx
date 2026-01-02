@@ -27,8 +27,9 @@ const MISSION_OPTIONS = [
 
 const TIME_OPTIONS = [
   { id: "today", label: "Heute" },
-  { id: "weekend", label: "Dieses Wochenende" },
-  { id: "pick", label: "Datum wählen" },
+  { id: "tomorrow", label: "Morgen" },
+  { id: "weekend", label: "Wochenende" },
+  { id: "pick", label: "📅 Kalender" },
 ];
 
 const RADIUS_OPTIONS = [
@@ -272,19 +273,19 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
             {/* Step 2: Time Selection */}
             {step === "time" && (
-              <div className="p-5 space-y-3">
-                <div className="flex items-center gap-2 text-gray-600 mb-4">
+              <div className="p-6 space-y-4">
+                <div className="flex items-center gap-2 text-gray-600 mb-3">
                   <Calendar className="h-4 w-4" />
                   <span className="text-sm font-medium">Wann soll es losgehen?</span>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {TIME_OPTIONS.map((option) => (
                     <button
                       key={option.id}
                       onClick={() => handleTimeSelect(option.id)}
                       disabled={isLoading}
-                      className="py-3 px-3 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="py-4 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {option.label}
                     </button>
@@ -366,7 +367,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
             )}
 
             {/* Input Area - Always visible with more padding */}
-            <div className="p-5 pt-3 border-t border-gray-200/50">
+            <div className="p-6 pt-4 pb-8 border-t border-gray-200/50">
               <div className="flex gap-3">
                 <Input
                   value={inputValue}
@@ -374,12 +375,12 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                   onKeyPress={handleKeyPress}
                   placeholder="Schreibe eine Nachricht..."
                   disabled={isLoading}
-                  className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-11"
+                  className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-12"
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isLoading}
-                  className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-11"
+                  className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-12"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
