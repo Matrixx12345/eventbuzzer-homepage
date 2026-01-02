@@ -336,7 +336,7 @@ const ListingsFilterBar = ({
   return (
     <div ref={containerRef} className="w-full relative">
       {/* Main Filter Bar - White bar with dark text */}
-      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-visible">
+      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Kategorie */}
         <div className="relative flex-1 min-w-0">
           <button
@@ -381,7 +381,7 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        <div className="w-px bg-gray-200 self-stretch my-3" />
+        <div className={cn("w-px self-stretch my-3 transition-colors", (selectedCategory.slug || selectedMood.slug) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Stimmung */}
         <div className="relative flex-1 min-w-0">
@@ -427,7 +427,7 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        <div className="w-px bg-gray-200 self-stretch my-3" />
+        <div className={cn("w-px self-stretch my-3 transition-colors", (selectedMood.slug || cityInput) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Ort */}
         <div className="relative flex-1 min-w-0">
@@ -501,7 +501,7 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        <div className="w-px bg-gray-200 self-stretch my-3" />
+        <div className={cn("w-px self-stretch my-3 transition-colors", (cityInput || selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Datum */}
         <div className="relative flex-1 min-w-0">
@@ -576,7 +576,7 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        <div className="w-px bg-gray-200 self-stretch my-3" />
+        <div className={cn("w-px self-stretch my-3 transition-colors", (selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Suche Input mit Vorschlägen */}
         <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
