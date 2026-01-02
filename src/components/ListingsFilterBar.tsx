@@ -342,12 +342,12 @@ const ListingsFilterBar = ({
           <button
             onClick={() => toggleSection("category")}
             className={cn(
-              "flex items-center gap-3 px-5 py-4 transition-colors w-full rounded-l-2xl",
+              "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               selectedCategory.slug
-                ? "bg-amber-700 text-white"
-                : openSection === "category"
-                ? "bg-gray-50"
-                : "hover:bg-gray-50"
+                ? "bg-amber-700 text-white rounded-l-2xl"
+                : "rounded-l-2xl",
+              openSection === "category" && !selectedCategory.slug && "bg-gray-50",
+              !selectedCategory.slug && openSection !== "category" && "hover:bg-gray-50"
             )}
           >
             <LayoutGrid className={cn("w-5 h-5 flex-shrink-0", selectedCategory.slug ? "text-white" : "text-gray-400")} />
@@ -390,7 +390,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               selectedMood.slug
-                ? "bg-amber-700 text-white"
+                ? "bg-amber-700 text-white rounded-xl"
                 : openSection === "mood"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -436,7 +436,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               cityInput
-                ? "bg-amber-700 text-white"
+                ? "bg-amber-700 text-white rounded-xl"
                 : openSection === "location"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
@@ -510,7 +510,7 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               (selectedDate || selectedTimePill)
-                ? "bg-amber-700 text-white"
+                ? "bg-amber-700 text-white rounded-xl"
                 : openSection === "date"
                 ? "bg-gray-50"
                 : "hover:bg-gray-50"
