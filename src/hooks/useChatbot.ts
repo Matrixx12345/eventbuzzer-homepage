@@ -14,12 +14,9 @@ export const useChatbot = () => {
       return;
     }
 
-    // Auto-open after a short delay on first visit
-    const timer = setTimeout(() => {
-      setIsOpen(true);
-    }, 1500);
+    // Auto-open immediately on first visit
+    setIsOpen(true);
 
-    return () => clearTimeout(timer);
   }, []);
 
   const openChatbot = () => {
