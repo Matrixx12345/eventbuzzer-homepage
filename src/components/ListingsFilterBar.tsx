@@ -336,16 +336,16 @@ const ListingsFilterBar = ({
   return (
     <div ref={containerRef} className="w-full relative">
       {/* Main Filter Bar - White bar with dark text */}
-      <div className="flex items-stretch bg-amber-700 rounded-2xl shadow-xl overflow-hidden">
+      <div className="flex items-stretch bg-white rounded-2xl shadow-xl overflow-visible">
         {/* Kategorie */}
         <div className="relative flex-1 min-w-0">
           <button
             onClick={() => toggleSection("category")}
             className={cn(
-              "flex items-center gap-3 px-5 py-4 transition-colors w-full",
+              "flex items-center gap-3 px-5 py-4 transition-colors w-full rounded-l-2xl",
               selectedCategory.slug
                 ? "bg-amber-700 text-white"
-                : "bg-white",
+                : "",
               openSection === "category" && !selectedCategory.slug && "bg-gray-50",
               !selectedCategory.slug && openSection !== "category" && "hover:bg-gray-50"
             )}
@@ -391,7 +391,7 @@ const ListingsFilterBar = ({
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               selectedMood.slug
                 ? "bg-amber-700 text-white"
-                : "bg-white",
+                : "",
               openSection === "mood" && !selectedMood.slug && "bg-gray-50",
               !selectedMood.slug && openSection !== "mood" && "hover:bg-gray-50"
             )}
@@ -437,7 +437,7 @@ const ListingsFilterBar = ({
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               cityInput
                 ? "bg-amber-700 text-white"
-                : "bg-white",
+                : "",
               openSection === "location" && !cityInput && "bg-gray-50",
               !cityInput && openSection !== "location" && "hover:bg-gray-50"
             )}
@@ -511,7 +511,7 @@ const ListingsFilterBar = ({
               "flex items-center gap-3 px-5 py-4 transition-colors w-full",
               (selectedDate || selectedTimePill)
                 ? "bg-amber-700 text-white"
-                : "bg-white",
+                : "",
               openSection === "date" && !(selectedDate || selectedTimePill) && "bg-gray-50",
               !(selectedDate || selectedTimePill) && openSection !== "date" && "hover:bg-gray-50"
             )}
@@ -579,7 +579,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Suche Input mit Vorschlägen */}
-        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 py-4 flex-1 min-w-0 bg-white">
+        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 py-4 flex-1 min-w-0">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
           <input
             type="text"
