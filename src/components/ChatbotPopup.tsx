@@ -19,15 +19,24 @@ interface ChatbotPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onOpen: () => void;
+  onFilterApply?: (filters: WizardFilters) => void;
 }
 
-type WizardStep = "mission" | "time" | "location" | "chat";
+export interface WizardFilters {
+  mission: string | null;
+  time: string | null;
+  date?: Date;
+  location: string;
+  radius: string | null;
+}
+
+type WizardStep = "mission" | "time" | "location" | "complete";
 
 const MISSION_OPTIONS = [
-  { id: "solo", label: "Solo-Inspiration" },
-  { id: "family", label: "Familien-Erlebnisse" },
-  { id: "friends", label: "Zeit mit Freunden" },
-  { id: "couple", label: "Erlebnisse zu zweit" },
+  { id: "solo", label: "Solo-Inspiration", emoji: "🧘" },
+  { id: "family", label: "Familien-Erlebnisse", emoji: "👨‍👩‍👧" },
+  { id: "friends", label: "Zeit mit Freunden", emoji: "🎉" },
+  { id: "couple", label: "Erlebnisse zu zweit", emoji: "💕" },
 ];
 
 const TIME_OPTIONS = [
@@ -60,7 +69,23 @@ const TIME_KEYWORDS = [
   { keywords: ["nächsten", "nächste", "kommenden", "kommende"], id: "weekend" },
 ];
 
-const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
+// Bot responses for empathetic conversation
+const BOT_RESPONSES = {
+  mission: {
+    solo: "Schön, Zeit für dich! 🧘 Wann soll es losgehen?",
+    family: "Toll! Familienzeit ist wertvoll. 👨‍👩‍👧 Wann soll es losgehen?",
+    friends: "Super! Mit Freunden macht alles mehr Spass. 🎉 Wann soll es losgehen?",
+    couple: "Wie schön! ✨ Zeit zu zweit ist kostbar. Wann soll es losgehen?",
+  },
+  time: {
+    today: "Perfekt, heute ist ein guter Tag! 📍 Wo magst du suchen?",
+    tomorrow: "Super, morgen passt prima. 📍 Wo magst du suchen?",
+    weekend: "Das Wochenende ruft! 📍 Wo magst du suchen?",
+    pick: "Notiert! 📍 Wo magst du suchen?",
+  },
+};
+
+const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupProps) => {
   const [step, setStep] = useState<WizardStep>("mission");
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -73,7 +98,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "bot",
-      content: "Hi! 👋 Wähle deine Mission oder schreib mir direkt, was du suchst!",
+      content: "Hi! 👋 Verrate mir deinen Wunsch oder lass uns das Richtige über mein Quiz finden! ✨",
     },
   ]);
   const [inputValue, setInputValue] = useState("");
@@ -87,6 +112,14 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const addBotMessage = (content: string) => {
+    setMessages(prev => [...prev, { role: "bot", content }]);
+  };
+
+  const addUserMessage = (content: string) => {
+    setMessages(prev => [...prev, { role: "user", content }]);
+  };
 
   const sendMessageToAI = async (userContent: string) => {
     setIsLoading(true);
@@ -139,8 +172,15 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const handleMissionSelect = (missionId: string) => {
     const mission = MISSION_OPTIONS.find(m => m.id === missionId);
     setSelectedMission(missionId);
-    setMessages(prev => [...prev, { role: "user", content: mission?.label || missionId }]);
-    setStep("time");
+    addUserMessage(mission?.label || missionId);
+    
+    // Bot responds empathetically
+    setTimeout(() => {
+      const response = BOT_RESPONSES.mission[missionId as keyof typeof BOT_RESPONSES.mission] 
+        || "Toll! Wann soll es losgehen?";
+      addBotMessage(response);
+      setStep("time");
+    }, 300);
   };
 
   const handleTimeSelect = (timeId: string) => {
@@ -150,8 +190,15 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
     }
     const time = TIME_OPTIONS.find(t => t.id === timeId);
     setSelectedTime(timeId);
-    setMessages(prev => [...prev, { role: "user", content: time?.label || timeId }]);
-    setStep("location");
+    addUserMessage(time?.label || timeId);
+    
+    // Bot responds empathetically
+    setTimeout(() => {
+      const response = BOT_RESPONSES.time[timeId as keyof typeof BOT_RESPONSES.time] 
+        || "Super! 📍 Wo magst du suchen?";
+      addBotMessage(response);
+      setStep("location");
+    }, 300);
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -160,8 +207,12 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
     setShowCalendar(false);
     const formattedDate = format(date, "d. MMMM yyyy", { locale: de });
     setSelectedTime("pick");
-    setMessages(prev => [...prev, { role: "user", content: formattedDate }]);
-    setStep("location");
+    addUserMessage(formattedDate);
+    
+    setTimeout(() => {
+      addBotMessage("Perfekt, ist notiert! 📍 Wo magst du suchen?");
+      setStep("location");
+    }, 300);
   };
 
   const handleCitySelect = (cityLabel: string) => {
@@ -197,23 +248,33 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
     const locationText = locationInput.trim() || "Schweiz";
     const radiusText = RADIUS_OPTIONS.find(r => r.id === selectedRadius)?.label || "";
     
-    setMessages(prev => [...prev, { 
-      role: "user", 
-      content: `${locationText}${radiusText ? ` ${radiusText}` : ''}` 
-    }]);
+    addUserMessage(`${locationText}${radiusText ? ` ${radiusText}` : ''}`);
     
-    setStep("chat");
+    // Create filter object
+    const filters: WizardFilters = {
+      mission: selectedMission,
+      time: selectedTime,
+      date: selectedDate,
+      location: locationText,
+      radius: selectedRadius,
+    };
     
-    // Build the search prompt
-    const missionLabel = MISSION_OPTIONS.find(m => m.id === selectedMission)?.label || selectedMission;
-    let timeLabel = TIME_OPTIONS.find(t => t.id === selectedTime)?.label || selectedTime;
-    if (selectedTime === "pick" && selectedDate) {
-      timeLabel = format(selectedDate, "d. MMMM yyyy", { locale: de });
-    }
-    
-    const searchPrompt = `Mission: ${missionLabel}, Zeit: ${timeLabel}, Ort: ${locationText}${radiusText ? ` (${radiusText})` : ''}`;
-    
-    await sendMessageToAI(searchPrompt);
+    // Bot confirms and mentions list update
+    setTimeout(() => {
+      addBotMessage("Ich habe die passenden Highlights für dich gefunden! Schau sie dir in der Liste an. 👇");
+      setStep("complete");
+      
+      // Apply filters to main list (if callback provided)
+      if (onFilterApply) {
+        onFilterApply(filters);
+      }
+      
+      // Minimize panel after short delay
+      setTimeout(() => {
+        onClose();
+        toast.success("Events gefiltert! Scroll nach unten für die Ergebnisse.");
+      }, 1500);
+    }, 300);
   };
 
   const handleSendMessage = async () => {
@@ -234,9 +295,12 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
         handleMissionSelect(matchedMission.id);
         return;
       }
-      // No match - add as message and still proceed
-      setMessages(prev => [...prev, { role: "user", content: inputValue }]);
+      // No match but try to be helpful
+      addUserMessage(inputValue);
       setInputValue("");
+      setTimeout(() => {
+        addBotMessage("Interessant! Wähle eine Mission oder sag mir mehr. 😊");
+      }, 300);
       return;
     }
     
@@ -256,10 +320,12 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
         handleTimeSelect("weekend");
         return;
       }
-      // No match - add as message and show hint
-      setMessages(prev => [...prev, { role: "user", content: inputValue }]);
-      toast.info("Wähle eine Zeit-Option oder tippe z.B. 'Wochenende'");
+      // No match
+      addUserMessage(inputValue);
       setInputValue("");
+      setTimeout(() => {
+        addBotMessage("Wähle eine Zeit-Option oder tippe z.B. 'Wochenende'. 📅");
+      }, 300);
       return;
     }
     
@@ -270,15 +336,13 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
       // Auto-submit if it looks like a city
       const isCityMatch = CITY_OPTIONS.some(c => input.includes(c.label.toLowerCase()));
       if (isCityMatch || input.length >= 3) {
-        // Wait a moment then submit
         setTimeout(() => handleLocationSubmit(), 100);
       }
       return;
     }
 
-    // Chat step: Free AI request
-    const userMessage: ChatMessage = { role: "user", content: inputValue };
-    setMessages((prev) => [...prev, userMessage]);
+    // Complete step: Free AI request for follow-up questions
+    addUserMessage(inputValue);
     const messageToSend = inputValue;
     setInputValue("");
 
@@ -287,9 +351,34 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
   const handleSurprise = async () => {
     if (isLoading) return;
-    setMessages(prev => [...prev, { role: "user", content: "Überrasche mich! ✨" }]);
-    setStep("chat");
-    await sendMessageToAI("Überrasche mich mit einem tollen Event-Vorschlag! Ich bin für alles offen.");
+    addUserMessage("Überrasche mich! ✨");
+    
+    // Set defaults for filter
+    setSelectedMission("solo");
+    setSelectedTime("weekend");
+    setLocationInput("Schweiz");
+    setSelectedRadius("all");
+    
+    setTimeout(() => {
+      addBotMessage("Ich liebe Überraschungen! 🎲 Hier sind die besten Events der Woche für dich:");
+      setStep("complete");
+      
+      const filters: WizardFilters = {
+        mission: "solo",
+        time: "weekend",
+        location: "Schweiz",
+        radius: "all",
+      };
+      
+      if (onFilterApply) {
+        onFilterApply(filters);
+      }
+      
+      setTimeout(() => {
+        onClose();
+        toast.success("Überraschung! Scroll nach unten für die Highlights.");
+      }, 1500);
+    }, 300);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -310,11 +399,24 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
         return "z.B. 'nächsten Samstag', 'Wochenende'...";
       case "location":
         return "Stadt oder PLZ eingeben...";
-      case "chat":
-        return "Frag mich nach weiteren Events...";
+      case "complete":
+        return "Frag mich nach weiteren Details...";
       default:
         return "Nachricht eingeben...";
     }
+  };
+
+  const resetWizard = () => {
+    setStep("mission");
+    setSelectedMission(null);
+    setSelectedTime(null);
+    setSelectedDate(undefined);
+    setLocationInput("");
+    setSelectedRadius(null);
+    setMessages([{
+      role: "bot",
+      content: "Hi! 👋 Verrate mir deinen Wunsch oder lass uns das Richtige über mein Quiz finden! ✨",
+    }]);
   };
 
   return (
@@ -337,45 +439,86 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
       >
         <div className="w-[380px] max-w-[calc(100vw-1rem)] flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
           {/* Frosted Glass Background */}
-          <div className="absolute inset-0 bg-white/75 backdrop-blur-xl rounded-l-2xl" />
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-xl rounded-l-2xl" />
           
           {/* Content - Auto height with max constraint */}
           <div className="relative flex flex-col" style={{ maxHeight: '80vh' }}>
             {/* Header - Clean, no divider */}
-            <div className="flex items-center justify-between p-5 pb-4">
+            <div className="flex items-center justify-between p-5 pb-3">
               <h2 className="font-serif text-lg text-gray-800">
-                Was möchtest du erleben?
+                Dein Event-Assistent
               </h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="h-8 w-8 rounded-full hover:bg-gray-200/50"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {step === "complete" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetWizard}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Neu starten
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="h-8 w-8 rounded-full hover:bg-gray-200/50"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto">
+              {/* Chat Messages - Always visible */}
+              <div className="px-5 py-2 space-y-3">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm ${
+                        message.role === "user"
+                          ? "bg-[hsl(var(--wizard-accent))] text-white rounded-br-md"
+                          : "bg-white/90 text-gray-800 rounded-bl-md shadow-sm border border-gray-100"
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === "user" && (
+                  <div className="flex justify-start">
+                    <div className="bg-white/90 text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-100 px-4 py-2.5">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
               {/* Step 1: Mission Selection */}
               {step === "mission" && (
-                <div className="px-5 pb-4 space-y-3">
+                <div className="px-5 pb-4 pt-2 space-y-2">
                   {MISSION_OPTIONS.map((option) => (
                     <button
                       key={option.id}
                       onClick={() => handleMissionSelect(option.id)}
                       disabled={isLoading}
-                      className="w-full py-3 px-5 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.01] active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-3 px-5 text-center rounded-xl bg-white/70 hover:bg-white/90 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.01] active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      {option.label}
+                      <span>{option.emoji}</span>
+                      <span>{option.label}</span>
                     </button>
                   ))}
                   
                   <button
                     onClick={handleSurprise}
                     disabled={isLoading}
-                    className="w-full py-2 px-4 text-center text-gray-500 hover:text-gray-700 text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 mt-2"
+                    className="w-full py-2.5 px-4 text-center text-gray-500 hover:text-gray-700 text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 mt-3 hover:bg-white/50 rounded-lg"
                   >
                     Noch unschlüssig? Lass dich überraschen
                     <Sparkles className="h-3.5 w-3.5" />
@@ -385,19 +528,14 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
               {/* Step 2: Time Selection */}
               {step === "time" && (
-                <div className="px-5 pb-4 space-y-4">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-sm font-medium">Wann soll es losgehen?</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="px-5 pb-4 pt-2 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
                     {TIME_OPTIONS.map((option) => (
                       <button
                         key={option.id}
                         onClick={() => handleTimeSelect(option.id)}
                         disabled={isLoading}
-                        className="py-4 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="py-3.5 px-4 text-center rounded-xl bg-white/70 hover:bg-white/90 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {option.label}
                       </button>
@@ -406,98 +544,80 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                 </div>
               )}
 
-              {/* Step 3: Location Selection */}
+              {/* Step 3: Location Selection - Clean Design */}
               {step === "location" && (
-                <div className="px-5 pb-4 space-y-4">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-sm font-medium">Wo suchst du Erlebnisse?</span>
-                  </div>
-
-                  {/* GPS Button */}
+                <div className="px-5 pb-4 pt-2 space-y-4">
+                  {/* Prominent GPS Button */}
                   <button
                     onClick={handleGPSLocation}
                     disabled={isLoadingGPS}
-                    className="w-full py-3 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-4 px-5 text-center rounded-xl bg-white/80 hover:bg-white border border-gray-200/60 text-gray-800 font-medium transition-all hover:shadow-lg text-sm flex items-center justify-center gap-3 disabled:opacity-50 backdrop-blur-sm"
                   >
                     {isLoadingGPS ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--wizard-accent))]" />
                     ) : (
-                      <Navigation className="h-4 w-4" />
+                      <Navigation className="h-5 w-5 text-[hsl(var(--wizard-accent))]" />
                     )}
-                    Meinen Standort nutzen
+                    <span>📍 Meinen Standort nutzen</span>
                   </button>
 
-                  {/* City Tiles */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {CITY_OPTIONS.map((city) => (
-                      <button
-                        key={city.id}
-                        onClick={() => handleCitySelect(city.label)}
-                        className={`py-2.5 px-2 text-center rounded-xl border text-xs font-medium transition-all ${
-                          locationInput === city.label
-                            ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
-                            : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700"
-                        }`}
-                      >
-                        {city.label}
-                      </button>
-                    ))}
+                  {/* City Chips - Clean Row */}
+                  <div className="space-y-2">
+                    <span className="text-xs text-gray-500 font-medium px-1">Oder wähle eine Stadt:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {CITY_OPTIONS.map((city) => (
+                        <button
+                          key={city.id}
+                          onClick={() => handleCitySelect(city.label)}
+                          className={`py-2 px-4 rounded-full border text-xs font-medium transition-all ${
+                            locationInput === city.label
+                              ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))] shadow-md"
+                              : "bg-white/60 hover:bg-white/90 border-gray-200/50 text-gray-700"
+                          }`}
+                        >
+                          {city.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                    {RADIUS_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        onClick={() => setSelectedRadius(selectedRadius === option.id ? null : option.id)}
-                        className={`flex-1 py-2.5 px-3 text-center rounded-xl border text-xs font-medium transition-all ${
-                          selectedRadius === option.id
-                            ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
-                            : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700 backdrop-blur-sm"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+                  {/* Radius Chips - Separate Row */}
+                  <div className="space-y-2">
+                    <span className="text-xs text-gray-500 font-medium px-1">Umkreis:</span>
+                    <div className="flex gap-2">
+                      {RADIUS_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => setSelectedRadius(selectedRadius === option.id ? null : option.id)}
+                          className={`flex-1 py-2 px-3 text-center rounded-full border text-xs font-medium transition-all ${
+                            selectedRadius === option.id
+                              ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))] shadow-md"
+                              : "bg-white/60 hover:bg-white/90 border-gray-200/50 text-gray-700"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   
+                  {/* Submit Button */}
                   <Button
                     onClick={handleLocationSubmit}
                     disabled={isLoading || !locationInput.trim()}
-                    className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-11"
+                    className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-12 font-medium shadow-md"
                   >
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Events finden"}
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "✨ Events finden"}
                   </Button>
                 </div>
               )}
 
-              {/* Chat Messages - After wizard completion */}
-              {messages.length > 1 && (
-                <div className="px-5 py-3 space-y-3">
-                  {messages.slice(1).map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm ${
-                          message.role === "user"
-                            ? "bg-[hsl(var(--wizard-accent))] text-white rounded-br-md"
-                            : "bg-white/80 text-gray-800 rounded-bl-md shadow-sm"
-                        }`}
-                      >
-                        {message.content}
-                      </div>
-                    </div>
-                  ))}
-                  {isLoading && messages[messages.length - 1]?.role === "user" && (
-                    <div className="flex justify-start">
-                      <div className="bg-white/80 text-gray-800 rounded-2xl rounded-bl-md shadow-sm px-4 py-2.5">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
+              {/* Complete Step - Follow-up chat available */}
+              {step === "complete" && (
+                <div className="px-5 pb-4 pt-2">
+                  <div className="text-center text-sm text-gray-500 bg-white/50 rounded-lg py-3 px-4">
+                    Du kannst mir noch Fragen stellen, z.B. "Hunde erlaubt?" oder "Mit Parkplatz?"
+                  </div>
                 </div>
               )}
             </div>
@@ -517,20 +637,20 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
             </Dialog>
 
             {/* Input Area - ALWAYS VISIBLE in every step */}
-            <div className="p-5 pt-3 border-t border-gray-100/50">
-              <div className="flex gap-3">
+            <div className="p-4 pt-2">
+              <div className="flex gap-2">
                 <Input
                   value={step === "location" ? locationInput : inputValue}
                   onChange={(e) => step === "location" ? setLocationInput(e.target.value) : setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder={getPlaceholder()}
                   disabled={isLoading}
-                  className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-12"
+                  className="flex-1 bg-white/90 border-gray-200/60 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-11"
                 />
                 <Button
                   onClick={step === "location" ? handleLocationSubmit : handleSendMessage}
                   disabled={(step === "location" ? !locationInput.trim() : !inputValue.trim()) || isLoading}
-                  className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-12"
+                  className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-11 shadow-md"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
