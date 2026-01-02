@@ -52,6 +52,14 @@ const CITY_OPTIONS = [
   { id: "lausanne", label: "Lausanne" },
 ];
 
+// Time keywords for hybrid input matching
+const TIME_KEYWORDS = [
+  { keywords: ["heute", "today"], id: "today" },
+  { keywords: ["morgen", "tomorrow"], id: "tomorrow" },
+  { keywords: ["wochenende", "samstag", "sonntag", "weekend"], id: "weekend" },
+  { keywords: ["nächsten", "nächste", "kommenden", "kommende"], id: "weekend" },
+];
+
 const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const [step, setStep] = useState<WizardStep>("mission");
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
@@ -83,7 +91,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const sendMessageToAI = async (userContent: string) => {
     setIsLoading(true);
     
-    // Include wizard context in prompt
+    // Include wizard context in prompt - limited to 50 results
     const context = `[System-Hinweis: Maximal 50 Ergebnisse anzeigen. User sucht: Mission=${selectedMission || 'offen'}, Zeit=${selectedTime || 'flexibel'}, Ort=${locationInput || 'Schweiz'}, Radius=${selectedRadius || 'flexibel'}]`;
     const fullPrompt = `${context}\n\nUser: ${userContent}`;
     
@@ -132,7 +140,6 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
     const mission = MISSION_OPTIONS.find(m => m.id === missionId);
     setSelectedMission(missionId);
     setMessages(prev => [...prev, { role: "user", content: mission?.label || missionId }]);
-    // Jump directly to step 2 (time selection)
     setStep("time");
   };
 
@@ -211,40 +218,65 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
+    const input = inputValue.toLowerCase().trim();
 
-    // Step-abhängiges Verhalten
+    // Step 1: Mission - try to match input to mission
     if (step === "mission") {
-      // Versuche Mission zu matchen
-      const input = inputValue.toLowerCase();
       const matchedMission = MISSION_OPTIONS.find(m => 
         input.includes(m.label.toLowerCase()) ||
-        (m.id === "couple" && (input.includes("date") || input.includes("zweit"))) ||
-        (m.id === "friends" && input.includes("freund")) ||
-        (m.id === "family" && input.includes("famili")) ||
-        (m.id === "solo" && input.includes("solo"))
+        (m.id === "couple" && (input.includes("date") || input.includes("zweit") || input.includes("romantik") || input.includes("paar"))) ||
+        (m.id === "friends" && (input.includes("freund") || input.includes("friend"))) ||
+        (m.id === "family" && (input.includes("famili") || input.includes("kind"))) ||
+        (m.id === "solo" && (input.includes("solo") || input.includes("allein")))
       );
       if (matchedMission) {
-        handleMissionSelect(matchedMission.id);
         setInputValue("");
+        handleMissionSelect(matchedMission.id);
         return;
       }
-      toast.info("Bitte wähle eine Mission oben aus!");
-      return;
-    }
-    
-    if (step === "time") {
-      toast.info("Bitte wähle eine Zeit-Option oben aus!");
-      return;
-    }
-    
-    if (step === "location") {
-      // Behandle als Ortseingabe
-      setLocationInput(inputValue);
+      // No match - add as message and still proceed
+      setMessages(prev => [...prev, { role: "user", content: inputValue }]);
       setInputValue("");
       return;
     }
+    
+    // Step 2: Time - try to match time keywords
+    if (step === "time") {
+      const matchedTime = TIME_KEYWORDS.find(t => 
+        t.keywords.some(k => input.includes(k))
+      );
+      if (matchedTime) {
+        setInputValue("");
+        handleTimeSelect(matchedTime.id);
+        return;
+      }
+      // Try to parse as a date-like string
+      if (input.includes("samstag") || input.includes("sonntag")) {
+        setInputValue("");
+        handleTimeSelect("weekend");
+        return;
+      }
+      // No match - add as message and show hint
+      setMessages(prev => [...prev, { role: "user", content: inputValue }]);
+      toast.info("Wähle eine Zeit-Option oder tippe z.B. 'Wochenende'");
+      setInputValue("");
+      return;
+    }
+    
+    // Step 3: Location - treat as location input
+    if (step === "location") {
+      setLocationInput(inputValue);
+      setInputValue("");
+      // Auto-submit if it looks like a city
+      const isCityMatch = CITY_OPTIONS.some(c => input.includes(c.label.toLowerCase()));
+      if (isCityMatch || input.length >= 3) {
+        // Wait a moment then submit
+        setTimeout(() => handleLocationSubmit(), 100);
+      }
+      return;
+    }
 
-    // Nur im Chat-Step: Freie AI-Anfrage
+    // Chat step: Free AI request
     const userMessage: ChatMessage = { role: "user", content: inputValue };
     setMessages((prev) => [...prev, userMessage]);
     const messageToSend = inputValue;
@@ -262,7 +294,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) {
-      if (step === "location") {
+      if (step === "location" && locationInput.trim()) {
         handleLocationSubmit();
       } else {
         handleSendMessage();
@@ -270,26 +302,19 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
     }
   };
 
-  const renderStepIndicator = () => {
-    const steps = ["mission", "time", "location"];
-    const currentIndex = steps.indexOf(step);
-    
-    if (step === "chat") return null;
-    
-    return (
-      <div className="flex justify-center gap-2 py-3">
-        {steps.map((s, i) => (
-          <div
-            key={s}
-            className={`h-1.5 rounded-full transition-all ${
-              i <= currentIndex 
-                ? "w-8 bg-[hsl(var(--wizard-accent))]" 
-                : "w-4 bg-gray-300/50"
-            }`}
-          />
-        ))}
-      </div>
-    );
+  const getPlaceholder = () => {
+    switch (step) {
+      case "mission":
+        return "z.B. 'date', 'Familie', 'Freunde'...";
+      case "time":
+        return "z.B. 'nächsten Samstag', 'Wochenende'...";
+      case "location":
+        return "Stadt oder PLZ eingeben...";
+      case "chat":
+        return "Frag mich nach weiteren Events...";
+      default:
+        return "Nachricht eingeben...";
+    }
   };
 
   return (
@@ -304,20 +329,20 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
         </button>
       )}
 
-      {/* Main Panel */}
+      {/* Main Panel - Dynamic Height */}
       <div
-        className={`fixed right-0 top-16 bottom-8 z-50 transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-16 z-50 transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="w-[380px] max-w-[calc(100vw-1rem)] h-full flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
+        <div className="w-[380px] max-w-[calc(100vw-1rem)] max-h-[80vh] flex flex-col rounded-l-2xl overflow-hidden shadow-2xl border border-r-0 border-white/20">
           {/* Frosted Glass Background */}
           <div className="absolute inset-0 bg-white/75 backdrop-blur-xl rounded-l-2xl" />
           
-          {/* Content */}
-          <div className="relative flex flex-col h-full">
-            {/* Header - Fixed */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-200/50">
+          {/* Content - grows with content */}
+          <div className="relative flex flex-col max-h-[80vh]">
+            {/* Header - Fixed, no divider */}
+            <div className="flex items-center justify-between p-5">
               <h2 className="font-serif text-lg text-gray-800">
                 Was möchtest du erleben?
               </h2>
@@ -331,12 +356,9 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               </Button>
             </div>
 
-            {/* Step Indicator */}
-            {renderStepIndicator()}
-
             {/* Step 1: Mission Selection */}
             {step === "mission" && (
-              <div className="p-5 space-y-3">
+              <div className="px-5 pb-3 space-y-3">
                 {MISSION_OPTIONS.map((option) => (
                   <button
                     key={option.id}
@@ -361,8 +383,8 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
             {/* Step 2: Time Selection */}
             {step === "time" && (
-              <div className="p-6 space-y-4">
-                <div className="flex items-center gap-2 text-gray-600 mb-3">
+              <div className="px-5 pb-3 space-y-4">
+                <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="h-4 w-4" />
                   <span className="text-sm font-medium">Wann soll es losgehen?</span>
                 </div>
@@ -384,8 +406,8 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
 
             {/* Step 3: Location Selection */}
             {step === "location" && (
-              <div className="p-5 space-y-4">
-                <div className="flex items-center gap-2 text-gray-600 mb-2">
+              <div className="px-5 pb-3 space-y-4">
+                <div className="flex items-center gap-2 text-gray-600">
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm font-medium">Wo suchst du Erlebnisse?</span>
                 </div>
@@ -421,14 +443,6 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                   ))}
                 </div>
                 
-                <Input
-                  value={locationInput}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Oder Stadt/PLZ eingeben..."
-                  className="bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-11"
-                />
-                
                 <div className="flex gap-2">
                   {RADIUS_OPTIONS.map((option) => (
                     <button
@@ -448,7 +462,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                 <Button
                   onClick={handleLocationSubmit}
                   disabled={isLoading || !locationInput.trim()}
-                  className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-11 mt-2"
+                  className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-11"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Events finden"}
                 </Button>
@@ -469,10 +483,10 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               </DialogContent>
             </Dialog>
 
-            {/* Chat Messages - Only in chat step or when there are more than initial message */}
-            {(step === "chat" || messages.length > 1) && (
-              <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[120px]">
-                {messages.map((message, index) => (
+            {/* Chat Messages - Only when there are more than initial message */}
+            {messages.length > 1 && (
+              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 max-h-[40vh]">
+                {messages.slice(1).map((message, index) => (
                   <div
                     key={index}
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
@@ -499,28 +513,26 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
               </div>
             )}
 
-            {/* Input Area - Only in chat step */}
-            {step === "chat" && (
-              <div className="p-6 pt-4 pb-8 border-t border-gray-200/50">
-                <div className="flex gap-3">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Frag mich nach weiteren Events..."
-                    disabled={isLoading}
-                    className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-12"
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isLoading}
-                    className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-12"
-                  >
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
-                </div>
+            {/* Input Area - ALWAYS visible */}
+            <div className="p-5 pt-3">
+              <div className="flex gap-3">
+                <Input
+                  value={step === "location" ? locationInput : inputValue}
+                  onChange={(e) => step === "location" ? setLocationInput(e.target.value) : setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={getPlaceholder()}
+                  disabled={isLoading}
+                  className="flex-1 bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-12"
+                />
+                <Button
+                  onClick={step === "location" ? handleLocationSubmit : handleSendMessage}
+                  disabled={(step === "location" ? !locationInput.trim() : !inputValue.trim()) || isLoading}
+                  className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl px-4 h-12"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
