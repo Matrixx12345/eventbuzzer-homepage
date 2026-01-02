@@ -36,6 +36,21 @@ import swissZurich from "@/assets/swiss-zurich.jpg";
 const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
 
+// Helper: Konvertiert tags sicher zu einem Array (verhindert .includes() Crashes)
+const ensureTagsArray = (tags: unknown): string[] => {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags.filter(t => typeof t === 'string');
+  if (typeof tags === 'string') {
+    try {
+      const parsed = JSON.parse(tags);
+      return Array.isArray(parsed) ? parsed.filter((t: unknown) => typeof t === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 // Konvertiert ASCII-Umlaute zu echten deutschen Umlauten
 const convertToUmlauts = (text: string | null | undefined): string => {
   if (!text) return "";
@@ -630,7 +645,7 @@ const Listings = () => {
                       if (subCat.includes('familie') || subCat.includes('kinder')) return 'FAMILIENAUSFLUG';
                       if (subCat.includes('wissenschaft') || subCat.includes('technik') || subCat.includes('science')) return 'SCIENCE';
                       // Fallback: versuche aus Tags zu lesen
-                      const tags = event.tags || [];
+                      const tags = ensureTagsArray(event.tags);
                       if (tags.includes('natur') || tags.includes('natur-erlebnisse')) return 'NATUR';
                       if (tags.includes('wellness') || tags.includes('wellness-selfcare')) return 'WELLNESS';
                       if (tags.includes('familie-kinder')) return 'FAMILIENAUSFLUG';
