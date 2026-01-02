@@ -1,15 +1,33 @@
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface BuzzTrackerProps {
   buzzScore?: number | null;
   className?: string;
+  editable?: boolean;
+  eventId?: string;
+  externalId?: string;
+  onBuzzChange?: (newScore: number) => void;
 }
 
 /**
  * Premium Buzz Thermometer - Gray to Red gradient with position indicator
+ * When editable=true, the slider becomes interactive
  */
-export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
-  const score = buzzScore ?? 20;
+export const BuzzTracker = ({ 
+  buzzScore, 
+  className, 
+  editable = false,
+  eventId,
+  externalId,
+  onBuzzChange 
+}: BuzzTrackerProps) => {
+  const [localScore, setLocalScore] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  
+  const score = localScore ?? buzzScore ?? 20;
   const normalizedScore = Math.min(100, Math.max(0, score));
   const isHot = score >= 80;
 
@@ -29,29 +47,105 @@ export const BuzzTracker = ({ buzzScore, className }: BuzzTrackerProps) => {
   // Text color matches the bar color exactly
   const getTextColor = () => getBarColor();
 
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseInt(e.target.value, 10);
+    setLocalScore(newValue);
+  };
+
+  const handleSliderRelease = async () => {
+    if (localScore === null || !editable) return;
+    
+    const extId = externalId || eventId;
+    if (!extId) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("event_vibe_overrides")
+        .upsert(
+          {
+            external_id: extId,
+            buzz_boost: localScore / (buzzScore || 20), // Calculate multiplier from new score
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "external_id" }
+        );
+
+      if (error) throw error;
+      
+      toast.success(`Buzz auf ${localScore} gesetzt`);
+      onBuzzChange?.(localScore);
+    } catch (error) {
+      console.error("Fehler beim Speichern:", error);
+      toast.error("Fehler beim Speichern");
+      setLocalScore(null); // Reset on error
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       {/* Thermometer capsule container - extended width with visible background */}
-      <span className="relative w-[140px] h-1.5 bg-stone-300/60 rounded-full overflow-hidden">
-        {/* Active bar */}
-        <span
-          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
-          style={{ 
-            width: `${normalizedScore}%`,
-            backgroundColor: getBarColor()
-          }}
-        />
-        {/* Position indicator dot */}
-        <span
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 shadow-sm transition-all duration-500 ease-out",
-            isHot ? "border-red-500 animate-pulse" : "border-neutral-400"
-          )}
-          style={{ 
-            left: `calc(${normalizedScore}% - 5px)`,
-            borderColor: getBarColor()
-          }}
-        />
+      <span className="relative w-[140px] h-1.5 bg-stone-300/60 rounded-full overflow-visible">
+        {editable ? (
+          <>
+            {/* Active bar background */}
+            <span
+              className="absolute inset-y-0 left-0 rounded-full transition-all duration-100 ease-out pointer-events-none"
+              style={{ 
+                width: `${normalizedScore}%`,
+                backgroundColor: getBarColor()
+              }}
+            />
+            {/* Interactive range input */}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round(score)}
+              onChange={handleSliderChange}
+              onMouseUp={handleSliderRelease}
+              onTouchEnd={handleSliderRelease}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              style={{ margin: 0 }}
+            />
+            {/* Visual indicator dot */}
+            <span
+              className={cn(
+                "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 shadow-sm transition-all duration-100 ease-out pointer-events-none",
+                saving ? "animate-pulse" : "",
+                isHot ? "border-red-500" : "border-neutral-400"
+              )}
+              style={{ 
+                left: `calc(${normalizedScore}% - 5px)`,
+                borderColor: getBarColor()
+              }}
+            />
+          </>
+        ) : (
+          <>
+            {/* Active bar */}
+            <span
+              className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
+              style={{ 
+                width: `${normalizedScore}%`,
+                backgroundColor: getBarColor()
+              }}
+            />
+            {/* Position indicator dot */}
+            <span
+              className={cn(
+                "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 shadow-sm transition-all duration-500 ease-out",
+                isHot ? "border-red-500 animate-pulse" : "border-neutral-400"
+              )}
+              style={{ 
+                left: `calc(${normalizedScore}% - 5px)`,
+                borderColor: getBarColor()
+              }}
+            />
+          </>
+        )}
       </span>
       {/* Buzz score text - color matches bar */}
       <span 

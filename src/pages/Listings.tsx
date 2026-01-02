@@ -4,7 +4,7 @@ import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
 import { BuzzTracker } from "@/components/BuzzTracker";
-import { BuzzSlider } from "@/components/BuzzSlider";
+
 import { trackEventClick } from "@/services/buzzTracking";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import OptimizedEventImage from "@/components/OptimizedEventImage";
@@ -660,20 +660,6 @@ const Listings = () => {
                             isFeatured={isFeatured}
                             className="group-hover:scale-105"
                           />
-                          {/* Buzz Slider Overlay - inside image container */}
-                          <BuzzSlider
-                            eventId={event.id}
-                            externalId={event.external_id}
-                            title={event.title}
-                            initialBuzzScore={event.buzz_score}
-                            onBuzzUpdated={(newScore) => {
-                              setEvents(prev => prev.map(e => 
-                                e.id === event.id 
-                                  ? { ...e, buzz_score: newScore }
-                                  : e
-                              ));
-                            }}
-                          />
                           
                           {/* Date or Category Badge */}
                           <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
@@ -785,7 +771,19 @@ const Listings = () => {
                                   : ''
                             }
                           </span>
-                          <BuzzTracker buzzScore={event.buzz_score} />
+                          <BuzzTracker 
+                            buzzScore={event.buzz_score} 
+                            editable={true}
+                            eventId={event.id}
+                            externalId={event.external_id}
+                            onBuzzChange={(newScore) => {
+                              setEvents(prev => prev.map(e => 
+                                e.id === event.id 
+                                  ? { ...e, buzz_score: newScore }
+                                  : e
+                              ));
+                            }}
+                          />
                           <div className="ml-auto">
                             <EventRatingButtons eventId={event.id} eventTitle={event.title} />
                           </div>
