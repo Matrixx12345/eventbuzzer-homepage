@@ -1,9 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { X, ChevronLeft, Send, Sparkles, Loader2, MapPin, Calendar } from "lucide-react";
+import { X, ChevronLeft, Send, Sparkles, Loader2, MapPin, Calendar, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { streamChat } from "@/services/chatService";
 import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { getNearestPlace } from "@/utils/swissPlaces";
 
 interface ChatMessage {
   role: "bot" | "user";
@@ -38,12 +43,24 @@ const RADIUS_OPTIONS = [
   { id: "all", label: "Ganze Schweiz" },
 ];
 
+const CITY_OPTIONS = [
+  { id: "zurich", label: "Zürich" },
+  { id: "basel", label: "Basel" },
+  { id: "bern", label: "Bern" },
+  { id: "genf", label: "Genf" },
+  { id: "luzern", label: "Luzern" },
+  { id: "lausanne", label: "Lausanne" },
+];
+
 const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   const [step, setStep] = useState<WizardStep>("mission");
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [locationInput, setLocationInput] = useState("");
   const [selectedRadius, setSelectedRadius] = useState<string | null>(null);
+  const [isLoadingGPS, setIsLoadingGPS] = useState(false);
   
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -120,11 +137,51 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
   };
 
   const handleTimeSelect = (timeId: string) => {
+    if (timeId === "pick") {
+      setShowCalendar(true);
+      return;
+    }
     const time = TIME_OPTIONS.find(t => t.id === timeId);
     setSelectedTime(timeId);
     setMessages(prev => [...prev, { role: "user", content: time?.label || timeId }]);
-    // Jump to step 3 (location)
     setStep("location");
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    setSelectedDate(date);
+    setShowCalendar(false);
+    const formattedDate = format(date, "d. MMMM yyyy", { locale: de });
+    setSelectedTime("pick");
+    setMessages(prev => [...prev, { role: "user", content: formattedDate }]);
+    setStep("location");
+  };
+
+  const handleCitySelect = (cityLabel: string) => {
+    setLocationInput(cityLabel);
+  };
+
+  const handleGPSLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("GPS wird von deinem Browser nicht unterstützt");
+      return;
+    }
+    
+    setIsLoadingGPS(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nearestCity = getNearestPlace(position.coords.latitude, position.coords.longitude);
+        setLocationInput(nearestCity);
+        setIsLoadingGPS(false);
+        toast.success(`Standort erkannt: ${nearestCity}`);
+      },
+      (error) => {
+        setIsLoadingGPS(false);
+        toast.error("Standort konnte nicht ermittelt werden");
+        console.error("GPS Error:", error);
+      },
+      { timeout: 10000 }
+    );
   };
 
   const handleLocationSubmit = async () => {
@@ -142,9 +199,12 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
     
     // Build the search prompt
     const missionLabel = MISSION_OPTIONS.find(m => m.id === selectedMission)?.label || selectedMission;
-    const timeLabel = TIME_OPTIONS.find(t => t.id === selectedTime)?.label || selectedTime;
+    let timeLabel = TIME_OPTIONS.find(t => t.id === selectedTime)?.label || selectedTime;
+    if (selectedTime === "pick" && selectedDate) {
+      timeLabel = format(selectedDate, "d. MMMM yyyy", { locale: de });
+    }
     
-    const searchPrompt = `Ich suche ${missionLabel} für ${timeLabel} in ${locationText}${radiusText ? ` (${radiusText})` : ''}. Zeige mir passende Events!`;
+    const searchPrompt = `Mission: ${missionLabel}, Zeit: ${timeLabel}, Ort: ${locationText}${radiusText ? ` (${radiusText})` : ''}`;
     
     await sendMessageToAI(searchPrompt);
   };
@@ -301,12 +361,43 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm font-medium">Wo suchst du Erlebnisse?</span>
                 </div>
+
+                {/* GPS Button */}
+                <button
+                  onClick={handleGPSLocation}
+                  disabled={isLoadingGPS}
+                  className="w-full py-3 px-4 text-center rounded-xl bg-white/60 hover:bg-white/80 border border-gray-200/50 text-gray-800 font-medium transition-all hover:shadow-md text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isLoadingGPS ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Navigation className="h-4 w-4" />
+                  )}
+                  Meinen Standort nutzen
+                </button>
+
+                {/* City Tiles */}
+                <div className="grid grid-cols-3 gap-2">
+                  {CITY_OPTIONS.map((city) => (
+                    <button
+                      key={city.id}
+                      onClick={() => handleCitySelect(city.label)}
+                      className={`py-2.5 px-2 text-center rounded-xl border text-xs font-medium transition-all ${
+                        locationInput === city.label
+                          ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))]"
+                          : "bg-white/40 hover:bg-white/60 border-gray-200/50 text-gray-700"
+                      }`}
+                    >
+                      {city.label}
+                    </button>
+                  ))}
+                </div>
                 
                 <Input
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Stadt oder PLZ"
+                  placeholder="Oder Stadt/PLZ eingeben..."
                   className="bg-white/80 border-gray-200/50 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-11"
                 />
                 
@@ -328,13 +419,27 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen }: ChatbotPopupProps) => {
                 
                 <Button
                   onClick={handleLocationSubmit}
-                  disabled={isLoading}
+                  disabled={isLoading || !locationInput.trim()}
                   className="w-full bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-xl h-11 mt-2"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Events finden"}
                 </Button>
               </div>
             )}
+
+            {/* Calendar Dialog */}
+            <Dialog open={showCalendar} onOpenChange={setShowCalendar}>
+              <DialogContent className="sm:max-w-[350px] p-0">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </DialogContent>
+            </Dialog>
 
             {/* Chat Messages - Only in chat step or when there are more than initial message */}
             {(step === "chat" || messages.length > 1) && (
