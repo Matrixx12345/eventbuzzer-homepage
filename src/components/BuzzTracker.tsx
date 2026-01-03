@@ -98,7 +98,7 @@ export const BuzzTracker = ({
                 backgroundColor: getBarColor()
               }}
             />
-            {/* Interactive range input */}
+            {/* Interactive range input - extended hit area for touch */}
             <input
               type="range"
               min="0"
@@ -110,8 +110,14 @@ export const BuzzTracker = ({
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              style={{ margin: 0 }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute left-0 w-full opacity-0 cursor-pointer z-20"
+              style={{ 
+                margin: 0, 
+                top: '-10px', 
+                height: '26px',
+                touchAction: 'none'
+              }}
             />
             {/* Visual indicator dot */}
             <span
