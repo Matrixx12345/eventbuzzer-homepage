@@ -184,18 +184,20 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("SimilarEventCard clicked, id:", id);
     
     if (id && id.trim() !== '') {
+      console.log("Calling onSwap with id:", id);
       onSwap(id);
+    } else {
+      console.warn("SimilarEventCard has no valid ID");
     }
   };
   
   return (
-    <div 
-      onClick={handleClick} 
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick(e as unknown as React.MouseEvent)}
+    <button 
+      type="button"
+      onClick={handleClick}
       className="block group h-full cursor-pointer text-left w-full hover:opacity-95 active:scale-[0.98] transition-all"
     >
       <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
@@ -203,20 +205,20 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
           <img
             src={image || weekendJazz}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = weekendJazz;
             }}
           />
         </div>
-        <div className="p-3">
+        <div className="p-3 pointer-events-none">
           <p className="text-neutral-500 text-xs mb-1">{date}</p>
           <h3 className="font-serif text-neutral-900 text-sm font-semibold leading-tight mb-1 line-clamp-1">{title}</h3>
           <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
         </div>
       </article>
-    </div>
+    </button>
   );
 };
 
