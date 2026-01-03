@@ -513,13 +513,6 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                 license={event.imageLicense} 
                 alwaysVisible 
               />
-              {/* Close button overlay */}
-              <button
-                onClick={() => onOpenChange(false)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
-              >
-                <X size={20} className="text-neutral-700" />
-              </button>
             </div>
 
             {/* Content */}
