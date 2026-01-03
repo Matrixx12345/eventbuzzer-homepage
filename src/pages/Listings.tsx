@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
+import { EventDetailModal } from "@/components/EventDetailModal";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
@@ -13,7 +14,7 @@ import {
   MapPin,
   Loader2,
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
@@ -196,6 +197,10 @@ const Listings = () => {
   const [hasMore, setHasMore] = useState(true);
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Modal state for event details
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // URL parameter für Filter auslesen
   const urlQuickFilter = searchParams.get("quickFilter");
@@ -672,9 +677,14 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group relative rounded-xl overflow-hidden bg-listings-card shadow-md hover:shadow-lg border border-stone-200/50 hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col"
+                      className="group relative rounded-xl overflow-hidden bg-listings-card shadow-md hover:shadow-lg border border-stone-200/50 hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col cursor-pointer"
+                      onClick={() => {
+                        trackEventClick(event.id);
+                        setSelectedEventId(event.id);
+                        setModalOpen(true);
+                      }}
                     >
-                      <Link to={`/event/${event.id}`} className="flex-grow flex flex-col min-h-0">
+                      <div className="flex-grow flex flex-col min-h-0">
                         <div className="relative overflow-hidden flex-grow">
                           <OptimizedEventImage
                             src={event.image_url || getPlaceholderImage(actualIndex)}
@@ -734,7 +744,7 @@ const Listings = () => {
                             license={event.image_license} 
                           />
                         </div>
-                      </Link>
+                      </div>
 
                       {/* Content Section - Dark elegant background */}
                       <div className="p-4 flex-shrink-0 bg-listings-card-content rounded-b-xl">
@@ -769,14 +779,9 @@ const Listings = () => {
                           )}
                         </div>
                         
-                        <Link 
-                          to={`/event/${event.id}`}
-                          onClick={() => trackEventClick(event.id)}
-                        >
-                          <h3 className="font-serif font-bold text-listings-text leading-tight hover:text-white transition-colors text-base line-clamp-1">
-                            {convertToUmlauts(event.title)}
-                          </h3>
-                        </Link>
+                        <h3 className="font-serif font-bold text-listings-text leading-tight hover:text-white transition-colors text-base line-clamp-1">
+                          {convertToUmlauts(event.title)}
+                        </h3>
                         
                         <p className="text-xs text-listings-text/90 leading-normal mt-1 line-clamp-1">
                           {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
@@ -861,6 +866,13 @@ const Listings = () => {
           {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />}
         </div>
       </div>
+      
+      {/* Event Detail Modal */}
+      <EventDetailModal 
+        eventId={selectedEventId}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 };
