@@ -277,20 +277,29 @@ serve(async (req) => {
     // Apply buzz boosts to all events
     filteredEvents = filteredEvents.map(applyBuzzBoost);
 
-    // Sort events: push flea markets and artists to the end (poor image quality)
+    // Hide flea markets from general view - only show in Märkte category or when searching for them
+    const isSearchingForFleaMarket = searchTerm && 
+      (searchTerm.toLowerCase().includes('flohmarkt') || searchTerm.toLowerCase().includes('trödelmarkt') || searchTerm.toLowerCase().includes('markt'));
+    const isMarketsCategory = categoryId === 'markets' || subcategoryId?.includes('market') || subcategoryId?.includes('floh');
+    
+    if (!isSearchingForFleaMarket && !isMarketsCategory) {
+      filteredEvents = filteredEvents.filter((event: any) => {
+        const title = (event.title || '').toLowerCase();
+        const isFleaMarket = title.includes('flohmarkt') || title.includes('trödelmarkt');
+        return !isFleaMarket;
+      });
+    }
+
+    // Sort events: push artists to the end (poor image quality)
     filteredEvents.sort((a: any, b: any) => {
       const titleA = (a.title || '').toLowerCase();
       const titleB = (b.title || '').toLowerCase();
-      const catA = (a.category_sub_id || a.sub_category || '').toString().toLowerCase();
-      const catB = (b.category_sub_id || b.sub_category || '').toString().toLowerCase();
       
-      const isLowPriorityA = titleA.includes('flohmarkt') || titleA.includes('trödelmarkt') || 
-                             titleA.includes('künstler') || catA.includes('flohmarkt');
-      const isLowPriorityB = titleB.includes('flohmarkt') || titleB.includes('trödelmarkt') || 
-                             titleB.includes('künstler') || catB.includes('flohmarkt');
+      const isLowPriorityA = titleA.includes('künstler');
+      const isLowPriorityB = titleB.includes('künstler');
       
-      if (isLowPriorityA && !isLowPriorityB) return 1;  // A to bottom
-      if (!isLowPriorityA && isLowPriorityB) return -1; // B to bottom
+      if (isLowPriorityA && !isLowPriorityB) return 1;
+      if (!isLowPriorityA && isLowPriorityB) return -1;
       
       // Keep date sorting for same priority
       const dateA = a.start_date ? new Date(a.start_date).getTime() : Infinity;
