@@ -47,11 +47,6 @@ import {
 // Fallback image
 import weekendJazz from "@/assets/weekend-jazz.jpg";
 
-// Similar events images
-import eventAbbey from "@/assets/event-abbey.jpg";
-import eventConcert from "@/assets/event-concert.jpg";
-import eventSymphony from "@/assets/event-symphony.jpg";
-import eventVenue from "@/assets/event-venue.jpg";
 
 // Partner products
 import partnerChampagne from "@/assets/partner-champagne.jpg";
@@ -160,13 +155,15 @@ const getDistanceInfo = (lat: number, lng: number): { city: string; distance: st
   return { city: nearest.name, distance: distanceText };
 };
 
-// Similar events for carousel
-const similarEvents = [
-  { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20" },
-  { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22" },
-  { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25" },
-  { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28" },
-];
+// Similar event type
+interface SimilarEvent {
+  id: string;
+  image: string;
+  title: string;
+  venue: string;
+  location: string;
+  date: string;
+}
 
 // Partner products
 const partnerProducts = [
@@ -181,28 +178,30 @@ const partnerProducts = [
 ];
 
 // Similar Event Card
-const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }: {
-  slug: string;
-  image: string;
-  title: string;
-  venue: string;
-  location: string;
-  date: string;
+const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: SimilarEvent & {
   onSwap: (eventId: string) => void;
 }) => {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    onSwap(slug);
+    e.stopPropagation();
+    onSwap(id);
   };
   
   return (
-    <a href={`/event/${slug}`} onClick={handleClick} className="block group h-full cursor-pointer">
+    <button 
+      onClick={handleClick} 
+      className="block group h-full cursor-pointer text-left w-full"
+    >
       <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
         <div className="relative aspect-video overflow-hidden">
           <img
-            src={image}
+            src={image || weekendJazz}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = weekendJazz;
+            }}
           />
         </div>
         <div className="p-3">
@@ -211,7 +210,7 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }:
           <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
         </div>
       </article>
-    </a>
+    </button>
   );
 };
 
@@ -255,6 +254,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
+  const [similarEvents, setSimilarEvents] = useState<SimilarEvent[]>([]);
   const [shareOpen, setShareOpen] = useState(false);
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
@@ -266,6 +266,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
     if (!open) {
       setShowFullDescription(false);
       setDynamicEvent(null);
+      setSimilarEvents([]);
       setShareOpen(false);
       referralTrackedRef.current = false;
       setNeedsReadMore(false);
@@ -288,12 +289,35 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
       const fetchEvent = async () => {
         setLoading(true);
         try {
+          // Fetch main event
           const { data, error } = await supabase.functions.invoke("get-external-events", {
             body: { eventId }
           });
           if (error) throw error;
           if (data?.events?.[0]) {
             setDynamicEvent(data.events[0]);
+            
+            // Fetch similar events (random 4 events, excluding current)
+            const { data: similarData } = await supabase.functions.invoke("get-external-events", {
+              body: { limit: 8 }
+            });
+            
+            if (similarData?.events) {
+              const filtered = similarData.events
+                .filter((e: DynamicEvent) => e.id !== eventId && e.external_id !== eventId)
+                .slice(0, 4)
+                .map((e: DynamicEvent) => ({
+                  id: e.external_id || e.id,
+                  image: e.image_url || weekendJazz,
+                  title: e.title,
+                  venue: e.venue_name || '',
+                  location: getEventLocation(e),
+                  date: e.start_date 
+                    ? new Date(e.start_date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
+                    : ''
+                }));
+              setSimilarEvents(filtered);
+            }
           }
         } catch (err) {
           console.error("Error fetching event:", err);
@@ -496,9 +520,18 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0 [&>button]:hidden">
+        {/* Sticky Close Button */}
+        <button
+          onClick={() => onOpenChange(false)}
+          className="sticky top-3 right-3 z-50 ml-auto mr-3 mt-3 w-9 h-9 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white/90 transition-all border border-white/50"
+          aria-label="Schließen"
+        >
+          <X size={18} className="text-neutral-700" />
+        </button>
+        
         {loading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-64 -mt-12">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
@@ -754,23 +787,29 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
                 </Link>
               </div>
 
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-3">
-                  {similarEvents.map((evt, index) => (
-                    <CarouselItem key={index} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                      <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-              </Carousel>
+              {similarEvents.length > 0 ? (
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-3">
+                    {similarEvents.map((evt) => (
+                      <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                        <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                </Carousel>
+              ) : (
+                <div className="text-center text-neutral-400 text-sm py-4">
+                  Ähnliche Events werden geladen...
+                </div>
+              )}
             </div>
 
             {/* Partner Products Section */}
