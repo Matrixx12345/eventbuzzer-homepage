@@ -246,6 +246,63 @@ const PartnerProductCard = ({ image, name, price, partner }: {
   );
 };
 
+// Event cache for faster repeated loads
+const eventCache = new Map<string, { event: DynamicEvent; similar: SimilarEvent[] }>();
+
+// Skeleton component for loading state
+const ModalSkeleton = () => (
+  <div className="animate-pulse">
+    {/* Hero skeleton */}
+    <div className="h-48 sm:h-56 bg-neutral-200" />
+    
+    {/* Content skeleton */}
+    <div className="p-5 sm:p-6 space-y-4">
+      {/* Title */}
+      <div className="h-7 bg-neutral-200 rounded-md w-3/4" />
+      
+      {/* Meta info */}
+      <div className="flex gap-3">
+        <div className="h-4 bg-neutral-100 rounded w-24" />
+        <div className="h-4 bg-neutral-100 rounded w-32" />
+        <div className="h-4 bg-neutral-100 rounded w-20" />
+      </div>
+      
+      {/* Buttons */}
+      <div className="flex gap-2">
+        <div className="h-10 bg-neutral-200 rounded-lg w-32" />
+        <div className="h-10 bg-neutral-100 rounded-lg w-10" />
+        <div className="h-10 bg-neutral-100 rounded-lg w-10" />
+      </div>
+      
+      {/* Description */}
+      <div className="space-y-2 pt-4 border-t border-neutral-100">
+        <div className="h-5 bg-neutral-200 rounded w-40 mb-3" />
+        <div className="h-4 bg-neutral-100 rounded w-full" />
+        <div className="h-4 bg-neutral-100 rounded w-full" />
+        <div className="h-4 bg-neutral-100 rounded w-5/6" />
+        <div className="h-4 bg-neutral-100 rounded w-4/5" />
+      </div>
+    </div>
+    
+    {/* Similar events skeleton */}
+    <div className="bg-stone-50 px-5 sm:px-6 py-5">
+      <div className="h-6 bg-neutral-200 rounded w-40 mb-4" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-xl overflow-hidden bg-white border border-neutral-200">
+            <div className="aspect-video bg-neutral-200" />
+            <div className="p-3 space-y-2">
+              <div className="h-3 bg-neutral-100 rounded w-16" />
+              <div className="h-4 bg-neutral-200 rounded w-full" />
+              <div className="h-3 bg-neutral-100 rounded w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 interface EventDetailModalProps {
   eventId: string | null;
   open: boolean;
@@ -289,32 +346,43 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
   // Fetch event when modal opens OR eventId changes (for swap)
   useEffect(() => {
     if (open && eventId) {
-      // Reset state immediately when eventId changes
+      // Reset UI state immediately when eventId changes
       setShowFullDescription(false);
       setNeedsReadMore(false);
+      
+      // Check cache first
+      const cached = eventCache.get(eventId);
+      if (cached) {
+        setDynamicEvent(cached.event);
+        setSimilarEvents(cached.similar);
+        setLoading(false);
+        return;
+      }
+      
+      // Not cached - fetch from API
       setDynamicEvent(null);
       setSimilarEvents([]);
       
       const fetchEvent = async () => {
         setLoading(true);
         try {
-          console.log("Fetching event:", eventId);
           // Fetch main event
           const { data, error } = await supabase.functions.invoke("get-external-events", {
             body: { eventId }
           });
           if (error) throw error;
           if (data?.events?.[0]) {
-            console.log("Event loaded:", data.events[0].title);
-            setDynamicEvent(data.events[0]);
+            const eventData = data.events[0];
+            setDynamicEvent(eventData);
             
             // Fetch similar events (random 4 events, excluding current)
             const { data: similarData } = await supabase.functions.invoke("get-external-events", {
               body: { limit: 8 }
             });
             
+            let similarList: SimilarEvent[] = [];
             if (similarData?.events) {
-              const filtered = similarData.events
+              similarList = similarData.events
                 .filter((e: DynamicEvent) => e.id !== eventId && e.external_id !== eventId)
                 .slice(0, 4)
                 .map((e: DynamicEvent) => ({
@@ -327,8 +395,11 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
                     ? new Date(e.start_date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
                     : ''
                 }));
-              setSimilarEvents(filtered);
+              setSimilarEvents(similarList);
             }
+            
+            // Cache for future use
+            eventCache.set(eventId, { event: eventData, similar: similarList });
           }
         } catch (err) {
           console.error("Error fetching event:", err);
@@ -544,9 +615,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
         </div>
         
         {loading ? (
-          <div className="flex items-center justify-center h-64 -mt-12">
-            <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
-          </div>
+          <ModalSkeleton />
         ) : (
           <>
             {/* Hero Image - smaller */}
