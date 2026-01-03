@@ -872,6 +872,7 @@ const Listings = () => {
         eventId={selectedEventId}
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onEventSwap={(newId) => setSelectedEventId(newId)}
       />
     </div>
   );
