@@ -181,9 +181,11 @@ const partnerProducts = [
 const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: SimilarEvent & {
   onSwap: (eventId: string) => void;
 }) => {
-  const handleClick = () => {
-    if (id) {
-      console.log("Swapping to event:", id);
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (id && id.trim() !== '') {
       onSwap(id);
     }
   };
@@ -193,8 +195,8 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
       onClick={handleClick} 
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
-      className="block group h-full cursor-pointer text-left w-full"
+      onKeyDown={(e) => e.key === 'Enter' && handleClick(e as unknown as React.MouseEvent)}
+      className="block group h-full cursor-pointer text-left w-full hover:opacity-95 active:scale-[0.98] transition-all"
     >
       <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
         <div className="relative aspect-video overflow-hidden">
