@@ -14,6 +14,8 @@ const Index = () => {
   const { isOpen, closeChatbot, openChatbot } = useChatbot();
   const { selectedEventId, isOpen: modalOpen, openEvent, closeEvent, swapEvent } = useEventModal();
 
+  console.log("Index render - swapEvent:", typeof swapEvent, swapEvent ? "exists" : "undefined");
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
