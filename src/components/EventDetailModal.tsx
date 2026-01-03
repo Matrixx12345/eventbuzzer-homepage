@@ -181,15 +181,19 @@ const partnerProducts = [
 const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: SimilarEvent & {
   onSwap: (eventId: string) => void;
 }) => {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSwap(id);
+  const handleClick = () => {
+    if (id) {
+      console.log("Swapping to event:", id);
+      onSwap(id);
+    }
   };
   
   return (
-    <button 
+    <div 
       onClick={handleClick} 
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
       className="block group h-full cursor-pointer text-left w-full"
     >
       <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
@@ -210,7 +214,7 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
           <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
         </div>
       </article>
-    </button>
+    </div>
   );
 };
 
@@ -520,14 +524,14 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0 [&>button]:hidden">
-        {/* Sticky Close Button */}
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0 [&>button]:hidden relative">
+        {/* Fixed Close Button */}
         <button
           onClick={() => onOpenChange(false)}
-          className="sticky top-3 right-3 z-50 ml-auto mr-3 mt-3 w-9 h-9 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white/90 transition-all border border-white/50"
+          className="fixed top-6 right-6 z-[60] w-10 h-10 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white transition-all border border-white/50"
           aria-label="Schließen"
         >
-          <X size={18} className="text-neutral-700" />
+          <X size={20} className="text-neutral-700" />
         </button>
         
         {loading ? (
