@@ -23,6 +23,7 @@ import {
 import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking";
@@ -318,16 +319,18 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
   const [similarEvents, setSimilarEvents] = useState<SimilarEvent[]>([]);
   const [shareOpen, setShareOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [loading, setLoading] = useState(false);
+const [loading, setLoading] = useState(false);
   const referralTrackedRef = useRef(false);
   const [needsReadMore, setNeedsReadMore] = useState(false);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const [nearbyEvents, setNearbyEvents] = useState<SimilarEvent[]>([]);
   // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       setShowFullDescription(false);
       setDynamicEvent(null);
       setSimilarEvents([]);
+      setNearbyEvents([]);
       setShareOpen(false);
       referralTrackedRef.current = false;
       setNeedsReadMore(false);
@@ -363,6 +366,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
       // Not cached - fetch from API
       setDynamicEvent(null);
       setSimilarEvents([]);
+      setNearbyEvents([]);
       
       const fetchEvent = async () => {
         setLoading(true);
@@ -397,6 +401,30 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
                     : ''
                 }));
               setSimilarEvents(similarList);
+            }
+            
+            // Fetch nearby events if coordinates available
+            if (eventData.latitude && eventData.longitude) {
+              const { data: nearbyData } = await externalSupabase.rpc('get_nearby_events', {
+                current_event_id: eventData.id,
+                current_lat: eventData.latitude,
+                current_lng: eventData.longitude,
+                radius_km: 10
+              });
+              
+              if (nearbyData && Array.isArray(nearbyData) && nearbyData.length > 0) {
+                const nearbyList = nearbyData.slice(0, 6).map((e: any) => ({
+                  id: e.external_id || e.id,
+                  image: e.image_url || weekendJazz,
+                  title: e.title,
+                  venue: e.venue_name || '',
+                  location: getEventLocation(e),
+                  date: e.start_date 
+                    ? new Date(e.start_date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
+                    : ''
+                }));
+                setNearbyEvents(nearbyList);
+              }
             }
             
             // Cache for future use
@@ -858,8 +886,38 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
               </div>
             </div>
 
+            {/* Nearby Events Section */}
+            {nearbyEvents.length > 0 && (
+              <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <MapPin size={18} className="text-neutral-500" />
+                    <h2 className="font-serif text-neutral-900 text-lg font-bold">In der Nähe</h2>
+                  </div>
+                </div>
+                
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-3">
+                    {nearbyEvents.map((evt) => (
+                      <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                        <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                </Carousel>
+              </div>
+            )}
+
             {/* Similar Events Section */}
-            <div className="bg-stone-50 px-5 sm:px-6 py-5">
+            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-serif text-neutral-900 text-lg font-bold">Ähnliche Events</h2>
                 <Link 
