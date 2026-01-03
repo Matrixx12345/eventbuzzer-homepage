@@ -524,15 +524,17 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0 [&>button]:hidden relative">
-        {/* Fixed Close Button */}
-        <button
-          onClick={() => onOpenChange(false)}
-          className="fixed top-6 right-6 z-[60] w-10 h-10 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white transition-all border border-white/50"
-          aria-label="Schließen"
-        >
-          <X size={20} className="text-neutral-700" />
-        </button>
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0 [&>button]:hidden">
+        {/* Sticky Close Button Container */}
+        <div className="sticky top-0 z-50 h-0 pointer-events-none">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute top-4 right-4 pointer-events-auto w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white transition-all border border-neutral-200"
+            aria-label="Schließen"
+          >
+            <X size={20} className="text-neutral-700" />
+          </button>
+        </div>
         
         {loading ? (
           <div className="flex items-center justify-center h-64 -mt-12">
