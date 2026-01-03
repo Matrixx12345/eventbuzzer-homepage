@@ -184,19 +184,8 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("SimilarEventCard clicked, id:", id);
-    console.log("onSwap function:", typeof onSwap, onSwap);
-    
     if (id && id.trim() !== '') {
-      console.log("Calling onSwap with id:", id);
-      try {
-        onSwap(id);
-        console.log("onSwap called successfully");
-      } catch (err) {
-        console.error("Error calling onSwap:", err);
-      }
-    } else {
-      console.warn("SimilarEventCard has no valid ID");
+      onSwap(id);
     }
   };
   
@@ -822,7 +811,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
                   <CarouselContent className="-ml-3">
                     {similarEvents.map((evt) => (
                       <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                        <SimilarEventCard {...evt} onSwap={onEventSwap ? onEventSwap : (id) => console.error("onEventSwap undefined, cannot swap to:", id)} />
+                        <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                       </CarouselItem>
                     ))}
                   </CarouselContent>
