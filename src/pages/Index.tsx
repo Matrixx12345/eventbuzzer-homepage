@@ -6,10 +6,13 @@ import SwitzerlandSection from "@/components/SwitzerlandSection";
 import RainyDaySection from "@/components/RainyDaySection";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
+import { useEventModal } from "@/hooks/useEventModal";
+import { EventDetailModal } from "@/components/EventDetailModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Index = () => {
   const { isOpen, closeChatbot, openChatbot } = useChatbot();
+  const { selectedEventId, isOpen: modalOpen, openEvent, closeEvent, swapEvent } = useEventModal();
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,6 +20,7 @@ const Index = () => {
       
       {/* Chatbot Popup */}
       <ChatbotPopup isOpen={isOpen} onClose={closeChatbot} onOpen={openChatbot} />
+      
       <main>
         <HeroSection />
         
@@ -30,15 +34,23 @@ const Index = () => {
         {/* TEMPORARILY HIDDEN - EventsSection (heute in deiner Nähe) - sag mir wenn du es reaktivieren möchtest */}
         {/* <EventsSection /> */}
         <ErrorBoundary>
-          <WeekendSection />
+          <WeekendSection onEventClick={openEvent} />
         </ErrorBoundary>
         <ErrorBoundary>
-          <SwitzerlandSection />
+          <SwitzerlandSection onEventClick={openEvent} />
         </ErrorBoundary>
         <ErrorBoundary>
-          <RainyDaySection />
+          <RainyDaySection onEventClick={openEvent} />
         </ErrorBoundary>
       </main>
+      
+      {/* Global Event Detail Modal with URL sync */}
+      <EventDetailModal 
+        eventId={selectedEventId}
+        open={modalOpen}
+        onOpenChange={(open) => !open && closeEvent()}
+        onEventSwap={swapEvent}
+      />
     </div>
   );
 };

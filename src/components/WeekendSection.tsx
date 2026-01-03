@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
@@ -65,6 +64,7 @@ interface WeekendCardProps {
   slug?: string;
   latitude?: number;
   longitude?: number;
+  onClick?: () => void;
 }
 const WeekendCard = ({
   id,
@@ -76,14 +76,23 @@ const WeekendCard = ({
   isLarge = false,
   slug,
   latitude,
-  longitude
+  longitude,
+  onClick
 }: WeekendCardProps) => {
   const {
     isFavorite,
     toggleFavorite
   } = useFavorites();
   const isCurrentlyFavorite = isFavorite(id);
-  return <Link to={`/event/${slug}`} className="block h-full">
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+  
+  return <a href={`/event/${slug}`} onClick={handleClick} className="block h-full cursor-pointer">
       <article className="relative h-full bg-card rounded-2xl overflow-hidden group">
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -94,6 +103,7 @@ const WeekendCard = ({
         {/* Favorite Button */}
         <button onClick={e => {
         e.preventDefault();
+        e.stopPropagation();
         toggleFavorite({
           id,
           slug,
@@ -145,7 +155,7 @@ const WeekendCard = ({
             </span>}
         </div>
       </article>
-    </Link>;
+    </a>;
 };
 
 // Helper to get location - same logic as Discover page
@@ -178,7 +188,11 @@ const getEventLocation = (event: any): string => {
   }
   return "Schweiz";
 };
-const WeekendSection = () => {
+interface WeekendSectionProps {
+  onEventClick?: (eventId: string) => void;
+}
+
+const WeekendSection = ({ onEventClick }: WeekendSectionProps) => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -212,6 +226,7 @@ const WeekendSection = () => {
     }
     loadWeekendEvents();
   }, []);
+  
   if (loading) {
     return <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -310,37 +325,38 @@ const WeekendSection = () => {
       } : null
     }
   };
+  
   return <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 sm:mb-12 lg:text-3xl">Verpasse nicht an diesem Wochenende:</h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-auto">
           {weekendEvents.row1.large && <div className="h-[500px] lg:h-[520px]">
-              <WeekendCard {...weekendEvents.row1.large} isLarge />
+              <WeekendCard {...weekendEvents.row1.large} isLarge onClick={() => onEventClick?.(weekendEvents.row1.large!.id)} />
             </div>}
 
           <div className="flex flex-col gap-6 h-[500px] lg:h-[520px]">
             {weekendEvents.row1.small.map((event: any, index: number) => <div key={index} className="flex-1">
-                <WeekendCard {...event} />
+                <WeekendCard {...event} onClick={() => onEventClick?.(event.id)} />
               </div>)}
           </div>
 
           {weekendEvents.row2[0] && <div className="h-[400px]">
-              <WeekendCard {...weekendEvents.row2[0]} isLarge />
+              <WeekendCard {...weekendEvents.row2[0]} isLarge onClick={() => onEventClick?.(weekendEvents.row2[0]!.id)} />
             </div>}
 
           {weekendEvents.row2[1] && <div className="h-[400px]">
-              <WeekendCard {...weekendEvents.row2[1]} />
+              <WeekendCard {...weekendEvents.row2[1]} onClick={() => onEventClick?.(weekendEvents.row2[1]!.id)} />
             </div>}
 
           <div className="flex flex-col gap-6 h-[500px] lg:h-[520px]">
             {weekendEvents.row3.small.map((event: any, index: number) => <div key={index} className="flex-1">
-                <WeekendCard {...event} />
+                <WeekendCard {...event} onClick={() => onEventClick?.(event.id)} />
               </div>)}
           </div>
 
           {weekendEvents.row3.large && <div className="h-[500px] lg:h-[520px]">
-              <WeekendCard {...weekendEvents.row3.large} isLarge />
+              <WeekendCard {...weekendEvents.row3.large} isLarge onClick={() => onEventClick?.(weekendEvents.row3.large!.id)} />
             </div>}
         </div>
       </div>

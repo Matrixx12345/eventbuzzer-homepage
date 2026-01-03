@@ -181,17 +181,22 @@ const partnerProducts = [
 ];
 
 // Similar Event Card
-const SimilarEventCard = ({ slug, image, title, venue, location, date, onNavigate }: {
+const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }: {
   slug: string;
   image: string;
   title: string;
   venue: string;
   location: string;
   date: string;
-  onNavigate: () => void;
+  onSwap: (eventId: string) => void;
 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onSwap(slug);
+  };
+  
   return (
-    <Link to={`/event/${slug}`} onClick={onNavigate} className="block group h-full">
+    <a href={`/event/${slug}`} onClick={handleClick} className="block group h-full cursor-pointer">
       <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
         <div className="relative aspect-video overflow-hidden">
           <img
@@ -206,7 +211,7 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date, onNavigat
           <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
         </div>
       </article>
-    </Link>
+    </a>
   );
 };
 
@@ -243,9 +248,10 @@ interface EventDetailModalProps {
   eventId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEventSwap?: (eventId: string) => void;
 }
 
-export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailModalProps) => {
+export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: EventDetailModalProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
@@ -758,7 +764,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                 <CarouselContent className="-ml-3">
                   {similarEvents.map((evt, index) => (
                     <CarouselItem key={index} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                      <SimilarEventCard {...evt} onNavigate={() => onOpenChange(false)} />
+                      <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                     </CarouselItem>
                   ))}
                 </CarouselContent>
