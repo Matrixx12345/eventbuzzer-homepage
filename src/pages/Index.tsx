@@ -48,6 +48,7 @@ const Index = () => {
       
       {/* Global Event Detail Modal with URL sync */}
       <EventDetailModal 
+        key={selectedEventId || "closed"}
         eventId={selectedEventId}
         open={modalOpen}
         onOpenChange={(open) => !open && closeEvent()}

@@ -60,12 +60,9 @@ export const useEventModal = () => {
   // Content swap: change event without closing modal
   const swapEvent = useCallback((eventId: string) => {
     console.log("useEventModal.swapEvent called with:", eventId);
-    console.log("Current selectedEventId:", selectedEventId);
     setSelectedEventId(eventId);
-    // Update URL
     window.history.replaceState(null, "", `/event/${eventId}`);
-    console.log("State updated, new eventId should be:", eventId);
-  }, [selectedEventId]);
+  }, []);
 
   return {
     selectedEventId,

@@ -265,6 +265,7 @@ interface EventDetailModalProps {
 }
 
 export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: EventDetailModalProps) => {
+  console.log("EventDetailModal render - onEventSwap:", typeof onEventSwap, onEventSwap ? "exists" : "undefined");
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
@@ -822,7 +823,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
                   <CarouselContent className="-ml-3">
                     {similarEvents.map((evt) => (
                       <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                        <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
+                        <SimilarEventCard {...evt} onSwap={onEventSwap ? onEventSwap : (id) => console.error("onEventSwap undefined, cannot swap to:", id)} />
                       </CarouselItem>
                     ))}
                   </CarouselContent>
