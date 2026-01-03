@@ -281,7 +281,25 @@ const Listings = () => {
           body: { offset, limit: 30, filters: buildFilters() },
         });
         if (error) throw error;
-        if (data?.events) setEvents((prev) => (isInitial ? data.events : [...prev, ...data.events]));
+        if (data?.events) {
+          // Sort events to push flea markets and artists to the bottom (poor image quality)
+          const sortedEvents = [...data.events].sort((a, b) => {
+            const titleA = (a.title || '').toLowerCase();
+            const titleB = (b.title || '').toLowerCase();
+            const catA = (a.category_sub_id || a.sub_category || '').toString().toLowerCase();
+            const catB = (b.category_sub_id || b.sub_category || '').toString().toLowerCase();
+            
+            const isLowPriorityA = titleA.includes('flohmarkt') || titleA.includes('trödelmarkt') || 
+                                   titleA.includes('künstler') || catA.includes('flohmarkt');
+            const isLowPriorityB = titleB.includes('flohmarkt') || titleB.includes('trödelmarkt') || 
+                                   titleB.includes('künstler') || catB.includes('flohmarkt');
+            
+            if (isLowPriorityA && !isLowPriorityB) return 1;
+            if (!isLowPriorityA && isLowPriorityB) return -1;
+            return 0; // Keep original order otherwise
+          });
+          setEvents((prev) => (isInitial ? sortedEvents : [...prev, ...sortedEvents]));
+        }
         if (data?.pagination) {
           setHasMore(data.pagination.hasMore);
           setNextOffset(data.pagination.nextOffset || offset + 30);
