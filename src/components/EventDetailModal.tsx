@@ -291,18 +291,26 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
     }
   }, [dynamicEvent, showFullDescription]);
 
-  // Fetch event when modal opens
+  // Fetch event when modal opens OR eventId changes (for swap)
   useEffect(() => {
     if (open && eventId) {
+      // Reset state immediately when eventId changes
+      setShowFullDescription(false);
+      setNeedsReadMore(false);
+      setDynamicEvent(null);
+      setSimilarEvents([]);
+      
       const fetchEvent = async () => {
         setLoading(true);
         try {
+          console.log("Fetching event:", eventId);
           // Fetch main event
           const { data, error } = await supabase.functions.invoke("get-external-events", {
             body: { eventId }
           });
           if (error) throw error;
           if (data?.events?.[0]) {
+            console.log("Event loaded:", data.events[0].title);
             setDynamicEvent(data.events[0]);
             
             // Fetch similar events (random 4 events, excluding current)
