@@ -253,7 +253,8 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
   const referralTrackedRef = useRef(false);
-
+  const [needsReadMore, setNeedsReadMore] = useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
   // Reset state when modal closes
   useEffect(() => {
     if (!open) {
@@ -261,8 +262,19 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
       setDynamicEvent(null);
       setShareOpen(false);
       referralTrackedRef.current = false;
+      setNeedsReadMore(false);
     }
   }, [open]);
+
+  // Check if description needs "read more" (more than 6 lines)
+  useEffect(() => {
+    if (descriptionRef.current && !showFullDescription) {
+      const lineHeight = parseFloat(getComputedStyle(descriptionRef.current).lineHeight);
+      const height = descriptionRef.current.scrollHeight;
+      const lines = Math.ceil(height / lineHeight);
+      setNeedsReadMore(lines > 6);
+    }
+  }, [dynamicEvent, showFullDescription]);
 
   // Fetch event when modal opens
   useEffect(() => {
@@ -496,12 +508,6 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                   target.src = weekendJazz;
                 }}
               />
-              <ImageAttribution 
-                author={event.imageAuthor} 
-                license={event.imageLicense} 
-                alwaysVisible 
-              />
-              
               {/* Close button overlay */}
               <button
                 onClick={() => onOpenChange(false)}
@@ -513,11 +519,22 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
 
             {/* Content */}
             <div className="p-5 sm:p-6">
-              {/* Title */}
+              {/* Title with Attribution */}
               <DialogHeader className="mb-3">
-                <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
-                  {event.title}
-                </DialogTitle>
+                <div className="flex items-start justify-between gap-2">
+                  <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
+                    {event.title}
+                  </DialogTitle>
+                  {(event.imageAuthor || event.imageLicense) && (
+                    <div className="flex-shrink-0">
+                      <ImageAttribution 
+                        author={event.imageAuthor} 
+                        license={event.imageLicense} 
+                        alwaysVisible 
+                      />
+                    </div>
+                  )}
+                </div>
               </DialogHeader>
 
               {/* Meta Info */}
@@ -706,10 +723,10 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
               {/* Description */}
               <div className="border-t border-neutral-100 pt-4">
                 <h2 className="font-serif text-neutral-900 text-base font-semibold mb-2">Über dieses Event</h2>
-                <div className={`text-neutral-600 text-sm leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
-                  <p>{event.description}</p>
+                <div className={`text-neutral-600 text-sm leading-relaxed ${!showFullDescription ? 'line-clamp-6' : ''}`}>
+                  <p ref={descriptionRef}>{event.description}</p>
                 </div>
-                {event.description && event.description.length > 150 && !showFullDescription && (
+                {needsReadMore && !showFullDescription && (
                   <button 
                     onClick={() => setShowFullDescription(true)}
                     className="text-neutral-900 text-xs underline mt-2 hover:text-neutral-600 transition-colors"
