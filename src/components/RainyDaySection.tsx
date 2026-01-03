@@ -1,5 +1,4 @@
 import { Heart } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import rainyKunsthaus from "@/assets/rainy-kunsthaus.jpg";
 import rainySpa from "@/assets/rainy-spa.jpg";
@@ -17,6 +16,7 @@ interface RainyCardProps {
   slug: string;
   latitude?: number;
   longitude?: number;
+  onClick?: () => void;
 }
 const RainyCard = ({
   id,
@@ -28,14 +28,23 @@ const RainyCard = ({
   isLarge = false,
   slug,
   latitude,
-  longitude
+  longitude,
+  onClick
 }: RainyCardProps) => {
   const {
     isFavorite,
     toggleFavorite
   } = useFavorites();
   const isCurrentlyFavorite = isFavorite(id);
-  return <Link to={`/event/${slug}`} className="block h-full">
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+  
+  return <a href={`/event/${slug}`} onClick={handleClick} className="block h-full cursor-pointer">
       <article className="relative h-full bg-card rounded-2xl overflow-hidden group">
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -46,6 +55,7 @@ const RainyCard = ({
         {/* Favorite Button */}
         <button onClick={e => {
         e.preventDefault();
+        e.stopPropagation();
         toggleFavorite({
           id,
           slug,
@@ -98,7 +108,7 @@ const RainyCard = ({
             </span>}
         </div>
       </article>
-    </Link>;
+    </a>;
 };
 const rainyEvents = {
   row1: {
@@ -155,7 +165,12 @@ const rainyEvents = {
     longitude: 8.5311
   }]
 };
-const RainyDaySection = () => {
+
+interface RainyDaySectionProps {
+  onEventClick?: (eventId: string) => void;
+}
+
+const RainyDaySection = ({ onEventClick }: RainyDaySectionProps) => {
   return <section className="py-12 sm:py-16 lg:py-20 pb-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-muted-foreground mb-8 sm:mb-12 not-italic">
@@ -164,20 +179,20 @@ const RainyDaySection = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-auto">
           <div className="h-[500px] lg:h-[520px]">
-            <RainyCard {...rainyEvents.row1.large} isLarge />
+            <RainyCard {...rainyEvents.row1.large} isLarge onClick={() => onEventClick?.(rainyEvents.row1.large.slug)} />
           </div>
 
           <div className="flex flex-col gap-6 h-[500px] lg:h-[520px]">
             {rainyEvents.row1.small.map((event, index) => <div key={index} className="flex-1">
-                <RainyCard {...event} />
+                <RainyCard {...event} onClick={() => onEventClick?.(event.slug)} />
               </div>)}
           </div>
 
           <div className="h-[400px]">
-            <RainyCard {...rainyEvents.row2[0]} isLarge />
+            <RainyCard {...rainyEvents.row2[0]} isLarge onClick={() => onEventClick?.(rainyEvents.row2[0].slug)} />
           </div>
           <div className="h-[400px]">
-            <RainyCard {...rainyEvents.row2[1]} isLarge />
+            <RainyCard {...rainyEvents.row2[1]} isLarge onClick={() => onEventClick?.(rainyEvents.row2[1].slug)} />
           </div>
         </div>
       </div>

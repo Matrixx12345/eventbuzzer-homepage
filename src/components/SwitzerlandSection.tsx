@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import swissGeneva from "@/assets/swiss-geneva.jpg";
 import swissLucerne from "@/assets/swiss-lucerne.jpg";
 import swissBern from "@/assets/swiss-bern.jpg";
@@ -112,6 +111,7 @@ interface BentoCardProps {
   location: string;
   latitude: number;
   longitude: number;
+  onClick?: () => void;
 }
 const BentoCard = ({
   title,
@@ -123,8 +123,16 @@ const BentoCard = ({
   slug,
   location,
   latitude,
-  longitude
+  longitude,
+  onClick
 }: BentoCardProps) => {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+  
   const CardContent = <div className="flex flex-col justify-center p-6 text-center h-full">
       <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">Premium Highlight</span>
       {/* Titel fixiert auf 2 Zeilen */}
@@ -159,17 +167,17 @@ const BentoCard = ({
     </div>;
   const cardBaseClass = "bg-neutral-900 rounded-3xl overflow-hidden h-full group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-xl";
   if (isWide) {
-    return <Link to={`/event/${slug}`} className="block h-full">
+    return <a href={`/event/${slug}`} onClick={handleClick} className="block h-full cursor-pointer">
         <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 min-h-[280px]`}>
           <div className="relative h-48 md:h-full overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
           {CardContent}
         </div>
-      </Link>;
+      </a>;
   }
   if (imagePosition === "left" || imagePosition === "right") {
-    return <Link to={`/event/${slug}`} className="block h-full">
+    return <a href={`/event/${slug}`} onClick={handleClick} className="block h-full cursor-pointer">
         <div className={`${cardBaseClass} grid grid-cols-2 min-h-[280px]`}>
           {imagePosition === "left" && <div className="relative overflow-hidden">
               <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -179,18 +187,23 @@ const BentoCard = ({
               <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>}
         </div>
-      </Link>;
+      </a>;
   }
-  return <Link to={`/event/${slug}`} className="block h-full">
+  return <a href={`/event/${slug}`} onClick={handleClick} className="block h-full cursor-pointer">
       <div className={`${cardBaseClass} flex flex-col ${isTall ? "min-h-[580px]" : "min-h-[280px]"}`}>
         <div className={`relative overflow-hidden ${isTall ? "flex-1" : "h-40"}`}>
           <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         </div>
         <div className="flex-shrink-0">{CardContent}</div>
       </div>
-    </Link>;
+    </a>;
 };
-const SwitzerlandSection = () => {
+
+interface SwitzerlandSectionProps {
+  onEventClick?: (eventId: string) => void;
+}
+
+const SwitzerlandSection = ({ onEventClick }: SwitzerlandSectionProps) => {
   return <section className="bg-background py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto px-0 py-0 my-0">
         <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
@@ -199,34 +212,34 @@ const SwitzerlandSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <BentoCard {...swissEvents[0]} />
+            <BentoCard {...swissEvents[0]} onClick={() => onEventClick?.(swissEvents[0].slug)} />
           </div>
           <div className="md:col-span-1 md:row-span-2">
-            <BentoCard {...swissEvents[2]} isTall />
+            <BentoCard {...swissEvents[2]} isTall onClick={() => onEventClick?.(swissEvents[2].slug)} />
           </div>
           <div className="md:col-span-2">
-            <BentoCard {...swissEvents[1]} />
+            <BentoCard {...swissEvents[1]} onClick={() => onEventClick?.(swissEvents[1].slug)} />
           </div>
 
           <div className="md:col-span-1">
-            <BentoCard {...swissEvents[3]} />
+            <BentoCard {...swissEvents[3]} onClick={() => onEventClick?.(swissEvents[3].slug)} />
           </div>
           <div className="md:col-span-1">
-            <BentoCard {...swissEvents[4]} />
+            <BentoCard {...swissEvents[4]} onClick={() => onEventClick?.(swissEvents[4].slug)} />
           </div>
 
           <div className="md:col-span-1">
-            <BentoCard {...swissEvents[5]} />
+            <BentoCard {...swissEvents[5]} onClick={() => onEventClick?.(swissEvents[5].slug)} />
           </div>
           <div className="md:col-span-1">
-            <BentoCard {...swissEvents[6]} />
+            <BentoCard {...swissEvents[6]} onClick={() => onEventClick?.(swissEvents[6].slug)} />
           </div>
           <div className="md:col-span-1">
-            <BentoCard {...swissEvents[7]} />
+            <BentoCard {...swissEvents[7]} onClick={() => onEventClick?.(swissEvents[7].slug)} />
           </div>
 
           <div className="md:col-span-2">
-            <BentoCard {...swissEvents[8]} />
+            <BentoCard {...swissEvents[8]} onClick={() => onEventClick?.(swissEvents[8].slug)} />
           </div>
         </div>
       </div>
