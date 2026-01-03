@@ -145,8 +145,11 @@ serve(async (req) => {
       "freunde-gruppen": ["freunde-gruppen"],
     };
 
-    // Use SELECT * to avoid column mismatch issues, then filter in response
-    let query = supabase.from("events").select("*", { count: "exact" });
+    // Use events_without_markets view to exclude flea markets by default
+    // Only use regular events table when Märkte category (ID 6) is selected
+    const isMarketsCategory = categoryId === 6 || categoryId === '6';
+    const tableName = isMarketsCategory ? "events" : "events_without_markets";
+    let query = supabase.from(tableName).select("*", { count: "exact" });
 
     // ✅ TAG-FILTER: Direkt mit .contains() auf der tags-Spalte filtern
     if (tags.length > 0) {
@@ -277,19 +280,7 @@ serve(async (req) => {
     // Apply buzz boosts to all events
     filteredEvents = filteredEvents.map(applyBuzzBoost);
 
-    // Hide flea markets (category_main_id = 6) from general view
-    // Only show them when user selects that category or searches for markets
-    const searchLower = (searchTerm || '').toLowerCase();
-    const marketSearchTerms = ['flohmarkt', 'trödelmarkt', 'markt', 'puces', 'marché', 'brocante', 'mercatino', 'antiquitäten', 'antik'];
-    const isSearchingForMarket = marketSearchTerms.some(term => searchLower.includes(term));
-    const isMarketsCategory = categoryId === 6 || categoryId === '6';
-    
-    if (!isSearchingForMarket && !isMarketsCategory) {
-      filteredEvents = filteredEvents.filter((event: any) => {
-        // Category 6 = Flohmärkte/Märkte
-        return event.category_main_id !== 6;
-      });
-    }
+    // Flea market filtering is now handled by the events_without_markets view
 
     // Sort events: push artists to the end (poor image quality)
     filteredEvents.sort((a: any, b: any) => {
