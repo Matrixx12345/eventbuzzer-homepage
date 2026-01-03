@@ -185,10 +185,16 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
     e.preventDefault();
     e.stopPropagation();
     console.log("SimilarEventCard clicked, id:", id);
+    console.log("onSwap function:", typeof onSwap, onSwap);
     
     if (id && id.trim() !== '') {
       console.log("Calling onSwap with id:", id);
-      onSwap(id);
+      try {
+        onSwap(id);
+        console.log("onSwap called successfully");
+      } catch (err) {
+        console.error("Error calling onSwap:", err);
+      }
     } else {
       console.warn("SimilarEventCard has no valid ID");
     }
