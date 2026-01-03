@@ -277,6 +277,27 @@ serve(async (req) => {
     // Apply buzz boosts to all events
     filteredEvents = filteredEvents.map(applyBuzzBoost);
 
+    // Sort events: push flea markets and artists to the end (poor image quality)
+    filteredEvents.sort((a: any, b: any) => {
+      const titleA = (a.title || '').toLowerCase();
+      const titleB = (b.title || '').toLowerCase();
+      const catA = (a.category_sub_id || a.sub_category || '').toString().toLowerCase();
+      const catB = (b.category_sub_id || b.sub_category || '').toString().toLowerCase();
+      
+      const isLowPriorityA = titleA.includes('flohmarkt') || titleA.includes('trödelmarkt') || 
+                             titleA.includes('künstler') || catA.includes('flohmarkt');
+      const isLowPriorityB = titleB.includes('flohmarkt') || titleB.includes('trödelmarkt') || 
+                             titleB.includes('künstler') || catB.includes('flohmarkt');
+      
+      if (isLowPriorityA && !isLowPriorityB) return 1;  // A to bottom
+      if (!isLowPriorityA && isLowPriorityB) return -1; // B to bottom
+      
+      // Keep date sorting for same priority
+      const dateA = a.start_date ? new Date(a.start_date).getTime() : Infinity;
+      const dateB = b.start_date ? new Date(b.start_date).getTime() : Infinity;
+      return dateA - dateB;
+    });
+
     console.log(`Returning ${filteredEvents.length} events (total: ${count})`);
 
     return new Response(
