@@ -98,7 +98,7 @@ export const BuzzTracker = ({
                 backgroundColor: getBarColor()
               }}
             />
-            {/* Interactive range input - extended hit area for touch */}
+            {/* Interactive range input - extended hit area, wider than container to catch edge clicks */}
             <input
               type="range"
               min="0"
@@ -107,15 +107,17 @@ export const BuzzTracker = ({
               onChange={handleSliderChange}
               onMouseUp={handleSliderRelease}
               onTouchEnd={handleSliderRelease}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="absolute left-0 w-full opacity-0 cursor-pointer z-20"
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              onTouchStart={(e) => { e.stopPropagation(); }}
+              onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              className="absolute opacity-0 cursor-pointer z-30"
               style={{ 
                 margin: 0, 
-                top: '-10px', 
-                height: '26px',
+                top: '-14px', 
+                left: '-10px',
+                width: 'calc(100% + 20px)',
+                height: '34px',
                 touchAction: 'none'
               }}
             />
