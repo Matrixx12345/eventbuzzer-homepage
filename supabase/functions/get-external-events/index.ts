@@ -277,18 +277,22 @@ serve(async (req) => {
     // Apply buzz boosts to all events
     filteredEvents = filteredEvents.map(applyBuzzBoost);
 
-    // Hide flea markets from general view - only show in Märkte category or when searching for them
+    // Hide flea markets and antique markets from general view
     const searchLower = (searchTerm || '').toLowerCase();
-    const isSearchingForFleaMarket = searchLower.includes('flohmarkt') || searchLower.includes('trödelmarkt') || 
-                                      searchLower.includes('markt') || searchLower.includes('puces') || searchLower.includes('marché');
+    const marketSearchTerms = ['flohmarkt', 'trödelmarkt', 'markt', 'puces', 'marché', 'brocante', 'mercatino', 'antiquitäten', 'antik'];
+    const isSearchingForMarket = marketSearchTerms.some(term => searchLower.includes(term));
     const isMarketsCategory = categoryId === 'markets' || subcategoryId?.includes('market') || subcategoryId?.includes('floh');
     
-    if (!isSearchingForFleaMarket && !isMarketsCategory) {
+    if (!isSearchingForMarket && !isMarketsCategory) {
       filteredEvents = filteredEvents.filter((event: any) => {
         const title = (event.title || '').toLowerCase();
-        // German: flohmarkt, trödelmarkt | French: puces, marché aux puces
+        // German: flohmarkt, trödelmarkt, antiquitäten
+        // French: puces, marché aux puces, brocante
+        // Italian: mercatino
         const isFleaMarket = title.includes('flohmarkt') || title.includes('trödelmarkt') || 
-                             title.includes('puces') || title.includes('marché aux');
+                             title.includes('puces') || title.includes('brocante') ||
+                             title.includes('mercatino') || title.includes('antiquitäten') ||
+                             (title.includes('marché') && !title.includes('marché de noël'));
         return !isFleaMarket;
       });
     }
