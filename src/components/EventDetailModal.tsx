@@ -85,6 +85,7 @@ interface DynamicEvent {
   created_at?: string;
   gallery_urls?: string[];
   buzz_score?: number | null;
+  opening_hours_note?: string;
 }
 
 const COUNTRY_NAMES = [
@@ -489,8 +490,9 @@ export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: E
       dateDisplay = "";
       timeDisplay = "";
     } else if (isPermanentAttraction) {
-      dateDisplay = "Jederzeit verfügbar";
-      timeDisplay = "";
+      // Use opening_hours_note if available, fallback to "Jederzeit verfügbar"
+      dateDisplay = dynamicEvent.opening_hours_note || "Jederzeit verfügbar";
+      timeDisplay = "";  // No time for permanent attractions
     } else {
       dateDisplay = formatDate(dynamicEvent.start_date) || "Datum folgt";
       timeDisplay = formatTime(dynamicEvent.start_date) || "";
