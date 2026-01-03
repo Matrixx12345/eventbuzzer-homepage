@@ -508,6 +508,11 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                   target.src = weekendJazz;
                 }}
               />
+              <ImageAttribution 
+                author={event.imageAuthor} 
+                license={event.imageLicense} 
+                alwaysVisible 
+              />
               {/* Close button overlay */}
               <button
                 onClick={() => onOpenChange(false)}
@@ -519,22 +524,11 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
 
             {/* Content */}
             <div className="p-5 sm:p-6">
-              {/* Title with Attribution */}
+              {/* Title */}
               <DialogHeader className="mb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
-                    {event.title}
-                  </DialogTitle>
-                  {(event.imageAuthor || event.imageLicense) && (
-                    <div className="flex-shrink-0">
-                      <ImageAttribution 
-                        author={event.imageAuthor} 
-                        license={event.imageLicense} 
-                        alwaysVisible 
-                      />
-                    </div>
-                  )}
-                </div>
+                <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
+                  {event.title}
+                </DialogTitle>
               </DialogHeader>
 
               {/* Meta Info */}
@@ -578,6 +572,9 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                 )}
                 
                 <BuzzTracker buzzScore={event.buzzScore} />
+                
+                {/* Report Flag - inline */}
+                <EventRatingButtons eventId={eventId} eventTitle={event.title} />
               </div>
 
               {/* Actions */}
@@ -735,10 +732,6 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                   </button>
                 )}
                 
-                {/* Rating buttons */}
-                <div className="mt-4 pt-3 border-t border-neutral-100">
-                  <EventRatingButtons eventId={eventId} eventTitle={event.title} />
-                </div>
 
                 {/* Image Gallery */}
                 {event.galleryUrls && event.galleryUrls.length > 0 && (
