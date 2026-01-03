@@ -107,6 +107,9 @@ export const BuzzTracker = ({
               onChange={handleSliderChange}
               onMouseUp={handleSliderRelease}
               onTouchEnd={handleSliderRelease}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               style={{ margin: 0 }}
             />
