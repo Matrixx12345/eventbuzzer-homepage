@@ -265,7 +265,6 @@ interface EventDetailModalProps {
 }
 
 export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: EventDetailModalProps) => {
-  console.log("EventDetailModal render - onEventSwap:", typeof onEventSwap, onEventSwap ? "exists" : "undefined");
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);

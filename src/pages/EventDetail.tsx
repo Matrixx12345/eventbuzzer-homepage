@@ -285,17 +285,22 @@ const partnerProducts = [
   { image: weekendOpera, name: "Crystal Wine Glasses", price: "CHF 75", partner: "Manor", size: "standard" as const },
 ];
 
-// Similar Event Card - Clean White Design
-const SimilarEventCard = ({ slug, image, title, venue, location, date }: {
+// Similar Event Card - Clean White Design with Swap Support
+const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }: {
   slug: string;
   image: string;
   title: string;
   venue: string;
   location: string;
   date: string;
+  onSwap: (slug: string) => void;
 }) => {
+  const handleClick = () => {
+    onSwap(slug);
+  };
+
   return (
-    <Link to={`/event/${slug}`} className="block group h-full">
+    <button onClick={handleClick} className="block group h-full w-full text-left">
       <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
         {/* Image - 16:9 Landscape */}
         <div className="relative aspect-video overflow-hidden">
@@ -311,12 +316,12 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date }: {
           <p className="text-neutral-500 text-xs mb-1">{date}</p>
           <h3 className="font-serif text-neutral-900 text-base font-semibold leading-tight mb-1">{title}</h3>
           <p className="text-neutral-500 text-sm">{venue} • {location}</p>
-          <button className="mt-3 text-neutral-900 text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
+          <span className="mt-3 text-neutral-900 text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
             View Details <ArrowRight size={14} />
-          </button>
+          </span>
         </div>
       </article>
-    </Link>
+    </button>
   );
 };
 
@@ -477,7 +482,8 @@ const getDistanceInfo = (lat: number, lng: number): { city: string; distance: st
 };
 
 const EventDetail = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: urlSlug } = useParams<{ slug: string }>();
+  const [currentSlug, setCurrentSlug] = useState(urlSlug);
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
@@ -485,6 +491,25 @@ const EventDetail = () => {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
   const referralTrackedRef = useRef(false);
+
+  // Sync with URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    if (urlSlug && urlSlug !== currentSlug) {
+      setCurrentSlug(urlSlug);
+    }
+  }, [urlSlug]);
+
+  // Swap to another event without page reload
+  const swapToEvent = (newSlug: string) => {
+    setCurrentSlug(newSlug);
+    setDynamicEvent(null);
+    setShowFullDescription(false);
+    window.history.pushState(null, "", `/event/${newSlug}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Use currentSlug instead of slug throughout
+  const slug = currentSlug;
 
   // Check if slug is a static event or needs to be fetched from Supabase
   const isStaticEvent = slug && eventsData[slug];
@@ -1026,7 +1051,7 @@ const EventDetail = () => {
             <CarouselContent className="-ml-4">
               {similarEvents.map((evt, index) => (
                 <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
-                  <SimilarEventCard {...evt} />
+                  <SimilarEventCard {...evt} onSwap={swapToEvent} />
                 </CarouselItem>
               ))}
             </CarouselContent>
