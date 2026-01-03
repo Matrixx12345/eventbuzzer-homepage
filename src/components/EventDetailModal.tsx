@@ -17,7 +17,10 @@ import {
   Mail,
   X,
   Loader2,
+  ArrowRight,
+  Plus,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -33,9 +36,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 // Fallback image
 import weekendJazz from "@/assets/weekend-jazz.jpg";
+
+// Similar events images
+import eventAbbey from "@/assets/event-abbey.jpg";
+import eventConcert from "@/assets/event-concert.jpg";
+import eventSymphony from "@/assets/event-symphony.jpg";
+import eventVenue from "@/assets/event-venue.jpg";
+
+// Partner products
+import partnerChampagne from "@/assets/partner-champagne.jpg";
+import partnerRoses from "@/assets/partner-roses.jpg";
+import partnerTeddy from "@/assets/partner-teddy.jpg";
+import partnerChocolate from "@/assets/partner-chocolate.jpg";
+import rainySpa from "@/assets/rainy-spa.jpg";
+import weekendWine from "@/assets/weekend-wine.jpg";
+import weekendArt from "@/assets/weekend-art.jpg";
+import rainyChocolate from "@/assets/rainy-chocolate.jpg";
 
 interface DynamicEvent {
   id: string;
@@ -132,6 +158,85 @@ const getDistanceInfo = (lat: number, lng: number): { city: string; distance: st
     : `~${Math.round(minDist)} km von ${nearest.name}`;
 
   return { city: nearest.name, distance: distanceText };
+};
+
+// Similar events for carousel
+const similarEvents = [
+  { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20" },
+  { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22" },
+  { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25" },
+  { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28" },
+];
+
+// Partner products
+const partnerProducts = [
+  { image: partnerRoses, name: "12 Red Roses Bouquet", price: "CHF 39", partner: "Fleurop" },
+  { image: partnerChampagne, name: "Moët & Chandon Impérial", price: "CHF 49", partner: "Galaxus" },
+  { image: partnerChocolate, name: "Lindt Pralinés Selection", price: "CHF 29", partner: "Lindt" },
+  { image: partnerTeddy, name: "Premium Teddy Bear", price: "CHF 35", partner: "Manor" },
+  { image: rainySpa, name: "Late Night Spa Access", price: "CHF 79", partner: "Hürlimann" },
+  { image: weekendWine, name: "Scented Candle Set", price: "CHF 45", partner: "Westwing" },
+  { image: weekendArt, name: "Cashmere Red Gloves", price: "CHF 89", partner: "Globus" },
+  { image: rainyChocolate, name: "Artisan Coffee Set", price: "CHF 55", partner: "Sprüngli" },
+];
+
+// Similar Event Card
+const SimilarEventCard = ({ slug, image, title, venue, location, date, onNavigate }: {
+  slug: string;
+  image: string;
+  title: string;
+  venue: string;
+  location: string;
+  date: string;
+  onNavigate: () => void;
+}) => {
+  return (
+    <Link to={`/event/${slug}`} onClick={onNavigate} className="block group h-full">
+      <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
+        <div className="relative aspect-video overflow-hidden">
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+        <div className="p-3">
+          <p className="text-neutral-500 text-xs mb-1">{date}</p>
+          <h3 className="font-serif text-neutral-900 text-sm font-semibold leading-tight mb-1 line-clamp-1">{title}</h3>
+          <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
+        </div>
+      </article>
+    </Link>
+  );
+};
+
+// Partner Product Card
+const PartnerProductCard = ({ image, name, price, partner }: {
+  image: string;
+  name: string;
+  price: string;
+  partner: string;
+}) => {
+  return (
+    <article className="relative rounded-xl overflow-hidden group cursor-pointer aspect-[4/5]">
+      <img
+        src={image}
+        alt={name}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-3">
+        <p className="text-white/70 text-[9px] uppercase tracking-wider mb-0.5">via {partner}</p>
+        <h3 className="text-white font-serif text-sm font-semibold leading-tight mb-1 line-clamp-2">{name}</h3>
+        <div className="flex items-center justify-between">
+          <span className="text-white text-sm font-semibold">{price}</span>
+          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-2 py-1 rounded-full text-[10px] font-medium transition-colors flex items-center gap-0.5">
+            <Plus size={10} /> Add
+          </button>
+        </div>
+      </div>
+    </article>
+  );
 };
 
 interface EventDetailModalProps {
@@ -373,15 +478,15 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
           </div>
         ) : (
           <>
-            {/* Hero Image */}
-            <div className="relative h-64 sm:h-80 overflow-hidden">
+            {/* Hero Image - smaller */}
+            <div className="relative h-48 sm:h-56 overflow-hidden">
               <img
                 src={event.image}
                 alt={event.title}
@@ -407,30 +512,30 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
             </div>
 
             {/* Content */}
-            <div className="p-6 sm:p-8">
+            <div className="p-5 sm:p-6">
               {/* Title */}
-              <DialogHeader className="mb-4">
-                <DialogTitle className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold leading-tight text-left">
+              <DialogHeader className="mb-3">
+                <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
                   {event.title}
                 </DialogTitle>
               </DialogHeader>
 
               {/* Meta Info */}
-              <div className="flex flex-wrap items-center gap-4 mb-6 text-[12px] text-gray-500">
+              <div className="flex flex-wrap items-center gap-3 mb-4 text-[11px] text-gray-500">
                 {event.isMuseum && (
                   <span className="uppercase tracking-wide">Museum</span>
                 )}
                 
                 {!event.isMuseum && event.date && (
                   <div className="flex items-center gap-1.5">
-                    <Calendar size={14} className="text-gray-400" />
+                    <Calendar size={12} className="text-gray-400" />
                     <span>{event.date}{event.time ? `, ${event.time}` : ''}</span>
                   </div>
                 )}
                 
                 {event.location && (
                   <div className="flex items-center gap-1.5">
-                    <MapPin size={14} className="text-gray-400" />
+                    <MapPin size={12} className="text-gray-400" />
                     <span>
                       {event.location}
                       {event.distance && <span className="text-gray-400 ml-1">• {event.distance}</span>}
@@ -440,7 +545,7 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                 
                 {event.venue && event.venue !== event.location && (
                   <div className="flex items-center gap-1.5">
-                    <Navigation size={14} className="text-gray-400" />
+                    <Navigation size={12} className="text-gray-400" />
                     <span>{event.venue}</span>
                   </div>
                 )}
@@ -459,18 +564,18 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-2 mb-4">
                 {event.ticketLink ? (
                   <a 
                     href={event.ticketLink} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
                   >
-                    Tickets kaufen <ExternalLink size={16} />
+                    Tickets kaufen <ExternalLink size={14} />
                   </a>
                 ) : (
-                  <button className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-6 py-3 rounded-lg transition-colors">
+                  <button className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-5 py-2.5 rounded-lg transition-colors text-sm">
                     Get Tickets
                   </button>
                 )}
@@ -485,10 +590,10 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                     location: event.location,
                     date: event.date
                   })}
-                  className="p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                  className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
                   title="Zu Favoriten hinzufügen"
                 >
-                  <Heart size={20} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
+                  <Heart size={18} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
                 </button>
                 
                 {/* Share */}
@@ -523,19 +628,19 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                         }
                       }
                     }}
-                    className="p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                    className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
                     title="Teilen"
                   >
-                    <Share2 size={20} className="text-neutral-400" />
+                    <Share2 size={18} className="text-neutral-400" />
                   </button>
                 ) : (
                   <Popover open={shareOpen} onOpenChange={setShareOpen}>
                     <PopoverTrigger asChild>
                       <button
-                        className="p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                        className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
                         title="Teilen"
                       >
-                        <Share2 size={20} className="text-neutral-400" />
+                        <Share2 size={18} className="text-neutral-400" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-56 p-2 bg-white shadow-lg border border-neutral-200" align="end">
@@ -591,39 +696,85 @@ export const EventDetailModal = ({ eventId, open, onOpenChange }: EventDetailMod
                 
                 <button
                   onClick={handleCalendarExport}
-                  className="p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                  className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
                   title="In Kalender eintragen"
                 >
-                  <CalendarPlus size={20} className="text-neutral-400" />
+                  <CalendarPlus size={18} className="text-neutral-400" />
                 </button>
               </div>
 
               {/* Description */}
-              <div className="border-t border-neutral-100 pt-6">
-                <h2 className="font-serif text-neutral-900 text-lg font-semibold mb-3">Über dieses Event</h2>
-                <div className={`text-neutral-600 leading-relaxed ${!showFullDescription ? 'line-clamp-4' : ''}`}>
+              <div className="border-t border-neutral-100 pt-4">
+                <h2 className="font-serif text-neutral-900 text-base font-semibold mb-2">Über dieses Event</h2>
+                <div className={`text-neutral-600 text-sm leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
                   <p>{event.description}</p>
                 </div>
-                {event.description && event.description.length > 200 && !showFullDescription && (
+                {event.description && event.description.length > 150 && !showFullDescription && (
                   <button 
                     onClick={() => setShowFullDescription(true)}
-                    className="text-neutral-900 text-sm underline mt-3 hover:text-neutral-600 transition-colors"
+                    className="text-neutral-900 text-xs underline mt-2 hover:text-neutral-600 transition-colors"
                   >
                     mehr lesen
                   </button>
                 )}
                 
                 {/* Rating buttons */}
-                <div className="mt-6 pt-4 border-t border-neutral-100">
+                <div className="mt-4 pt-3 border-t border-neutral-100">
                   <EventRatingButtons eventId={eventId} eventTitle={event.title} />
                 </div>
 
                 {/* Image Gallery */}
                 {event.galleryUrls && event.galleryUrls.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-neutral-100">
+                  <div className="mt-4 pt-3 border-t border-neutral-100">
                     <ImageGallery images={event.galleryUrls} alt={event.title} />
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Similar Events Section */}
+            <div className="bg-stone-50 px-5 sm:px-6 py-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-serif text-neutral-900 text-lg font-bold">Ähnliche Events</h2>
+                <Link 
+                  to="/" 
+                  onClick={() => onOpenChange(false)}
+                  className="text-neutral-600 hover:text-neutral-900 text-xs font-medium flex items-center gap-1"
+                >
+                  Alle ansehen <ArrowRight size={12} />
+                </Link>
+              </div>
+
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-3">
+                  {similarEvents.map((evt, index) => (
+                    <CarouselItem key={index} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                      <SimilarEventCard {...evt} onNavigate={() => onOpenChange(false)} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+              </Carousel>
+            </div>
+
+            {/* Partner Products Section */}
+            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+              <div className="text-center mb-4">
+                <h2 className="font-serif text-neutral-900 text-lg font-bold mb-1">Unvergessliche Augenblicke</h2>
+                <p className="text-neutral-500 text-xs">Curated additions to enhance your experience</p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {partnerProducts.slice(0, 4).map((product, index) => (
+                  <PartnerProductCard key={index} {...product} />
+                ))}
               </div>
             </div>
           </>
