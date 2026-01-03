@@ -86,13 +86,14 @@ const WeekendCard = ({
   const isCurrentlyFavorite = isFavorite(id);
   
   const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (onClick) {
-      e.preventDefault();
       onClick();
     }
   };
   
-  return <a href={`/event/${slug}`} onClick={handleClick} className="block h-full cursor-pointer">
+  return <div onClick={handleClick} className="block h-full cursor-pointer">
       <article className="relative h-full bg-card rounded-2xl overflow-hidden group">
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -155,7 +156,7 @@ const WeekendCard = ({
             </span>}
         </div>
       </article>
-    </a>;
+    </div>;
 };
 
 // Helper to get location - same logic as Discover page
