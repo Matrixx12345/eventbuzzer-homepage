@@ -427,14 +427,27 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     };
   }, [mapReady, updateMarkers]);
 
-  // Resize map when visibility changes
+  // Resize map when visibility changes - use ResizeObserver for reliability
   useEffect(() => {
-    if (isVisible && map.current && mapReady) {
-      // Small delay to ensure container is fully visible before resize
-      setTimeout(() => {
-        map.current?.resize();
-      }, 50);
+    if (!mapContainer.current || !map.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (map.current && isVisible) {
+        map.current.resize();
+      }
+    });
+
+    resizeObserver.observe(mapContainer.current);
+
+    // Also trigger immediate resize when becoming visible
+    if (isVisible && mapReady) {
+      // Multiple resize calls with increasing delays for reliability
+      map.current.resize();
+      setTimeout(() => map.current?.resize(), 100);
+      setTimeout(() => map.current?.resize(), 300);
     }
+
+    return () => resizeObserver.disconnect();
   }, [isVisible, mapReady]);
 
   return (
