@@ -427,7 +427,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
   }, [mapReady, updateMarkers]);
 
   return (
-    <div className="relative w-full h-[600px] rounded-xl overflow-hidden border border-border shadow-lg">
+    <div className="relative w-full min-h-[600px] h-[calc(100vh-280px)] rounded-xl overflow-hidden border border-border shadow-lg">
       <div ref={mapContainer} className="w-full h-full" />
       
       {loading && (
