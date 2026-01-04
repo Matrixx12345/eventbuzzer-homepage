@@ -310,20 +310,35 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
 
   // Update markers when events change
   useEffect(() => {
-    if (!map.current || !mapReady) return;
+    if (!map.current || !mapReady) {
+      console.log('Map not ready:', { mapExists: !!map.current, mapReady });
+      return;
+    }
+    
+    console.log('Updating markers for', events.length, 'events');
     
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
     clearSpideredMarkers();
     
+    // Debug: Check events data
+    const eventsWithCoords = events.filter(e => e.latitude && e.longitude);
+    console.log('Events with coordinates:', eventsWithCoords.length);
+    if (eventsWithCoords.length > 0) {
+      console.log('Sample event:', eventsWithCoords[0]);
+    }
+    
     // Group events by location
     const groups = groupMarkersByLocation(events);
+    console.log('Marker groups:', groups.size);
     
     groups.forEach((groupedEvents, key) => {
       const [lat, lng] = key.split(',').map(Number);
       const isStacked = groupedEvents.length > 1;
       const primaryEvent = groupedEvents[0];
+      
+      console.log(`Creating marker at [${lng}, ${lat}] for:`, primaryEvent.title);
       
       const el = createMarkerElement(primaryEvent, isStacked, groupedEvents.length);
       
@@ -333,6 +348,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
       })
         .setLngLat([lng, lat])
         .addTo(map.current!);
+      
+      console.log('Marker added to map');
       
       // Create popup
       const popup = new mapboxgl.Popup({
@@ -376,6 +393,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
       markersRef.current.push(marker);
     });
     
+    console.log('Total markers created:', markersRef.current.length);
     setEventCount(events.length);
   }, [events, mapReady, onEventClick, spiderMarkers, clearSpideredMarkers]);
 
