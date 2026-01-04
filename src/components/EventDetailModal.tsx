@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
@@ -710,11 +711,12 @@ const [loading, setLoading] = useState(false);
             <button
               onClick={onNavigatePrev}
               disabled={!hasPrev}
-              className={`fixed left-2 sm:left-4 lg:left-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all ${
+              className={cn(
+                "fixed left-2 sm:left-4 lg:left-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all",
                 hasPrev 
                   ? "hover:bg-neutral-50 hover:scale-110 hover:shadow-xl cursor-pointer" 
                   : "opacity-20 cursor-not-allowed"
-              }`}
+              )}
               aria-label="Vorheriges Event"
             >
               <ChevronLeft size={32} strokeWidth={2.5} className="text-neutral-800" />
@@ -723,11 +725,12 @@ const [loading, setLoading] = useState(false);
             <button
               onClick={onNavigateNext}
               disabled={!hasNext}
-              className={`fixed right-2 sm:right-4 lg:right-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all ${
+              className={cn(
+                "fixed right-2 sm:right-4 lg:right-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all",
                 hasNext 
                   ? "hover:bg-neutral-50 hover:scale-110 hover:shadow-xl cursor-pointer" 
                   : "opacity-20 cursor-not-allowed"
-              }`}
+              )}
               aria-label="Nächstes Event"
             >
               <ChevronRight size={32} strokeWidth={2.5} className="text-neutral-800" />
@@ -966,7 +969,7 @@ const [loading, setLoading] = useState(false);
               {/* Description */}
               <div className="border-t border-neutral-100 pt-4 max-w-full overflow-hidden">
                 <h2 className="font-serif text-neutral-900 text-base font-semibold mb-2">Über dieses Event</h2>
-                <div className={`text-neutral-600 text-sm leading-relaxed ${!showFullDescription ? 'line-clamp-6' : ''}`}>
+                <div className={cn("text-neutral-600 text-sm leading-relaxed", !showFullDescription && "line-clamp-6")}>
                   <p ref={descriptionRef} className="break-words whitespace-pre-wrap" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{event.description}</p>
                 </div>
                 {needsReadMore && !showFullDescription && (
