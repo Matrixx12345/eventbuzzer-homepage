@@ -436,7 +436,7 @@ const [loading, setLoading] = useState(false);
               }
               
               if (nearbyData && Array.isArray(nearbyData) && nearbyData.length > 0) {
-                const nearbyList = nearbyData.slice(0, 6).map((e: any) => ({
+                const nearbyList = nearbyData.slice(0, 10).map((e: any) => ({
                   id: e.external_id || e.id,
                   image: e.image_url || weekendJazz,
                   title: e.title,
@@ -923,7 +923,7 @@ const [loading, setLoading] = useState(false);
                 <Carousel
                   opts={{
                     align: "start",
-                    loop: nearbyEvents.length > 4,
+                    loop: nearbyEvents.length > 8,
                   }}
                   className="w-full"
                 >
