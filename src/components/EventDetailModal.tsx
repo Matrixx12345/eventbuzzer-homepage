@@ -165,6 +165,7 @@ interface SimilarEvent {
   venue: string;
   location: string;
   date: string;
+  distance?: number;
 }
 
 // Partner products
@@ -180,7 +181,7 @@ const partnerProducts = [
 ];
 
 // Similar Event Card
-const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: SimilarEvent & {
+const SimilarEventCard = ({ id, image, title, venue, location, date, distance, onSwap }: SimilarEvent & {
   onSwap: (eventId: string) => void;
 }) => {
   const handleClick = (e: React.MouseEvent) => {
@@ -213,6 +214,9 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, onSwap }: S
           <p className="text-neutral-500 text-xs mb-1">{date}</p>
           <h3 className="font-serif text-neutral-900 text-sm font-semibold leading-tight mb-1 line-clamp-1">{title}</h3>
           <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
+          {distance !== undefined && (
+            <p className="text-neutral-400 text-xs mt-1">~ {distance.toFixed(1)} km entfernt</p>
+          )}
         </div>
       </article>
     </button>
@@ -421,7 +425,8 @@ const [loading, setLoading] = useState(false);
                   location: getEventLocation(e),
                   date: e.start_date 
                     ? new Date(e.start_date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
-                    : ''
+                    : '',
+                  distance: e.distance_km
                 }));
                 setNearbyEvents(nearbyList);
               }
@@ -892,14 +897,14 @@ const [loading, setLoading] = useState(false);
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <MapPin size={18} className="text-neutral-500" />
-                    <h2 className="font-serif text-neutral-900 text-lg font-bold">In der Nähe</h2>
+                    <h2 className="font-serif text-neutral-900 text-lg font-bold">Highlights in der Nähe</h2>
                   </div>
                 </div>
                 
                 <Carousel
                   opts={{
                     align: "start",
-                    loop: true,
+                    loop: nearbyEvents.length > 4,
                   }}
                   className="w-full"
                 >
