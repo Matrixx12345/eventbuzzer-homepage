@@ -19,6 +19,8 @@ import {
   Loader2,
   ArrowRight,
   Plus,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -314,9 +316,20 @@ interface EventDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEventSwap?: (eventId: string) => void;
+  eventIds?: string[];
+  onNavigatePrev?: () => void;
+  onNavigateNext?: () => void;
 }
 
-export const EventDetailModal = ({ eventId, open, onOpenChange, onEventSwap }: EventDetailModalProps) => {
+export const EventDetailModal = ({ 
+  eventId, 
+  open, 
+  onOpenChange, 
+  onEventSwap,
+  eventIds = [],
+  onNavigatePrev,
+  onNavigateNext 
+}: EventDetailModalProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
@@ -328,6 +341,30 @@ const [loading, setLoading] = useState(false);
   const [needsReadMore, setNeedsReadMore] = useState(false);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const [nearbyEvents, setNearbyEvents] = useState<SimilarEvent[]>([]);
+
+  // Navigation state
+  const currentIndex = eventIds.length > 0 && eventId ? eventIds.indexOf(eventId) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < eventIds.length - 1 && currentIndex !== -1;
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && hasPrev && onNavigatePrev) {
+        e.preventDefault();
+        onNavigatePrev();
+      } else if (e.key === 'ArrowRight' && hasNext && onNavigateNext) {
+        e.preventDefault();
+        onNavigateNext();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, hasPrev, hasNext, onNavigatePrev, onNavigateNext]);
+
   // Reset state when modal closes
   useEffect(() => {
     if (!open) {
@@ -657,6 +694,37 @@ const [loading, setLoading] = useState(false);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto overflow-x-hidden p-0 gap-0 [&>button]:hidden">
+        {/* Navigation Arrows - Left and Right of Modal */}
+        {eventIds.length > 1 && (
+          <>
+            <button
+              onClick={onNavigatePrev}
+              disabled={!hasPrev}
+              className={`fixed left-4 lg:left-[calc(50%-min(40rem,48vw)-4rem)] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xl border border-neutral-200 transition-all ${
+                hasPrev 
+                  ? "hover:bg-white hover:scale-110 cursor-pointer" 
+                  : "opacity-30 cursor-not-allowed"
+              }`}
+              aria-label="Vorheriges Event"
+            >
+              <ChevronLeft size={24} className="text-neutral-700" />
+            </button>
+            
+            <button
+              onClick={onNavigateNext}
+              disabled={!hasNext}
+              className={`fixed right-4 lg:right-[calc(50%-min(40rem,48vw)-4rem)] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xl border border-neutral-200 transition-all ${
+                hasNext 
+                  ? "hover:bg-white hover:scale-110 cursor-pointer" 
+                  : "opacity-30 cursor-not-allowed"
+              }`}
+              aria-label="Nächstes Event"
+            >
+              <ChevronRight size={24} className="text-neutral-700" />
+            </button>
+          </>
+        )}
+        
         {/* Sticky Close Button Container */}
         <div className="sticky top-0 z-50 h-0 pointer-events-none">
           <button
@@ -925,6 +993,7 @@ const [loading, setLoading] = useState(false);
                     opts={{
                       align: "start",
                       loop: nearbyEvents.length > 8,
+                      containScroll: false,
                     }}
                     className="w-full px-1"
                   >
@@ -974,6 +1043,7 @@ const [loading, setLoading] = useState(false);
                     opts={{
                       align: "start",
                       loop: true,
+                      containScroll: false,
                     }}
                     className="w-full px-1"
                   >
