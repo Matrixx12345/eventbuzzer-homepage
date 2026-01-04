@@ -98,20 +98,29 @@ const COUNTRY_NAMES = [
 ];
 
 const isCountryName = (str?: string) => {
-  if (!str) return true;
+  if (!str || typeof str !== 'string') return true;
   return COUNTRY_NAMES.includes(str.toLowerCase().trim());
 };
 
+// Safe string helper
+const safeString = (val: unknown): string => {
+  if (typeof val === 'string') return val;
+  return '';
+};
+
 const getEventLocation = (event: DynamicEvent): string => {
-  const city = event.address_city?.trim();
+  const city = safeString(event.address_city).trim();
   if (city && city.length > 0 && !isCountryName(city)) {
     return city;
   }
-  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountryName(event.venue_name)) {
-    return event.venue_name.trim();
+  const venueName = safeString(event.venue_name).trim();
+  const title = safeString(event.title).trim();
+  if (venueName && venueName !== title && !isCountryName(venueName)) {
+    return venueName;
   }
-  if (event.location && !isCountryName(event.location)) {
-    return event.location.trim();
+  const location = safeString(event.location).trim();
+  if (location && !isCountryName(location)) {
+    return location;
   }
   if (event.latitude && event.longitude) {
     return getNearestPlace(event.latitude, event.longitude);
@@ -189,8 +198,9 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, distance, o
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (id && id.trim() !== '') {
-      onSwap(id);
+    const safeId = typeof id === 'string' ? id.trim() : '';
+    if (safeId !== '') {
+      onSwap(safeId);
     }
   };
   
