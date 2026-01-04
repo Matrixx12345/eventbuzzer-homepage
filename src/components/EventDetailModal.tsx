@@ -934,8 +934,8 @@ const [loading, setLoading] = useState(false);
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  <CarouselPrevious className="hidden sm:flex left-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
+                  <CarouselNext className="hidden sm:flex right-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
                 </Carousel>
               </div>
             )}
@@ -968,8 +968,8 @@ const [loading, setLoading] = useState(false);
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  <CarouselPrevious className="hidden sm:flex left-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
+                  <CarouselNext className="hidden sm:flex right-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
                 </Carousel>
               ) : (
                 <div className="text-center text-neutral-400 text-sm py-4">
