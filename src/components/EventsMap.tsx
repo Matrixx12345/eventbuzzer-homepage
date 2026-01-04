@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { useState, useRef, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Loader2, MapPin } from "lucide-react";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import "leaflet/dist/leaflet.css";
 
-// Fix Leaflet default icon issue - use CDN URLs instead of imports
+// Fix Leaflet default icon issue - use CDN URLs
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -36,42 +36,6 @@ const createCustomIcon = (isHighlighted = false) => {
   });
 };
 
-// Map event handler component
-const MapEventHandler = ({ 
-  onBoundsChange, 
-  debounceMs = 300 
-}: { 
-  onBoundsChange: (bounds: L.LatLngBounds) => void;
-  debounceMs?: number;
-}) => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  
-  const map = useMapEvents({
-    moveend: () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        onBoundsChange(map.getBounds());
-      }, debounceMs);
-    },
-    zoomend: () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        onBoundsChange(map.getBounds());
-      }, debounceMs);
-    },
-  });
-  
-  // Trigger initial bounds on mount
-  useEffect(() => {
-    onBoundsChange(map.getBounds());
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-  
-  return null;
-};
-
 interface EventsMapProps {
   onEventsChange: (events: MapEvent[]) => void;
   onEventClick: (eventId: string) => void;
@@ -81,52 +45,63 @@ interface EventsMapProps {
 export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapProps) => {
   const [loading, setLoading] = useState(false);
   const [eventCount, setEventCount] = useState(0);
-  
+  const mapRef = useRef<L.Map | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout>();
+
   // Switzerland center
   const center: [number, number] = [46.8182, 8.2275];
   const defaultZoom = 8;
-  
-  const fetchEventsInView = useCallback(async (bounds: L.LatLngBounds) => {
-    setLoading(true);
-    try {
-      const { data, error } = await externalSupabase.rpc('get_events_in_view', {
-        min_lat: bounds.getSouth(),
-        max_lat: bounds.getNorth(),
-        min_lng: bounds.getWest(),
-        max_lng: bounds.getEast(),
-        event_limit: 50
-      });
-      
-      if (error) {
-        console.error("Error fetching events in view:", error);
-        return;
+
+  const loadEventsInView = useCallback(async (map: L.Map) => {
+    if (!map) return;
+
+    // Debounce
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      const bounds = map.getBounds();
+
+      try {
+        const { data, error } = await externalSupabase.rpc('get_events_in_view', {
+          min_lat: bounds.getSouth(),
+          max_lat: bounds.getNorth(),
+          min_lng: bounds.getWest(),
+          max_lng: bounds.getEast(),
+          event_limit: 50
+        });
+
+        if (error) {
+          console.error("Error fetching events in view:", error);
+          return;
+        }
+
+        if (data && Array.isArray(data)) {
+          const mappedEvents: MapEvent[] = data.map((e: any) => ({
+            id: e.id,
+            external_id: e.external_id,
+            title: e.title,
+            venue_name: e.venue_name,
+            address_city: e.address_city,
+            image_url: e.image_url,
+            start_date: e.start_date,
+            latitude: e.latitude,
+            longitude: e.longitude,
+            buzz_score: e.buzz_score,
+            price_from: e.price_from,
+            price_to: e.price_to,
+          }));
+          onEventsChange(mappedEvents);
+          setEventCount(mappedEvents.length);
+        }
+      } catch (err) {
+        console.error("Error in loadEventsInView:", err);
+      } finally {
+        setLoading(false);
       }
-      
-      if (data && Array.isArray(data)) {
-        const mappedEvents: MapEvent[] = data.map((e: any) => ({
-          id: e.id,
-          external_id: e.external_id,
-          title: e.title,
-          venue_name: e.venue_name,
-          address_city: e.address_city,
-          image_url: e.image_url,
-          start_date: e.start_date,
-          latitude: e.latitude,
-          longitude: e.longitude,
-          buzz_score: e.buzz_score,
-          price_from: e.price_from,
-          price_to: e.price_to,
-        }));
-        onEventsChange(mappedEvents);
-        setEventCount(mappedEvents.length);
-      }
-    } catch (err) {
-      console.error("Error in fetchEventsInView:", err);
-    } finally {
-      setLoading(false);
-    }
+    }, 300);
   }, [onEventsChange]);
-  
+
   const formatEventDate = (dateStr?: string) => {
     if (!dateStr) return "";
     try {
@@ -135,8 +110,7 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
       return "";
     }
   };
-  
-  
+
   return (
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden shadow-lg border border-neutral-200">
       {/* Loading overlay */}
@@ -146,26 +120,32 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
           <span className="text-sm text-neutral-700">Lädt Events...</span>
         </div>
       )}
-      
+
       {/* Event count badge */}
       <div className="absolute top-4 right-4 z-[1000] bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
         <span className="text-sm font-medium text-neutral-700">{eventCount} Events im sichtbaren Bereich</span>
       </div>
-      
+
       <MapContainer
         center={center}
         zoom={defaultZoom}
         scrollWheelZoom={true}
         className="w-full h-full"
         style={{ background: "#f5f5f5" }}
+        ref={(map) => {
+          if (map && !mapRef.current) {
+            mapRef.current = map;
+            loadEventsInView(map);
+            map.on('moveend', () => loadEventsInView(map));
+            map.on('zoomend', () => loadEventsInView(map));
+          }
+        }}
       >
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           attribution="&copy; Esri"
         />
-        
-        <MapEventHandler onBoundsChange={fetchEventsInView} />
-        
+
         {events.map((event) => (
           <Marker
             key={event.id}
