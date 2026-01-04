@@ -1,8 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Loader2, MapPin } from "lucide-react";
-import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { MapEvent } from "@/types/map";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -44,63 +43,12 @@ interface EventsMapProps {
 
 export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapProps) => {
   const [loading, setLoading] = useState(false);
-  const [eventCount, setEventCount] = useState(0);
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
 
   // Switzerland center
   const center: [number, number] = [46.8182, 8.2275];
   const defaultZoom = 8;
-
-  const loadEventsInView = useCallback(async (map: L.Map) => {
-    if (!map) return;
-
-    // Debounce
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      const bounds = map.getBounds();
-
-      try {
-        const { data, error } = await externalSupabase.rpc('get_events_in_view', {
-          min_lat: bounds.getSouth(),
-          max_lat: bounds.getNorth(),
-          min_lng: bounds.getWest(),
-          max_lng: bounds.getEast(),
-          event_limit: 50
-        });
-
-        if (error) {
-          console.error("Error fetching events in view:", error);
-          return;
-        }
-
-        if (data && Array.isArray(data)) {
-          const mappedEvents: MapEvent[] = data.map((e: any) => ({
-            id: e.id,
-            external_id: e.external_id,
-            title: e.title,
-            venue_name: e.venue_name,
-            address_city: e.address_city,
-            image_url: e.image_url,
-            start_date: e.start_date,
-            latitude: e.latitude,
-            longitude: e.longitude,
-            buzz_score: e.buzz_score,
-            price_from: e.price_from,
-            price_to: e.price_to,
-          }));
-          onEventsChange(mappedEvents);
-          setEventCount(mappedEvents.length);
-        }
-      } catch (err) {
-        console.error("Error in loadEventsInView:", err);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-  }, [onEventsChange]);
 
   const formatEventDate = (dateStr?: string) => {
     if (!dateStr) return "";
@@ -110,6 +58,14 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
       return "";
     }
   };
+
+  // Handle map ready
+  const handleMapReady = useCallback((map: L.Map) => {
+    if (map && !mapRef.current) {
+      mapRef.current = map;
+      setMapReady(true);
+    }
+  }, []);
 
   return (
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden shadow-lg border border-neutral-200">
@@ -123,7 +79,7 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
 
       {/* Event count badge */}
       <div className="absolute top-4 right-4 z-[1000] bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
-        <span className="text-sm font-medium text-neutral-700">{eventCount} Events im sichtbaren Bereich</span>
+        <span className="text-sm font-medium text-neutral-700">{events.length} Events</span>
       </div>
 
       <MapContainer
@@ -132,25 +88,18 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
         scrollWheelZoom={true}
         className="w-full h-full"
         style={{ background: "#f5f5f5" }}
-        ref={(map) => {
-          if (map && !mapRef.current) {
-            mapRef.current = map;
-            loadEventsInView(map);
-            map.on('moveend', () => loadEventsInView(map));
-            map.on('zoomend', () => loadEventsInView(map));
-          }
-        }}
+        ref={handleMapReady}
       >
         <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="&copy; Esri"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
 
         {events.map((event) => (
           <Marker
             key={event.id}
             position={[event.latitude, event.longitude]}
-            icon={createCustomIcon(event.buzz_score && event.buzz_score > 50)}
+            icon={createCustomIcon(event.buzz_score != null && event.buzz_score > 50)}
             eventHandlers={{
               click: () => onEventClick(event.external_id || event.id),
             }}
@@ -170,7 +119,7 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
                   </h3>
                   <div className="flex items-center gap-1 text-neutral-500 text-xs mb-1">
                     <MapPin size={12} />
-                    <span>{event.address_city || event.venue_name}</span>
+                    <span>{event.address_city || event.venue_name || "Schweiz"}</span>
                   </div>
                   {event.start_date && (
                     <p className="text-neutral-400 text-xs">{formatEventDate(event.start_date)}</p>
