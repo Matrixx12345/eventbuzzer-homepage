@@ -745,7 +745,7 @@ const [loading, setLoading] = useState(false);
               <img
                 src={event.image}
                 alt={event.title}
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-cover object-center"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = weekendJazz;
@@ -992,30 +992,16 @@ const [loading, setLoading] = useState(false);
                   <Carousel
                     opts={{
                       align: "start",
-                      loop: nearbyEvents.length > 8,
-                      containScroll: false,
+                      loop: nearbyEvents.length > 4,
                     }}
                     className="w-full px-1"
                   >
                     <CarouselContent className="-ml-3">
                       {nearbyEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]">
+                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
                           <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                         </CarouselItem>
                       ))}
-                      {nearbyEvents.length < 4 && 
-                        Array.from({ length: 4 - nearbyEvents.length }).map((_, i) => (
-                          <CarouselItem 
-                            key={`placeholder-nearby-${i}`} 
-                            className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]"
-                            aria-hidden="true"
-                          >
-                            <div className="invisible">
-                              <div className="aspect-[4/3]" />
-                            </div>
-                          </CarouselItem>
-                        ))
-                      }
                     </CarouselContent>
                     <CarouselPrevious className="hidden sm:flex left-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
                     <CarouselNext className="hidden sm:flex right-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
@@ -1042,30 +1028,16 @@ const [loading, setLoading] = useState(false);
                   <Carousel
                     opts={{
                       align: "start",
-                      loop: true,
-                      containScroll: false,
+                      loop: similarEvents.length > 4,
                     }}
                     className="w-full px-1"
                   >
                     <CarouselContent className="-ml-3">
                       {similarEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]">
+                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
                           <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                         </CarouselItem>
                       ))}
-                      {similarEvents.length < 4 && 
-                        Array.from({ length: 4 - similarEvents.length }).map((_, i) => (
-                          <CarouselItem 
-                            key={`placeholder-similar-${i}`} 
-                            className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]"
-                            aria-hidden="true"
-                          >
-                            <div className="invisible">
-                              <div className="aspect-[4/3]" />
-                            </div>
-                          </CarouselItem>
-                        ))
-                      }
                     </CarouselContent>
                     <CarouselPrevious className="hidden sm:flex left-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
                     <CarouselNext className="hidden sm:flex right-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
