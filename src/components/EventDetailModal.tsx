@@ -930,7 +930,7 @@ const [loading, setLoading] = useState(false);
                   >
                     <CarouselContent className="-ml-3">
                       {nearbyEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4 grow-0 shrink-0">
                           <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                         </CarouselItem>
                       ))}
@@ -966,7 +966,7 @@ const [loading, setLoading] = useState(false);
                   >
                     <CarouselContent className="-ml-3">
                       {similarEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4 grow-0 shrink-0">
                           <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                         </CarouselItem>
                       ))}
