@@ -408,13 +408,32 @@ const [loading, setLoading] = useState(false);
             }
             
             // Fetch nearby events if coordinates available
+            // First try 10km radius, expand to 25km if fewer than 3 events found
             if (eventData.latitude && eventData.longitude) {
-              const { data: nearbyData } = await externalSupabase.rpc('get_nearby_events', {
+              let nearbyData = null;
+              let usedRadius = 10;
+              
+              // First attempt: 10km radius
+              const { data: nearbyData10km } = await externalSupabase.rpc('get_nearby_events', {
                 current_event_id: eventData.id,
                 current_lat: eventData.latitude,
                 current_lng: eventData.longitude,
                 radius_km: 10
               });
+              
+              // If fewer than 3 events, expand to 25km
+              if (!nearbyData10km || nearbyData10km.length < 3) {
+                const { data: nearbyData25km } = await externalSupabase.rpc('get_nearby_events', {
+                  current_event_id: eventData.id,
+                  current_lat: eventData.latitude,
+                  current_lng: eventData.longitude,
+                  radius_km: 25
+                });
+                nearbyData = nearbyData25km;
+                usedRadius = 25;
+              } else {
+                nearbyData = nearbyData10km;
+              }
               
               if (nearbyData && Array.isArray(nearbyData) && nearbyData.length > 0) {
                 const nearbyList = nearbyData.slice(0, 6).map((e: any) => ({
