@@ -225,37 +225,47 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
 
   // Create marker element
   const createMarkerElement = (event: MapEvent, isStacked: boolean = false, stackCount: number = 0) => {
+    // Outer wrapper - Mapbox controls this position, don't add transforms here
+    const wrapper = document.createElement('div');
+    wrapper.className = 'marker-wrapper';
+    wrapper.style.cssText = `
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+    `;
+    
+    // Inner element - we can safely transform this
     const el = document.createElement('div');
     el.className = 'custom-marker';
     el.style.cssText = `
-      width: 32px;
-      height: 32px;
+      width: 100%;
+      height: 100%;
       background: #ef4444;
       border: 3px solid white;
       border-radius: 50%;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
       transition: transform 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
     `;
     
-    // Add stack indicator if multiple events at same location
+    // Add stack indicator with count if multiple events at same location
     if (isStacked && stackCount > 1) {
       el.innerHTML = `<span style="color: white; font-weight: bold; font-size: 12px;">${stackCount}</span>`;
     }
     
-    // Hover effect
-    el.addEventListener('mouseenter', () => {
+    wrapper.appendChild(el);
+    
+    // Hover effect on inner element only
+    wrapper.addEventListener('mouseenter', () => {
       el.style.transform = 'scale(1.2)';
     });
-    el.addEventListener('mouseleave', () => {
+    wrapper.addEventListener('mouseleave', () => {
       el.style.transform = 'scale(1)';
     });
     
-    return el;
+    return wrapper;
   };
 
   // Handle spider animation for overlapping markers
