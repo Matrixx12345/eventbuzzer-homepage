@@ -691,7 +691,7 @@ const [loading, setLoading] = useState(false);
             </div>
 
             {/* Content */}
-            <div className="p-5 sm:p-6 overflow-hidden">
+            <div className="p-5 sm:p-6">
               {/* Title */}
               <DialogHeader className="mb-3">
                 <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
@@ -889,7 +889,7 @@ const [loading, setLoading] = useState(false);
               <div className="border-t border-neutral-100 pt-4">
                 <h2 className="font-serif text-neutral-900 text-base font-semibold mb-2">Über dieses Event</h2>
                 <div className={`text-neutral-600 text-sm leading-relaxed ${!showFullDescription ? 'line-clamp-6' : ''}`}>
-                  <p ref={descriptionRef}>{event.description}</p>
+                  <p ref={descriptionRef} className="break-words">{event.description}</p>
                 </div>
                 {needsReadMore && !showFullDescription && (
                   <button 
@@ -912,7 +912,7 @@ const [loading, setLoading] = useState(false);
 
             {/* Nearby Events Section */}
             {nearbyEvents.length > 0 && (
-              <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+              <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 overflow-visible">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <MapPin size={18} className="text-neutral-500" />
@@ -920,28 +920,30 @@ const [loading, setLoading] = useState(false);
                   </div>
                 </div>
                 
-                <Carousel
-                  opts={{
-                    align: "start",
-                    loop: nearbyEvents.length > 8,
-                  }}
-                  className="w-full"
-                >
-                  <CarouselContent className="-ml-3">
-                    {nearbyEvents.map((evt) => (
-                      <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                        <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                </Carousel>
+                <div className="relative px-4">
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: nearbyEvents.length > 8,
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-3">
+                      {nearbyEvents.map((evt) => (
+                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                          <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="hidden sm:flex -left-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                    <CarouselNext className="hidden sm:flex -right-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  </Carousel>
+                </div>
               </div>
             )}
 
             {/* Similar Events Section */}
-            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 overflow-visible">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-serif text-neutral-900 text-lg font-bold">Ähnliche Events</h2>
                 <Link 
@@ -954,23 +956,25 @@ const [loading, setLoading] = useState(false);
               </div>
 
               {similarEvents.length > 0 ? (
-                <Carousel
-                  opts={{
-                    align: "start",
-                    loop: true,
-                  }}
-                  className="w-full"
-                >
-                  <CarouselContent className="-ml-3">
-                    {similarEvents.map((evt) => (
-                      <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                        <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
-                </Carousel>
+                <div className="relative px-4">
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: true,
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-3">
+                      {similarEvents.map((evt) => (
+                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                          <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="hidden sm:flex -left-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                    <CarouselNext className="hidden sm:flex -right-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  </Carousel>
+                </div>
               ) : (
                 <div className="text-center text-neutral-400 text-sm py-4">
                   Ähnliche Events werden geladen...
