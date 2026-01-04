@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { Loader2, MapPin } from "lucide-react";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
@@ -137,27 +136,6 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
     }
   };
   
-  // Create cluster custom icon
-  const createClusterCustomIcon = (cluster: any) => {
-    const count = cluster.getChildCount();
-    let size = "small";
-    if (count > 10) size = "medium";
-    if (count > 25) size = "large";
-    
-    const sizes = {
-      small: { w: 36, h: 36, fontSize: 12 },
-      medium: { w: 44, h: 44, fontSize: 14 },
-      large: { w: 52, h: 52, fontSize: 16 },
-    };
-    
-    const s = sizes[size as keyof typeof sizes];
-    
-    return L.divIcon({
-      html: `<div class="flex items-center justify-center bg-neutral-900 text-white rounded-full shadow-lg border-2 border-white font-semibold" style="width: ${s.w}px; height: ${s.h}px; font-size: ${s.fontSize}px;">${count}</div>`,
-      className: "custom-cluster-icon",
-      iconSize: L.point(s.w, s.h, true),
-    });
-  };
   
   return (
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden shadow-lg border border-neutral-200">
@@ -188,55 +166,46 @@ export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapPro
         
         <MapEventHandler onBoundsChange={fetchEventsInView} />
         
-        <MarkerClusterGroup
-          chunkedLoading
-          spiderfyOnMaxZoom={true}
-          showCoverageOnHover={false}
-          maxClusterRadius={50}
-          spiderfyDistanceMultiplier={2}
-          iconCreateFunction={createClusterCustomIcon}
-        >
-          {events.map((event) => (
-            <Marker
-              key={event.id}
-              position={[event.latitude, event.longitude]}
-              icon={createCustomIcon(event.buzz_score && event.buzz_score > 50)}
-              eventHandlers={{
-                click: () => onEventClick(event.external_id || event.id),
-              }}
-            >
-              <Popup className="custom-popup">
-                <div className="w-64 p-0">
-                  {event.image_url && (
-                    <img 
-                      src={event.image_url} 
-                      alt={event.title}
-                      className="w-full h-32 object-cover rounded-t-lg"
-                    />
-                  )}
-                  <div className="p-3">
-                    <h3 className="font-semibold text-neutral-900 text-sm line-clamp-2 mb-1">
-                      {event.title}
-                    </h3>
-                    <div className="flex items-center gap-1 text-neutral-500 text-xs mb-1">
-                      <MapPin size={12} />
-                      <span>{event.address_city || event.venue_name}</span>
-                    </div>
-                    {event.start_date && (
-                      <p className="text-neutral-400 text-xs">{formatEventDate(event.start_date)}</p>
-                    )}
-                    <button
-                      onClick={() => onEventClick(event.external_id || event.id)}
-                      className="mt-2 w-full bg-neutral-900 text-white text-xs font-medium py-1.5 px-3 rounded-md hover:bg-neutral-800 transition-colors"
-                    >
-                      Details ansehen
-                    </button>
+        {events.map((event) => (
+          <Marker
+            key={event.id}
+            position={[event.latitude, event.longitude]}
+            icon={createCustomIcon(event.buzz_score && event.buzz_score > 50)}
+            eventHandlers={{
+              click: () => onEventClick(event.external_id || event.id),
+            }}
+          >
+            <Popup className="custom-popup">
+              <div className="w-64 p-0">
+                {event.image_url && (
+                  <img 
+                    src={event.image_url} 
+                    alt={event.title}
+                    className="w-full h-32 object-cover rounded-t-lg"
+                  />
+                )}
+                <div className="p-3">
+                  <h3 className="font-semibold text-neutral-900 text-sm line-clamp-2 mb-1">
+                    {event.title}
+                  </h3>
+                  <div className="flex items-center gap-1 text-neutral-500 text-xs mb-1">
+                    <MapPin size={12} />
+                    <span>{event.address_city || event.venue_name}</span>
                   </div>
+                  {event.start_date && (
+                    <p className="text-neutral-400 text-xs">{formatEventDate(event.start_date)}</p>
+                  )}
+                  <button
+                    onClick={() => onEventClick(event.external_id || event.id)}
+                    className="mt-2 w-full bg-neutral-900 text-white text-xs font-medium py-1.5 px-3 rounded-md hover:bg-neutral-800 transition-colors"
+                  >
+                    Details ansehen
+                  </button>
                 </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MarkerClusterGroup>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
