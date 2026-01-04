@@ -26,7 +26,7 @@ import { getNearestPlace } from "@/utils/swissPlaces";
 import { toggleFavoriteApi } from "@/services/favorites";
 import { toast } from "sonner";
 
-// Lazy load map component
+// Lazy load map component (Mapbox-based)
 const EventsMap = lazy(() => import("@/components/EventsMap"));
 
 // Cloud Supabase für Edge Functions (incl. buzz_boost)
@@ -619,13 +619,12 @@ const Listings = () => {
         {/* Map View */}
         {viewMode === "map" && (
           <Suspense fallback={
-            <div className="w-full h-[600px] rounded-xl bg-neutral-100 flex flex-col items-center justify-center border border-neutral-200">
-              <Loader2 className="w-8 h-8 text-neutral-400 animate-spin mb-4" />
-              <p className="text-neutral-600 font-medium">Kartenansicht wird geladen...</p>
+            <div className="w-full h-[600px] rounded-xl bg-muted flex flex-col items-center justify-center border border-border">
+              <Loader2 className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
+              <p className="text-muted-foreground font-medium">Kartenansicht wird geladen...</p>
             </div>
           }>
             <EventsMap 
-              events={mapEvents}
               onEventsChange={handleEventsChange}
               onEventClick={handleEventClick}
             />
