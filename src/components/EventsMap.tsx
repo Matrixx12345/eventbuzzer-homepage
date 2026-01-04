@@ -173,6 +173,42 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
 
     // Load events on map ready
     map.current.on('load', () => {
+      // Add Switzerland highlight layer
+      if (map.current) {
+        // Add a layer to dim everything outside Switzerland
+        map.current.addSource('countries', {
+          type: 'vector',
+          url: 'mapbox://mapbox.country-boundaries-v1'
+        });
+        
+        // Dim all countries except Switzerland
+        map.current.addLayer({
+          id: 'country-dim',
+          type: 'fill',
+          source: 'countries',
+          'source-layer': 'country_boundaries',
+          filter: ['!=', ['get', 'iso_3166_1'], 'CH'],
+          paint: {
+            'fill-color': '#6b7280',
+            'fill-opacity': 0.35
+          }
+        }, 'country-label'); // Add below country labels
+        
+        // Add Switzerland border highlight
+        map.current.addLayer({
+          id: 'switzerland-border',
+          type: 'line',
+          source: 'countries',
+          'source-layer': 'country_boundaries',
+          filter: ['==', ['get', 'iso_3166_1'], 'CH'],
+          paint: {
+            'line-color': '#ef4444',
+            'line-width': 2.5,
+            'line-opacity': 0.8
+          }
+        });
+      }
+      
       setMapReady(true);
       loadEventsInView();
     });
