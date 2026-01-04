@@ -27,6 +27,7 @@ interface EventsMapProps {
   events?: MapEvent[];
   onEventClick?: (eventId: string) => void;
   onEventsChange?: (events: MapEvent[]) => void;
+  isVisible?: boolean;
 }
 
 // Define GeoJSON feature type for Supercluster
@@ -43,7 +44,7 @@ interface EventFeature {
   };
 }
 
-export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsMapProps) {
+export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true }: EventsMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -425,6 +426,16 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
       map.current?.off('moveend', handleMove);
     };
   }, [mapReady, updateMarkers]);
+
+  // Resize map when visibility changes
+  useEffect(() => {
+    if (isVisible && map.current && mapReady) {
+      // Small delay to ensure container is fully visible before resize
+      setTimeout(() => {
+        map.current?.resize();
+      }, 50);
+    }
+  }, [isVisible, mapReady]);
 
   return (
     <div className="relative w-full min-h-[600px] h-[calc(100vh-280px)] rounded-xl overflow-hidden border border-border shadow-lg">
