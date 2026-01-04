@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import ImageAttribution from "@/components/ImageAttribution";
 import { BuzzTracker } from "@/components/BuzzTracker";
+import { ViewToggle, ViewMode } from "@/components/ViewToggle";
+import { MapEvent } from "@/types/map";
 
 import { trackEventClick } from "@/services/buzzTracking";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
@@ -23,6 +25,9 @@ import { de } from "date-fns/locale";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import { toggleFavoriteApi } from "@/services/favorites";
 import { toast } from "sonner";
+
+// Lazy load map component
+const EventsMap = lazy(() => import("@/components/EventsMap"));
 
 // Cloud Supabase für Edge Functions (incl. buzz_boost)
 import { supabase } from "@/integrations/supabase/client";
@@ -189,6 +194,7 @@ const Listings = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
   const [events, setEvents] = useState<ExternalEvent[]>([]);
+  const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
   const [taxonomyLoaded, setTaxonomyLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -197,6 +203,9 @@ const Listings = () => {
   const [hasMore, setHasMore] = useState(true);
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // View mode (list or map)
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   
   // Modal state for event details
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -551,14 +560,20 @@ const Listings = () => {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-foreground/60">
-          {loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`}
+        
+        {/* Header with View Toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="text-sm text-foreground/60">
+            {viewMode === "list" 
+              ? (loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`)
+              : `${mapEvents.length} Events im sichtbaren Bereich`
+            }
+          </div>
+          <ViewToggle mode={viewMode} onModeChange={setViewMode} />
         </div>
 
-        {/* Subcategory Sticky Bar */}
-        {selectedCategoryId && subCategories.length > 0 && (
+        {/* Subcategory Sticky Bar - only in list mode */}
+        {viewMode === "list" && selectedCategoryId && subCategories.length > 0 && (
           <div className="sticky top-0 z-10 bg-listings/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
             <div className="flex gap-2 min-w-max">
               <button
@@ -589,9 +604,27 @@ const Listings = () => {
             </div>
           </div>
         )}
+        
+        {/* Map View */}
+        {viewMode === "map" && (
+          <Suspense fallback={
+            <div className="w-full h-[600px] rounded-xl bg-neutral-100 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+            </div>
+          }>
+            <EventsMap 
+              events={mapEvents}
+              onEventsChange={setMapEvents}
+              onEventClick={(eventId) => {
+                setSelectedEventId(eventId);
+                setModalOpen(true);
+              }}
+            />
+          </Suspense>
+        )}
 
-        {/* Events Grid - Alternating Layout with Featured Cards */}
-        {loading && !loadingMore ? (
+        {/* Events Grid - Alternating Layout with Featured Cards (only in list mode) */}
+        {viewMode === "list" && loading && !loadingMore ? (
           <div className="space-y-5">
             {/* Skeleton Grid - 5 cards like real layout */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[330px_330px] gap-4">
@@ -602,7 +635,7 @@ const Listings = () => {
               <EventCardSkeleton isFeatured />
             </div>
           </div>
-        ) : (
+        ) : viewMode === "list" ? (
           <div className="space-y-5">
             {/* Group events into blocks of 5 with alternating featured position */}
             {(() => {
@@ -863,10 +896,14 @@ const Listings = () => {
               });
             })()}
           </div>
+        ) : null}
+        
+        {/* Load more indicator - only in list mode */}
+        {viewMode === "list" && (
+          <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
+            {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />}
+          </div>
         )}
-        <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
-          {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />}
-        </div>
       </div>
       
       {/* Event Detail Modal */}
