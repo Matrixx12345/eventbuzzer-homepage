@@ -616,8 +616,8 @@ const Listings = () => {
           </div>
         )}
         
-        {/* Map View */}
-        {viewMode === "map" && (
+        {/* Map View - Always mounted, hidden via CSS to preserve Mapbox instance and save API loads */}
+        <div className={viewMode === "map" ? "block" : "hidden"}>
           <Suspense fallback={
             <div className="w-full h-[600px] rounded-xl bg-muted flex flex-col items-center justify-center border border-border">
               <Loader2 className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
@@ -629,7 +629,7 @@ const Listings = () => {
               onEventClick={handleEventClick}
             />
           </Suspense>
-        )}
+        </div>
 
         {/* Events Grid - Alternating Layout with Featured Cards (only in list mode) */}
         {viewMode === "list" && loading && !loadingMore ? (
