@@ -875,6 +875,19 @@ const Listings = () => {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onEventSwap={(newId) => setSelectedEventId(newId)}
+        eventIds={events.map(e => e.id)}
+        onNavigatePrev={() => {
+          const currentIndex = events.findIndex(e => e.id === selectedEventId);
+          if (currentIndex > 0) {
+            setSelectedEventId(events[currentIndex - 1].id);
+          }
+        }}
+        onNavigateNext={() => {
+          const currentIndex = events.findIndex(e => e.id === selectedEventId);
+          if (currentIndex < events.length - 1) {
+            setSelectedEventId(events[currentIndex + 1].id);
+          }
+        }}
       />
     </div>
   );
