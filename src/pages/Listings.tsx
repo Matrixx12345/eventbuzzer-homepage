@@ -26,8 +26,8 @@ import { getNearestPlace } from "@/utils/swissPlaces";
 import { toggleFavoriteApi } from "@/services/favorites";
 import { toast } from "sonner";
 
-// Lazy load map component
-const EventsMap = lazy(() => import("@/components/EventsMap"));
+// Lazy load map component - temporarily disabled
+// const EventsMap = lazy(() => import("@/components/EventsMap"));
 
 // Cloud Supabase für Edge Functions (incl. buzz_boost)
 import { supabase } from "@/integrations/supabase/client";
@@ -605,22 +605,13 @@ const Listings = () => {
           </div>
         )}
         
-        {/* Map View */}
+        {/* Map View - temporarily disabled for testing */}
         {viewMode === "map" && (
-          <Suspense fallback={
-            <div className="w-full h-[600px] rounded-xl bg-neutral-100 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
-            </div>
-          }>
-            <EventsMap 
-              events={mapEvents}
-              onEventsChange={setMapEvents}
-              onEventClick={(eventId) => {
-                setSelectedEventId(eventId);
-                setModalOpen(true);
-              }}
-            />
-          </Suspense>
+          <div className="w-full h-[600px] rounded-xl bg-neutral-100 flex flex-col items-center justify-center border border-neutral-200">
+            <MapPin className="w-12 h-12 text-neutral-400 mb-4" />
+            <p className="text-neutral-600 font-medium">Kartenansicht wird geladen...</p>
+            <p className="text-neutral-400 text-sm mt-2">Die Map-Funktion ist temporär deaktiviert</p>
+          </div>
         )}
 
         {/* Events Grid - Alternating Layout with Featured Cards (only in list mode) */}
