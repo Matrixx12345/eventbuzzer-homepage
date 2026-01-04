@@ -117,7 +117,12 @@ serve(async (req) => {
       cityLng,
       singleDate,
       dateFrom,
-      dateTo
+      dateTo,
+      // Geo bounding box for map view
+      minLat,
+      maxLat,
+      minLng,
+      maxLng
     } = filters;
     
     // Support both "search" and "searchQuery" parameter names
@@ -248,6 +253,18 @@ serve(async (req) => {
     }
     if (dateTo) {
       query = query.lte("start_date", dateTo);
+    }
+
+    // Geo bounding box filter for map view
+    if (minLat !== undefined && maxLat !== undefined && minLng !== undefined && maxLng !== undefined) {
+      query = query
+        .not("latitude", "is", null)
+        .not("longitude", "is", null)
+        .gte("latitude", minLat)
+        .lte("latitude", maxLat)
+        .gte("longitude", minLng)
+        .lte("longitude", maxLng);
+      console.log(`Geo filter applied: lat ${minLat}-${maxLat}, lng ${minLng}-${maxLng}`);
     }
 
     // Stadt/Radius-Filter (muss nach dem Fetch angewendet werden da PostGIS nicht verfügbar)

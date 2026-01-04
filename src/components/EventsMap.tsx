@@ -75,7 +75,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
   const [eventCount, setEventCount] = useState(0);
   const [mapReady, setMapReady] = useState(false);
 
-  // Load events from RPC based on map bounds
+  // Load events from Edge Function based on map bounds
   const loadEventsInView = useCallback(async () => {
     if (!map.current || !onEventsChange) return;
     
@@ -85,23 +85,28 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
       const bounds = map.current.getBounds();
       if (!bounds) return;
       
-      // Use type assertion since RPC function is defined in external Supabase
-      const { data, error } = await (supabase.rpc as any)('get_events_in_view', {
-        min_lat: bounds.getSouth(),
-        max_lat: bounds.getNorth(),
-        min_lng: bounds.getWest(),
-        max_lng: bounds.getEast(),
-        event_limit: 50
+      // Use edge function with geo bounding box filter
+      const { data, error } = await supabase.functions.invoke('get-external-events', {
+        body: {
+          limit: 50,
+          offset: 0,
+          filters: {
+            minLat: bounds.getSouth(),
+            maxLat: bounds.getNorth(),
+            minLng: bounds.getWest(),
+            maxLng: bounds.getEast()
+          }
+        }
       });
       
       if (error) {
-        console.error('RPC Error:', error);
+        console.error('Edge Function Error:', error);
         return;
       }
       
-      if (data && Array.isArray(data)) {
-        const mappedEvents: MapEvent[] = data.map((e: any) => ({
-          id: e.id,
+      if (data?.events && Array.isArray(data.events)) {
+        const mappedEvents: MapEvent[] = data.events.map((e: any) => ({
+          id: e.external_id || String(e.id),
           external_id: e.external_id,
           title: e.title,
           venue_name: e.venue_name,
@@ -117,6 +122,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
         
         onEventsChange(mappedEvents);
         setEventCount(mappedEvents.length);
+        console.log(`Loaded ${mappedEvents.length} events in view`);
       }
     } catch (err) {
       console.error('Failed to load events:', err);
