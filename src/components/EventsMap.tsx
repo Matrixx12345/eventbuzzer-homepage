@@ -74,6 +74,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
   const [loading, setLoading] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [mapReady, setMapReady] = useState(false);
+  // Internal state for events loaded from edge function
+  const [internalEvents, setInternalEvents] = useState<MapEvent[]>([]);
 
   // Load events from Edge Function based on map bounds
   const loadEventsInView = useCallback(async () => {
@@ -118,11 +120,18 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
           buzz_score: e.buzz_score,
           price_from: e.price_from,
           price_to: e.price_to
-        }));
+        })).filter((e: MapEvent) => e.latitude && e.longitude);
         
-        onEventsChange(mappedEvents);
+        console.log(`Loaded ${mappedEvents.length} events with coordinates`);
+        
+        // Store internally for markers
+        setInternalEvents(mappedEvents);
         setEventCount(mappedEvents.length);
-        console.log(`Loaded ${mappedEvents.length} events in view`);
+        
+        // Also notify parent
+        if (onEventsChange) {
+          onEventsChange(mappedEvents);
+        }
       }
     } catch (err) {
       console.error('Failed to load events:', err);
@@ -131,7 +140,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
     }
   }, [onEventsChange]);
 
-  // Debounced load on map move
+  // Use internal events for markers (not props)
+  const displayEvents = internalEvents;
   const debouncedLoad = useCallback(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -308,29 +318,27 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
     // (visual connection effect - optional, skip for performance)
   }, [clearSpideredMarkers, onEventClick]);
 
-  // Update markers when events change
+  // Update markers when internalEvents change
   useEffect(() => {
     if (!map.current || !mapReady) {
       console.log('Map not ready:', { mapExists: !!map.current, mapReady });
       return;
     }
     
-    console.log('Updating markers for', events.length, 'events');
+    console.log('Updating markers for', displayEvents.length, 'events');
     
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
     clearSpideredMarkers();
     
-    // Debug: Check events data
-    const eventsWithCoords = events.filter(e => e.latitude && e.longitude);
-    console.log('Events with coordinates:', eventsWithCoords.length);
-    if (eventsWithCoords.length > 0) {
-      console.log('Sample event:', eventsWithCoords[0]);
+    if (displayEvents.length === 0) {
+      console.log('No events to display');
+      return;
     }
     
     // Group events by location
-    const groups = groupMarkersByLocation(events);
+    const groups = groupMarkersByLocation(displayEvents);
     console.log('Marker groups:', groups.size);
     
     groups.forEach((groupedEvents, key) => {
@@ -394,8 +402,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
     });
     
     console.log('Total markers created:', markersRef.current.length);
-    setEventCount(events.length);
-  }, [events, mapReady, onEventClick, spiderMarkers, clearSpideredMarkers]);
+  }, [displayEvents, mapReady, onEventClick, spiderMarkers, clearSpideredMarkers]);
 
   // Click on map to close spidered markers
   useEffect(() => {
