@@ -627,6 +627,7 @@ const Listings = () => {
             <EventsMap 
               onEventsChange={handleEventsChange}
               onEventClick={handleEventClick}
+              isVisible={viewMode === "map"}
             />
           </Suspense>
         </div>
