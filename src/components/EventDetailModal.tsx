@@ -708,7 +708,7 @@ const [loading, setLoading] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto overflow-x-hidden p-0 gap-0 [&>button]:hidden">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl max-h-[95vh] overflow-y-auto overflow-x-hidden p-0 gap-0 [&>button]:hidden">
         {/* Navigation Arrows - Left and Right of Modal */}
         {eventIds.length > 1 && (
           <>
@@ -743,10 +743,10 @@ const [loading, setLoading] = useState(false);
         )}
         
         {/* Sticky Close Button Container */}
-        <div className="sticky top-0 z-50 h-0 pointer-events-none">
+        <div className="sticky top-0 z-50 w-full h-0 pointer-events-none">
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 pointer-events-auto w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white transition-all border border-neutral-200"
+            className="absolute top-3 right-3 pointer-events-auto w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white transition-all border border-neutral-200"
             aria-label="Schließen"
           >
             <X size={20} className="text-neutral-700" />
@@ -776,7 +776,7 @@ const [loading, setLoading] = useState(false);
             </div>
 
             {/* Content */}
-            <div className="p-5 sm:p-6 max-w-full">
+            <div className="p-5 sm:p-6 w-full overflow-hidden">
               {/* Title */}
               <DialogHeader className="mb-3">
                 <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
@@ -997,7 +997,7 @@ const [loading, setLoading] = useState(false);
 
             {/* Nearby Events Section */}
             {nearbyEvents.length > 0 && (
-              <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+              <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 w-full overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <MapPin size={18} className="text-neutral-500" />
@@ -1028,7 +1028,7 @@ const [loading, setLoading] = useState(false);
             )}
 
             {/* Similar Events Section */}
-            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 w-full overflow-hidden">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-serif text-neutral-900 text-lg font-bold">Ähnliche Events</h2>
                 <Link 
@@ -1068,7 +1068,7 @@ const [loading, setLoading] = useState(false);
             </div>
 
             {/* Partner Products Section */}
-            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200">
+            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 w-full overflow-hidden">
               <div className="text-center mb-4">
                 <h2 className="font-serif text-neutral-900 text-lg font-bold mb-1">Unvergessliche Augenblicke</h2>
                 <p className="text-neutral-500 text-xs">Curated additions to enhance your experience</p>
