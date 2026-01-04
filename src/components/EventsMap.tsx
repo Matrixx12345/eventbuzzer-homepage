@@ -177,13 +177,23 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
       const el = document.createElement('div');
 
       if (isCluster) {
-        // CLUSTER marker with count
+        // CLUSTER marker with count - use wrapper to prevent position shift on hover
         const pointCount = feature.properties.point_count;
         const size = Math.min(60, 35 + Math.log2(pointCount) * 8);
         
-        el.style.cssText = `
+        // Outer wrapper - Mapbox controls this, no transforms here
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = `
           width: ${size}px;
           height: ${size}px;
+          cursor: pointer;
+        `;
+        
+        // Inner element - safe to transform
+        const inner = document.createElement('div');
+        inner.style.cssText = `
+          width: 100%;
+          height: 100%;
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           border: 4px solid white;
           border-radius: 50%;
@@ -193,22 +203,22 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
           color: white;
           font-weight: bold;
           font-size: ${Math.min(18, 12 + Math.log2(pointCount) * 2)}px;
-          cursor: pointer;
           box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
           transition: transform 0.2s ease;
         `;
-        el.textContent = pointCount.toString();
+        inner.textContent = pointCount.toString();
+        wrapper.appendChild(inner);
 
-        // Hover effect
-        el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.1)';
+        // Hover effect on inner element only
+        wrapper.addEventListener('mouseenter', () => {
+          inner.style.transform = 'scale(1.1)';
         });
-        el.addEventListener('mouseleave', () => {
-          el.style.transform = 'scale(1)';
+        wrapper.addEventListener('mouseleave', () => {
+          inner.style.transform = 'scale(1)';
         });
 
         // Click: Zoom into cluster
-        el.addEventListener('click', (e) => {
+        wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!superclusterRef.current || !map.current) return;
           
@@ -223,7 +233,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange }: EventsM
           });
         });
 
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+        const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
           .setLngLat([lng, lat])
           .addTo(map.current!);
 
