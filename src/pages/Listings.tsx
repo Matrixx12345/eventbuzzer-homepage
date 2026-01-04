@@ -617,7 +617,7 @@ const Listings = () => {
         )}
         
         {/* Map View - Always mounted, hidden via CSS to preserve Mapbox instance and save API loads */}
-        <div className={viewMode === "map" ? "block" : "hidden"}>
+        <div className={viewMode === "map" ? "block w-full" : "hidden"}>
           <Suspense fallback={
             <div className="w-full h-[600px] rounded-xl bg-muted flex flex-col items-center justify-center border border-border">
               <Loader2 className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
