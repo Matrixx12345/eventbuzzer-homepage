@@ -1,0 +1,249 @@
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
+import L from "leaflet";
+import { Loader2, MapPin } from "lucide-react";
+import { externalSupabase } from "@/integrations/supabase/externalClient";
+import { MapEvent } from "@/types/map";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default icon issue
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import iconRetina from "leaflet/dist/images/marker-icon-2x.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: icon,
+  iconRetinaUrl: iconRetina,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Custom marker icon
+const createCustomIcon = (isHighlighted = false) => {
+  return L.divIcon({
+    className: "custom-marker",
+    html: `<div class="w-8 h-8 ${isHighlighted ? 'bg-red-500' : 'bg-neutral-900'} rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+};
+
+// Map event handler component
+const MapEventHandler = ({ 
+  onBoundsChange, 
+  debounceMs = 300 
+}: { 
+  onBoundsChange: (bounds: L.LatLngBounds) => void;
+  debounceMs?: number;
+}) => {
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  
+  const map = useMapEvents({
+    moveend: () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        onBoundsChange(map.getBounds());
+      }, debounceMs);
+    },
+    zoomend: () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        onBoundsChange(map.getBounds());
+      }, debounceMs);
+    },
+  });
+  
+  // Trigger initial bounds on mount
+  useEffect(() => {
+    onBoundsChange(map.getBounds());
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+  
+  return null;
+};
+
+interface EventsMapProps {
+  onEventsChange: (events: MapEvent[]) => void;
+  onEventClick: (eventId: string) => void;
+  events: MapEvent[];
+}
+
+export const EventsMap = ({ onEventsChange, onEventClick, events }: EventsMapProps) => {
+  const [loading, setLoading] = useState(false);
+  const [eventCount, setEventCount] = useState(0);
+  
+  // Switzerland center
+  const center: [number, number] = [46.8182, 8.2275];
+  const defaultZoom = 8;
+  
+  const fetchEventsInView = useCallback(async (bounds: L.LatLngBounds) => {
+    setLoading(true);
+    try {
+      const { data, error } = await externalSupabase.rpc('get_events_in_view', {
+        min_lat: bounds.getSouth(),
+        max_lat: bounds.getNorth(),
+        min_lng: bounds.getWest(),
+        max_lng: bounds.getEast(),
+        event_limit: 50
+      });
+      
+      if (error) {
+        console.error("Error fetching events in view:", error);
+        return;
+      }
+      
+      if (data && Array.isArray(data)) {
+        const mappedEvents: MapEvent[] = data.map((e: any) => ({
+          id: e.id,
+          external_id: e.external_id,
+          title: e.title,
+          venue_name: e.venue_name,
+          address_city: e.address_city,
+          image_url: e.image_url,
+          start_date: e.start_date,
+          latitude: e.latitude,
+          longitude: e.longitude,
+          buzz_score: e.buzz_score,
+          price_from: e.price_from,
+          price_to: e.price_to,
+        }));
+        onEventsChange(mappedEvents);
+        setEventCount(mappedEvents.length);
+      }
+    } catch (err) {
+      console.error("Error in fetchEventsInView:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [onEventsChange]);
+  
+  const formatEventDate = (dateStr?: string) => {
+    if (!dateStr) return "";
+    try {
+      return format(new Date(dateStr), "d. MMM yyyy", { locale: de });
+    } catch {
+      return "";
+    }
+  };
+  
+  // Create cluster custom icon
+  const createClusterCustomIcon = (cluster: any) => {
+    const count = cluster.getChildCount();
+    let size = "small";
+    if (count > 10) size = "medium";
+    if (count > 25) size = "large";
+    
+    const sizes = {
+      small: { w: 36, h: 36, fontSize: 12 },
+      medium: { w: 44, h: 44, fontSize: 14 },
+      large: { w: 52, h: 52, fontSize: 16 },
+    };
+    
+    const s = sizes[size as keyof typeof sizes];
+    
+    return L.divIcon({
+      html: `<div class="flex items-center justify-center bg-neutral-900 text-white rounded-full shadow-lg border-2 border-white font-semibold" style="width: ${s.w}px; height: ${s.h}px; font-size: ${s.fontSize}px;">${count}</div>`,
+      className: "custom-cluster-icon",
+      iconSize: L.point(s.w, s.h, true),
+    });
+  };
+  
+  return (
+    <div className="relative w-full h-[600px] rounded-xl overflow-hidden shadow-lg border border-neutral-200">
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md flex items-center gap-2">
+          <Loader2 size={16} className="animate-spin text-neutral-600" />
+          <span className="text-sm text-neutral-700">Lädt Events...</span>
+        </div>
+      )}
+      
+      {/* Event count badge */}
+      <div className="absolute top-4 right-4 z-[1000] bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+        <span className="text-sm font-medium text-neutral-700">{eventCount} Events im sichtbaren Bereich</span>
+      </div>
+      
+      <MapContainer
+        center={center}
+        zoom={defaultZoom}
+        scrollWheelZoom={true}
+        className="w-full h-full"
+        style={{ background: "#f5f5f5" }}
+      >
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution="&copy; Esri"
+        />
+        
+        <MapEventHandler onBoundsChange={fetchEventsInView} />
+        
+        <MarkerClusterGroup
+          chunkedLoading
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          maxClusterRadius={50}
+          spiderfyDistanceMultiplier={2}
+          iconCreateFunction={createClusterCustomIcon}
+        >
+          {events.map((event) => (
+            <Marker
+              key={event.id}
+              position={[event.latitude, event.longitude]}
+              icon={createCustomIcon(event.buzz_score && event.buzz_score > 50)}
+              eventHandlers={{
+                click: () => onEventClick(event.external_id || event.id),
+              }}
+            >
+              <Popup className="custom-popup">
+                <div className="w-64 p-0">
+                  {event.image_url && (
+                    <img 
+                      src={event.image_url} 
+                      alt={event.title}
+                      className="w-full h-32 object-cover rounded-t-lg"
+                    />
+                  )}
+                  <div className="p-3">
+                    <h3 className="font-semibold text-neutral-900 text-sm line-clamp-2 mb-1">
+                      {event.title}
+                    </h3>
+                    <div className="flex items-center gap-1 text-neutral-500 text-xs mb-1">
+                      <MapPin size={12} />
+                      <span>{event.address_city || event.venue_name}</span>
+                    </div>
+                    {event.start_date && (
+                      <p className="text-neutral-400 text-xs">{formatEventDate(event.start_date)}</p>
+                    )}
+                    <button
+                      onClick={() => onEventClick(event.external_id || event.id)}
+                      className="mt-2 w-full bg-neutral-900 text-white text-xs font-medium py-1.5 px-3 rounded-md hover:bg-neutral-800 transition-colors"
+                    >
+                      Details ansehen
+                    </button>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
+      </MapContainer>
+    </div>
+  );
+};
+
+export default EventsMap;
