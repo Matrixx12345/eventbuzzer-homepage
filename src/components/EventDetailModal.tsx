@@ -700,27 +700,27 @@ const [loading, setLoading] = useState(false);
             <button
               onClick={onNavigatePrev}
               disabled={!hasPrev}
-              className={`fixed left-4 lg:left-[calc(50%-min(40rem,48vw)-4rem)] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xl border border-neutral-200 transition-all ${
+              className={`fixed left-2 sm:left-4 lg:left-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all ${
                 hasPrev 
-                  ? "hover:bg-white hover:scale-110 cursor-pointer" 
-                  : "opacity-30 cursor-not-allowed"
+                  ? "hover:bg-neutral-50 hover:scale-110 hover:shadow-xl cursor-pointer" 
+                  : "opacity-20 cursor-not-allowed"
               }`}
               aria-label="Vorheriges Event"
             >
-              <ChevronLeft size={24} className="text-neutral-700" />
+              <ChevronLeft size={32} strokeWidth={2.5} className="text-neutral-800" />
             </button>
             
             <button
               onClick={onNavigateNext}
               disabled={!hasNext}
-              className={`fixed right-4 lg:right-[calc(50%-min(40rem,48vw)-4rem)] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xl border border-neutral-200 transition-all ${
+              className={`fixed right-2 sm:right-4 lg:right-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all ${
                 hasNext 
-                  ? "hover:bg-white hover:scale-110 cursor-pointer" 
-                  : "opacity-30 cursor-not-allowed"
+                  ? "hover:bg-neutral-50 hover:scale-110 hover:shadow-xl cursor-pointer" 
+                  : "opacity-20 cursor-not-allowed"
               }`}
               aria-label="Nächstes Event"
             >
-              <ChevronRight size={24} className="text-neutral-700" />
+              <ChevronRight size={32} strokeWidth={2.5} className="text-neutral-800" />
             </button>
           </>
         )}
@@ -745,7 +745,7 @@ const [loading, setLoading] = useState(false);
               <img
                 src={event.image}
                 alt={event.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = weekendJazz;
@@ -999,7 +999,7 @@ const [loading, setLoading] = useState(false);
                   >
                     <CarouselContent className="-ml-3">
                       {nearbyEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4 grow-0 shrink-0">
+                        <CarouselItem key={evt.id} className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]">
                           <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                         </CarouselItem>
                       ))}
@@ -1007,7 +1007,7 @@ const [loading, setLoading] = useState(false);
                         Array.from({ length: 4 - nearbyEvents.length }).map((_, i) => (
                           <CarouselItem 
                             key={`placeholder-nearby-${i}`} 
-                            className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4 grow-0 shrink-0"
+                            className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]"
                             aria-hidden="true"
                           >
                             <div className="invisible">
@@ -1049,7 +1049,7 @@ const [loading, setLoading] = useState(false);
                   >
                     <CarouselContent className="-ml-3">
                       {similarEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4 grow-0 shrink-0">
+                        <CarouselItem key={evt.id} className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]">
                           <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
                         </CarouselItem>
                       ))}
@@ -1057,7 +1057,7 @@ const [loading, setLoading] = useState(false);
                         Array.from({ length: 4 - similarEvents.length }).map((_, i) => (
                           <CarouselItem 
                             key={`placeholder-similar-${i}`} 
-                            className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4 grow-0 shrink-0"
+                            className="pl-3 flex-none w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]"
                             aria-hidden="true"
                           >
                             <div className="invisible">
