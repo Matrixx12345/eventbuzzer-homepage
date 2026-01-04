@@ -656,7 +656,7 @@ const [loading, setLoading] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 gap-0 [&>button]:hidden">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto overflow-x-hidden p-0 gap-0 [&>button]:hidden">
         {/* Sticky Close Button Container */}
         <div className="sticky top-0 z-50 h-0 pointer-events-none">
           <button
@@ -691,7 +691,7 @@ const [loading, setLoading] = useState(false);
             </div>
 
             {/* Content */}
-            <div className="p-5 sm:p-6">
+            <div className="p-5 sm:p-6 overflow-hidden">
               {/* Title */}
               <DialogHeader className="mb-3">
                 <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
@@ -934,8 +934,8 @@ const [loading, setLoading] = useState(false);
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex left-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
-                  <CarouselNext className="hidden sm:flex right-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
+                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
                 </Carousel>
               </div>
             )}
@@ -968,8 +968,8 @@ const [loading, setLoading] = useState(false);
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex left-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
-                  <CarouselNext className="hidden sm:flex right-2 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-10 w-10 shadow-md" />
+                  <CarouselPrevious className="hidden sm:flex -left-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
+                  <CarouselNext className="hidden sm:flex -right-3 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 h-8 w-8" />
                 </Carousel>
               ) : (
                 <div className="text-center text-neutral-400 text-sm py-4">
