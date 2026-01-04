@@ -199,9 +199,13 @@ const SimilarEventCard = ({ id, image, title, venue, location, date, distance, o
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const safeId = typeof id === 'string' ? id.trim() : '';
-    if (safeId !== '') {
+    console.log('SimilarEventCard clicked, id:', id, 'type:', typeof id);
+    const safeId = typeof id === 'string' ? id.trim() : String(id || '');
+    console.log('safeId:', safeId, 'onSwap:', typeof onSwap);
+    if (safeId !== '' && typeof onSwap === 'function') {
       onSwap(safeId);
+    } else {
+      console.warn('Cannot swap: safeId empty or onSwap not a function');
     }
   };
   
