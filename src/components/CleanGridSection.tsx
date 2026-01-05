@@ -192,15 +192,32 @@ const CleanGridSection = ({
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Diversify events: max N per category to avoid too many spas/thermen
+  const diversifyEvents = (events: any[], maxPerCategory: number = 2): any[] => {
+    const categoryCounts: Record<string, number> = {};
+    return events.filter(event => {
+      const cat = event.category_sub_id || 'unknown';
+      const catKey = Array.isArray(cat) ? cat[0] : cat;
+      categoryCounts[catKey] = (categoryCounts[catKey] || 0) + 1;
+      return categoryCounts[catKey] <= maxPerCategory;
+    });
+  };
+
   useEffect(() => {
     async function loadEvents() {
       try {
+        // Date filtering: only show events that are currently active
+        const today = new Date().toISOString().split('T')[0];
+        const nextWeek = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
         let query = supabase
           .from("events")
           .select("*")
           .not("image_url", "is", null)
+          .or(`start_date.is.null,start_date.lte.${nextWeek}`)
+          .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
-          .limit(maxEvents);
+          .limit(maxEvents * 3); // Fetch more to allow for filtering
 
         if (tagFilter) {
           query = query.contains("tags", [tagFilter]);
@@ -219,13 +236,16 @@ const CleanGridSection = ({
 
         // FILTER: Entferne schlechte Events
         const BLACKLIST = ["hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", "malen wie", "zeichnen wie", "basteln wie"];
-        const filtered = (data || []).filter(event => {
+        let filtered = (data || []).filter(event => {
           const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
           const isBlacklisted = BLACKLIST.some(keyword => searchText.includes(keyword.toLowerCase()));
           return !isBlacklisted;
         });
 
-        setEvents(filtered);
+        // Apply category diversity: max 2 per category
+        filtered = diversifyEvents(filtered, 2);
+
+        setEvents(filtered.slice(0, maxEvents));
       } catch (error) {
         console.error(`Error loading events:`, error);
       } finally {
