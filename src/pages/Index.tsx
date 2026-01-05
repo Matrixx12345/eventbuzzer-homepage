@@ -24,10 +24,12 @@ const Index = () => {
         <HeroSection />
         
         {/* Discovery CTA */}
-        <div className="bg-background pt-16 pb-4 text-center">
-          <h2 className="font-serif text-4xl text-[#1f1f1f] italic font-normal text-center">
-            Oder entdecke unsere Auswahl ↓
-          </h2>
+        <div className="bg-background pt-16 pb-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="font-serif text-4xl text-[#1f1f1f] italic font-normal text-center">
+              Oder entdecke unsere Auswahl ↓
+            </h2>
+          </div>
         </div>
         
         {/* Sektion 1: Verpasse nicht an diesem Wochenende - 3-Spalten-Grid (Clean Look) */}
