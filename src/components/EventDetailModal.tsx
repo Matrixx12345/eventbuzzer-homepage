@@ -94,20 +94,21 @@ interface DynamicEvent {
 }
 
 // Tag display mapping and styling
+// Tag display mapping - milky style mit besserer Lesbarkeit (60% Deckkraft)
 const TAG_DISPLAY_MAP: Record<string, { label: string; bgColor: string; textColor: string }> = {
-  'elite': { label: 'Must-See', bgColor: 'rgba(212, 175, 55, 0.2)', textColor: 'rgb(139, 115, 36)' },
-  'mistwetter': { label: 'Bei Mistwetter', bgColor: 'rgba(139, 133, 137, 0.2)', textColor: 'rgb(89, 83, 87)' },
-  'natur': { label: 'Natur', bgColor: 'rgba(178, 172, 136, 0.2)', textColor: 'rgb(98, 92, 56)' },
-  'outdoor': { label: 'Outdoor', bgColor: 'rgba(178, 172, 136, 0.2)', textColor: 'rgb(98, 92, 56)' },
-  'wandern': { label: 'Wandern', bgColor: 'rgba(178, 172, 136, 0.2)', textColor: 'rgb(98, 92, 56)' },
-  'winter-special': { label: 'Winter Special', bgColor: 'rgba(176, 224, 230, 0.2)', textColor: 'rgb(56, 124, 130)' },
-  'ski': { label: 'Ski', bgColor: 'rgba(176, 224, 230, 0.2)', textColor: 'rgb(56, 124, 130)' },
-  'schnee': { label: 'Schnee', bgColor: 'rgba(176, 224, 230, 0.2)', textColor: 'rgb(56, 124, 130)' },
-  'familie-freundlich': { label: 'Familienfreundlich', bgColor: 'rgba(251, 206, 177, 0.2)', textColor: 'rgb(171, 106, 57)' },
-  'gruppe': { label: 'Gruppenaktivität', bgColor: 'rgba(251, 206, 177, 0.2)', textColor: 'rgb(171, 106, 57)' },
-  'romantik': { label: 'Romantisch', bgColor: 'rgba(245, 245, 220, 0.2)', textColor: 'rgb(125, 125, 100)' },
-  'kultur': { label: 'Kultur', bgColor: 'rgba(245, 245, 220, 0.2)', textColor: 'rgb(125, 125, 100)' },
-  'kunst': { label: 'Kunst', bgColor: 'rgba(245, 245, 220, 0.2)', textColor: 'rgb(125, 125, 100)' },
+  'elite': { label: 'MUST-SEE', bgColor: 'rgba(212, 175, 55, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'mistwetter': { label: 'BEI MISTWETTER', bgColor: 'rgba(120, 115, 117, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'natur': { label: 'NATUR', bgColor: 'rgba(130, 145, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'outdoor': { label: 'OUTDOOR', bgColor: 'rgba(130, 145, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'wandern': { label: 'WANDERN', bgColor: 'rgba(130, 145, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'winter-special': { label: 'WINTER', bgColor: 'rgba(100, 160, 180, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'ski': { label: 'SKI', bgColor: 'rgba(100, 160, 180, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'schnee': { label: 'SCHNEE', bgColor: 'rgba(100, 160, 180, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'familie-freundlich': { label: 'FAMILIEN', bgColor: 'rgba(200, 140, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'gruppe': { label: 'GRUPPEN', bgColor: 'rgba(200, 140, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'romantik': { label: 'ROMANTIK', bgColor: 'rgba(180, 130, 150, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'kultur': { label: 'KULTUR', bgColor: 'rgba(160, 140, 120, 0.6)', textColor: 'rgb(255, 255, 255)' },
+  'kunst': { label: 'KUNST', bgColor: 'rgba(160, 140, 120, 0.6)', textColor: 'rgb(255, 255, 255)' },
 };
 
 // Category to label mapping
@@ -809,19 +810,19 @@ const [loading, setLoading] = useState(false);
               <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 max-w-[80%]">
                 {/* Subkategorie Badge (grau) - immer zuerst */}
                 {event.categoryLabel && (
-                  <span className="bg-neutral-800/70 backdrop-blur-sm text-white text-[10px] font-semibold tracking-wider uppercase px-2 py-1 rounded">
+                  <span className="bg-neutral-800/70 backdrop-blur-sm text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
                     {event.categoryLabel}
                   </span>
                 )}
                 
-                {/* Weitere Tags mit Milky-Style */}
+                {/* Weitere Tags - gleiches Design wie Subkategorie, nur andere Farben */}
                 {event.tags?.map((tag) => {
                   const tagInfo = TAG_DISPLAY_MAP[tag];
                   if (!tagInfo) return null;
                   return (
                     <span
                       key={tag}
-                      className="backdrop-blur-sm text-[10px] font-medium px-2 py-1 rounded"
+                      className="backdrop-blur-sm text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded"
                       style={{
                         backgroundColor: tagInfo.bgColor,
                         color: tagInfo.textColor,
