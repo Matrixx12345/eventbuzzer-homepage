@@ -40,9 +40,9 @@ const CompactCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className="bg-neutral-900 rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-lg">
+      <div className="bg-neutral-900 rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-lg grid grid-cols-2 h-[200px]">
         {/* Image */}
-        <div className="aspect-[16/10] overflow-hidden">
+        <div className="overflow-hidden">
           <img 
             src={image} 
             alt={title} 
@@ -51,15 +51,15 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-5">
+        <div className="p-4 flex flex-col justify-center">
           {categoryLabel && (
-            <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2 block">
+            <span className="text-primary text-[9px] font-sans tracking-[0.2em] uppercase mb-1.5 block">
               {categoryLabel}
             </span>
           )}
-          <h3 className="font-serif text-base md:text-lg text-white mb-2 line-clamp-2">{title}</h3>
+          <h3 className="font-serif text-sm md:text-base text-white mb-1.5 line-clamp-2 leading-tight">{title}</h3>
 
-          <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-xs mb-2 cursor-help">
+          <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-[10px] mb-1.5 cursor-help">
             <span className="text-red-500">📍</span>
             <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
 
@@ -82,7 +82,7 @@ const CompactCard = ({
             )}
           </div>
 
-          <p className="text-gray-400 font-sans text-xs leading-relaxed line-clamp-2">{description}</p>
+          <p className="text-gray-400 font-sans text-[11px] leading-relaxed line-clamp-2">{description}</p>
         </div>
       </div>
     </Wrapper>
