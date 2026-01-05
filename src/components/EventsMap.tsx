@@ -345,7 +345,12 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
         const color = CATEGORY_COLORS[category];
         const isElite = event.buzz_boost === 100;
         
+        // Debug: Log image URL
+        console.log(`Event "${event.title}" - image_url:`, event.image_url);
+        
         const wrapper = document.createElement('div');
+        const fallbackImage = 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=200';
+        const imageUrl = event.image_url && event.image_url.trim() !== '' ? event.image_url : fallbackImage;
         
         if (showImages) {
           // Large marker with image inlay
@@ -358,18 +363,33 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           `;
 
           const inner = document.createElement('div');
-          const imageUrl = event.image_url || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=100';
           inner.style.cssText = `
             width: 100%;
             height: 100%;
             border-radius: 50%;
             border: 4px solid ${color};
-            background-image: url('${imageUrl}');
+            background-color: ${color}20;
             background-size: cover;
             background-position: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             transition: transform 0.2s ease;
           `;
+          
+          // Load image properly with error handling
+          const img = new Image();
+          img.onload = () => {
+            inner.style.backgroundImage = `url('${imageUrl}')`;
+            inner.style.backgroundColor = 'transparent';
+          };
+          img.onerror = () => {
+            console.log(`Image failed to load for "${event.title}", using fallback`);
+            inner.style.backgroundImage = `url('${fallbackImage}')`;
+          };
+          img.src = imageUrl;
+          
+          // Set fallback immediately to show something
+          inner.style.backgroundImage = `url('${imageUrl}')`;
+          
           wrapper.appendChild(inner);
 
           // Add elite badge if applicable
