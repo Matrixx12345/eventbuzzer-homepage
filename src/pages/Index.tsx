@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import WeekendSection from "@/components/WeekendSection";
-import DynamicEventSection from "@/components/DynamicEventSection";
+import CleanGridSection from "@/components/CleanGridSection";
+import SideBySideSection from "@/components/SideBySideSection";
 import EliteExperiencesSection from "@/components/EliteExperiencesSection";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
@@ -30,30 +30,35 @@ const Index = () => {
           </h2>
         </div>
         
-        {/* Sektion 1: Wochenende in deiner Nähe (bestehend) */}
+        {/* Sektion 1: Verpasse nicht an diesem Wochenende - 3-Spalten-Grid (Clean Look) */}
         <ErrorBoundary>
-          <WeekendSection onEventClick={openEvent} />
+          <CleanGridSection 
+            title="Verpasse nicht an diesem Wochenende:"
+            sourceFilter="myswitzerland"
+            onEventClick={openEvent}
+            maxEvents={6}
+          />
         </ErrorBoundary>
 
-        {/* Sektion 2: Familien-Abenteuer (familie-freundlich Tag) */}
+        {/* Sektion 2: Familien-Abenteuer - Schwarzes Side-by-Side Layout */}
         <ErrorBoundary>
-          <DynamicEventSection 
+          <SideBySideSection 
             title="Familien-Abenteuer:" 
             tagFilter="familie-freundlich"
             filterParam="tags=familie-freundlich"
             onEventClick={openEvent}
-            maxEvents={12}
+            maxEvents={9}
           />
         </ErrorBoundary>
 
-        {/* Sektion 3: Wärmende Indoor-Erlebnisse (mistwetter Tag) */}
+        {/* Sektion 3: Wärmende Indoor-Erlebnisse - 3-Spalten-Grid (Clean Look) */}
         <ErrorBoundary>
-          <DynamicEventSection 
+          <CleanGridSection 
             title="Wärmende Indoor-Erlebnisse:" 
             tagFilter="mistwetter"
             filterParam="tags=mistwetter"
             onEventClick={openEvent}
-            maxEvents={12}
+            maxEvents={6}
           />
         </ErrorBoundary>
 
