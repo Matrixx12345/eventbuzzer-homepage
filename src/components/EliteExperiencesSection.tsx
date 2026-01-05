@@ -36,20 +36,20 @@ const HorizontalCard = ({
   };
 
   const CardContent = (
-    <div className="flex flex-col justify-center p-6 text-center h-full">
+    <div className="flex flex-col justify-center p-5 md:p-6 h-full">
       {categoryLabel && (
-        <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
+        <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-1">
           {categoryLabel}
         </span>
       )}
-      <h3 className="font-serif text-lg text-white mb-2 line-clamp-2 min-h-[3rem]">{title}</h3>
+      <h3 className="font-serif text-xl md:text-2xl text-white mb-2 line-clamp-2">{title}</h3>
 
-      <div className="group/map relative inline-flex items-center justify-center gap-1 text-gray-400 text-xs mb-3 cursor-help">
+      <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-xs mb-2 cursor-help">
         <span className="text-red-500">📍</span>
         <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
 
         {latitude && longitude && (
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+          <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
             <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
               <div className="relative w-full h-full">
                 <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
@@ -62,13 +62,13 @@ const HorizontalCard = ({
                 />
               </div>
             </div>
-            <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 mx-auto shadow-sm" />
+            <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
           </div>
         )}
       </div>
 
-      <p className="text-gray-400 font-sans text-xs leading-relaxed mb-4 line-clamp-2">{description}</p>
-      <div className="mt-auto">
+      <p className="text-gray-400 font-sans text-sm leading-relaxed line-clamp-3">{description}</p>
+      <div className="mt-auto pt-3">
         <span className="inline-block border border-white/20 text-white hover:bg-white/10 text-[10px] px-3 py-1.5 rounded transition-colors uppercase tracking-wider">
           {ticketUrl ? 'Tickets' : 'Entdecken'}
         </span>
@@ -84,16 +84,16 @@ const HorizontalCard = ({
     : {};
 
   return (
-    <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-      <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 min-h-[280px]`}>
+    <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
+      <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 h-[220px]`}>
         {imagePosition === "left" && (
-          <div className="relative h-48 md:h-full overflow-hidden">
+          <div className="relative h-full overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
         )}
         {CardContent}
         {imagePosition === "right" && (
-          <div className="relative h-48 md:h-full overflow-hidden">
+          <div className="relative h-full overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
         )}
