@@ -185,6 +185,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           start_date: e.start_date,
           latitude: e.latitude,
           longitude: e.longitude,
+          mapbox_lng: e.mapbox_lng,
+          mapbox_lat: e.mapbox_lat,
           buzz_score: e.buzz_score,
           price_from: e.price_from,
           price_to: e.price_to,
@@ -582,6 +584,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     });
 
     // Convert events to GeoJSON features with category
+    // Use mapbox_lng/lat for accurate positioning, fallback to longitude/latitude
     const points: EventFeature[] = filteredEvents.map(event => ({
       type: 'Feature',
       properties: {
@@ -592,7 +595,10 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       },
       geometry: {
         type: 'Point',
-        coordinates: [event.longitude, event.latitude]
+        coordinates: [
+          event.mapbox_lng ?? event.longitude,
+          event.mapbox_lat ?? event.latitude
+        ]
       }
     }));
 
