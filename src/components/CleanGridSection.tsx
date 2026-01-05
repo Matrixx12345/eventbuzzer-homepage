@@ -1,0 +1,303 @@
+import { useEffect, useState } from "react";
+import { Heart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
+import { getNearestPlace } from "@/utils/swissPlaces";
+
+interface CleanGridCardProps {
+  id: string;
+  image: string;
+  title: string;
+  location: string;
+  slug?: string;
+  latitude?: number;
+  longitude?: number;
+  categoryLabel?: string;
+  onClick?: () => void;
+}
+
+const CleanGridCard = ({
+  id,
+  image,
+  title,
+  location,
+  slug,
+  latitude,
+  longitude,
+  categoryLabel,
+  onClick
+}: CleanGridCardProps) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isCurrentlyFavorite = isFavorite(id);
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) {
+      onClick();
+    }
+  };
+  
+  return (
+    <div onClick={handleClick} className="block h-full cursor-pointer">
+      <article className="relative h-full rounded-2xl overflow-hidden group">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={image} 
+            alt={title} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        </div>
+
+        {/* Category Badge - Clean Look */}
+        {categoryLabel && (
+          <div className="absolute top-4 left-4 z-10">
+            <span className="bg-neutral-800/70 backdrop-blur-sm text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
+              {categoryLabel}
+            </span>
+          </div>
+        )}
+
+        {/* Favorite Button */}
+        <button 
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite({
+              id,
+              slug,
+              image,
+              title,
+              venue: "",
+              location
+            });
+          }} 
+          className="absolute top-4 right-4 p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors z-10" 
+          aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart size={18} className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-white"} />
+        </button>
+
+        {/* Content - nur Titel und Ort */}
+        <div className="relative h-full flex flex-col justify-end p-5">
+          <h3 className="font-serif text-white text-xl lg:text-2xl font-semibold leading-tight mb-2 line-clamp-2">
+            {title}
+          </h3>
+          
+          {/* Location mit Mini-Map Hover */}
+          <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help">
+            <span className="text-red-500">📍</span>
+            <span className="border-b border-dotted border-white/40 hover:text-white transition-colors">
+              {location}
+            </span>
+
+            {/* MINI-MAP TOOLTIP */}
+            {latitude && longitude && (
+              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-40 h-28 overflow-hidden flex items-center justify-center">
+                  <div className="relative w-full h-full">
+                    <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
+                    <div 
+                      className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm shadow-black/50" 
+                      style={{
+                        left: `${(longitude - 5.9) / (10.5 - 5.9) * 100}%`,
+                        top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`
+                      }} 
+                    />
+                  </div>
+                </div>
+                <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+};
+
+// Helper to get location
+const getEventLocation = (event: any): string => {
+  const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein"];
+  const isCountry = (str?: string) => {
+    if (!str) return true;
+    return countryNames.includes(str.toLowerCase().trim());
+  };
+
+  const city = event.address_city?.trim();
+  if (city && city.length > 0 && !isCountry(city)) {
+    return city;
+  }
+
+  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
+    return event.venue_name.trim();
+  }
+
+  if (event.location && !isCountry(event.location)) {
+    return event.location.trim();
+  }
+
+  if (event.latitude && event.longitude) {
+    return getNearestPlace(event.latitude, event.longitude);
+  }
+  return "Schweiz";
+};
+
+// Category label mapping
+const getCategoryLabel = (categorySubId?: string | string[]): string | undefined => {
+  const mapping: Record<string, string> = {
+    'museum-kunst': 'Museum',
+    'konzert': 'Konzert',
+    'theater': 'Theater',
+    'sport': 'Sport',
+    'festival': 'Festival',
+    'outdoor': 'Outdoor',
+    'wellness': 'Wellness',
+    'family': 'Familie',
+    'food': 'Kulinarik',
+    'nightlife': 'Nightlife',
+    'erlebnisse': 'Erlebnisse',
+    'spa': 'Wellness',
+    'attraction': 'Attraktion',
+    'natur': 'Natur',
+    'aussicht': 'Aussicht',
+    'stadt': 'Stadt',
+  };
+  if (!categorySubId) return undefined;
+  const subId = Array.isArray(categorySubId) ? categorySubId[0] : categorySubId;
+  if (!subId || typeof subId !== 'string') return undefined;
+  return mapping[subId] || subId.charAt(0).toUpperCase() + subId.slice(1);
+};
+
+interface CleanGridSectionProps {
+  title: string;
+  tagFilter?: string;
+  filterParam?: string;
+  sourceFilter?: string;
+  onEventClick?: (eventId: string) => void;
+  maxEvents?: number;
+}
+
+const CleanGridSection = ({ 
+  title, 
+  tagFilter,
+  filterParam,
+  sourceFilter,
+  onEventClick,
+  maxEvents = 6
+}: CleanGridSectionProps) => {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadEvents() {
+      try {
+        let query = supabase
+          .from("events")
+          .select("*")
+          .not("image_url", "is", null)
+          .order("relevance_score", { ascending: false })
+          .limit(maxEvents);
+
+        if (tagFilter) {
+          query = query.contains("tags", [tagFilter]);
+        }
+        
+        if (sourceFilter) {
+          query = query.eq("source", sourceFilter);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error(`Error loading events:`, error);
+          return;
+        }
+
+        // FILTER: Entferne schlechte Events
+        const BLACKLIST = ["hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", "malen wie", "zeichnen wie", "basteln wie"];
+        const filtered = (data || []).filter(event => {
+          const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
+          const isBlacklisted = BLACKLIST.some(keyword => searchText.includes(keyword.toLowerCase()));
+          return !isBlacklisted;
+        });
+
+        setEvents(filtered);
+      } catch (error) {
+        console.error(`Error loading events:`, error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadEvents();
+  }, [tagFilter, sourceFilter, maxEvents]);
+
+  if (loading) {
+    return (
+      <section className="py-12 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 sm:mb-12 lg:text-3xl">
+            {title}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-[320px] bg-muted rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (events.length === 0) {
+    return null;
+  }
+
+  // 3-Spalten-Grid wie im Referenzbild
+  const gridEvents = events.slice(0, maxEvents).map(event => ({
+    id: event.id,
+    image: event.image_url,
+    title: event.title,
+    location: getEventLocation(event),
+    slug: event.id,
+    latitude: event.latitude,
+    longitude: event.longitude,
+    categoryLabel: getCategoryLabel(event.category_sub_id)
+  }));
+
+  return (
+    <section className="py-12 sm:py-16 lg:py-20 bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 sm:mb-12 lg:text-3xl">
+          {title}
+        </h2>
+
+        {/* 3-Spalten-Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {gridEvents.map((event) => (
+            <div key={event.id} className="h-[320px]">
+              <CleanGridCard {...event} onClick={() => onEventClick?.(event.id)} />
+            </div>
+          ))}
+        </div>
+
+        {/* Mehr anzeigen Button */}
+        {filterParam && (
+          <div className="mt-10 text-center">
+            <Link 
+              to={`/listings?${filterParam}`}
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground border border-muted-foreground/30 hover:border-foreground/50 px-6 py-2.5 rounded-full transition-all text-sm font-medium"
+            >
+              Mehr anzeigen
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default CleanGridSection;
