@@ -104,6 +104,20 @@ const SideBySideCard = ({
     );
   }
 
+  // TALL CARDS: Bild OBEN, Text UNTEN - IMMER vertikal
+  if (isTall) {
+    return (
+      <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
+        <div className={`${cardBaseClass} flex flex-col min-h-[580px]`}>
+          <div className="relative overflow-hidden flex-1">
+            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          </div>
+          <div className="flex-shrink-0">{CardContent}</div>
+        </div>
+      </Wrapper>
+    );
+  }
+
   if (imagePosition === "left" || imagePosition === "right") {
     return (
       <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
@@ -126,8 +140,8 @@ const SideBySideCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-      <div className={`${cardBaseClass} flex flex-col ${isTall ? "min-h-[580px]" : "min-h-[280px]"}`}>
-        <div className={`relative overflow-hidden ${isTall ? "flex-1" : "h-40"}`}>
+      <div className={`${cardBaseClass} flex flex-col min-h-[280px]`}>
+        <div className="relative overflow-hidden h-40">
           <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         </div>
         <div className="flex-shrink-0">{CardContent}</div>
@@ -227,6 +241,7 @@ const SideBySideSection = ({
           .select("*")
           .contains("tags", [tagFilter])
           .not("image_url", "is", null)
+          .gte("relevance_score", 3.0) // Nur hochwertige Events für Startseite
           .or(`start_date.is.null,start_date.lte.${nextWeek}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
