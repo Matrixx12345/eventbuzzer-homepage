@@ -252,8 +252,33 @@ const SideBySideSection = ({
           return;
         }
 
+        // FILTER: Entferne schlechte/saisonale Events - erweiterte Blacklist
+        const BLACKLIST = [
+          "hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", 
+          "malen wie", "zeichnen wie", "basteln wie", 
+          "schafe scheren", "schafschur", "sheep shearing", "schafe werden geschoren",
+          "wenn schafe geschoren werden",
+          "disc golf", "discgolf", "frisbee golf"
+        ];
+        
+        const TITLE_BLACKLIST = [
+          "wenn schafe geschoren werden",
+          "schafschur",
+          "sheep shearing"
+        ];
+        
+        let filtered = (data || []).filter(event => {
+          const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
+          const titleLower = (event.title || "").toLowerCase();
+          
+          const isBlacklisted = BLACKLIST.some(keyword => searchText.includes(keyword.toLowerCase()));
+          const isTitleBlocked = TITLE_BLACKLIST.some(t => titleLower.includes(t));
+          
+          return !isBlacklisted && !isTitleBlocked;
+        });
+
         // Apply category diversity: max 2 per category
-        const diversified = diversifyEvents(data || [], 2);
+        const diversified = diversifyEvents(filtered, 2);
         setEvents(diversified.slice(0, maxEvents + 1)); // +1 for the tall card fix
       } catch (error) {
         console.error(`Error loading ${tagFilter} events:`, error);
@@ -266,7 +291,7 @@ const SideBySideSection = ({
 
   if (loading) {
     return (
-      <section className="bg-background py-24 px-4 md:px-8">
+      <section className="bg-background py-24 px-6 md:px-12 lg:px-16">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
             {title}
@@ -300,7 +325,7 @@ const SideBySideSection = ({
   }));
 
   return (
-    <section className="bg-background py-24 px-4 md:px-8">
+    <section className="bg-background py-24 px-6 md:px-12 lg:px-16">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
           {title}

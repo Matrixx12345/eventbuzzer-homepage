@@ -251,7 +251,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
 
   if (loading) {
     return (
-      <section className="bg-background py-24 px-4 md:px-8">
+      <section className="bg-background py-24 px-6 md:px-12 lg:px-16">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
             Die Schweizer Top Erlebnisse:
@@ -286,7 +286,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   }));
 
   return (
-    <section className="bg-background py-24 px-4 md:px-8">
+    <section className="bg-background py-24 px-6 md:px-12 lg:px-16">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
           Die Schweizer Top Erlebnisse:
@@ -349,9 +349,9 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
             </div>
           )}
           
-          {/* Kleine Karte unten rechts (1x1) */}
+          {/* Kleine Karte unten rechts (1x1) - explizite Grid-Position */}
           {bentoEvents[10] && (
-            <div className="md:col-span-1">
+            <div className="md:col-span-1 md:col-start-3 md:row-start-5">
               <BentoCard {...bentoEvents[10]} onClick={() => onEventClick?.(bentoEvents[10].id)} />
             </div>
           )}
