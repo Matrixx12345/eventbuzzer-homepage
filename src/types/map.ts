@@ -28,26 +28,26 @@ export type CategoryType =
   | 'default';
 
 export const CATEGORY_COLORS: Record<CategoryType, string> = {
-  wellness: '#00BCD4',      // Türkis
-  nature: '#4CAF50',        // Grün
-  markets: '#FF5722',       // Orange/Rot
-  culture: '#9C27B0',       // Violett
-  food: '#FF9800',          // Orange
-  sports: '#F44336',        // Rot
-  family: '#2196F3',        // Blau
-  elite: '#FFD700',         // Gold
-  default: '#424242'        // Anthrazit
+  wellness: '#4DD0E1',      // Sanftes Türkis
+  nature: '#66BB6A',        // Weiches Grün
+  markets: '#FF7043',       // Warmes Orange
+  culture: '#AB47BC',       // Sanftes Violett
+  food: '#FFA726',          // Helles Orange
+  sports: '#EF5350',        // Weiches Rot
+  family: '#42A5F5',        // Helles Blau
+  elite: '#FFD700',         // Gold (Elite!)
+  default: '#616161'        // Helles Anthrazit
 };
 
 export const CATEGORY_FILTERS = [
-  { key: 'all', label: 'Alle', color: '#424242' },
-  { key: 'wellness', label: 'Wellness', color: '#00BCD4' },
-  { key: 'nature', label: 'Natur', color: '#4CAF50' },
-  { key: 'markets', label: 'Märkte', color: '#FF5722' },
-  { key: 'culture', label: 'Kultur', color: '#9C27B0' },
-  { key: 'food', label: 'Food', color: '#FF9800' },
-  { key: 'sports', label: 'Sport', color: '#F44336' },
-  { key: 'family', label: 'Familie', color: '#2196F3' },
+  { key: 'all', label: 'Alle', color: '#616161' },
+  { key: 'wellness', label: 'Wellness', color: '#4DD0E1' },
+  { key: 'nature', label: 'Natur', color: '#66BB6A' },
+  { key: 'markets', label: 'Märkte', color: '#FF7043' },
+  { key: 'culture', label: 'Kultur', color: '#AB47BC' },
+  { key: 'food', label: 'Food', color: '#FFA726' },
+  { key: 'sports', label: 'Sport', color: '#EF5350' },
+  { key: 'family', label: 'Familie', color: '#42A5F5' },
   { key: 'elite', label: '⭐ Elite', color: '#FFD700' }
 ] as const;
 
