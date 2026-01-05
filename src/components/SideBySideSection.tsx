@@ -36,7 +36,7 @@ const HorizontalCard = ({
   };
 
   const CardContent = (
-    <div className="flex flex-col justify-center p-5 md:p-6 h-full">
+    <div className="flex flex-col justify-center p-5 md:p-6">
       {categoryLabel && (
         <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-1">
           {categoryLabel}
@@ -71,7 +71,7 @@ const HorizontalCard = ({
     </div>
   );
 
-  const cardBaseClass = "bg-neutral-900 rounded-3xl overflow-hidden h-full group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-xl";
+  const cardBaseClass = "bg-neutral-900 rounded-3xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-xl";
   
   const Wrapper = ticketUrl ? 'a' : 'div';
   const wrapperProps = ticketUrl 
@@ -82,14 +82,14 @@ const HorizontalCard = ({
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
       <div className={`${cardBaseClass} grid grid-cols-2 h-[240px]`}>
         {imagePosition === "left" && (
-          <div className="relative h-full overflow-hidden">
-            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className="relative overflow-hidden">
+            <img src={image} alt={title} className="w-full h-[240px] object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
         )}
         {CardContent}
         {imagePosition === "right" && (
-          <div className="relative h-full overflow-hidden">
-            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className="relative overflow-hidden">
+            <img src={image} alt={title} className="w-full h-[240px] object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
         )}
       </div>
