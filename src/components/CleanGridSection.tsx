@@ -214,6 +214,7 @@ const CleanGridSection = ({
           .from("events")
           .select("*")
           .not("image_url", "is", null)
+          .gte("relevance_score", 3.0) // Nur hochwertige Events für Startseite
           .or(`start_date.is.null,start_date.lte.${nextWeek}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
@@ -234,8 +235,8 @@ const CleanGridSection = ({
           return;
         }
 
-        // FILTER: Entferne schlechte Events
-        const BLACKLIST = ["hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", "malen wie", "zeichnen wie", "basteln wie"];
+        // FILTER: Entferne schlechte/saisonale Events
+        const BLACKLIST = ["hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", "malen wie", "zeichnen wie", "basteln wie", "schafe scheren", "schafschur", "disc golf", "discgolf"];
         let filtered = (data || []).filter(event => {
           const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
           const isBlacklisted = BLACKLIST.some(keyword => searchText.includes(keyword.toLowerCase()));

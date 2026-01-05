@@ -105,6 +105,20 @@ const BentoCard = ({
     );
   }
 
+  // TALL CARDS: Bild OBEN, Text UNTEN - IMMER vertikal
+  if (isTall) {
+    return (
+      <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
+        <div className={`${cardBaseClass} flex flex-col min-h-[580px]`}>
+          <div className="relative overflow-hidden flex-1">
+            <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          </div>
+          <div className="flex-shrink-0">{CardContent}</div>
+        </div>
+      </Wrapper>
+    );
+  }
+
   if (imagePosition === "left" || imagePosition === "right") {
     return (
       <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
@@ -127,8 +141,8 @@ const BentoCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-      <div className={`${cardBaseClass} flex flex-col ${isTall ? "min-h-[580px]" : "min-h-[280px]"}`}>
-        <div className={`relative overflow-hidden ${isTall ? "flex-1" : "h-40"}`}>
+      <div className={`${cardBaseClass} flex flex-col min-h-[280px]`}>
+        <div className="relative overflow-hidden h-40">
           <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         </div>
         <div className="flex-shrink-0">{CardContent}</div>
@@ -225,7 +239,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
 
         // Apply category diversity: max 2 per category
         const diversified = diversifyEvents(data || [], 2);
-        setEvents(diversified.slice(0, 10)); // Need 10 for complete grid
+        setEvents(diversified.slice(0, 11)); // Need 11 for complete grid mit 1x1 unten rechts
       } catch (error) {
         console.error("Error loading elite events:", error);
       } finally {
@@ -254,8 +268,8 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     return null;
   }
 
-  // Map events to bento grid layout - need 10 for complete grid
-  const bentoEvents = events.slice(0, 10).map((event, index) => ({
+  // Map events to bento grid layout - need 11 for complete grid mit 1x1 unten rechts
+  const bentoEvents = events.slice(0, 11).map((event, index) => ({
     id: event.id,
     title: event.title,
     description: event.description || event.short_description || "",
@@ -268,7 +282,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     // Layout variations
     imagePosition: index % 3 === 0 ? "left" : index % 3 === 1 ? "right" : "top",
     isTall: index === 2 || index === 8, // Position 2 and 8 are tall cards
-    isWide: index === 9 // Last card is wide
+    isWide: index === 9 // Position 9 is wide card
   }));
 
   return (
@@ -332,6 +346,13 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           {bentoEvents[9] && (
             <div className="md:col-span-2">
               <BentoCard {...bentoEvents[9]} isWide onClick={() => onEventClick?.(bentoEvents[9].id)} />
+            </div>
+          )}
+          
+          {/* Kleine Karte unten rechts (1x1) */}
+          {bentoEvents[10] && (
+            <div className="md:col-span-1">
+              <BentoCard {...bentoEvents[10]} onClick={() => onEventClick?.(bentoEvents[10].id)} />
             </div>
           )}
         </div>
