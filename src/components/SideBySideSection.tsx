@@ -204,23 +204,42 @@ const SideBySideSection = ({
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Diversify events: max N per category to avoid too many spas/thermen
+  const diversifyEvents = (events: any[], maxPerCategory: number = 2): any[] => {
+    const categoryCounts: Record<string, number> = {};
+    return events.filter(event => {
+      const cat = event.category_sub_id || 'unknown';
+      const catKey = Array.isArray(cat) ? cat[0] : cat;
+      categoryCounts[catKey] = (categoryCounts[catKey] || 0) + 1;
+      return categoryCounts[catKey] <= maxPerCategory;
+    });
+  };
+
   useEffect(() => {
     async function loadEvents() {
       try {
+        // Date filtering: only show events that are currently active
+        const today = new Date().toISOString().split('T')[0];
+        const nextWeek = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
         const { data, error } = await supabase
           .from("events")
           .select("*")
           .contains("tags", [tagFilter])
           .not("image_url", "is", null)
+          .or(`start_date.is.null,start_date.lte.${nextWeek}`)
+          .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
-          .limit(maxEvents);
+          .limit(maxEvents * 3); // Fetch more to allow for diversity filtering
 
         if (error) {
           console.error(`Error loading ${tagFilter} events:`, error);
           return;
         }
 
-        setEvents(data || []);
+        // Apply category diversity: max 2 per category
+        const diversified = diversifyEvents(data || [], 2);
+        setEvents(diversified.slice(0, maxEvents + 1)); // +1 for the tall card fix
       } catch (error) {
         console.error(`Error loading ${tagFilter} events:`, error);
       } finally {
@@ -249,8 +268,8 @@ const SideBySideSection = ({
     return null;
   }
 
-  // Map events to bento grid layout
-  const bentoEvents = events.slice(0, 9).map((event, index) => ({
+  // Map events to bento grid layout - need 10 for complete grid
+  const bentoEvents = events.slice(0, 10).map((event, index) => ({
     id: event.id,
     title: event.title,
     description: event.description || event.short_description || "",
@@ -261,8 +280,8 @@ const SideBySideSection = ({
     categoryLabel: getCategoryLabel(event.category_sub_id),
     ticketUrl: event.ticket_link,
     imagePosition: (index % 2 === 0 ? "left" : "right") as "left" | "right",
-    isTall: index === 2,
-    isWide: index === 8
+    isTall: index === 2 || index === 8, // Position 2 and 8 are tall cards
+    isWide: index === 9 // Last card is wide
   }));
 
   return (
@@ -315,10 +334,17 @@ const SideBySideSection = ({
               <SideBySideCard {...bentoEvents[7]} onClick={() => onEventClick?.(bentoEvents[7].id)} />
             </div>
           )}
-
+          {/* Tall card in bottom right (1 column, 2 rows) */}
           {bentoEvents[8] && (
+            <div className="md:col-span-1 md:row-span-2">
+              <SideBySideCard {...bentoEvents[8]} isTall onClick={() => onEventClick?.(bentoEvents[8].id)} />
+            </div>
+          )}
+
+          {/* Wide card bottom left (2 columns) */}
+          {bentoEvents[9] && (
             <div className="md:col-span-2">
-              <SideBySideCard {...bentoEvents[8]} isWide onClick={() => onEventClick?.(bentoEvents[8].id)} />
+              <SideBySideCard {...bentoEvents[9]} isWide onClick={() => onEventClick?.(bentoEvents[9].id)} />
             </div>
           )}
         </div>
