@@ -268,7 +268,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       bounds.getNorth()
     ];
     const zoom = Math.floor(map.current.getZoom());
-    const showImages = zoom >= 12;
+    const showImages = zoom >= 11;
 
     // Get clusters for current viewport
     const clusters = superclusterRef.current.getClusters(bbox, zoom);
@@ -283,7 +283,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
         const categoryCounts = feature.properties.categoryCounts || {};
         const dominantCategory = getDominantCategory(categoryCounts);
         const color = CATEGORY_COLORS[dominantCategory];
-        const size = Math.min(55, 38 + Math.log2(pointCount) * 6);
+        const size = Math.min(50, 34 + Math.log2(pointCount) * 5);
         
         const wrapper = document.createElement('div');
         wrapper.style.cssText = `
@@ -297,16 +297,16 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           width: 100%;
           height: 100%;
           background: white;
-          border: 4px solid ${color};
+          border: 3px solid ${color};
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: ${color};
-          font-weight: bold;
-          font-size: ${Math.min(16, 12 + Math.log2(pointCount) * 2)}px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-          transition: transform 0.2s ease;
+          font-weight: 600;
+          font-size: ${Math.min(14, 11 + Math.log2(pointCount) * 1.5)}px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          transition: transform 0.2s ease-out;
         `;
         inner.textContent = pointCount.toString();
         wrapper.appendChild(inner);
