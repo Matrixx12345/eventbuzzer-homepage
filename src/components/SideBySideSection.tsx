@@ -225,7 +225,7 @@ const SideBySideSection = ({
   if (loading) {
     return (
       <section className="bg-background py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16">
+        <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
           <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
             {title}
           </h2>
@@ -258,7 +258,7 @@ const SideBySideSection = ({
 
   return (
     <section className="bg-background py-12 md:py-16">
-      <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16">
+      <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
         <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
           {title}
         </h2>
