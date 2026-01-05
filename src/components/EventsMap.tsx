@@ -175,6 +175,19 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       }
       
       if (data?.events && Array.isArray(data.events)) {
+        // Debug: Log first event coordinates to verify mapbox coords are returned
+        if (data.events.length > 0) {
+          const sample = data.events[0];
+          console.log('Sample event coords:', {
+            title: sample.title,
+            lng: sample.longitude,
+            lat: sample.latitude,
+            mapbox_lng: sample.mapbox_lng,
+            mapbox_lat: sample.mapbox_lat,
+            hasMapboxCoords: !!(sample.mapbox_lng && sample.mapbox_lat)
+          });
+        }
+        
         const mappedEvents: MapEvent[] = data.events.map((e: any) => ({
           id: e.external_id || String(e.id),
           external_id: e.external_id,
@@ -185,8 +198,9 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           start_date: e.start_date,
           latitude: e.latitude,
           longitude: e.longitude,
-          mapbox_lng: e.mapbox_lng,
-          mapbox_lat: e.mapbox_lat,
+          // Use mapbox coords if available, otherwise fallback to regular coords
+          mapbox_lng: e.mapbox_lng ?? e.longitude,
+          mapbox_lat: e.mapbox_lat ?? e.latitude,
           buzz_score: e.buzz_score,
           price_from: e.price_from,
           price_to: e.price_to,
@@ -584,23 +598,25 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     });
 
     // Convert events to GeoJSON features with category
-    // Use mapbox_lng/lat for accurate positioning, fallback to longitude/latitude
-    const points: EventFeature[] = filteredEvents.map(event => ({
-      type: 'Feature',
-      properties: {
-        cluster: false,
-        eventId: event.id,
-        event: event,
-        category: getCategoryForEvent(event)
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [
-          event.mapbox_lng ?? event.longitude,
-          event.mapbox_lat ?? event.latitude
-        ]
-      }
-    }));
+    // Use mapbox_lng/lat for accurate positioning (already normalized in mapping above)
+    // Round to 6 decimal places for consistent precision (~0.1m accuracy)
+    const points: EventFeature[] = filteredEvents.map(event => {
+      const lng = Number((event.mapbox_lng ?? event.longitude).toFixed(6));
+      const lat = Number((event.mapbox_lat ?? event.latitude).toFixed(6));
+      return {
+        type: 'Feature',
+        properties: {
+          cluster: false,
+          eventId: event.id,
+          event: event,
+          category: getCategoryForEvent(event)
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [lng, lat]
+        }
+      };
+    });
 
     cluster.load(points as any);
     superclusterRef.current = cluster;
