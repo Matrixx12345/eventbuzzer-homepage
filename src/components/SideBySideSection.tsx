@@ -51,15 +51,10 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-4 flex flex-col justify-center">
-          {categoryLabel && (
-            <span className="text-primary text-[9px] font-sans tracking-[0.2em] uppercase mb-1.5 block">
-              {categoryLabel}
-            </span>
-          )}
-          <h3 className="font-serif text-sm md:text-base text-white mb-1.5 line-clamp-2 leading-tight">{title}</h3>
+        <div className="p-3 flex flex-col justify-center">
+          <h3 className="font-serif text-sm md:text-base text-white mb-2 line-clamp-2 leading-snug">{title}</h3>
 
-          <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-[10px] mb-1.5 cursor-help">
+          <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-[10px] mb-2 cursor-help">
             <span className="text-red-500">📍</span>
             <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
 
