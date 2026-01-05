@@ -1,27 +1,13 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Supercluster from 'supercluster';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from '@/types/map';
 
 // Mapbox public token
 mapboxgl.accessToken = 'pk.eyJ1IjoibWF0cml4eDEyMyIsImEiOiJjbWp6eXUwOTAwZTk4M2ZzaTkycTg4eGs1In0.fThJ64zR4-7gi-ONMtglfQ';
-
-export interface MapEvent {
-  id: string;
-  external_id?: string;
-  title: string;
-  venue_name?: string;
-  address_city?: string;
-  image_url?: string;
-  start_date?: string;
-  latitude: number;
-  longitude: number;
-  buzz_score?: number;
-  price_from?: number;
-  price_to?: number;
-}
 
 interface EventsMapProps {
   events?: MapEvent[];
@@ -37,11 +23,84 @@ interface EventFeature {
     cluster: false;
     eventId: string;
     event: MapEvent;
+    category: CategoryType;
   };
   geometry: {
     type: 'Point';
     coordinates: [number, number];
   };
+}
+
+// Get category for an event based on buzz_boost, category_main_id, or tags
+function getCategoryForEvent(event: MapEvent): CategoryType {
+  // Elite check first (buzz_boost === 100)
+  if (event.buzz_boost === 100) {
+    return 'elite';
+  }
+  
+  const tags = event.tags || [];
+  const tagsLower = tags.map(t => t.toLowerCase());
+  
+  // Wellness: category_main_id = 2 or tags contain wellness-related terms
+  if (event.category_main_id === 2 || 
+      tagsLower.some(t => t.includes('wellness') || t.includes('spa') || t.includes('therme'))) {
+    return 'wellness';
+  }
+  
+  // Nature: category_main_id = 3 or tags contain nature-related terms
+  if (event.category_main_id === 3 || 
+      tagsLower.some(t => t.includes('berg') || t.includes('gletscher') || t.includes('natur') || t.includes('wandern'))) {
+    return 'nature';
+  }
+  
+  // Markets: category_main_id = 6
+  if (event.category_main_id === 6 || 
+      tagsLower.some(t => t.includes('markt') || t.includes('weihnacht'))) {
+    return 'markets';
+  }
+  
+  // Culture: tags contain culture-related terms
+  if (tagsLower.some(t => t.includes('museum') || t.includes('konzert') || t.includes('ausstellung') || t.includes('theater') || t.includes('oper'))) {
+    return 'culture';
+  }
+  
+  // Food: tags contain food-related terms
+  if (tagsLower.some(t => t.includes('restaurant') || t.includes('food') || t.includes('kulinarisch') || t.includes('wein'))) {
+    return 'food';
+  }
+  
+  // Sports: category_main_id = 4 or tags contain sports terms
+  if (event.category_main_id === 4 || 
+      tagsLower.some(t => t.includes('sport') || t.includes('ski') || t.includes('bike') || t.includes('action'))) {
+    return 'sports';
+  }
+  
+  // Family: category_main_id = 5 or tags contain family terms
+  if (event.category_main_id === 5 || 
+      tagsLower.some(t => t.includes('familie') || t.includes('kinder') || t.includes('family'))) {
+    return 'family';
+  }
+  
+  return 'default';
+}
+
+// Get dominant category for a cluster
+function getDominantCategory(categories: Record<CategoryType, number>): CategoryType {
+  let maxCount = 0;
+  let dominant: CategoryType = 'default';
+  
+  for (const [category, count] of Object.entries(categories)) {
+    // Elite always takes priority if present
+    if (category === 'elite' && count > 0) {
+      return 'elite';
+    }
+    if (count > maxCount) {
+      maxCount = count;
+      dominant = category as CategoryType;
+    }
+  }
+  
+  return dominant;
 }
 
 export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true }: EventsMapProps) {
@@ -55,6 +114,37 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
   const [eventCount, setEventCount] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const [internalEvents, setInternalEvents] = useState<MapEvent[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
+
+  // Toggle filter
+  const toggleFilter = useCallback((filterKey: string) => {
+    setActiveFilters(prev => {
+      if (filterKey === 'all') {
+        return ['all'];
+      }
+      
+      const newFilters = prev.filter(f => f !== 'all');
+      
+      if (newFilters.includes(filterKey)) {
+        const filtered = newFilters.filter(f => f !== filterKey);
+        return filtered.length === 0 ? ['all'] : filtered;
+      } else {
+        return [...newFilters, filterKey];
+      }
+    });
+  }, []);
+
+  // Filter events based on active filters
+  const filteredEvents = useMemo(() => {
+    if (activeFilters.includes('all')) {
+      return internalEvents;
+    }
+    
+    return internalEvents.filter(event => {
+      const category = getCategoryForEvent(event);
+      return activeFilters.includes(category);
+    });
+  }, [internalEvents, activeFilters]);
 
   // Load events from Edge Function based on map bounds
   const loadEventsInView = useCallback(async () => {
@@ -97,7 +187,10 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           longitude: e.longitude,
           buzz_score: e.buzz_score,
           price_from: e.price_from,
-          price_to: e.price_to
+          price_to: e.price_to,
+          category_main_id: e.category_main_id,
+          tags: Array.isArray(e.tags) ? e.tags : [],
+          buzz_boost: e.buzz_boost
         })).filter((e: MapEvent) => e.latitude && e.longitude);
         
         console.log(`Loaded ${mappedEvents.length} events with coordinates`);
@@ -129,6 +222,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
   const createPopupHTML = (event: MapEvent) => {
     const imageUrl = event.image_url || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400';
     const city = event.address_city || event.venue_name || '';
+    const category = getCategoryForEvent(event);
+    const categoryColor = CATEGORY_COLORS[category];
     
     return `
       <div style="width: 200px; cursor: pointer;" class="event-popup">
@@ -139,6 +234,12 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400'"
         />
         <div style="padding: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${categoryColor};"></div>
+            <span style="font-size: 10px; color: ${categoryColor}; font-weight: 600; text-transform: uppercase;">
+              ${category === 'elite' ? '⭐ Elite' : category}
+            </span>
+          </div>
           <div style="font-weight: 600; font-size: 14px; line-height: 1.3; color: #1a1a1a; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
             ${event.title}
           </div>
@@ -167,6 +268,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       bounds.getNorth()
     ];
     const zoom = Math.floor(map.current.getZoom());
+    const showImages = zoom >= 12;
 
     // Get clusters for current viewport
     const clusters = superclusterRef.current.getClusters(bbox, zoom);
@@ -175,14 +277,14 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       const [lng, lat] = feature.geometry.coordinates;
       const isCluster = feature.properties.cluster;
 
-      const el = document.createElement('div');
-
       if (isCluster) {
-        // CLUSTER marker with count - use wrapper to prevent position shift on hover
+        // CLUSTER marker with colored border
         const pointCount = feature.properties.point_count;
-        const size = Math.min(60, 35 + Math.log2(pointCount) * 8);
+        const categoryCounts = feature.properties.categoryCounts || {};
+        const dominantCategory = getDominantCategory(categoryCounts);
+        const color = CATEGORY_COLORS[dominantCategory];
+        const size = Math.min(55, 38 + Math.log2(pointCount) * 6);
         
-        // Outer wrapper - Mapbox controls this, no transforms here
         const wrapper = document.createElement('div');
         wrapper.style.cssText = `
           width: ${size}px;
@@ -190,27 +292,25 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           cursor: pointer;
         `;
         
-        // Inner element - safe to transform
         const inner = document.createElement('div');
         inner.style.cssText = `
           width: 100%;
           height: 100%;
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          border: 4px solid white;
+          background: white;
+          border: 4px solid ${color};
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
+          color: ${color};
           font-weight: bold;
-          font-size: ${Math.min(18, 12 + Math.log2(pointCount) * 2)}px;
-          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+          font-size: ${Math.min(16, 12 + Math.log2(pointCount) * 2)}px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
           transition: transform 0.2s ease;
         `;
         inner.textContent = pointCount.toString();
         wrapper.appendChild(inner);
 
-        // Hover effect on inner element only
         wrapper.addEventListener('mouseenter', () => {
           inner.style.transform = 'scale(1.1)';
         });
@@ -218,7 +318,6 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           inner.style.transform = 'scale(1)';
         });
 
-        // Click: Zoom into cluster
         wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!superclusterRef.current || !map.current) return;
@@ -242,38 +341,104 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       } else {
         // SINGLE event marker
         const event = feature.properties.event as MapEvent;
+        const category = getCategoryForEvent(event);
+        const color = CATEGORY_COLORS[category];
+        const isElite = event.buzz_boost === 100;
         
-        // Wrapper for stable positioning
         const wrapper = document.createElement('div');
-        wrapper.style.cssText = `
-          width: 32px;
-          height: 32px;
-          cursor: pointer;
-        `;
+        
+        if (showImages) {
+          // Large marker with image inlay
+          const size = 60;
+          wrapper.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            cursor: pointer;
+            position: relative;
+          `;
 
-        const inner = document.createElement('div');
-        inner.style.cssText = `
-          width: 100%;
-          height: 100%;
-          background: #ef4444;
-          border: 3px solid white;
-          border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          transition: transform 0.2s ease;
-        `;
-        wrapper.appendChild(inner);
+          const inner = document.createElement('div');
+          const imageUrl = event.image_url || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=100';
+          inner.style.cssText = `
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid ${color};
+            background-image: url('${imageUrl}');
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+          `;
+          wrapper.appendChild(inner);
 
-        // Hover effect
-        wrapper.addEventListener('mouseenter', () => {
-          inner.style.transform = 'scale(1.2)';
-        });
-        wrapper.addEventListener('mouseleave', () => {
-          inner.style.transform = 'scale(1)';
-        });
+          // Add elite badge if applicable
+          if (isElite) {
+            const badge = document.createElement('div');
+            badge.className = 'elite-badge';
+            badge.textContent = '⭐';
+            wrapper.appendChild(badge);
+          }
+
+          wrapper.addEventListener('mouseenter', () => {
+            inner.style.transform = 'scale(1.1)';
+          });
+          wrapper.addEventListener('mouseleave', () => {
+            inner.style.transform = 'scale(1)';
+          });
+        } else {
+          // Small marker with colored border
+          wrapper.style.cssText = `
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            position: relative;
+          `;
+
+          const inner = document.createElement('div');
+          inner.style.cssText = `
+            width: 100%;
+            height: 100%;
+            background: white;
+            border: 3px solid ${color};
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+          `;
+          wrapper.appendChild(inner);
+
+          // Add small elite indicator
+          if (isElite) {
+            const badge = document.createElement('div');
+            badge.style.cssText = `
+              position: absolute;
+              top: -4px;
+              right: -4px;
+              background: #FFD700;
+              border-radius: 50%;
+              width: 14px;
+              height: 14px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 8px;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            `;
+            badge.textContent = '⭐';
+            wrapper.appendChild(badge);
+          }
+
+          wrapper.addEventListener('mouseenter', () => {
+            inner.style.transform = 'scale(1.2)';
+          });
+          wrapper.addEventListener('mouseleave', () => {
+            inner.style.transform = 'scale(1)';
+          });
+        }
 
         // Create popup
         const popup = new mapboxgl.Popup({
-          offset: 20,
+          offset: showImages ? 35 : 20,
           closeButton: true,
           closeOnClick: false,
           maxWidth: '220px'
@@ -284,7 +449,6 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           .setPopup(popup)
           .addTo(map.current!);
 
-        // Click opens event detail
         wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           if (onEventClick) {
@@ -320,7 +484,6 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
     map.current.on('load', () => {
       if (map.current) {
-        // Add Switzerland highlight
         map.current.addSource('countries', {
           type: 'vector',
           url: 'mapbox://mapbox.country-boundaries-v1'
@@ -368,30 +531,40 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     };
   }, [loadEventsInView, debouncedLoad]);
 
-  // Initialize Supercluster when events change
+  // Initialize Supercluster when filtered events change
   useEffect(() => {
-    if (internalEvents.length === 0) {
+    if (filteredEvents.length === 0) {
       superclusterRef.current = null;
-      // Clear markers if no events
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       return;
     }
 
-    // Create Supercluster instance
+    // Create Supercluster instance with category counting
     const cluster = new Supercluster({
       radius: 60,
       maxZoom: 16,
-      minZoom: 0
+      minZoom: 0,
+      map: (props: any) => ({
+        category: props.category,
+        categoryCounts: { [props.category]: 1 }
+      }),
+      reduce: (accumulated: any, props: any) => {
+        accumulated.categoryCounts = accumulated.categoryCounts || {};
+        for (const [cat, count] of Object.entries(props.categoryCounts || {})) {
+          accumulated.categoryCounts[cat] = (accumulated.categoryCounts[cat] || 0) + (count as number);
+        }
+      }
     });
 
-    // Convert events to GeoJSON features
-    const points: EventFeature[] = internalEvents.map(event => ({
+    // Convert events to GeoJSON features with category
+    const points: EventFeature[] = filteredEvents.map(event => ({
       type: 'Feature',
       properties: {
         cluster: false,
         eventId: event.id,
-        event: event
+        event: event,
+        category: getCategoryForEvent(event)
       },
       geometry: {
         type: 'Point',
@@ -404,11 +577,10 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
     console.log(`Supercluster initialized with ${points.length} points`);
 
-    // Update markers
     if (mapReady) {
       updateMarkers();
     }
-  }, [internalEvents, mapReady, updateMarkers]);
+  }, [filteredEvents, mapReady, updateMarkers]);
 
   // Update markers on zoom/pan
   useEffect(() => {
@@ -427,7 +599,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     };
   }, [mapReady, updateMarkers]);
 
-  // Resize map when visibility changes - use ResizeObserver for reliability
+  // Resize map when visibility changes
   useEffect(() => {
     if (!mapContainer.current || !map.current) return;
 
@@ -439,9 +611,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
     resizeObserver.observe(mapContainer.current);
 
-    // Also trigger immediate resize when becoming visible
     if (isVisible && mapReady) {
-      // Multiple resize calls with increasing delays for reliability
       map.current.resize();
       setTimeout(() => map.current?.resize(), 100);
       setTimeout(() => map.current?.resize(), 300);
@@ -451,32 +621,69 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
   }, [isVisible, mapReady]);
 
   return (
-    <div className="relative w-full min-h-[600px] h-[calc(100vh-280px)] rounded-xl overflow-hidden border border-border shadow-lg">
-      <div ref={mapContainer} className="w-full h-full" />
-      
-      {loading && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 shadow-lg border border-border">
-          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-          <span className="text-sm font-medium">Events werden geladen...</span>
+    <div className="relative w-full">
+      {/* Filter Pills */}
+      <div className="mb-4 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 pb-2">
+          {CATEGORY_FILTERS.map(filter => {
+            const isActive = activeFilters.includes(filter.key);
+            return (
+              <button
+                key={filter.key}
+                onClick={() => toggleFilter(filter.key)}
+                className="filter-pill whitespace-nowrap"
+                style={{
+                  borderColor: filter.color,
+                  backgroundColor: isActive ? filter.color : 'transparent',
+                  color: isActive ? 'white' : filter.color
+                }}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
         </div>
-      )}
-      
-      {!loading && eventCount > 0 && (
-        <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-border">
-          <span className="text-sm font-medium">{eventCount} Events sichtbar</span>
-        </div>
-      )}
-      
-      <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="w-3 h-3 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
-          <span>Event-Standort</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ef4444] to-[#dc2626] border-2 border-white shadow-sm flex items-center justify-center">
-            <span className="text-[9px] text-white font-bold">5</span>
+      </div>
+
+      {/* Map Container */}
+      <div className="relative min-h-[600px] h-[calc(100vh-340px)] rounded-xl overflow-hidden border border-border shadow-lg">
+        <div ref={mapContainer} className="w-full h-full" />
+        
+        {loading && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 shadow-lg border border-border">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-sm font-medium">Events werden geladen...</span>
           </div>
-          <span>Cluster (Zoom zum Aufteilen)</span>
+        )}
+        
+        {!loading && eventCount > 0 && (
+          <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-border">
+            <span className="text-sm font-medium">
+              {filteredEvents.length} von {eventCount} Events
+            </span>
+          </div>
+        )}
+        
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border">
+          <div className="text-xs font-medium mb-2 text-foreground">Kategorien</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            {[
+              { key: 'wellness', label: 'Wellness' },
+              { key: 'nature', label: 'Natur' },
+              { key: 'culture', label: 'Kultur' },
+              { key: 'markets', label: 'Märkte' },
+              { key: 'elite', label: 'Elite ⭐' }
+            ].map(item => (
+              <div key={item.key} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div 
+                  className="w-3 h-3 rounded-full border-2" 
+                  style={{ borderColor: CATEGORY_COLORS[item.key as CategoryType], backgroundColor: 'white' }}
+                />
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
