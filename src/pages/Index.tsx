@@ -1,9 +1,8 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import EventsSection from "@/components/EventsSection";
 import WeekendSection from "@/components/WeekendSection";
-import SwitzerlandSection from "@/components/SwitzerlandSection";
-import RainyDaySection from "@/components/RainyDaySection";
+import DynamicEventSection from "@/components/DynamicEventSection";
+import EliteExperiencesSection from "@/components/EliteExperiencesSection";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
 import { useEventModal } from "@/hooks/useEventModal";
@@ -13,8 +12,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 const Index = () => {
   const { isOpen, closeChatbot, openChatbot } = useChatbot();
   const { selectedEventId, isOpen: modalOpen, openEvent, closeEvent, swapEvent } = useEventModal();
-
-  
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,16 +30,36 @@ const Index = () => {
           </h2>
         </div>
         
-        {/* TEMPORARILY HIDDEN - EventsSection (heute in deiner Nähe) - sag mir wenn du es reaktivieren möchtest */}
-        {/* <EventsSection /> */}
+        {/* Sektion 1: Wochenende in deiner Nähe (bestehend) */}
         <ErrorBoundary>
           <WeekendSection onEventClick={openEvent} />
         </ErrorBoundary>
+
+        {/* Sektion 2: Familien-Abenteuer (familie-freundlich Tag) */}
         <ErrorBoundary>
-          <SwitzerlandSection onEventClick={openEvent} />
+          <DynamicEventSection 
+            title="Familien-Abenteuer:" 
+            tagFilter="familie-freundlich"
+            filterParam="tags=familie-freundlich"
+            onEventClick={openEvent}
+            maxEvents={12}
+          />
         </ErrorBoundary>
+
+        {/* Sektion 3: Wärmende Indoor-Erlebnisse (mistwetter Tag) */}
         <ErrorBoundary>
-          <RainyDaySection onEventClick={openEvent} />
+          <DynamicEventSection 
+            title="Wärmende Indoor-Erlebnisse:" 
+            tagFilter="mistwetter"
+            filterParam="tags=mistwetter"
+            onEventClick={openEvent}
+            maxEvents={12}
+          />
+        </ErrorBoundary>
+
+        {/* Sektion 4: Die Schweizer Top Erlebnisse (elite Tag) - vorletzte Sektion */}
+        <ErrorBoundary>
+          <EliteExperiencesSection onEventClick={openEvent} />
         </ErrorBoundary>
       </main>
       
