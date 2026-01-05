@@ -8,6 +8,8 @@ export interface MapEvent {
   start_date?: string;
   latitude: number;
   longitude: number;
+  mapbox_lng?: number;
+  mapbox_lat?: number;
   buzz_score?: number;
   price_from?: number;
   price_to?: number;
@@ -46,7 +48,6 @@ export const CATEGORY_FILTERS = [
   { key: 'markets', label: 'Märkte', color: '#FF7043' },
   { key: 'culture', label: 'Kultur', color: '#AB47BC' },
   { key: 'food', label: 'Food', color: '#FFA726' },
-  { key: 'sports', label: 'Sport', color: '#EF5350' },
   { key: 'family', label: 'Familie', color: '#42A5F5' },
   { key: 'elite', label: '⭐ Elite', color: '#FFD700' }
 ] as const;
