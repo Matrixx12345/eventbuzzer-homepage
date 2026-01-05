@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 import { getNearestPlace } from "@/utils/swissPlaces";
 
-interface HorizontalCardProps {
+interface CompactCardProps {
   title: string;
   description: string;
   image: string;
-  imagePosition: "left" | "right";
   location: string;
   latitude?: number;
   longitude?: number;
@@ -16,18 +15,17 @@ interface HorizontalCardProps {
   onClick?: () => void;
 }
 
-const HorizontalCard = ({
+const CompactCard = ({
   title,
   description,
   image,
-  imagePosition,
   location,
   latitude,
   longitude,
   categoryLabel,
   ticketUrl,
   onClick
-}: HorizontalCardProps) => {
+}: CompactCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
     if (!ticketUrl && onClick) {
       e.preventDefault();
@@ -35,44 +33,6 @@ const HorizontalCard = ({
     }
   };
 
-  const CardContent = (
-    <div className="flex flex-col justify-center p-6 md:p-8">
-      {categoryLabel && (
-        <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
-          {categoryLabel}
-        </span>
-      )}
-      <h3 className="font-serif text-lg md:text-xl text-white mb-3 line-clamp-2">{title}</h3>
-
-      <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-xs mb-3 cursor-help">
-        <span className="text-red-500">📍</span>
-        <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
-
-        {latitude && longitude && (
-          <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-            <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
-              <div className="relative w-full h-full">
-                <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
-                <div 
-                  className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm" 
-                  style={{
-                    left: `${(longitude - 5.9) / (10.5 - 5.9) * 100}%`,
-                    top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`
-                  }} 
-                />
-              </div>
-            </div>
-            <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
-          </div>
-        )}
-      </div>
-
-      <p className="text-gray-300 font-sans text-xs leading-relaxed line-clamp-3">{description}</p>
-    </div>
-  );
-
-  const cardBaseClass = "bg-neutral-900 rounded-3xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-xl";
-  
   const Wrapper = ticketUrl ? 'a' : 'div';
   const wrapperProps = ticketUrl 
     ? { href: ticketUrl, target: "_blank", rel: "noopener noreferrer" }
@@ -80,18 +40,50 @@ const HorizontalCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className={`${cardBaseClass} grid grid-cols-[60%_40%] h-[260px]`}>
-        {imagePosition === "left" && (
-          <div className="relative overflow-hidden">
-            <img src={image} alt={title} className="w-full h-[260px] object-cover group-hover:scale-105 transition-transform duration-500" />
+      <div className="bg-neutral-900 rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-lg">
+        {/* Image */}
+        <div className="aspect-[16/10] overflow-hidden">
+          <img 
+            src={image} 
+            alt={title} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+          />
+        </div>
+        
+        {/* Content */}
+        <div className="p-5">
+          {categoryLabel && (
+            <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2 block">
+              {categoryLabel}
+            </span>
+          )}
+          <h3 className="font-serif text-base md:text-lg text-white mb-2 line-clamp-2">{title}</h3>
+
+          <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-xs mb-2 cursor-help">
+            <span className="text-red-500">📍</span>
+            <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
+
+            {latitude && longitude && (
+              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
+                  <div className="relative w-full h-full">
+                    <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
+                    <div 
+                      className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm" 
+                      style={{
+                        left: `${(longitude - 5.9) / (10.5 - 5.9) * 100}%`,
+                        top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`
+                      }} 
+                    />
+                  </div>
+                </div>
+                <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+              </div>
+            )}
           </div>
-        )}
-        {CardContent}
-        {imagePosition === "right" && (
-          <div className="relative overflow-hidden">
-            <img src={image} alt={title} className="w-full h-[260px] object-cover group-hover:scale-105 transition-transform duration-500" />
-          </div>
-        )}
+
+          <p className="text-gray-400 font-sans text-xs leading-relaxed line-clamp-2">{description}</p>
+        </div>
       </div>
     </Wrapper>
   );
@@ -214,7 +206,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     return null;
   }
 
-  const cardEvents = events.slice(0, 6).map((event, index) => ({
+  const cardEvents = events.slice(0, 6).map((event) => ({
     id: event.id,
     title: event.title,
     description: event.description || event.short_description || "",
@@ -223,8 +215,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     latitude: event.latitude,
     longitude: event.longitude,
     categoryLabel: getCategoryLabel(event.category_sub_id),
-    ticketUrl: event.ticket_link,
-    imagePosition: (index % 2 === 0 ? "left" : "right") as "left" | "right"
+    ticketUrl: event.ticket_link
   }));
 
   return (
@@ -234,10 +225,10 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           Die Schweizer Top Erlebnisse:
         </h2>
 
-        {/* Vertikale Liste mit alternierenden horizontalen Karten */}
-        <div className="space-y-6">
+        {/* 2-Spalten Grid mit vertikalen Karten */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {cardEvents.map((event) => (
-            <HorizontalCard 
+            <CompactCard 
               key={event.id}
               {...event}
               onClick={() => onEventClick?.(event.id)}
