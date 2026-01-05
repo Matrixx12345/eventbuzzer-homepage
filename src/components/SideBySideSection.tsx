@@ -36,15 +36,15 @@ const HorizontalCard = ({
   };
 
   const CardContent = (
-    <div className="flex flex-col justify-center p-5 md:p-6">
+    <div className="flex flex-col justify-center p-6 md:p-8">
       {categoryLabel && (
-        <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-1">
+        <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
           {categoryLabel}
         </span>
       )}
-      <h3 className="font-serif text-xl md:text-2xl text-white mb-2 line-clamp-2">{title}</h3>
+      <h3 className="font-serif text-lg md:text-xl text-white mb-3 line-clamp-2">{title}</h3>
 
-      <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-xs mb-2 cursor-help">
+      <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-xs mb-3 cursor-help">
         <span className="text-red-500">📍</span>
         <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
 
@@ -67,7 +67,7 @@ const HorizontalCard = ({
         )}
       </div>
 
-      <p className="text-gray-400 font-sans text-sm leading-relaxed line-clamp-3">{description}</p>
+      <p className="text-gray-300 font-sans text-xs leading-relaxed line-clamp-3">{description}</p>
     </div>
   );
 
