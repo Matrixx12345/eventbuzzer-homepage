@@ -68,11 +68,6 @@ const HorizontalCard = ({
       </div>
 
       <p className="text-gray-400 font-sans text-sm leading-relaxed line-clamp-3">{description}</p>
-      <div className="mt-auto pt-3">
-        <span className="inline-block border border-white/20 text-white hover:bg-white/10 text-[10px] px-3 py-1.5 rounded transition-colors uppercase tracking-wider">
-          {ticketUrl ? 'Tickets' : 'Entdecken'}
-        </span>
-      </div>
     </div>
   );
 
@@ -85,7 +80,7 @@ const HorizontalCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 h-[220px]`}>
+      <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 h-[240px]`}>
         {imagePosition === "left" && (
           <div className="relative h-full overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
