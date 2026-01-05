@@ -51,7 +51,7 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-3 flex flex-col justify-center">
+        <div className="p-4 flex flex-col justify-center">
           <h3 className="font-serif text-sm md:text-base text-white mb-2 line-clamp-2 leading-snug">{title}</h3>
 
           <div className="group/map relative inline-flex items-center gap-1 text-gray-400 text-[10px] mb-2 cursor-help">
@@ -183,7 +183,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   if (loading) {
     return (
       <section className="bg-background py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
             Die Schweizer Top Erlebnisse:
           </h2>
@@ -215,7 +215,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
 
   return (
     <section className="bg-background py-12 md:py-16">
-      <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
           Die Schweizer Top Erlebnisse:
         </h2>
