@@ -80,7 +80,7 @@ const HorizontalCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className={`${cardBaseClass} grid grid-cols-2 h-[260px]`}>
+      <div className={`${cardBaseClass} grid grid-cols-[60%_40%] h-[260px]`}>
         {imagePosition === "left" && (
           <div className="relative overflow-hidden">
             <img src={image} alt={title} className="w-full h-[260px] object-cover group-hover:scale-105 transition-transform duration-500" />
