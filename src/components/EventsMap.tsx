@@ -156,15 +156,27 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       const bounds = map.current.getBounds();
       if (!bounds) return;
       
+      // ADD PADDING: Expand bounds by 20% in each direction
+      // This pre-loads events slightly outside viewport for smooth experience
+      const latPadding = (bounds.getNorth() - bounds.getSouth()) * 0.2;
+      const lngPadding = (bounds.getEast() - bounds.getWest()) * 0.2;
+      
+      const paddedBounds = {
+        minLat: bounds.getSouth() - latPadding,
+        maxLat: bounds.getNorth() + latPadding,
+        minLng: bounds.getWest() - lngPadding,
+        maxLng: bounds.getEast() + lngPadding
+      };
+      
       const { data, error } = await supabase.functions.invoke('get-external-events', {
         body: {
           limit: 100,
           offset: 0,
           filters: {
-            minLat: bounds.getSouth(),
-            maxLat: bounds.getNorth(),
-            minLng: bounds.getWest(),
-            maxLng: bounds.getEast()
+            minLat: paddedBounds.minLat,
+            maxLat: paddedBounds.maxLat,
+            minLng: paddedBounds.minLng,
+            maxLng: paddedBounds.maxLng
           }
         }
       });
@@ -175,19 +187,6 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       }
       
       if (data?.events && Array.isArray(data.events)) {
-        // Debug: Log first event coordinates to verify mapbox coords are returned
-        if (data.events.length > 0) {
-          const sample = data.events[0];
-          console.log('Sample event coords:', {
-            title: sample.title,
-            lng: sample.longitude,
-            lat: sample.latitude,
-            mapbox_lng: sample.mapbox_lng,
-            mapbox_lat: sample.mapbox_lat,
-            hasMapboxCoords: !!(sample.mapbox_lng && sample.mapbox_lat)
-          });
-        }
-        
         const mappedEvents: MapEvent[] = data.events.map((e: any) => ({
           id: e.external_id || String(e.id),
           external_id: e.external_id,
