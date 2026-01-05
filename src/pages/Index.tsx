@@ -25,7 +25,7 @@ const Index = () => {
         
         {/* Discovery CTA */}
         <div className="bg-background pt-16 pb-4">
-          <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
             <h2 className="font-serif text-4xl text-[#1f1f1f] italic font-normal text-center">
               Oder entdecke unsere Auswahl ↓
             </h2>

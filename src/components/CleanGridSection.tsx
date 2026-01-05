@@ -277,7 +277,7 @@ const CleanGridSection = ({
   if (loading) {
     return (
       <section className="py-10 md:py-12 bg-background">
-        <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 lg:text-3xl">
             {title}
           </h2>
@@ -309,7 +309,7 @@ const CleanGridSection = ({
 
   return (
     <section className="py-10 md:py-12 bg-background">
-      <div className="max-w-7xl mx-auto px-12 sm:px-16 lg:px-24">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 lg:text-3xl">
           {title}
         </h2>
