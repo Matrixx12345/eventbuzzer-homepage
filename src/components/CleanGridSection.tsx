@@ -235,12 +235,30 @@ const CleanGridSection = ({
           return;
         }
 
-        // FILTER: Entferne schlechte/saisonale Events
-        const BLACKLIST = ["hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", "malen wie", "zeichnen wie", "basteln wie", "schafe scheren", "schafschur", "disc golf", "discgolf"];
+        // FILTER: Entferne schlechte/saisonale Events - erweiterte Blacklist
+        const BLACKLIST = [
+          "hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", 
+          "malen wie", "zeichnen wie", "basteln wie", 
+          "schafe scheren", "schafschur", "sheep shearing", "schafe werden geschoren",
+          "wenn schafe geschoren werden",
+          "disc golf", "discgolf", "frisbee golf"
+        ];
+        
+        // Zusätzlicher exakter Titel-Check für hartnäckige Events
+        const TITLE_BLACKLIST = [
+          "wenn schafe geschoren werden",
+          "schafschur",
+          "sheep shearing"
+        ];
+        
         let filtered = (data || []).filter(event => {
           const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
+          const titleLower = (event.title || "").toLowerCase();
+          
           const isBlacklisted = BLACKLIST.some(keyword => searchText.includes(keyword.toLowerCase()));
-          return !isBlacklisted;
+          const isTitleBlocked = TITLE_BLACKLIST.some(t => titleLower.includes(t));
+          
+          return !isBlacklisted && !isTitleBlocked;
         });
 
         // Apply category diversity: max 2 per category
