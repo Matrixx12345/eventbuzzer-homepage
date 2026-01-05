@@ -3,13 +3,11 @@ import { Link } from "react-router-dom";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 import { getNearestPlace } from "@/utils/swissPlaces";
 
-interface BentoCardProps {
+interface HorizontalCardProps {
   title: string;
   description: string;
   image: string;
-  imagePosition: string;
-  isTall?: boolean;
-  isWide?: boolean;
+  imagePosition: "left" | "right";
   location: string;
   latitude?: number;
   longitude?: number;
@@ -18,22 +16,19 @@ interface BentoCardProps {
   onClick?: () => void;
 }
 
-const BentoCard = ({
+const HorizontalCard = ({
   title,
   description,
   image,
   imagePosition,
-  isTall,
-  isWide,
   location,
   latitude,
   longitude,
   categoryLabel,
   ticketUrl,
   onClick
-}: BentoCardProps) => {
+}: HorizontalCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
-    // If there's a ticket URL, let it navigate there; otherwise open popup
     if (!ticketUrl && onClick) {
       e.preventDefault();
       onClick();
@@ -42,21 +37,17 @@ const BentoCard = ({
 
   const CardContent = (
     <div className="flex flex-col justify-center p-6 text-center h-full">
-      {/* Category Badge - Clean Look */}
       {categoryLabel && (
         <span className="text-primary text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
           {categoryLabel}
         </span>
       )}
-      {/* Titel fixiert auf 2 Zeilen */}
       <h3 className="font-serif text-lg text-white mb-2 line-clamp-2 min-h-[3rem]">{title}</h3>
 
-      {/* Location mit Mini-Map Hover */}
       <div className="group/map relative inline-flex items-center justify-center gap-1 text-gray-400 text-xs mb-3 cursor-help">
         <span className="text-red-500">📍</span>
         <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
 
-        {/* MINI-MAP TOOLTIP */}
         {latitude && longitude && (
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
             <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
@@ -92,60 +83,20 @@ const BentoCard = ({
     ? { href: ticketUrl, target: "_blank", rel: "noopener noreferrer" }
     : {};
 
-  if (isWide) {
-    return (
-      <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-        <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 min-h-[280px]`}>
+  return (
+    <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
+      <div className={`${cardBaseClass} grid grid-cols-1 md:grid-cols-2 min-h-[280px]`}>
+        {imagePosition === "left" && (
           <div className="relative h-48 md:h-full overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
-          {CardContent}
-        </div>
-      </Wrapper>
-    );
-  }
-
-  // TALL CARDS: Bild OBEN, Text UNTEN - IMMER vertikal
-  if (isTall) {
-    return (
-      <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-        <div className={`${cardBaseClass} flex flex-col min-h-[580px]`}>
-          <div className="relative overflow-hidden flex-1">
+        )}
+        {CardContent}
+        {imagePosition === "right" && (
+          <div className="relative h-48 md:h-full overflow-hidden">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
-          <div className="flex-shrink-0">{CardContent}</div>
-        </div>
-      </Wrapper>
-    );
-  }
-
-  if (imagePosition === "left" || imagePosition === "right") {
-    return (
-      <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-        <div className={`${cardBaseClass} grid grid-cols-2 min-h-[280px]`}>
-          {imagePosition === "left" && (
-            <div className="relative overflow-hidden">
-              <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          )}
-          {CardContent}
-          {imagePosition === "right" && (
-            <div className="relative overflow-hidden">
-              <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          )}
-        </div>
-      </Wrapper>
-    );
-  }
-
-  return (
-    <Wrapper {...wrapperProps} onClick={handleClick} className="block h-full cursor-pointer">
-      <div className={`${cardBaseClass} flex flex-col min-h-[280px]`}>
-        <div className="relative overflow-hidden h-40">
-          <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        </div>
-        <div className="flex-shrink-0">{CardContent}</div>
+        )}
       </div>
     </Wrapper>
   );
@@ -204,7 +155,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Diversify events: max N per category to avoid too many spas/thermen
+  // Diversify events: max N per category
   const diversifyEvents = (events: any[], maxPerCategory: number = 2): any[] => {
     const categoryCounts: Record<string, number> = {};
     return events.filter(event => {
@@ -218,7 +169,6 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   useEffect(() => {
     async function loadEvents() {
       try {
-        // Date filtering: only show events that are currently active
         const today = new Date().toISOString().split('T')[0];
         const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
@@ -230,16 +180,15 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           .or(`start_date.is.null,start_date.lte.${nextMonth}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
-          .limit(30); // Fetch more to allow for diversity filtering
+          .limit(20);
 
         if (error) {
           console.error("Error loading elite events:", error);
           return;
         }
 
-        // Apply category diversity: max 2 per category
         const diversified = diversifyEvents(data || [], 2);
-        setEvents(diversified.slice(0, 11)); // Need 11 for complete grid mit 1x1 unten rechts
+        setEvents(diversified.slice(0, 6));
       } catch (error) {
         console.error("Error loading elite events:", error);
       } finally {
@@ -251,13 +200,15 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
 
   if (loading) {
     return (
-      <section className="bg-background py-24 px-6 md:px-12 lg:px-16">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
+      <section className="bg-background py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
             Die Schweizer Top Erlebnisse:
           </h2>
-          <div className="h-[400px] flex items-center justify-center">
-            <div className="animate-pulse text-muted-foreground">Lädt...</div>
+          <div className="space-y-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-[280px] bg-neutral-800 rounded-3xl animate-pulse" />
+            ))}
           </div>
         </div>
       </section>
@@ -268,8 +219,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     return null;
   }
 
-  // Map events to bento grid layout - need 11 for complete grid mit 1x1 unten rechts
-  const bentoEvents = events.slice(0, 11).map((event, index) => ({
+  const cardEvents = events.slice(0, 6).map((event, index) => ({
     id: event.id,
     title: event.title,
     description: event.description || event.short_description || "",
@@ -279,82 +229,25 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     longitude: event.longitude,
     categoryLabel: getCategoryLabel(event.category_sub_id),
     ticketUrl: event.ticket_link,
-    // Layout variations
-    imagePosition: index % 3 === 0 ? "left" : index % 3 === 1 ? "right" : "top",
-    isTall: index === 2 || index === 8, // Position 2 and 8 are tall cards
-    isWide: index === 9 // Position 9 is wide card
+    imagePosition: (index % 2 === 0 ? "left" : "right") as "left" | "right"
   }));
 
   return (
-    <section className="bg-background py-24 px-6 md:px-12 lg:px-16">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="font-serif text-4xl mb-16 not-italic text-left md:text-4xl text-neutral-500">
+    <section className="bg-background py-12 md:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
           Die Schweizer Top Erlebnisse:
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {bentoEvents[0] && (
-            <div className="md:col-span-2">
-              <BentoCard {...bentoEvents[0]} onClick={() => onEventClick?.(bentoEvents[0].id)} />
-            </div>
-          )}
-          {bentoEvents[2] && (
-            <div className="md:col-span-1 md:row-span-2">
-              <BentoCard {...bentoEvents[2]} isTall onClick={() => onEventClick?.(bentoEvents[2].id)} />
-            </div>
-          )}
-          {bentoEvents[1] && (
-            <div className="md:col-span-2">
-              <BentoCard {...bentoEvents[1]} onClick={() => onEventClick?.(bentoEvents[1].id)} />
-            </div>
-          )}
-
-          {bentoEvents[3] && (
-            <div className="md:col-span-1">
-              <BentoCard {...bentoEvents[3]} onClick={() => onEventClick?.(bentoEvents[3].id)} />
-            </div>
-          )}
-          {bentoEvents[4] && (
-            <div className="md:col-span-1">
-              <BentoCard {...bentoEvents[4]} onClick={() => onEventClick?.(bentoEvents[4].id)} />
-            </div>
-          )}
-          {bentoEvents[5] && (
-            <div className="md:col-span-1">
-              <BentoCard {...bentoEvents[5]} onClick={() => onEventClick?.(bentoEvents[5].id)} />
-            </div>
-          )}
-
-          {bentoEvents[6] && (
-            <div className="md:col-span-1">
-              <BentoCard {...bentoEvents[6]} onClick={() => onEventClick?.(bentoEvents[6].id)} />
-            </div>
-          )}
-          {bentoEvents[7] && (
-            <div className="md:col-span-1">
-              <BentoCard {...bentoEvents[7]} onClick={() => onEventClick?.(bentoEvents[7].id)} />
-            </div>
-          )}
-          {/* Tall card in bottom right (1 column, 2 rows) */}
-          {bentoEvents[8] && (
-            <div className="md:col-span-1 md:row-span-2">
-              <BentoCard {...bentoEvents[8]} isTall onClick={() => onEventClick?.(bentoEvents[8].id)} />
-            </div>
-          )}
-
-          {/* Wide card bottom left (2 columns) */}
-          {bentoEvents[9] && (
-            <div className="md:col-span-2">
-              <BentoCard {...bentoEvents[9]} isWide onClick={() => onEventClick?.(bentoEvents[9].id)} />
-            </div>
-          )}
-          
-          {/* Kleine Karte unten rechts (1x1) - explizite Grid-Position */}
-          {bentoEvents[10] && (
-            <div className="md:col-span-1 md:col-start-3 md:row-start-5">
-              <BentoCard {...bentoEvents[10]} onClick={() => onEventClick?.(bentoEvents[10].id)} />
-            </div>
-          )}
+        {/* Vertikale Liste mit alternierenden horizontalen Karten */}
+        <div className="space-y-6">
+          {cardEvents.map((event) => (
+            <HorizontalCard 
+              key={event.id}
+              {...event}
+              onClick={() => onEventClick?.(event.id)}
+            />
+          ))}
         </div>
 
         {/* Mehr anzeigen Button */}
