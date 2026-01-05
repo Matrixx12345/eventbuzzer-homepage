@@ -561,10 +561,14 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     }
 
     // Create Supercluster instance with category counting
+    // radius: 40 = events must be closer to cluster (less aggressive clustering)
+    // maxZoom: 14 = clusters break apart earlier (at regional view)
+    // minPoints: 3 = only cluster if 3+ events nearby
     const cluster = new Supercluster({
-      radius: 60,
-      maxZoom: 16,
+      radius: 40,
+      maxZoom: 14,
       minZoom: 0,
+      minPoints: 3,
       map: (props: any) => ({
         category: props.category,
         categoryCounts: { [props.category]: 1 }
