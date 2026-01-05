@@ -166,7 +166,7 @@ const getEventLocation = (event: any): string => {
 };
 
 // Category label mapping
-const getCategoryLabel = (categorySubId?: string): string | undefined => {
+const getCategoryLabel = (categorySubId?: string | string[]): string | undefined => {
   const mapping: Record<string, string> = {
     'museum-kunst': 'Museum',
     'konzert': 'Konzert',
@@ -178,9 +178,15 @@ const getCategoryLabel = (categorySubId?: string): string | undefined => {
     'family': 'Familie',
     'food': 'Kulinarik',
     'nightlife': 'Nightlife',
+    'erlebnisse': 'Erlebnisse',
+    'spa': 'Wellness',
+    'attraction': 'Attraktion',
   };
   if (!categorySubId) return undefined;
-  return mapping[categorySubId] || categorySubId.toUpperCase();
+  // Handle array case - take first element
+  const subId = Array.isArray(categorySubId) ? categorySubId[0] : categorySubId;
+  if (!subId || typeof subId !== 'string') return undefined;
+  return mapping[subId] || subId.charAt(0).toUpperCase() + subId.slice(1);
 };
 
 interface DynamicEventSectionProps {
