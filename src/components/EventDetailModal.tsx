@@ -90,7 +90,39 @@ interface DynamicEvent {
   gallery_urls?: string[];
   buzz_score?: number | null;
   opening_hours_note?: string;
+  tags?: string[];
 }
+
+// Tag display mapping and styling
+const TAG_DISPLAY_MAP: Record<string, { label: string; bgColor: string; textColor: string }> = {
+  'elite': { label: 'Must-See', bgColor: 'rgba(212, 175, 55, 0.2)', textColor: 'rgb(139, 115, 36)' },
+  'mistwetter': { label: 'Bei Mistwetter', bgColor: 'rgba(139, 133, 137, 0.2)', textColor: 'rgb(89, 83, 87)' },
+  'natur': { label: 'Natur', bgColor: 'rgba(178, 172, 136, 0.2)', textColor: 'rgb(98, 92, 56)' },
+  'outdoor': { label: 'Outdoor', bgColor: 'rgba(178, 172, 136, 0.2)', textColor: 'rgb(98, 92, 56)' },
+  'wandern': { label: 'Wandern', bgColor: 'rgba(178, 172, 136, 0.2)', textColor: 'rgb(98, 92, 56)' },
+  'winter-special': { label: 'Winter Special', bgColor: 'rgba(176, 224, 230, 0.2)', textColor: 'rgb(56, 124, 130)' },
+  'ski': { label: 'Ski', bgColor: 'rgba(176, 224, 230, 0.2)', textColor: 'rgb(56, 124, 130)' },
+  'schnee': { label: 'Schnee', bgColor: 'rgba(176, 224, 230, 0.2)', textColor: 'rgb(56, 124, 130)' },
+  'familie-freundlich': { label: 'Familienfreundlich', bgColor: 'rgba(251, 206, 177, 0.2)', textColor: 'rgb(171, 106, 57)' },
+  'gruppe': { label: 'Gruppenaktivität', bgColor: 'rgba(251, 206, 177, 0.2)', textColor: 'rgb(171, 106, 57)' },
+  'romantik': { label: 'Romantisch', bgColor: 'rgba(245, 245, 220, 0.2)', textColor: 'rgb(125, 125, 100)' },
+  'kultur': { label: 'Kultur', bgColor: 'rgba(245, 245, 220, 0.2)', textColor: 'rgb(125, 125, 100)' },
+  'kunst': { label: 'Kunst', bgColor: 'rgba(245, 245, 220, 0.2)', textColor: 'rgb(125, 125, 100)' },
+};
+
+// Category to label mapping
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+  'museum-kunst': 'MUSEUM',
+  'konzert': 'KONZERT',
+  'theater': 'THEATER',
+  'sport': 'SPORT',
+  'festival': 'FESTIVAL',
+  'outdoor': 'OUTDOOR',
+  'wellness': 'WELLNESS',
+  'family': 'FAMILIE',
+  'food': 'KULINARIK',
+  'nightlife': 'NIGHTLIFE',
+};
 
 const COUNTRY_NAMES = [
   "schweiz", "switzerland", "suisse", "svizzera",
@@ -574,6 +606,8 @@ const [loading, setLoading] = useState(false);
     isMuseum?: boolean;
     buzzScore?: number | null;
     galleryUrls?: string[];
+    categoryLabel?: string;
+    tags?: string[];
   };
 
   if (dynamicEvent) {
@@ -628,6 +662,8 @@ const [loading, setLoading] = useState(false);
       isMuseum,
       buzzScore: dynamicEvent.buzz_score,
       galleryUrls: dynamicEvent.gallery_urls || [],
+      categoryLabel: dynamicEvent.category_sub_id ? CATEGORY_LABEL_MAP[dynamicEvent.category_sub_id] : undefined,
+      tags: dynamicEvent.tags || [],
     };
   } else {
     event = {
@@ -768,6 +804,35 @@ const [loading, setLoading] = useState(false);
                   target.src = weekendJazz;
                 }}
               />
+              
+              {/* Tag Pills - oben links im Bild */}
+              <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 max-w-[80%]">
+                {/* Subkategorie Badge (grau) - immer zuerst */}
+                {event.categoryLabel && (
+                  <span className="bg-neutral-800/70 backdrop-blur-sm text-white text-[10px] font-semibold tracking-wider uppercase px-2 py-1 rounded">
+                    {event.categoryLabel}
+                  </span>
+                )}
+                
+                {/* Weitere Tags mit Milky-Style */}
+                {event.tags?.map((tag) => {
+                  const tagInfo = TAG_DISPLAY_MAP[tag];
+                  if (!tagInfo) return null;
+                  return (
+                    <span
+                      key={tag}
+                      className="backdrop-blur-sm text-[10px] font-medium px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: tagInfo.bgColor,
+                        color: tagInfo.textColor,
+                      }}
+                    >
+                      {tagInfo.label}
+                    </span>
+                  );
+                })}
+              </div>
+              
               <ImageAttribution 
                 author={event.imageAuthor} 
                 license={event.imageLicense} 
