@@ -42,14 +42,18 @@ const CleanGridCard = ({
   return (
     <div onClick={handleClick} className="block h-full cursor-pointer">
       <article className="relative h-full rounded-2xl overflow-hidden group">
-        {/* Background Image */}
+        {/* Background Image with premium treatment */}
         <div className="absolute inset-0">
           <img 
             src={image} 
             alt={title} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            className="w-full h-full object-cover transition-all duration-500
+                       saturate-[1.08] contrast-[1.02] brightness-[1.02]
+                       group-hover:scale-105 group-hover:saturate-[1.15]" 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          {/* Subtle Vignette for premium look */}
+          <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.15)] pointer-events-none" />
         </div>
 
         {/* Category Badge - Clean Look */}

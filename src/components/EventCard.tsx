@@ -71,16 +71,23 @@ const EventCard = ({
       onClick={handleCardClick}
       className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 cursor-pointer"
     >
-      {/* Image Section - 2.5:1 ultra-compact */}
+      {/* Image Section - 2.5:1 ultra-compact with premium treatment */}
       <div className="relative aspect-[2.5/1] overflow-hidden">
         <img
           src={image}
           alt={title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover transition-all duration-500
+                     saturate-[1.08] contrast-[1.02] brightness-[1.02]
+                     group-hover:scale-105 group-hover:saturate-[1.15]"
         />
+        {/* Cinematic Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent pointer-events-none" />
+        {/* Subtle Vignette for premium look */}
+        <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.15)] pointer-events-none" />
+        
         <button
           onClick={handleFavoriteClick}
-          className="absolute top-3 right-3 p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-black/40 transition-colors"
+          className="absolute top-3 right-3 p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-black/40 transition-colors z-10"
         >
           <Heart size={18} className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-white"} />
         </button>

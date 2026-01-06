@@ -41,13 +41,19 @@ const CompactCard = ({
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
       <div className="bg-neutral-900 rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-lg grid grid-cols-2 h-[220px]">
-        {/* Image */}
-        <div className="overflow-hidden">
+        {/* Image with premium treatment */}
+        <div className="relative overflow-hidden">
           <img 
             src={image} 
             alt={title} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            className="w-full h-full object-cover transition-all duration-500
+                       saturate-[1.08] contrast-[1.02] brightness-[1.02]
+                       group-hover:scale-105 group-hover:saturate-[1.15]" 
           />
+          {/* Cinematic Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/20 pointer-events-none" />
+          {/* Subtle Vignette */}
+          <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.15)] pointer-events-none" />
         </div>
         
         {/* Content */}
