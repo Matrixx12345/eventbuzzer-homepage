@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Heart } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Heart, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
@@ -7,6 +7,7 @@ import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import BuzzTracker from "@/components/BuzzTracker";
 import QuickHideButton from "@/components/QuickHideButton";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface CleanGridCardProps {
   id: string;
@@ -51,7 +52,7 @@ const CleanGridCard = ({
   };
   
   return (
-    <div onClick={handleClick} className="block h-full cursor-pointer">
+    <div onClick={handleClick} className="block h-full cursor-pointer flex-shrink-0 w-[300px] md:w-[320px]">
       <article className="relative h-full rounded-2xl overflow-hidden group">
         {/* Background Image with premium treatment */}
         <div className="absolute inset-0">
@@ -215,10 +216,40 @@ const CleanGridSection = ({
   filterParam,
   sourceFilter,
   onEventClick,
-  maxEvents = 6
+  maxEvents = 10
 }: CleanGridSectionProps) => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Embla Carousel
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    align: "start",
+    containScroll: "trimSnaps",
+    dragFree: true,
+  });
+  
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("reInit", onSelect);
+    };
+  }, [emblaApi, onSelect]);
 
   // Diversify events: max N per category to avoid too many spas/thermen
   const diversifyEvents = (events: any[], maxPerCategory: number = 2): any[] => {
@@ -347,12 +378,12 @@ const CleanGridSection = ({
     return (
       <section className="py-8 md:py-10 bg-transparent">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="text-3xl md:text-3xl font-serif text-foreground/80 mb-6">
+          <h2 className="text-2xl md:text-2xl font-serif text-foreground/80 mb-6 tracking-wide">
             {title}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-[320px] bg-muted rounded-2xl animate-pulse" />
+          <div className="flex gap-6 overflow-hidden">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-[300px] md:w-[320px] h-[320px] bg-muted rounded-2xl animate-pulse" />
             ))}
           </div>
         </div>
@@ -364,7 +395,6 @@ const CleanGridSection = ({
     return null;
   }
 
-  // 3-Spalten-Grid wie im Referenzbild
   const gridEvents = events.slice(0, maxEvents).map(event => ({
     id: event.id,
     image: event.image_url,
@@ -381,39 +411,74 @@ const CleanGridSection = ({
   return (
     <section className="py-8 md:py-10 bg-transparent">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <h2 className="text-3xl md:text-3xl font-serif text-foreground/80 mb-6">
+        {/* Title with reduced size and increased letter-spacing */}
+        <h2 className="text-2xl md:text-2xl font-serif text-foreground/80 mb-6 tracking-wide">
           {title}
         </h2>
 
-        {/* 3-Spalten-Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gridEvents.map((event) => (
-            <div key={event.id} className="h-[320px]">
-              <CleanGridCard 
-                {...event} 
-                onClick={() => onEventClick?.(event.id)}
-                onBuzzChange={(newScore) => {
-                  setEvents(prev => prev.map(e => 
-                    e.id === event.id ? { ...e, buzz_score: newScore } : e
-                  ));
-                }}
-                onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Mehr anzeigen Button */}
-        {filterParam && (
-          <div className="mt-6 text-center">
-            <Link 
-              to={`/listings?${filterParam}`}
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground border border-muted-foreground/30 hover:border-foreground/50 px-6 py-2.5 rounded-full transition-all text-sm font-medium"
+        {/* Carousel Container */}
+        <div className="relative group/carousel">
+          {/* Previous Button - Glassmorphism */}
+          {canScrollPrev && (
+            <button
+              onClick={scrollPrev}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -ml-4"
+              aria-label="Vorherige"
             >
-              Mehr anzeigen
-            </Link>
+              <ChevronLeft size={28} strokeWidth={2.5} className="text-stone-700" />
+            </button>
+          )}
+
+          {/* Next Button - Glassmorphism */}
+          {canScrollNext && (
+            <button
+              onClick={scrollNext}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -mr-4"
+              aria-label="Nächste"
+            >
+              <ChevronRight size={28} strokeWidth={2.5} className="text-stone-700" />
+            </button>
+          )}
+
+          {/* Embla Viewport */}
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex gap-6">
+              {gridEvents.map((event) => (
+                <div key={event.id} className="h-[320px]">
+                  <CleanGridCard 
+                    {...event} 
+                    onClick={() => onEventClick?.(event.id)}
+                    onBuzzChange={(newScore) => {
+                      setEvents(prev => prev.map(e => 
+                        e.id === event.id ? { ...e, buzz_score: newScore } : e
+                      ));
+                    }}
+                    onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
+                  />
+                </div>
+              ))}
+              
+              {/* End Card - "Alle anzeigen" */}
+              {filterParam && (
+                <div className="flex-shrink-0 w-[300px] md:w-[320px]">
+                  <Link 
+                    to={`/listings?${filterParam}`}
+                    className="flex items-center justify-center h-[320px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
+                  >
+                    <div className="text-center px-6">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 flex items-center justify-center group-hover:bg-stone-200 transition-colors">
+                        <ArrowRight size={28} className="text-stone-600 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                      <span className="text-lg font-medium text-stone-700 group-hover:text-stone-900">
+                        Alle anzeigen
+                      </span>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </section>
   );

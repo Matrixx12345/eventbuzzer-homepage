@@ -118,6 +118,8 @@ serve(async (req) => {
       singleDate,
       dateFrom,
       dateTo,
+      // NEU: Source-Filter
+      source,
       // Geo bounding box for map view
       minLat,
       maxLat,
@@ -188,6 +190,12 @@ serve(async (req) => {
     }
     if (subcategoryId) {
       query = query.eq("category_sub_id", subcategoryId);
+    }
+    
+    // NEU: Source-Filter (z.B. myswitzerland)
+    if (source) {
+      query = query.eq("source", source);
+      console.log("Filtering by source:", source);
     }
 
     // Suchtext-Filter

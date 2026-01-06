@@ -1,5 +1,6 @@
 import heroImage from "@/assets/hero-mountains.jpg";
 import HeroFilterBar from "./HeroFilterBar";
+import ScrollIndicator from "./ScrollIndicator";
 
 const HeroSection = () => {
   return (
@@ -22,6 +23,11 @@ const HeroSection = () => {
         
         {/* Filter Bar positioned at bottom of hero */}
         <HeroFilterBar />
+      </div>
+
+      {/* Scroll Indicator - milky pill with animated chevron */}
+      <div className="bg-[#F5F0E8] pt-8 pb-4 flex justify-center">
+        <ScrollIndicator />
       </div>
     </section>
   );

@@ -23,51 +23,42 @@ const Index = () => {
       <main>
         <HeroSection />
         
-        {/* Discovery CTA */}
-        <div className="bg-[#F5F0E8] pt-16 pb-4">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-            <h2 className="font-serif text-4xl text-[#1f1f1f] italic font-normal text-center">
-              Oder entdecke unsere Auswahl ↓
-            </h2>
-          </div>
-        </div>
-        
         {/* Sandiger Hintergrund für alle Event-Sektionen */}
         <div className="bg-[#F5F0E8]">
-          {/* Sektion 1: Verpasse nicht an diesem Wochenende - 3-Spalten-Grid (Clean Look) */}
+          {/* Sektion 1: Verpasse nicht an diesem Wochenende - Karussell */}
           <ErrorBoundary>
             <CleanGridSection 
               title="Verpasse nicht an diesem Wochenende:"
               sourceFilter="myswitzerland"
               filterParam="source=myswitzerland"
               onEventClick={openEvent}
-              maxEvents={3}
+              maxEvents={10}
             />
           </ErrorBoundary>
 
-          {/* Sektion 2: Familien-Abenteuer - Schwarzes Side-by-Side Layout */}
+          {/* Sektion 2: Familien-Abenteuer - Karussell */}
           <ErrorBoundary>
             <SideBySideSection 
               title="Familien-Abenteuer:" 
               tagFilter="familie-freundlich"
               filterParam="tags=familie-freundlich"
               onEventClick={openEvent}
-              maxEvents={4}
+              maxEvents={10}
             />
           </ErrorBoundary>
 
-          {/* Sektion 3: Wärmende Indoor-Erlebnisse - 3-Spalten-Grid (Clean Look) */}
+          {/* Sektion 3: Wärmende Indoor-Erlebnisse - Karussell */}
           <ErrorBoundary>
             <CleanGridSection 
               title="Wärmende Indoor-Erlebnisse:" 
               tagFilter="mistwetter"
               filterParam="tags=mistwetter"
               onEventClick={openEvent}
-              maxEvents={3}
+              maxEvents={10}
             />
           </ErrorBoundary>
 
-          {/* Sektion 4: Die Schweizer Top Erlebnisse (elite Tag) - vorletzte Sektion */}
+          {/* Sektion 4: Die Schweizer Top Erlebnisse - Karussell */}
           <ErrorBoundary>
             <EliteExperiencesSection onEventClick={openEvent} />
           </ErrorBoundary>

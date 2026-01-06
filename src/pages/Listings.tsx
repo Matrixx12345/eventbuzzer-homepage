@@ -224,6 +224,9 @@ const Listings = () => {
   const urlTime = searchParams.get("time");
   const urlDate = searchParams.get("date");
   const urlSearch = searchParams.get("search");
+  // NEU: Direkte Tags und Source aus URL
+  const urlTags = searchParams.get("tags");
+  const urlSource = searchParams.get("source");
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState(urlCity || "");
@@ -258,7 +261,18 @@ const Listings = () => {
       }
     }
     
+    // NEU: Source-Filter aus URL
+    if (urlSource) {
+      filters.source = urlSource;
+    }
+    
     const tags: string[] = [];
+    
+    // NEU: Direkte Tags aus URL (z.B. ?tags=elite oder ?tags=mistwetter)
+    if (urlTags) {
+      tags.push(urlTags);
+    }
+    
     if (selectedQuickFilters.includes("romantik")) tags.push("romantisch-date");
     if (selectedQuickFilters.includes("wellness")) tags.push("wellness-selfcare");
     if (selectedQuickFilters.includes("natur")) tags.push("natur-erlebnisse", "open-air");
@@ -280,6 +294,8 @@ const Listings = () => {
     selectedQuickFilters,
     selectedDate,
     searchQuery,
+    urlTags,
+    urlSource,
   ]);
 
   const fetchEvents = useCallback(
