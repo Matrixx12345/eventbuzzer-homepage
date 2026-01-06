@@ -73,10 +73,10 @@ const CompactCard = ({
           )}
         </div>
         
-        {/* Content */}
-        <div className="py-5 px-6 flex flex-col h-full">
+        {/* Content - mehr Padding oben, weniger unten für Content näher am BuzzTracker */}
+        <div className="pt-8 pb-3 px-6 flex flex-col h-full">
           {/* Location - subtle, top */}
-          <div className="group/map relative inline-flex items-center mb-2">
+          <div className="group/map relative inline-flex items-center mb-1">
             <span className="text-[11px] font-medium tracking-widest text-stone-400 uppercase">{location}</span>
 
             {latitude && longitude && (
@@ -99,13 +99,13 @@ const CompactCard = ({
           </div>
 
           {/* Title - Playfair elegant */}
-          <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-3 line-clamp-2 leading-tight">{title}</h3>
+          <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-2 leading-tight">{title}</h3>
 
           {/* Description - 3 lines */}
           <p className="text-stone-500 text-sm leading-relaxed line-clamp-3">{description}</p>
 
           {/* BuzzTracker - fills bottom space */}
-          <div className="mt-auto pt-2">
+          <div className="mt-auto pt-1">
             <BuzzTracker 
               buzzScore={buzzScore} 
               editable={true}
