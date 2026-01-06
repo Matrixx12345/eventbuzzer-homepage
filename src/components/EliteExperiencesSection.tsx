@@ -305,7 +305,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
             <CompactCard 
               key={event.id}
               {...event}
-              eventId={event.id}
+              eventId={event.externalId}
               onBuzzChange={(newScore) => {
                 setEvents(prev => prev.map(e => 
                   e.id === event.id ? { ...e, buzz_score: newScore } : e

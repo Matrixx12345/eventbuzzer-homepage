@@ -55,8 +55,12 @@ export const BuzzTracker = ({
   const handleSliderRelease = async () => {
     if (localScore === null || !editable) return;
     
-    const extId = externalId || eventId;
-    if (!extId) return;
+    // Nur externalId verwenden - das ist die korrekte ID für Overrides
+    const extId = externalId;
+    if (!extId) {
+      console.warn("BuzzTracker: Keine externalId vorhanden!", { eventId, externalId });
+      return;
+    }
 
     setSaving(true);
     try {
