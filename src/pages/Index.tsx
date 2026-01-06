@@ -44,11 +44,6 @@ const Index = () => {
               maxEvents={3}
             />
           </ErrorBoundary>
-          
-          {/* Dezente Trennlinie */}
-          <div className="flex justify-center mb-10">
-            <div className="w-2/3 max-w-4xl h-px bg-[#C9A962]/20" />
-          </div>
 
           {/* Sektion 2: Familien-Abenteuer - Schwarzes Side-by-Side Layout */}
           <ErrorBoundary>
@@ -57,14 +52,9 @@ const Index = () => {
               tagFilter="familie-freundlich"
               filterParam="tags=familie-freundlich"
               onEventClick={openEvent}
-              maxEvents={9}
+              maxEvents={4}
             />
           </ErrorBoundary>
-          
-          {/* Dezente Trennlinie */}
-          <div className="flex justify-center mb-10">
-            <div className="w-2/3 max-w-4xl h-px bg-[#C9A962]/20" />
-          </div>
 
           {/* Sektion 3: Wärmende Indoor-Erlebnisse - 3-Spalten-Grid (Clean Look) */}
           <ErrorBoundary>
@@ -76,11 +66,6 @@ const Index = () => {
               maxEvents={3}
             />
           </ErrorBoundary>
-          
-          {/* Dezente Trennlinie */}
-          <div className="flex justify-center mb-10">
-            <div className="w-2/3 max-w-4xl h-px bg-[#C9A962]/20" />
-          </div>
 
           {/* Sektion 4: Die Schweizer Top Erlebnisse (elite Tag) - vorletzte Sektion */}
           <ErrorBoundary>
