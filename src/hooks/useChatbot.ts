@@ -7,8 +7,12 @@ export const useChatbot = () => {
   const [hasBeenDismissed, setHasBeenDismissed] = useState(false);
 
   useEffect(() => {
-    // Always auto-open on page load
-    setIsOpen(true);
+    // 4-Sekunden-Delay für das automatische Öffnen
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+    }, 4000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const openChatbot = () => {
