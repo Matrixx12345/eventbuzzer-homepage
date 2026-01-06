@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
+import { externalSupabase } from "@/integrations/supabase/externalClient";
+import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
 
 import BuzzTracker from "@/components/BuzzTracker";
@@ -190,7 +191,8 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
         const today = new Date().toISOString().split('T')[0];
         const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        const { data, error } = await supabase
+        // 1. Lade Events vom externen Supabase
+        const { data, error } = await externalSupabase
           .from("events")
           .select("*")
           .contains("tags", ["elite"])
@@ -206,16 +208,39 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           return;
         }
 
+        // 2. Lade Buzz-Overrides von Lovable Cloud
+        const externalIds = (data || []).map(e => e.external_id).filter(Boolean);
+        let overridesMap: Record<string, number> = {};
+        
+        if (externalIds.length > 0) {
+          const { data: overrides } = await cloudSupabase
+            .from("event_vibe_overrides")
+            .select("external_id, buzz_boost")
+            .in("external_id", externalIds);
+          
+          if (overrides) {
+            overridesMap = Object.fromEntries(
+              overrides.map(o => [o.external_id, o.buzz_boost])
+            );
+          }
+        }
+
         // BLACKLIST für unerwünschte Events
         const BLACKLIST = [
           "schaf", "sheep", "geschieden", "geschoren",
           "wenn schafe geschoren werden", "wenn schafe geschieden werden"
         ];
         
-        const filtered = (data || []).filter(event => {
+        let filtered = (data || []).filter(event => {
           const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
           return !BLACKLIST.some(keyword => searchText.includes(keyword));
         });
+
+        // 3. Wende Overrides an
+        filtered = filtered.map(event => ({
+          ...event,
+          buzz_score: overridesMap[event.external_id] ?? event.buzz_score
+        }));
 
         const diversified = diversifyEvents(filtered, 2);
         setEvents(diversified.slice(0, 6));
