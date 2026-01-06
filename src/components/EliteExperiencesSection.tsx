@@ -55,18 +55,10 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-6 flex flex-col relative">
-          {/* Premium Accent Line */}
-          <div className="absolute top-0 left-6 right-6 h-[2px] bg-gradient-to-r from-amber-400/70 via-amber-300/40 to-transparent" />
-          
-          <h3 className="font-serif text-xl md:text-2xl font-bold text-[#1a1a1a] mb-4 line-clamp-2 leading-tight">{title}</h3>
-
-          <p className="text-[#2d2d2d] font-sans text-[15px] leading-relaxed line-clamp-4 mb-4">{description}</p>
-
-          {/* Location at bottom */}
-          <div className="mt-auto pt-3 group/map relative inline-flex items-center gap-1.5 text-stone-500 text-sm cursor-help">
-            <span className="text-red-500">📍</span>
-            <span className="border-b border-dotted border-stone-300 hover:text-stone-700 transition-colors">{location}</span>
+        <div className="py-5 px-6 flex flex-col h-full">
+          {/* Location - subtle, top */}
+          <div className="group/map relative inline-flex items-center mb-3">
+            <span className="text-xs font-medium tracking-wide text-stone-400 uppercase">{location}</span>
 
             {latitude && longitude && (
               <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
@@ -86,6 +78,10 @@ const CompactCard = ({
               </div>
             )}
           </div>
+
+          <h3 className="font-sans text-lg font-semibold text-[#1a1a1a] mb-3 line-clamp-2 leading-snug tracking-tight">{title}</h3>
+
+          <p className="text-stone-600 font-sans text-sm leading-relaxed line-clamp-4">{description}</p>
         </div>
       </div>
     </Wrapper>
