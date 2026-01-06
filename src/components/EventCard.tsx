@@ -69,7 +69,7 @@ const EventCard = ({
   return (
     <article 
       onClick={handleCardClick}
-      className="group bg-[#FDFBF7] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-stone-200/60 cursor-pointer"
+      className="group bg-[#F5EFE6] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-stone-300/50 cursor-pointer"
     >
       {/* Image Section - 2.5:1 ultra-compact with premium treatment */}
       <div className="relative aspect-[2.5/1] overflow-hidden">
@@ -96,17 +96,17 @@ const EventCard = ({
       {/* Content Section */}
       <div className="p-4 flex flex-col flex-grow gap-1.5">
         {/* Title: Fixed 2 lines with min-height for consistent card heights */}
-        <h3 className="text-[15px] font-bold text-neutral-800 leading-tight line-clamp-2 min-h-[2.5rem]">
+        <h3 className="text-base font-bold text-stone-900 leading-tight line-clamp-2 min-h-[2.75rem]">
           {title}
         </h3>
 
         {/* Venue */}
-        <p className="text-[11px] text-neutral-500 truncate">{venue}</p>
+        <p className="text-[11px] text-stone-600 truncate">{venue}</p>
 
         {/* Location with Mini-Map Hover Tooltip */}
-        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-500 cursor-help w-fit">
-          <span className="text-red-500">📍</span>
-          <span className="border-b border-dotted border-gray-300 group-hover/map:text-gray-700 transition-colors">
+        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-stone-600 cursor-help w-fit">
+          <span className="text-red-600">📍</span>
+          <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
             {location || "Schweiz"}
           </span>
 
@@ -135,9 +135,9 @@ const EventCard = ({
         </div>
 
         {/* Footer: Price indicator + Buzz + Rating */}
-        <div className="mt-auto pt-2 flex items-center gap-8 text-[10px] text-neutral-500">
+        <div className="mt-auto pt-2 flex items-center gap-8 text-[10px] text-stone-600">
           {/* Price indicator */}
-          <span className="text-sm font-medium text-neutral-600">$</span>
+          <span className="text-sm font-medium text-stone-700">$</span>
           
           {/* Buzz Tracker - inline in footer */}
           <BuzzTracker buzzScore={buzz_score} />
