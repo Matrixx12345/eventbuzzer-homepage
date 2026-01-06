@@ -104,8 +104,8 @@ const CompactCard = ({
           {/* Description - 3 lines */}
           <p className="text-stone-500 text-sm leading-relaxed line-clamp-3">{description}</p>
 
-          {/* BuzzTracker - direkt unter description */}
-          <div className="pt-2">
+          {/* BuzzTracker - mit Abstand zur description */}
+          <div className="pt-12">
             <BuzzTracker 
               buzzScore={buzzScore} 
               editable={true}
