@@ -1,24 +1,18 @@
 import { useState, useEffect } from "react";
 
-const CHATBOT_DISMISSED_KEY = "eventbuzzer_chatbot_dismissed";
-
+// Kein sessionStorage mehr - Chatbot öffnet bei JEDEM Seitenbesuch nach 4 Sekunden
 export const useChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasBeenDismissed, setHasBeenDismissed] = useState(() => {
-    return sessionStorage.getItem(CHATBOT_DISMISSED_KEY) === "true";
-  });
 
   useEffect(() => {
-    // Nicht automatisch öffnen wenn bereits dismissed
-    if (hasBeenDismissed) return;
-    
-    // 4-Sekunden-Delay für das automatische Öffnen
+    // 4-Sekunden-Delay für das automatische Öffnen - IMMER
     const timer = setTimeout(() => {
+      console.log("[Chatbot] Auto-opening after 4 seconds");
       setIsOpen(true);
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [hasBeenDismissed]);
+  }, []);
 
   const openChatbot = () => {
     setIsOpen(true);
@@ -26,8 +20,6 @@ export const useChatbot = () => {
 
   const closeChatbot = () => {
     setIsOpen(false);
-    setHasBeenDismissed(true);
-    sessionStorage.setItem(CHATBOT_DISMISSED_KEY, "true");
   };
 
   const toggleChatbot = () => {
@@ -40,7 +32,7 @@ export const useChatbot = () => {
 
   return {
     isOpen,
-    hasBeenDismissed,
+    hasBeenDismissed: false, // Immer false da keine Persistenz mehr
     openChatbot,
     closeChatbot,
     toggleChatbot,

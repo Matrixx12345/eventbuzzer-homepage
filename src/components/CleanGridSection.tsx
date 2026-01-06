@@ -175,30 +175,44 @@ const getEventLocation = (event: any): string => {
   return "Schweiz";
 };
 
-// Category label mapping
-const getCategoryLabel = (categorySubId?: string | string[]): string | undefined => {
-  const mapping: Record<string, string> = {
-    'museum-kunst': 'Museum',
-    'konzert': 'Konzert',
-    'theater': 'Theater',
-    'sport': 'Sport',
-    'festival': 'Festival',
-    'outdoor': 'Outdoor',
-    'wellness': 'Wellness',
-    'family': 'Familie',
-    'food': 'Kulinarik',
-    'nightlife': 'Nightlife',
-    'erlebnisse': 'Erlebnisse',
-    'spa': 'Wellness',
-    'attraction': 'Attraktion',
-    'natur': 'Natur',
-    'aussicht': 'Aussicht',
-    'stadt': 'Stadt',
-  };
-  if (!categorySubId) return undefined;
-  const subId = Array.isArray(categorySubId) ? categorySubId[0] : categorySubId;
-  if (!subId || typeof subId !== 'string') return undefined;
-  return mapping[subId] || subId.charAt(0).toUpperCase() + subId.slice(1);
+// Intelligente Kategorie-Erkennung mit includes() und Tag-Fallback
+const getCategoryLabel = (event: any): string | undefined => {
+  const subCat = (event.category_sub_id || event.sub_category || '').toString().toLowerCase();
+  const tags = Array.isArray(event.tags) ? event.tags : [];
+  
+  // Exakte und Teil-Matches für Kategorien
+  if (subCat.includes('museum') || subCat.includes('kunst') || subCat.includes('galer')) return 'Museum';
+  if (subCat.includes('wanderung') || subCat.includes('trail') || subCat.includes('hike')) return 'Wanderung';
+  if (subCat.includes('wellness') || subCat.includes('spa') || subCat.includes('therm')) return 'Wellness';
+  if (subCat.includes('natur') || subCat.includes('park') || subCat.includes('garten')) return 'Natur';
+  if (subCat.includes('sehenswürdig') || subCat.includes('attraction') || subCat.includes('ausflug')) return 'Ausflug';
+  if (subCat.includes('schloss') || subCat.includes('burg') || subCat.includes('castle')) return 'Schloss';
+  if (subCat.includes('kirche') || subCat.includes('kloster') || subCat.includes('dom')) return 'Kultur';
+  if (subCat.includes('zoo') || subCat.includes('tier') || subCat.includes('aquar')) return 'Tierpark';
+  if (subCat.includes('familie') || subCat.includes('kinder') || subCat.includes('family')) return 'Familie';
+  if (subCat.includes('wissenschaft') || subCat.includes('technik') || subCat.includes('science')) return 'Science';
+  if (subCat.includes('konzert') || subCat.includes('music') || subCat.includes('live')) return 'Konzert';
+  if (subCat.includes('theater') || subCat.includes('oper') || subCat.includes('bühne')) return 'Theater';
+  if (subCat.includes('sport') || subCat.includes('outdoor')) return 'Sport';
+  if (subCat.includes('festival') || subCat.includes('fest')) return 'Festival';
+  if (subCat.includes('food') || subCat.includes('kulinar') || subCat.includes('gastro')) return 'Kulinarik';
+  if (subCat.includes('nightlife') || subCat.includes('party') || subCat.includes('club')) return 'Nightlife';
+  if (subCat.includes('aussicht') || subCat.includes('view') || subCat.includes('panorama')) return 'Aussicht';
+  if (subCat.includes('erlebnis')) return 'Erlebnis';
+  
+  // Fallback: Tags prüfen
+  if (tags.includes('natur') || tags.includes('natur-erlebnisse')) return 'Natur';
+  if (tags.includes('wellness') || tags.includes('wellness-selfcare')) return 'Wellness';
+  if (tags.includes('familie-kinder') || tags.includes('familie-freundlich')) return 'Familie';
+  if (tags.includes('kunst') || tags.includes('kultur')) return 'Kultur';
+  if (tags.includes('indoor') || tags.includes('mistwetter')) return 'Indoor';
+  
+  // Letzter Fallback: Ersten Buchstaben gross wenn subCat existiert
+  if (subCat && subCat.length > 2) {
+    return subCat.charAt(0).toUpperCase() + subCat.slice(1);
+  }
+  
+  return undefined;
 };
 
 interface CleanGridSectionProps {
@@ -404,7 +418,7 @@ const CleanGridSection = ({
     slug: event.id,
     latitude: event.latitude,
     longitude: event.longitude,
-    categoryLabel: getCategoryLabel(event.category_sub_id),
+    categoryLabel: getCategoryLabel(event), // Ganzes Event übergeben für intelligente Erkennung
     buzzScore: event.buzz_score,
     externalId: event.external_id
   }));
