@@ -39,6 +39,7 @@ const Index = () => {
             <CleanGridSection 
               title="Verpasse nicht an diesem Wochenende:"
               sourceFilter="myswitzerland"
+              filterParam="source=myswitzerland"
               onEventClick={openEvent}
               maxEvents={6}
             />

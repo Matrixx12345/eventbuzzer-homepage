@@ -259,7 +259,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
 
   if (loading) {
     return (
-      <section className="bg-background py-12 md:py-16">
+      <section className="bg-transparent py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
             Die Schweizer Top Erlebnisse:
@@ -293,7 +293,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   }));
 
   return (
-    <section className="bg-background py-12 md:py-16">
+    <section className="bg-transparent py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
           Die Schweizer Top Erlebnisse:
