@@ -55,8 +55,8 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-5 flex flex-col justify-center">
-          <h3 className="font-serif text-lg md:text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-2 leading-snug">{title}</h3>
+        <div className="p-5 flex flex-col">
+          <h3 className="font-serif text-lg md:text-xl font-semibold text-[#1a1a1a] mb-3 line-clamp-2 leading-snug">{title}</h3>
 
           <div className="group/map relative inline-flex items-center gap-1 text-stone-700 text-sm mb-3 cursor-help">
             <span className="border-b border-dotted border-stone-400 hover:text-stone-900 transition-colors">{location}</span>
@@ -80,7 +80,7 @@ const CompactCard = ({
             )}
           </div>
 
-          <p className="text-stone-700 font-sans text-sm leading-relaxed line-clamp-2">{description}</p>
+          <p className="text-[#3d3d3d] font-sans text-sm font-medium leading-relaxed line-clamp-2">{description}</p>
         </div>
       </div>
     </Wrapper>
