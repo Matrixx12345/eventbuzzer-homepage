@@ -60,12 +60,13 @@ export const BuzzTracker = ({
 
     setSaving(true);
     try {
+      // Speichere den absoluten Score direkt als buzz_boost (nicht als Multiplikator)
       const { error } = await supabase
         .from("event_vibe_overrides")
         .upsert(
           {
             external_id: extId,
-            buzz_boost: localScore / (buzzScore || 20), // Calculate multiplier from new score
+            buzz_boost: localScore, // Direkt den Score speichern
             updated_at: new Date().toISOString(),
           },
           { onConflict: "external_id" }
