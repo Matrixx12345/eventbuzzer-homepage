@@ -219,8 +219,12 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
             .in("external_id", externalIds);
           
           if (overrides) {
+            // Nur Werte > 10 sind absolute Scores (neue Logik)
+            // Werte <= 10 sind alte Multiplikatoren, die ignoriert werden
             overridesMap = Object.fromEntries(
-              overrides.map(o => [o.external_id, o.buzz_boost])
+              overrides
+                .filter(o => o.buzz_boost !== null && o.buzz_boost > 10)
+                .map(o => [o.external_id, o.buzz_boost])
             );
           }
         }
