@@ -40,7 +40,7 @@ const CompactCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className="bg-[#F5EFE6] rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-stone-400/50 shadow-lg border border-stone-300/50 grid grid-cols-2 h-[220px]">
+      <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 shadow-md border border-stone-200 grid grid-cols-2 h-[220px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden">
           <img 
@@ -55,11 +55,11 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-4 flex flex-col justify-center">
-          <h3 className="font-serif text-base md:text-lg text-stone-900 mb-2 line-clamp-2 leading-snug">{title}</h3>
+        <div className="p-5 flex flex-col justify-center">
+          <h3 className="font-serif text-lg md:text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-2 leading-snug">{title}</h3>
 
-          <div className="group/map relative inline-flex items-center gap-1 text-stone-600 text-[11px] mb-2 cursor-help">
-            <span className="border-b border-dotted border-stone-400 hover:text-stone-800 transition-colors">{location}</span>
+          <div className="group/map relative inline-flex items-center gap-1 text-stone-700 text-sm mb-3 cursor-help">
+            <span className="border-b border-dotted border-stone-400 hover:text-stone-900 transition-colors">{location}</span>
 
             {latitude && longitude && (
               <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
@@ -80,7 +80,7 @@ const CompactCard = ({
             )}
           </div>
 
-          <p className="text-stone-600 font-sans text-xs leading-relaxed line-clamp-2">{description}</p>
+          <p className="text-stone-700 font-sans text-sm leading-relaxed line-clamp-2">{description}</p>
         </div>
       </div>
     </Wrapper>
