@@ -69,7 +69,7 @@ const EventCard = ({
   return (
     <article 
       onClick={handleCardClick}
-      className="group bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 cursor-pointer"
+      className="group bg-[#FDFBF7] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-stone-200/60 cursor-pointer"
     >
       {/* Image Section - 2.5:1 ultra-compact with premium treatment */}
       <div className="relative aspect-[2.5/1] overflow-hidden">
@@ -77,8 +77,8 @@ const EventCard = ({
           src={image}
           alt={title}
           className="w-full h-full object-cover transition-all duration-500
-                     saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
-                     group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0"
+                     blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
+                     group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0"
         />
         {/* Subtle Vignette for premium look */}
         <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
@@ -96,15 +96,15 @@ const EventCard = ({
       {/* Content Section */}
       <div className="p-4 flex flex-col flex-grow gap-1.5">
         {/* Title: Fixed 2 lines with min-height for consistent card heights */}
-        <h3 className="text-[15px] font-bold text-card-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
+        <h3 className="text-[15px] font-bold text-neutral-800 leading-tight line-clamp-2 min-h-[2.5rem]">
           {title}
         </h3>
 
         {/* Venue */}
-        <p className="text-[11px] text-gray-500 truncate">{venue}</p>
+        <p className="text-[11px] text-neutral-500 truncate">{venue}</p>
 
         {/* Location with Mini-Map Hover Tooltip */}
-        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-gray-500 cursor-help w-fit">
+        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-neutral-500 cursor-help w-fit">
           <span className="text-red-500">📍</span>
           <span className="border-b border-dotted border-gray-300 group-hover/map:text-gray-700 transition-colors">
             {location || "Schweiz"}
@@ -135,9 +135,9 @@ const EventCard = ({
         </div>
 
         {/* Footer: Price indicator + Buzz + Rating */}
-        <div className="mt-auto pt-2 flex items-center gap-8 text-[10px] text-gray-500">
+        <div className="mt-auto pt-2 flex items-center gap-8 text-[10px] text-neutral-500">
           {/* Price indicator */}
-          <span className="text-sm font-medium text-neutral-700">$</span>
+          <span className="text-sm font-medium text-neutral-600">$</span>
           
           {/* Buzz Tracker - inline in footer */}
           <BuzzTracker buzzScore={buzz_score} />
