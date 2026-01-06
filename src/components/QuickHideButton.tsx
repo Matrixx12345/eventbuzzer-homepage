@@ -47,10 +47,10 @@ export const QuickHideButton = ({ externalId, onHide }: QuickHideButtonProps) =>
   return (
     <button
       onClick={handleHide}
-      className="absolute bottom-3 right-3 z-20 bg-red-500/80 hover:bg-red-600 text-white rounded-full p-1.5 opacity-60 hover:opacity-100 transition-opacity"
+      className="absolute bottom-2 right-2 z-20 text-white/20 hover:text-white/80 transition-all p-1"
       title="Von Startseite ausblenden"
     >
-      <X className="h-3 w-3" />
+      <X className="h-4 w-4" />
     </button>
   );
 };
