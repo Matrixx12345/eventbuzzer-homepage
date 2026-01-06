@@ -178,39 +178,35 @@ const getEventLocation = (event: any): string => {
 // Intelligente Kategorie-Erkennung mit includes() und Tag-Fallback
 const getCategoryLabel = (event: any): string | undefined => {
   const subCat = (event.category_sub_id || event.sub_category || '').toString().toLowerCase();
-  const tags = Array.isArray(event.tags) ? event.tags : [];
+  const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : '';
+  const title = (event.title || '').toLowerCase();
+  const combined = `${subCat} ${tags} ${title}`;
   
   // Exakte und Teil-Matches für Kategorien
-  if (subCat.includes('museum') || subCat.includes('kunst') || subCat.includes('galer')) return 'Museum';
-  if (subCat.includes('wanderung') || subCat.includes('trail') || subCat.includes('hike')) return 'Wanderung';
-  if (subCat.includes('wellness') || subCat.includes('spa') || subCat.includes('therm')) return 'Wellness';
-  if (subCat.includes('natur') || subCat.includes('park') || subCat.includes('garten')) return 'Natur';
-  if (subCat.includes('sehenswürdig') || subCat.includes('attraction') || subCat.includes('ausflug')) return 'Ausflug';
-  if (subCat.includes('schloss') || subCat.includes('burg') || subCat.includes('castle')) return 'Schloss';
-  if (subCat.includes('kirche') || subCat.includes('kloster') || subCat.includes('dom')) return 'Kultur';
-  if (subCat.includes('zoo') || subCat.includes('tier') || subCat.includes('aquar')) return 'Tierpark';
-  if (subCat.includes('familie') || subCat.includes('kinder') || subCat.includes('family')) return 'Familie';
-  if (subCat.includes('wissenschaft') || subCat.includes('technik') || subCat.includes('science')) return 'Science';
-  if (subCat.includes('konzert') || subCat.includes('music') || subCat.includes('live')) return 'Konzert';
-  if (subCat.includes('theater') || subCat.includes('oper') || subCat.includes('bühne')) return 'Theater';
-  if (subCat.includes('sport') || subCat.includes('outdoor')) return 'Sport';
-  if (subCat.includes('festival') || subCat.includes('fest')) return 'Festival';
-  if (subCat.includes('food') || subCat.includes('kulinar') || subCat.includes('gastro')) return 'Kulinarik';
-  if (subCat.includes('nightlife') || subCat.includes('party') || subCat.includes('club')) return 'Nightlife';
-  if (subCat.includes('aussicht') || subCat.includes('view') || subCat.includes('panorama')) return 'Aussicht';
-  if (subCat.includes('erlebnis')) return 'Erlebnis';
+  if (combined.includes('museum') || combined.includes('kunst') || combined.includes('galer') || combined.includes('ausstellung')) return 'Museum';
+  if (combined.includes('wanderung') || combined.includes('trail') || combined.includes('hike')) return 'Wanderung';
+  if (combined.includes('wellness') || combined.includes('spa') || combined.includes('therm') || combined.includes('bad')) return 'Wellness';
+  if (combined.includes('natur') || combined.includes('park') || combined.includes('garten') || combined.includes('wald')) return 'Natur';
+  if (combined.includes('sehenswürdig') || combined.includes('attraction')) return 'Ausflug';
+  if (combined.includes('schloss') || combined.includes('burg') || combined.includes('castle')) return 'Schloss';
+  if (combined.includes('kirche') || combined.includes('kloster') || combined.includes('dom') || combined.includes('münster')) return 'Kultur';
+  if (combined.includes('zoo') || combined.includes('tier') || combined.includes('aquar')) return 'Tierpark';
+  if (combined.includes('familie') || combined.includes('kinder') || combined.includes('family')) return 'Familie';
+  if (combined.includes('wissenschaft') || combined.includes('technik') || combined.includes('science') || combined.includes('planetar')) return 'Science';
+  if (combined.includes('konzert') || combined.includes('music') || combined.includes('live')) return 'Konzert';
+  if (combined.includes('theater') || combined.includes('oper') || combined.includes('bühne')) return 'Theater';
+  if (combined.includes('sport')) return 'Sport';
+  if (combined.includes('festival') || combined.includes('fest')) return 'Festival';
+  if (combined.includes('food') || combined.includes('kulinar') || combined.includes('gastro') || combined.includes('wein') || combined.includes('käse')) return 'Kulinarik';
+  if (combined.includes('nightlife') || combined.includes('party') || combined.includes('club')) return 'Nightlife';
+  if (combined.includes('aussicht') || combined.includes('view') || combined.includes('panorama') || combined.includes('berg')) return 'Aussicht';
+  if (combined.includes('see') || combined.includes('lake') || combined.includes('schiff')) return 'See';
+  if (combined.includes('bahn') || combined.includes('zug') || combined.includes('train')) return 'Bahn';
+  if (combined.includes('altstadt') || combined.includes('city') || combined.includes('stadt')) return 'Stadt';
+  if (combined.includes('erlebnis')) return 'Erlebnis';
   
-  // Fallback: Tags prüfen
-  if (tags.includes('natur') || tags.includes('natur-erlebnisse')) return 'Natur';
-  if (tags.includes('wellness') || tags.includes('wellness-selfcare')) return 'Wellness';
-  if (tags.includes('familie-kinder') || tags.includes('familie-freundlich')) return 'Familie';
-  if (tags.includes('kunst') || tags.includes('kultur')) return 'Kultur';
-  if (tags.includes('indoor') || tags.includes('mistwetter')) return 'Indoor';
-  
-  // Letzter Fallback: Ersten Buchstaben gross wenn subCat existiert
-  if (subCat && subCat.length > 2) {
-    return subCat.charAt(0).toUpperCase() + subCat.slice(1);
-  }
+  // Fallback für myswitzerland: "Ausflug" als Default
+  if (event.source === 'myswitzerland') return 'Ausflug';
   
   return undefined;
 };
