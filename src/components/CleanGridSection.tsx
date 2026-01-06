@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
+import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import BuzzTracker from "@/components/BuzzTracker";
 
@@ -254,6 +255,26 @@ const CleanGridSection = ({
           return;
         }
 
+        // Lade Buzz-Overrides von Lovable Cloud
+        const externalIds = (data || []).map(e => e.external_id).filter(Boolean);
+        let overridesMap: Record<string, number> = {};
+        
+        if (externalIds.length > 0) {
+          const { data: overrides } = await cloudSupabase
+            .from("event_vibe_overrides")
+            .select("external_id, buzz_boost")
+            .in("external_id", externalIds);
+          
+          if (overrides) {
+            // Nur Werte > 10 sind absolute Scores (neue Logik)
+            overridesMap = Object.fromEntries(
+              overrides
+                .filter(o => o.buzz_boost !== null && o.buzz_boost > 10)
+                .map(o => [o.external_id, o.buzz_boost])
+            );
+          }
+        }
+
         // FILTER: Entferne schlechte/saisonale Events - erweiterte Blacklist
         const BLACKLIST = [
           "hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", 
@@ -282,6 +303,12 @@ const CleanGridSection = ({
           return !isBlacklisted && !isTitleBlocked;
         });
 
+        // Wende Buzz-Overrides an
+        filtered = filtered.map(event => ({
+          ...event,
+          buzz_score: overridesMap[event.external_id] ?? event.buzz_score
+        }));
+
         // Apply category diversity: max 2 per category
         filtered = diversifyEvents(filtered, 2);
 
@@ -309,7 +336,7 @@ const CleanGridSection = ({
 
   if (loading) {
     return (
-      <section className="py-10 md:py-12 bg-background">
+      <section className="py-10 md:py-12 bg-transparent">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <h2 className="text-3xl md:text-3xl font-serif text-muted-foreground mb-8">
             {title}
@@ -343,7 +370,7 @@ const CleanGridSection = ({
   }));
 
   return (
-    <section className="py-10 md:py-12 bg-background">
+    <section className="py-10 md:py-12 bg-transparent">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <h2 className="text-3xl md:text-3xl font-serif text-muted-foreground mb-8">
           {title}
