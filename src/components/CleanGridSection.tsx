@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 import { getNearestPlace } from "@/utils/swissPlaces";
+import BuzzTracker from "@/components/BuzzTracker";
 
 interface CleanGridCardProps {
   id: string;
@@ -14,6 +15,9 @@ interface CleanGridCardProps {
   latitude?: number;
   longitude?: number;
   categoryLabel?: string;
+  buzzScore?: number | null;
+  externalId?: string;
+  onBuzzChange?: (newScore: number) => void;
   onClick?: () => void;
 }
 
@@ -26,6 +30,9 @@ const CleanGridCard = ({
   latitude,
   longitude,
   categoryLabel,
+  buzzScore,
+  externalId,
+  onBuzzChange,
   onClick
 }: CleanGridCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -56,10 +63,10 @@ const CleanGridCard = ({
           <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
         </div>
 
-        {/* Category Badge - Clean Look */}
+        {/* Category Badge - Milky Look */}
         {categoryLabel && (
           <div className="absolute top-4 left-4 z-10">
-            <span className="bg-neutral-800/70 backdrop-blur-sm text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
+            <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
               {categoryLabel}
             </span>
           </div>
@@ -85,14 +92,14 @@ const CleanGridCard = ({
           <Heart size={18} className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-white"} />
         </button>
 
-        {/* Content - nur Titel und Ort */}
+        {/* Content - Titel, Ort und BuzzTracker */}
         <div className="relative h-full flex flex-col justify-end p-5">
-          <h3 className="font-serif text-white text-xl lg:text-2xl font-semibold leading-tight mb-2 line-clamp-2">
+          <h3 className="font-serif text-white text-xl lg:text-2xl font-semibold leading-tight mb-1 line-clamp-2">
             {title}
           </h3>
           
           {/* Location mit Mini-Map Hover */}
-          <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help">
+          <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help mb-2">
             <span className="border-b border-dotted border-white/40 hover:text-white transition-colors">
               {location}
             </span>
@@ -116,6 +123,15 @@ const CleanGridCard = ({
               </div>
             )}
           </div>
+
+          {/* BuzzTracker */}
+          <BuzzTracker 
+            buzzScore={buzzScore} 
+            editable={true}
+            eventId={id}
+            externalId={externalId}
+            onBuzzChange={onBuzzChange}
+          />
         </div>
       </article>
     </div>
@@ -321,7 +337,9 @@ const CleanGridSection = ({
     slug: event.id,
     latitude: event.latitude,
     longitude: event.longitude,
-    categoryLabel: getCategoryLabel(event.category_sub_id)
+    categoryLabel: getCategoryLabel(event.category_sub_id),
+    buzzScore: event.buzz_score,
+    externalId: event.external_id
   }));
 
   return (
@@ -335,7 +353,15 @@ const CleanGridSection = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {gridEvents.map((event) => (
             <div key={event.id} className="h-[320px]">
-              <CleanGridCard {...event} onClick={() => onEventClick?.(event.id)} />
+              <CleanGridCard 
+                {...event} 
+                onClick={() => onEventClick?.(event.id)}
+                onBuzzChange={(newScore) => {
+                  setEvents(prev => prev.map(e => 
+                    e.id === event.id ? { ...e, buzz_score: newScore } : e
+                  ));
+                }}
+              />
             </div>
           ))}
         </div>
