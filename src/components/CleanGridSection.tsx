@@ -6,6 +6,7 @@ import { externalSupabase as supabase } from "@/integrations/supabase/externalCl
 import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import BuzzTracker from "@/components/BuzzTracker";
+import QuickHideButton from "@/components/QuickHideButton";
 
 interface CleanGridCardProps {
   id: string;
@@ -20,6 +21,7 @@ interface CleanGridCardProps {
   externalId?: string;
   onBuzzChange?: (newScore: number) => void;
   onClick?: () => void;
+  onHide?: () => void;
 }
 
 const CleanGridCard = ({
@@ -34,7 +36,8 @@ const CleanGridCard = ({
   buzzScore,
   externalId,
   onBuzzChange,
-  onClick
+  onClick,
+  onHide
 }: CleanGridCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const isCurrentlyFavorite = isFavorite(id);
@@ -62,6 +65,11 @@ const CleanGridCard = ({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           {/* Subtle Vignette for premium look */}
           <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
+          
+          {/* QuickHideButton - bottom right of image */}
+          {externalId && onHide && (
+            <QuickHideButton externalId={externalId} onHide={onHide} />
+          )}
         </div>
 
         {/* Category Badge - Milky Look */}
@@ -233,12 +241,13 @@ const CleanGridSection = ({
         let query = supabase
           .from("events")
           .select("*")
+          .eq("hide_from_homepage", false)
           .not("image_url", "is", null)
-          .gte("relevance_score", 50) // Nur hochwertige Events für Startseite
+          .gte("relevance_score", 50)
           .or(`start_date.is.null,start_date.lte.${nextWeek}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
-          .limit(maxEvents * 5); // Fetch more to allow for filtering + blacklist + diversification
+          .limit(maxEvents * 5);
 
         if (tagFilter) {
           query = query.contains("tags", [tagFilter]);
@@ -388,6 +397,7 @@ const CleanGridSection = ({
                     e.id === event.id ? { ...e, buzz_score: newScore } : e
                   ));
                 }}
+                onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
               />
             </div>
           ))}

@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
-
 import BuzzTracker from "@/components/BuzzTracker";
+import QuickHideButton from "@/components/QuickHideButton";
 
 interface CompactCardProps {
   title: string;
@@ -20,6 +20,7 @@ interface CompactCardProps {
   externalId?: string;
   onBuzzChange?: (newScore: number) => void;
   onClick?: () => void;
+  onHide?: () => void;
 }
 
 const CompactCard = ({
@@ -35,7 +36,8 @@ const CompactCard = ({
   eventId,
   externalId,
   onBuzzChange,
-  onClick
+  onClick,
+  onHide
 }: CompactCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
     if (!ticketUrl && onClick) {
@@ -71,6 +73,11 @@ const CompactCard = ({
                 {categoryLabel}
               </span>
             </div>
+          )}
+          
+          {/* QuickHideButton - bottom right of image */}
+          {externalId && onHide && (
+            <QuickHideButton externalId={externalId} onHide={onHide} />
           )}
         </div>
         
@@ -195,6 +202,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
         const { data, error } = await externalSupabase
           .from("events")
           .select("*")
+          .eq("hide_from_homepage", false)
           .contains("tags", ["elite"])
           .not("image_url", "is", null)
           .gte("relevance_score", 50)
@@ -312,6 +320,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
                 ));
               }}
               onClick={() => onEventClick?.(event.id)}
+              onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
             />
           ))}
         </div>
