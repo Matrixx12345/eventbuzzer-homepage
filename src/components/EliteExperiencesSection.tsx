@@ -40,7 +40,7 @@ const CompactCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 shadow-md border border-stone-200 grid grid-cols-2 h-[220px]">
+      <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 grid grid-cols-[55%_45%] h-[280px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden">
           <img 
@@ -55,11 +55,18 @@ const CompactCard = ({
         </div>
         
         {/* Content */}
-        <div className="p-5 flex flex-col">
-          <h3 className="font-serif text-lg md:text-xl font-semibold text-[#1a1a1a] mb-3 line-clamp-2 leading-snug">{title}</h3>
+        <div className="p-6 flex flex-col relative">
+          {/* Premium Accent Line */}
+          <div className="absolute top-0 left-6 right-6 h-[2px] bg-gradient-to-r from-amber-400/70 via-amber-300/40 to-transparent" />
+          
+          <h3 className="font-serif text-xl md:text-2xl font-bold text-[#1a1a1a] mb-4 line-clamp-2 leading-tight">{title}</h3>
 
-          <div className="group/map relative inline-flex items-center gap-1 text-stone-700 text-sm mb-3 cursor-help">
-            <span className="border-b border-dotted border-stone-400 hover:text-stone-900 transition-colors">{location}</span>
+          <p className="text-[#2d2d2d] font-sans text-[15px] leading-relaxed line-clamp-4 mb-4">{description}</p>
+
+          {/* Location at bottom */}
+          <div className="mt-auto pt-3 group/map relative inline-flex items-center gap-1.5 text-stone-500 text-sm cursor-help">
+            <span className="text-red-500">📍</span>
+            <span className="border-b border-dotted border-stone-300 hover:text-stone-700 transition-colors">{location}</span>
 
             {latitude && longitude && (
               <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
@@ -79,8 +86,6 @@ const CompactCard = ({
               </div>
             )}
           </div>
-
-          <p className="text-[#3d3d3d] font-sans text-sm font-medium leading-relaxed line-clamp-2">{description}</p>
         </div>
       </div>
     </Wrapper>
