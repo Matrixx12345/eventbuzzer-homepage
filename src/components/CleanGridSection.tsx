@@ -221,11 +221,12 @@ const CleanGridSection = ({
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Embla Carousel
+  // Embla Carousel - slidesToScroll scrollt ganze Karten
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: "start",
-    containScroll: "trimSnaps",
-    dragFree: true,
+    containScroll: false,
+    dragFree: false,
+    slidesToScroll: 1,
   });
   
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -417,34 +418,34 @@ const CleanGridSection = ({
         </h2>
 
         {/* Carousel Container */}
-        <div className="relative group/carousel">
-          {/* Previous Button - Glassmorphism */}
+        <div className="relative">
+          {/* Previous Button - Glassmorphism, IMMER sichtbar */}
           {canScrollPrev && (
             <button
               onClick={scrollPrev}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -ml-4"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-full shadow-lg border border-white/40 hover:bg-white/90 transition-colors -ml-4"
               aria-label="Vorherige"
             >
               <ChevronLeft size={28} strokeWidth={2.5} className="text-stone-700" />
             </button>
           )}
 
-          {/* Next Button - Glassmorphism */}
+          {/* Next Button - Glassmorphism, IMMER sichtbar */}
           {canScrollNext && (
             <button
               onClick={scrollNext}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -mr-4"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-full shadow-lg border border-white/40 hover:bg-white/90 transition-colors -mr-4"
               aria-label="Nächste"
             >
               <ChevronRight size={28} strokeWidth={2.5} className="text-stone-700" />
             </button>
           )}
 
-          {/* Embla Viewport */}
-          <div className="overflow-hidden" ref={emblaRef}>
+          {/* Embla Viewport - mit Fade-Gradient rechts */}
+          <div className="overflow-hidden relative" ref={emblaRef}>
             <div className="flex gap-6">
               {gridEvents.map((event) => (
-                <div key={event.id} className="h-[320px]">
+                <div key={event.id} className="h-[320px] flex-shrink-0">
                   <CleanGridCard 
                     {...event} 
                     onClick={() => onEventClick?.(event.id)}
@@ -477,6 +478,10 @@ const CleanGridSection = ({
                 </div>
               )}
             </div>
+            {/* Fade-Gradient rechts um anzuzeigen dass mehr kommt */}
+            {canScrollNext && (
+              <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+            )}
           </div>
         </div>
       </div>

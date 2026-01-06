@@ -6,7 +6,6 @@ import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import BuzzTracker from "@/components/BuzzTracker";
 import QuickHideButton from "@/components/QuickHideButton";
-import useEmblaCarousel from "embla-carousel-react";
 
 interface CompactCardProps {
   title: string;
@@ -54,7 +53,7 @@ const CompactCard = ({
     : {};
 
   return (
-    <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer flex-shrink-0 w-[400px] md:w-[440px]">
+    <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
       <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 grid grid-cols-[55%_45%] h-[280px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden">
@@ -193,40 +192,11 @@ const SideBySideSection = ({
   tagFilter,
   filterParam,
   onEventClick,
-  maxEvents = 10
+  maxEvents = 8
 }: SideBySideSectionProps) => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Embla Carousel
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    align: "start",
-    containScroll: "trimSnaps",
-    dragFree: true,
-  });
-  
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
-    return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
-    };
-  }, [emblaApi, onSelect]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Diversify events: max N per category to avoid too many spas/thermen
   const diversifyEvents = (events: any[], maxPerCategory: number = 2): any[] => {
@@ -274,8 +244,6 @@ const SideBySideSection = ({
             .in("external_id", externalIds);
           
           if (overrides) {
-            // Nur Werte > 10 sind absolute Scores (neue Logik)
-            // Werte <= 10 sind alte Multiplikatoren, die ignoriert werden
             overridesMap = Object.fromEntries(
               overrides
                 .filter(o => o.buzz_boost !== null && o.buzz_boost > 10)
@@ -315,6 +283,23 @@ const SideBySideSection = ({
     loadEvents();
   }, [tagFilter, maxEvents]);
 
+  // 2x2 Grid Navigation
+  const eventsPerPage = 4;
+  const totalPages = Math.ceil(events.length / eventsPerPage);
+  const canScrollPrev = currentPage > 0;
+  const canScrollNext = currentPage < totalPages - 1;
+
+  const scrollPrev = useCallback(() => {
+    setCurrentPage(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const scrollNext = useCallback(() => {
+    setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
+  }, [totalPages]);
+
+  // Get current 4 events for 2x2 grid
+  const currentEvents = events.slice(currentPage * eventsPerPage, (currentPage + 1) * eventsPerPage);
+
   if (loading) {
     return (
       <section className="bg-transparent py-8 md:py-10">
@@ -322,9 +307,9 @@ const SideBySideSection = ({
           <h2 className="font-serif text-2xl mb-6 not-italic text-left tracking-wide text-foreground/80">
             {title}
           </h2>
-          <div className="flex gap-6 overflow-hidden">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-[400px] md:w-[440px] h-[280px] bg-neutral-200 rounded-2xl animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-[280px] bg-neutral-200 rounded-2xl animate-pulse" />
             ))}
           </div>
         </div>
@@ -336,7 +321,7 @@ const SideBySideSection = ({
     return null;
   }
 
-  const cardEvents = events.slice(0, maxEvents).map((event) => ({
+  const cardEvents = currentEvents.map((event) => ({
     id: event.id,
     title: event.title,
     description: event.description || event.short_description || "",
@@ -350,6 +335,10 @@ const SideBySideSection = ({
     externalId: event.external_id
   }));
 
+  // Check if we should show "Alle anzeigen" card (on last page with less than 4 events)
+  const isLastPage = currentPage === totalPages - 1;
+  const showEndCard = isLastPage && cardEvents.length < 4;
+
   return (
     <section className="bg-transparent py-8 md:py-10">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
@@ -358,66 +347,77 @@ const SideBySideSection = ({
           {title}
         </h2>
 
-        {/* Carousel Container */}
-        <div className="relative group/carousel">
-          {/* Previous Button - Glassmorphism */}
+        {/* 2x2 Grid Container with Chevrons */}
+        <div className="relative">
+          {/* Previous Button - zwischen Zeile 1 und 2, IMMER sichtbar */}
           {canScrollPrev && (
             <button
               onClick={scrollPrev}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -ml-4"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-full shadow-lg border border-white/40 hover:bg-white/90 transition-colors -ml-4"
               aria-label="Vorherige"
             >
               <ChevronLeft size={28} strokeWidth={2.5} className="text-stone-700" />
             </button>
           )}
 
-          {/* Next Button - Glassmorphism */}
+          {/* Next Button - zwischen Zeile 1 und 2, IMMER sichtbar */}
           {canScrollNext && (
             <button
               onClick={scrollNext}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -mr-4"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-full shadow-lg border border-white/40 hover:bg-white/90 transition-colors -mr-4"
               aria-label="Nächste"
             >
               <ChevronRight size={28} strokeWidth={2.5} className="text-stone-700" />
             </button>
           )}
 
-          {/* Embla Viewport */}
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-6">
-              {cardEvents.map((event) => (
-                <CompactCard 
-                  key={event.id}
-                  {...event}
-                  eventId={event.externalId}
-                  onBuzzChange={(newScore) => {
-                    setEvents(prev => prev.map(e => 
-                      e.id === event.id ? { ...e, buzz_score: newScore } : e
-                    ));
-                  }}
-                  onClick={() => onEventClick?.(event.id)}
-                  onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
-                />
-              ))}
-              
-              {/* End Card - "Alle anzeigen" */}
-              <div className="flex-shrink-0 w-[400px] md:w-[440px]">
-                <Link 
-                  to={`/listings?${filterParam}`}
-                  className="flex items-center justify-center h-[280px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
-                >
-                  <div className="text-center px-6">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 flex items-center justify-center group-hover:bg-stone-200 transition-colors">
-                      <ArrowRight size={28} className="text-stone-600 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                    <span className="text-lg font-medium text-stone-700 group-hover:text-stone-900">
-                      Alle anzeigen
-                    </span>
+          {/* 2x2 Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {cardEvents.map((event) => (
+              <CompactCard 
+                key={event.id}
+                {...event}
+                eventId={event.externalId}
+                onBuzzChange={(newScore) => {
+                  setEvents(prev => prev.map(e => 
+                    e.id === event.id ? { ...e, buzz_score: newScore } : e
+                  ));
+                }}
+                onClick={() => onEventClick?.(event.id)}
+                onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
+              />
+            ))}
+            
+            {/* End Card - "Alle anzeigen" - nur auf letzter Seite wenn Platz */}
+            {showEndCard && (
+              <Link 
+                to={`/listings?${filterParam}`}
+                className="flex items-center justify-center h-[280px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
+              >
+                <div className="text-center px-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 flex items-center justify-center group-hover:bg-stone-200 transition-colors">
+                    <ArrowRight size={28} className="text-stone-600 group-hover:translate-x-1 transition-transform" />
                   </div>
-                </Link>
-              </div>
-            </div>
+                  <span className="text-lg font-medium text-stone-700 group-hover:text-stone-900">
+                    Alle anzeigen
+                  </span>
+                </div>
+              </Link>
+            )}
           </div>
+
+          {/* "Alle anzeigen" Link unter dem Grid wenn nicht als Karte angezeigt */}
+          {!showEndCard && (
+            <div className="flex justify-center mt-6">
+              <Link 
+                to={`/listings?${filterParam}`}
+                className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-900 font-medium transition-colors group"
+              >
+                <span>Alle {title.split(' ').slice(-1)[0]} anzeigen</span>
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </section>
