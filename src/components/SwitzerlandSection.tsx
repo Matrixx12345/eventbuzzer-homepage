@@ -140,7 +140,6 @@ const BentoCard = ({
 
       {/* Location mit Mini-Map Hover */}
       <div className="group/map relative inline-flex items-center justify-center gap-1 text-gray-400 text-xs mb-3 cursor-help">
-        <span className="text-red-500">📍</span>
         <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
 
         {/* MINI-MAP TOOLTIP */}

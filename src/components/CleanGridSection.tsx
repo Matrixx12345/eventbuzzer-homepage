@@ -89,7 +89,6 @@ const CleanGridCard = ({
           
           {/* Location mit Mini-Map Hover */}
           <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help">
-            <span className="text-red-500">📍</span>
             <span className="border-b border-dotted border-white/40 hover:text-white transition-colors">
               {location}
             </span>
