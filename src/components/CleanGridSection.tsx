@@ -213,7 +213,7 @@ const CleanGridSection = ({
           .from("events")
           .select("*")
           .not("image_url", "is", null)
-          .gte("relevance_score", 3.0) // Nur hochwertige Events für Startseite
+          .gte("relevance_score", 50) // Nur hochwertige Events für Startseite
           .or(`start_date.is.null,start_date.lte.${nextWeek}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })

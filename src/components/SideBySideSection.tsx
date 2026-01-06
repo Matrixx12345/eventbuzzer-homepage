@@ -173,7 +173,7 @@ const SideBySideSection = ({
           .select("*")
           .contains("tags", [tagFilter])
           .not("image_url", "is", null)
-          .gte("relevance_score", 3.0)
+          .gte("relevance_score", 50)
           .or(`start_date.is.null,start_date.lte.${nextWeek}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
