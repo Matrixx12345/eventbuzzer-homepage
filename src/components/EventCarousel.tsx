@@ -56,23 +56,23 @@ const EventCarousel = ({
         </h2>
 
         {/* Carousel Container */}
-        <div className="relative group/carousel">
-          {/* Previous Button - Glassmorphism */}
+        <div className="relative">
+          {/* Previous Button - Glassmorphism, IMMER sichtbar */}
           {canScrollPrev && (
             <button
               onClick={scrollPrev}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -ml-4"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-full shadow-lg border border-white/40 hover:bg-white/90 transition-colors -ml-4"
               aria-label="Vorherige"
             >
               <ChevronLeft size={28} strokeWidth={2.5} className="text-stone-700" />
             </button>
           )}
 
-          {/* Next Button - Glassmorphism */}
+          {/* Next Button - Glassmorphism, IMMER sichtbar */}
           {canScrollNext && (
             <button
               onClick={scrollNext}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/60 backdrop-blur-md rounded-full shadow-lg border border-white/30 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 hover:bg-white/80 -mr-4"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-full shadow-lg border border-white/40 hover:bg-white/90 transition-colors -mr-4"
               aria-label="Nächste"
             >
               <ChevronRight size={28} strokeWidth={2.5} className="text-stone-700" />
