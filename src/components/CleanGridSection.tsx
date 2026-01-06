@@ -239,13 +239,15 @@ const CleanGridSection = ({
           "hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", 
           "malen wie", "zeichnen wie", "basteln wie", 
           "schafe scheren", "schafschur", "sheep shearing", "schafe werden geschoren",
-          "wenn schafe geschoren werden",
+          "wenn schafe geschoren werden", "wenn schafe geschieden werden",
+          "schaf", "sheep", "geschieden", "geschoren",
           "disc golf", "discgolf", "frisbee golf"
         ];
         
         // Zusätzlicher exakter Titel-Check für hartnäckige Events
         const TITLE_BLACKLIST = [
           "wenn schafe geschoren werden",
+          "wenn schafe geschieden werden",
           "schafschur",
           "sheep shearing"
         ];
@@ -277,7 +279,7 @@ const CleanGridSection = ({
     return (
       <section className="py-10 md:py-12 bg-background">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 lg:text-3xl">
+          <h2 className="text-3xl md:text-3xl font-serif text-muted-foreground mb-8">
             {title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -309,7 +311,7 @@ const CleanGridSection = ({
   return (
     <section className="py-10 md:py-12 bg-background">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <h2 className="text-3xl sm:text-4xl font-serif text-muted-foreground mb-8 lg:text-3xl">
+        <h2 className="text-3xl md:text-3xl font-serif text-muted-foreground mb-8">
           {title}
         </h2>
 
