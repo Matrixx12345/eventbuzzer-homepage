@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 import { getNearestPlace } from "@/utils/swissPlaces";
 
+import BuzzTracker from "@/components/BuzzTracker";
+
 interface CompactCardProps {
   title: string;
   description: string;
@@ -12,6 +14,7 @@ interface CompactCardProps {
   longitude?: number;
   categoryLabel?: string;
   ticketUrl?: string;
+  buzzScore?: number | null;
   onClick?: () => void;
 }
 
@@ -24,6 +27,7 @@ const CompactCard = ({
   longitude,
   categoryLabel,
   ticketUrl,
+  buzzScore,
   onClick
 }: CompactCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
@@ -52,13 +56,22 @@ const CompactCard = ({
           />
           {/* Subtle Vignette */}
           <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
+          
+          {/* Milky Category Pill - top left */}
+          {categoryLabel && (
+            <div className="absolute top-4 left-4 z-10">
+              <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
+                {categoryLabel}
+              </span>
+            </div>
+          )}
         </div>
         
         {/* Content */}
         <div className="py-5 px-6 flex flex-col h-full">
           {/* Location - subtle, top */}
-          <div className="group/map relative inline-flex items-center mb-3">
-            <span className="text-xs font-medium tracking-wide text-stone-400 uppercase">{location}</span>
+          <div className="group/map relative inline-flex items-center mb-2">
+            <span className="text-[11px] font-medium tracking-widest text-stone-400 uppercase">{location}</span>
 
             {latitude && longitude && (
               <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
@@ -79,9 +92,16 @@ const CompactCard = ({
             )}
           </div>
 
-          <h3 className="font-sans text-lg font-semibold text-[#1a1a1a] mb-3 line-clamp-2 leading-snug tracking-tight">{title}</h3>
+          {/* Title - Playfair elegant */}
+          <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-3 line-clamp-2 leading-tight">{title}</h3>
 
-          <p className="text-stone-600 font-sans text-sm leading-relaxed line-clamp-4">{description}</p>
+          {/* Description - 3 lines */}
+          <p className="text-stone-500 text-sm leading-relaxed line-clamp-3">{description}</p>
+
+          {/* BuzzTracker - fills bottom space */}
+          <div className="mt-auto pt-4">
+            <BuzzTracker buzzScore={buzzScore} />
+          </div>
         </div>
       </div>
     </Wrapper>
@@ -244,7 +264,8 @@ const SideBySideSection = ({
     latitude: event.latitude,
     longitude: event.longitude,
     categoryLabel: getCategoryLabel(event.category_sub_id),
-    ticketUrl: event.ticket_link
+    ticketUrl: event.ticket_link,
+    buzzScore: event.buzz_score
   }));
 
   return (
