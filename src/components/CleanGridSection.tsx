@@ -52,7 +52,7 @@ const CleanGridCard = ({
   };
   
   return (
-    <div onClick={handleClick} className="block h-full cursor-pointer flex-shrink-0 w-[300px] md:w-[320px]">
+    <div onClick={handleClick} className="block h-full cursor-pointer flex-shrink-0 w-full">
       <article className="relative h-full rounded-2xl overflow-hidden group">
         {/* Background Image with premium treatment */}
         <div className="absolute inset-0">
@@ -221,12 +221,12 @@ const CleanGridSection = ({
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Embla Carousel - slidesToScroll scrollt ganze Karten
+  // Embla Carousel - zeigt exakt 3 volle Karten
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: "start",
-    containScroll: false,
+    containScroll: "trimSnaps",
     dragFree: false,
-    slidesToScroll: 1,
+    slidesToScroll: 3,
   });
   
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -441,11 +441,11 @@ const CleanGridSection = ({
             </button>
           )}
 
-          {/* Embla Viewport - mit Fade-Gradient rechts */}
+          {/* Embla Viewport - Nur 3 volle Karten */}
           <div className="overflow-hidden relative" ref={emblaRef}>
-            <div className="flex gap-6">
-              {gridEvents.map((event) => (
-                <div key={event.id} className="h-[320px] flex-shrink-0">
+            <div className="flex gap-5">
+              {gridEvents.slice(0, 9).map((event) => (
+                <div key={event.id} className="h-[320px] flex-shrink-0 w-[calc(33.333%-14px)] min-w-[280px]">
                   <CleanGridCard 
                     {...event} 
                     onClick={() => onEventClick?.(event.id)}
@@ -461,7 +461,7 @@ const CleanGridSection = ({
               
               {/* End Card - "Alle anzeigen" */}
               {filterParam && (
-                <div className="flex-shrink-0 w-[300px] md:w-[320px]">
+                <div className="flex-shrink-0 w-[calc(33.333%-14px)] min-w-[280px]">
                   <Link 
                     to={`/listings?${filterParam}`}
                     className="flex items-center justify-center h-[320px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
@@ -478,10 +478,6 @@ const CleanGridSection = ({
                 </div>
               )}
             </div>
-            {/* Fade-Gradient rechts um anzuzeigen dass mehr kommt */}
-            {canScrollNext && (
-              <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-            )}
           </div>
         </div>
       </div>
