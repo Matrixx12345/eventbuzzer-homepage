@@ -259,9 +259,9 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
 
   if (loading) {
     return (
-      <section className="bg-transparent py-12 md:py-16">
+      <section className="bg-transparent py-8 md:py-10">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
+          <h2 className="font-serif text-3xl mb-6 not-italic text-left md:text-4xl text-foreground/80">
             Die Schweizer Top Erlebnisse:
           </h2>
           <div className="space-y-6">
@@ -293,9 +293,9 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   }));
 
   return (
-    <section className="bg-transparent py-12 md:py-16">
+    <section className="bg-transparent py-8 md:py-10">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
+        <h2 className="font-serif text-3xl mb-6 not-italic text-left md:text-4xl text-foreground/80">
           Die Schweizer Top Erlebnisse:
         </h2>
 
@@ -317,7 +317,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
         </div>
 
         {/* Mehr anzeigen Button */}
-        <div className="mt-10 text-center">
+        <div className="mt-6 text-center">
           <Link 
             to="/listings?tags=elite"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground border border-muted-foreground/30 hover:border-foreground/50 px-6 py-2.5 rounded-full transition-all text-sm font-medium"
