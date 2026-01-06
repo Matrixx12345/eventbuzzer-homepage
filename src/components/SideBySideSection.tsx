@@ -188,7 +188,8 @@ const SideBySideSection = ({
           "hop-on-hop-off", "hop on hop off", "city sightseeing bus", "stadtrundfahrt bus", 
           "malen wie", "zeichnen wie", "basteln wie", 
           "schafe scheren", "schafschur", "sheep shearing", "schafe werden geschoren",
-          "wenn schafe geschoren werden", "schaf", "sheep",
+          "wenn schafe geschoren werden", "wenn schafe geschieden werden",
+          "schaf", "sheep", "geschieden", "geschoren",
           "disc golf", "discgolf", "frisbee golf"
         ];
         
@@ -212,7 +213,7 @@ const SideBySideSection = ({
     return (
       <section className="bg-background py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
+          <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
             {title}
           </h2>
           <div className="space-y-6">
@@ -244,7 +245,7 @@ const SideBySideSection = ({
   return (
     <section className="bg-background py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
+        <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
           {title}
         </h2>
 

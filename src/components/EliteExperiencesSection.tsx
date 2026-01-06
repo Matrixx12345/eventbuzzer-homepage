@@ -169,7 +169,18 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           return;
         }
 
-        const diversified = diversifyEvents(data || [], 2);
+        // BLACKLIST für unerwünschte Events
+        const BLACKLIST = [
+          "schaf", "sheep", "geschieden", "geschoren",
+          "wenn schafe geschoren werden", "wenn schafe geschieden werden"
+        ];
+        
+        const filtered = (data || []).filter(event => {
+          const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
+          return !BLACKLIST.some(keyword => searchText.includes(keyword));
+        });
+
+        const diversified = diversifyEvents(filtered, 2);
         setEvents(diversified.slice(0, 6));
       } catch (error) {
         console.error("Error loading elite events:", error);
@@ -184,7 +195,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     return (
       <section className="bg-background py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
+          <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
             Die Schweizer Top Erlebnisse:
           </h2>
           <div className="space-y-6">
@@ -216,7 +227,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   return (
     <section className="bg-background py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <h2 className="font-serif text-4xl mb-10 not-italic text-left md:text-4xl text-neutral-500">
+        <h2 className="font-serif text-3xl mb-10 not-italic text-left md:text-4xl text-muted-foreground">
           Die Schweizer Top Erlebnisse:
         </h2>
 
