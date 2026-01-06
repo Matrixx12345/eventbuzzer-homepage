@@ -48,8 +48,8 @@ const CleanGridCard = ({
             src={image} 
             alt={title} 
             className="w-full h-full object-cover transition-all duration-500
-                       saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
-                       group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0" 
+                       blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
+                       group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           {/* Subtle Vignette for premium look */}

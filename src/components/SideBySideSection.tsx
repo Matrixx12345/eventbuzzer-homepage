@@ -40,15 +40,15 @@ const CompactCard = ({
 
   return (
     <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
-      <div className="bg-neutral-900 rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-white/20 shadow-lg grid grid-cols-2 h-[220px]">
+      <div className="bg-[#FDFBF7] rounded-2xl overflow-hidden group transition-all duration-300 hover:ring-1 hover:ring-stone-300 shadow-lg border border-stone-200/60 grid grid-cols-2 h-[220px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden">
           <img 
             src={image} 
             alt={title} 
             className="w-full h-full object-cover transition-all duration-500
-                       saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
-                       group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0" 
+                       blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
+                       group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0" 
           />
           {/* Subtle Vignette */}
           <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
@@ -56,10 +56,10 @@ const CompactCard = ({
         
         {/* Content */}
         <div className="p-4 flex flex-col justify-center">
-          <h3 className="font-serif text-sm md:text-base text-white mb-2 line-clamp-2 leading-snug">{title}</h3>
+          <h3 className="font-serif text-sm md:text-base text-neutral-800 mb-2 line-clamp-2 leading-snug">{title}</h3>
 
-          <div className="group/map relative inline-flex items-center gap-1 text-gray-300 text-[11px] mb-2 cursor-help">
-            <span className="border-b border-dotted border-gray-600 hover:text-white transition-colors">{location}</span>
+          <div className="group/map relative inline-flex items-center gap-1 text-neutral-500 text-[11px] mb-2 cursor-help">
+            <span className="border-b border-dotted border-stone-300 hover:text-neutral-700 transition-colors">{location}</span>
 
             {latitude && longitude && (
               <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
@@ -80,7 +80,7 @@ const CompactCard = ({
             )}
           </div>
 
-          <p className="text-gray-300 font-sans text-xs leading-relaxed line-clamp-2">{description}</p>
+          <p className="text-neutral-500 font-sans text-xs leading-relaxed line-clamp-2">{description}</p>
         </div>
       </div>
     </Wrapper>
