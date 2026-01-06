@@ -336,9 +336,9 @@ const CleanGridSection = ({
 
   if (loading) {
     return (
-      <section className="py-10 md:py-12 bg-transparent">
+      <section className="py-8 md:py-10 bg-transparent">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <h2 className="text-3xl md:text-3xl font-serif text-muted-foreground mb-8">
+          <h2 className="text-3xl md:text-3xl font-serif text-foreground/80 mb-6">
             {title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -370,9 +370,9 @@ const CleanGridSection = ({
   }));
 
   return (
-    <section className="py-10 md:py-12 bg-transparent">
+    <section className="py-8 md:py-10 bg-transparent">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <h2 className="text-3xl md:text-3xl font-serif text-muted-foreground mb-8">
+        <h2 className="text-3xl md:text-3xl font-serif text-foreground/80 mb-6">
           {title}
         </h2>
 
@@ -395,7 +395,7 @@ const CleanGridSection = ({
 
         {/* Mehr anzeigen Button */}
         {filterParam && (
-          <div className="mt-10 text-center">
+          <div className="mt-6 text-center">
             <Link 
               to={`/listings?${filterParam}`}
               className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground border border-muted-foreground/30 hover:border-foreground/50 px-6 py-2.5 rounded-full transition-all text-sm font-medium"
