@@ -15,6 +15,9 @@ interface CompactCardProps {
   categoryLabel?: string;
   ticketUrl?: string;
   buzzScore?: number | null;
+  eventId?: string;
+  externalId?: string;
+  onBuzzChange?: (newScore: number) => void;
   onClick?: () => void;
 }
 
@@ -28,6 +31,9 @@ const CompactCard = ({
   categoryLabel,
   ticketUrl,
   buzzScore,
+  eventId,
+  externalId,
+  onBuzzChange,
   onClick
 }: CompactCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
@@ -99,8 +105,14 @@ const CompactCard = ({
           <p className="text-stone-500 text-sm leading-relaxed line-clamp-3">{description}</p>
 
           {/* BuzzTracker - fills bottom space */}
-          <div className="mt-auto pt-4">
-            <BuzzTracker buzzScore={buzzScore} />
+          <div className="mt-auto pt-2">
+            <BuzzTracker 
+              buzzScore={buzzScore} 
+              editable={true}
+              eventId={eventId}
+              externalId={externalId}
+              onBuzzChange={onBuzzChange}
+            />
           </div>
         </div>
       </div>
@@ -247,7 +259,8 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     longitude: event.longitude,
     categoryLabel: getCategoryLabel(event.category_sub_id),
     ticketUrl: event.ticket_link,
-    buzzScore: event.buzz_score
+    buzzScore: event.buzz_score,
+    externalId: event.external_id
   }));
 
   return (
@@ -263,6 +276,12 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
             <CompactCard 
               key={event.id}
               {...event}
+              eventId={event.id}
+              onBuzzChange={(newScore) => {
+                setEvents(prev => prev.map(e => 
+                  e.id === event.id ? { ...e, buzz_score: newScore } : e
+                ));
+              }}
               onClick={() => onEventClick?.(event.id)}
             />
           ))}

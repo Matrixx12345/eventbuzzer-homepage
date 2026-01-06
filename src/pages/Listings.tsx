@@ -191,6 +191,11 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
 
 const Listings = () => {
   const [searchParams] = useSearchParams();
+  
+  // Scroll to top when URL params change (e.g., from "Mehr anzeigen" links)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams]);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
   const [events, setEvents] = useState<ExternalEvent[]>([]);
