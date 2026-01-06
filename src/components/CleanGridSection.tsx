@@ -217,7 +217,7 @@ const CleanGridSection = ({
           .or(`start_date.is.null,start_date.lte.${nextWeek}`)
           .or(`end_date.is.null,end_date.gte.${today}`)
           .order("relevance_score", { ascending: false })
-          .limit(maxEvents * 3); // Fetch more to allow for filtering
+          .limit(maxEvents * 5); // Fetch more to allow for filtering + blacklist + diversification
 
         if (tagFilter) {
           query = query.contains("tags", [tagFilter]);
@@ -264,6 +264,18 @@ const CleanGridSection = ({
 
         // Apply category diversity: max 2 per category
         filtered = diversifyEvents(filtered, 2);
+
+        // Fallback: Falls zu wenige Events, Diversifizierung lockern (3 pro Kategorie)
+        if (filtered.length < maxEvents) {
+          const refiltered = (data || []).filter(event => {
+            const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
+            const titleLower = (event.title || "").toLowerCase();
+            const isBlacklisted = BLACKLIST.some(keyword => searchText.includes(keyword.toLowerCase()));
+            const isTitleBlocked = TITLE_BLACKLIST.some(t => titleLower.includes(t));
+            return !isBlacklisted && !isTitleBlocked;
+          });
+          filtered = diversifyEvents(refiltered, 3);
+        }
 
         setEvents(filtered.slice(0, maxEvents));
       } catch (error) {
