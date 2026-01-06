@@ -41,13 +41,13 @@ const Index = () => {
               sourceFilter="myswitzerland"
               filterParam="source=myswitzerland"
               onEventClick={openEvent}
-              maxEvents={6}
+              maxEvents={3}
             />
           </ErrorBoundary>
           
           {/* Dezente Trennlinie */}
           <div className="flex justify-center mb-10">
-            <div className="w-32 h-px bg-[#C9A962]/30" />
+            <div className="w-2/3 max-w-4xl h-px bg-[#C9A962]/20" />
           </div>
 
           {/* Sektion 2: Familien-Abenteuer - Schwarzes Side-by-Side Layout */}
@@ -63,7 +63,7 @@ const Index = () => {
           
           {/* Dezente Trennlinie */}
           <div className="flex justify-center mb-10">
-            <div className="w-32 h-px bg-[#C9A962]/30" />
+            <div className="w-2/3 max-w-4xl h-px bg-[#C9A962]/20" />
           </div>
 
           {/* Sektion 3: Wärmende Indoor-Erlebnisse - 3-Spalten-Grid (Clean Look) */}
@@ -73,13 +73,13 @@ const Index = () => {
               tagFilter="mistwetter"
               filterParam="tags=mistwetter"
               onEventClick={openEvent}
-              maxEvents={6}
+              maxEvents={3}
             />
           </ErrorBoundary>
           
           {/* Dezente Trennlinie */}
           <div className="flex justify-center mb-10">
-            <div className="w-32 h-px bg-[#C9A962]/30" />
+            <div className="w-2/3 max-w-4xl h-px bg-[#C9A962]/20" />
           </div>
 
           {/* Sektion 4: Die Schweizer Top Erlebnisse (elite Tag) - vorletzte Sektion */}
