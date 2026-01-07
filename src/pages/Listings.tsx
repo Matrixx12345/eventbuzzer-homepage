@@ -23,7 +23,7 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
-import { getNearestPlace, getNearestPlaceWithDistance } from "@/utils/swissPlaces";
+import { getNearestPlace, getLocationWithMajorCity } from "@/utils/swissPlaces";
 import { toggleFavoriteApi } from "@/services/favorites";
 import { toast } from "sonner";
 
@@ -752,13 +752,9 @@ const Listings = () => {
                             <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
                               <span className="text-red-600">📍</span>
                               <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
-                                {event.latitude && event.longitude ? (() => {
-                                  const info = getNearestPlaceWithDistance(event.latitude, event.longitude);
-                                  // Wenn < 2km -> "in Stadt", sonst "X km von Stadt"
-                                  return info.distance < 2 
-                                    ? `in ${info.name}` 
-                                    : `${Math.round(info.distance)} km von ${info.name}`;
-                                })() : (locationName || "Schweiz")}
+                                {event.latitude && event.longitude 
+                                  ? getLocationWithMajorCity(event.latitude, event.longitude, locationName)
+                                  : (locationName || "Schweiz")}
                               </span>
 
                               {/* Mini-Map Tooltip */}

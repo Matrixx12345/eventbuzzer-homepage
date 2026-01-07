@@ -333,3 +333,74 @@ export function getNearestPlaceWithDistance(lat: number, lng: number): { name: s
 
   return { name: nearest.name, distance: minDist };
 }
+
+// Nur die großen Städte für Distanzberechnung
+const majorCities = [
+  { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+  { name: "Genf", lat: 46.2044, lng: 6.1432 },
+  { name: "Basel", lat: 47.5596, lng: 7.5886 },
+  { name: "Bern", lat: 46.948, lng: 7.4474 },
+  { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+  { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+  { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+  { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+  { name: "Winterthur", lat: 47.4984, lng: 8.7246 },
+  { name: "Chur", lat: 46.8503, lng: 9.5334 },
+];
+
+/**
+ * Berechnet Himmelsrichtung von Punkt A nach Punkt B
+ */
+function getDirection(fromLat: number, fromLng: number, toLat: number, toLng: number): string {
+  const dLat = toLat - fromLat;
+  const dLng = toLng - fromLng;
+  
+  const angle = Math.atan2(dLng, dLat) * (180 / Math.PI);
+  
+  if (angle >= -22.5 && angle < 22.5) return "N";
+  if (angle >= 22.5 && angle < 67.5) return "NO";
+  if (angle >= 67.5 && angle < 112.5) return "O";
+  if (angle >= 112.5 && angle < 157.5) return "SO";
+  if (angle >= 157.5 || angle < -157.5) return "S";
+  if (angle >= -157.5 && angle < -112.5) return "SW";
+  if (angle >= -112.5 && angle < -67.5) return "W";
+  return "NW";
+}
+
+/**
+ * Findet die nächste GROSSSTADT und berechnet Distanz + Richtung
+ * Format: "Riehen, 5 km NO von Basel" oder "in Basel" wenn < 3km
+ */
+export function getLocationWithMajorCity(lat: number, lng: number, locationName?: string): string {
+  let nearestMajor = majorCities[0];
+  let minDist = Infinity;
+
+  for (const city of majorCities) {
+    const dLat = (lat - city.lat) * 111;
+    const dLng = (lng - city.lng) * 85;
+    const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+    
+    if (dist < minDist) {
+      minDist = dist;
+      nearestMajor = city;
+    }
+  }
+
+  const distance = Math.round(minDist);
+  
+  // Wenn in der Großstadt selbst (< 3km)
+  if (distance < 3) {
+    return `in ${nearestMajor.name}`;
+  }
+  
+  // Richtung berechnen (von Großstadt zum Event)
+  const direction = getDirection(nearestMajor.lat, nearestMajor.lng, lat, lng);
+  
+  // Wenn wir einen Ortsnamen haben, zeige: "Riehen, 5 km NO von Basel"
+  if (locationName && locationName !== nearestMajor.name) {
+    return `${locationName}, ${distance} km ${direction} von ${nearestMajor.name}`;
+  }
+  
+  // Fallback: nur Distanz
+  return `${distance} km ${direction} von ${nearestMajor.name}`;
+}
