@@ -20,10 +20,10 @@ const transportOptions = [
 ];
 
 const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
-  const { favorites } = useFavorites();
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const [isExpanded, setIsExpanded] = useState(false);
   const [transportMode, setTransportMode] = useState<"auto" | "bahn">("bahn");
-  const [, setMapEvents] = useState<any[]>([]); // Dummy setter to trigger map loading
+  const [, setMapEvents] = useState<any[]>([]);
 
   // Mock suggested events for expanded view
   const suggestedEvents = [
@@ -33,57 +33,43 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     { id: "4", title: "Luzerner Kapellbrücke", location: "Luzern", buzzScore: 85, image: "https://images.unsplash.com/photo-1527668752968-14dc70a27c95?w=200&q=80" },
   ];
 
-  // Convert favorites to map events format
-  const mapEvents = favorites.map((fav, idx) => ({
-    id: fav.id,
-    title: fav.title,
-    latitude: 46.8 + (idx * 0.3),
-    longitude: 8.2 + (idx * 0.4),
-    image_url: fav.image,
-  }));
-
   if (isExpanded) {
-    // Get up to 6 favorites for the snake grid
     const gridFavorites = favorites.slice(0, 6);
     
     return (
-      <div className="fixed inset-0 z-[100] bg-[#F5F3EE] overflow-auto">
-        {/* Minimaler Header - nur X Button rechts oben */}
+      <div className="fixed inset-0 z-[100] bg-[hsl(var(--listings-bg))] overflow-auto">
+        {/* X Button top right */}
         <button
           onClick={() => setIsExpanded(false)}
-          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-md transition-colors"
+          className="fixed top-6 right-6 z-50 p-2.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg transition-colors"
         >
-          <X size={20} className="text-stone-600" />
+          <X size={22} className="text-stone-600" />
         </button>
 
         <div className="flex h-full">
-          {/* Left Sidebar: Vorschläge - Karten wie in Vorlage */}
-          <div className="w-80 p-5 flex-shrink-0 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-5">
-              <h3 className="font-semibold text-stone-800 text-lg">Vorschläge für dich</h3>
-              <Sparkles size={18} className="text-amber-500" />
+          {/* Left Sidebar: Vorschläge - elegant cards */}
+          <div className="w-72 bg-white/60 backdrop-blur-sm p-6 flex-shrink-0 overflow-y-auto border-r border-stone-200/50">
+            <div className="flex items-center gap-2.5 mb-6">
+              <Sparkles size={20} className="text-amber-500" />
+              <h3 className="font-serif font-semibold text-stone-800 text-xl">Vorschläge</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {suggestedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="relative rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
+                  className="relative rounded-2xl overflow-hidden cursor-pointer group shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
                 >
-                  {/* Horizontales Bild */}
                   <img
                     src={event.image}
                     alt={event.title}
-                    className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  {/* Text Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5">
                     <p className="text-white font-semibold text-sm leading-tight">{event.title}</p>
-                    <p className="text-white/70 text-xs mt-0.5">{event.location}, Schweiz · Buzz {event.buzzScore}</p>
+                    <p className="text-white/60 text-xs mt-1">{event.location} · Buzz {event.buzzScore}</p>
                   </div>
-                  {/* Plus Button */}
-                  <button className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors shadow-sm">
+                  <button className="absolute top-2.5 right-2.5 p-2 rounded-full bg-white/95 hover:bg-white transition-colors shadow-md hover:scale-110">
                     <Plus size={14} className="text-stone-700" />
                   </button>
                 </div>
@@ -92,12 +78,12 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* Right Content: Map + Timeline */}
-          <div className="flex-1 p-6 flex flex-col gap-5 overflow-y-auto">
-            {/* Real Mapbox Map - größer */}
-            <div className="rounded-2xl h-72 overflow-hidden shadow-sm">
+          <div className="flex-1 p-8 flex flex-col gap-6 overflow-y-auto">
+            {/* Map - larger */}
+            <div className="rounded-2xl h-80 overflow-hidden shadow-lg">
               <Suspense fallback={
                 <div className="w-full h-full bg-stone-100 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 text-stone-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
                 </div>
               }>
                 <EventsMap 
@@ -108,45 +94,49 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               </Suspense>
             </div>
 
-            {/* Transport Toggle - eleganter wie Vorlage */}
-            <div className="flex items-center justify-start gap-3">
+            {/* Transport Toggle - elegant */}
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => setTransportMode("auto")}
                 className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all",
+                  "flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300",
                   transportMode === "auto"
-                    ? "bg-stone-100 text-stone-800 shadow-sm"
-                    : "text-stone-500 hover:text-stone-700"
+                    ? "bg-stone-800 text-white shadow-lg"
+                    : "bg-white text-stone-500 hover:text-stone-700 shadow-sm"
                 )}
               >
-                <Car size={16} />
+                <Car size={18} />
                 Auto
               </button>
               <button
                 onClick={() => setTransportMode("bahn")}
                 className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all",
+                  "flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300",
                   transportMode === "bahn"
-                    ? "bg-stone-800 text-white shadow-sm"
-                    : "text-stone-500 hover:text-stone-700"
+                    ? "bg-stone-800 text-white shadow-lg"
+                    : "bg-white text-stone-500 hover:text-stone-700 shadow-sm"
                 )}
               >
-                <Train size={16} />
+                <Train size={18} />
                 Bahn
               </button>
             </div>
 
-            {/* Trip Timeline - Snake Grid */}
+            {/* Trip Timeline - Snake Grid with connecting lines */}
             {favorites.length === 0 ? (
-              <div className="text-center py-12 text-stone-400">
-                <Heart size={32} className="mx-auto mb-3 text-red-300" strokeWidth={1.5} />
-                <p>Füge Favoriten hinzu, um deinen Trip zu planen</p>
+              <div className="text-center py-16 text-stone-400">
+                <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
+                <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
               </div>
             ) : (
               <SnakeGrid 
                 favorites={gridFavorites} 
                 transportMode={transportMode}
                 onEventClick={onEventClick}
+                onRemoveFavorite={(id) => {
+                  const fav = favorites.find(f => f.id === id);
+                  if (fav) toggleFavorite(fav);
+                }}
               />
             )}
           </div>
@@ -155,13 +145,19 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     );
   }
 
-  // Collapsed State
+  // Collapsed State - von oben bis unten, Map höher
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
-      {/* Real Mapbox Map in Collapsed State */}
-      <div className="h-44 relative overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-lg border border-stone-200/80 overflow-hidden h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-stone-100">
+        <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-0.5">Trip Composer</p>
+        <h3 className="font-serif font-bold text-stone-900 text-lg">Dein Trip-Entwurf</h3>
+      </div>
+
+      {/* Map - HÖHER (nicht so querformat) */}
+      <div className="h-56 relative overflow-hidden flex-shrink-0">
         <Suspense fallback={
-          <div className="w-full h-full bg-stone-100 flex items-center justify-center">
+          <div className="w-full h-full bg-stone-50 flex items-center justify-center">
             <img 
               src="/swiss-outline.svg" 
               className="w-full h-full object-contain opacity-20 p-4" 
@@ -177,33 +173,27 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         </Suspense>
       </div>
 
-      {/* Header */}
-      <div className="p-4 border-b border-stone-100">
-        <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Trip Composer</p>
-        <h3 className="font-serif font-bold text-stone-900 text-lg">Dein Trip-Entwurf</h3>
-      </div>
-
-      {/* Favorites List or Empty State */}
-      <div className="p-4">
+      {/* Favorites List or Empty State - flex-1 to fill remaining space */}
+      <div className="p-4 flex-1 overflow-y-auto">
         {favorites.length === 0 ? (
-          <div className="text-center py-6">
-            <Heart size={48} className="text-red-400 mx-auto mb-3" strokeWidth={1.5} />
+          <div className="text-center py-8">
+            <Heart size={48} className="text-stone-300 mx-auto mb-3" strokeWidth={1.5} />
             <p className="text-sm text-stone-500 leading-relaxed">
               Wähle Favoriten (❤️) – wir erstellen deinen perfekten Ablauf.
             </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {favorites.slice(0, 4).map((fav) => (
+            {favorites.slice(0, 5).map((fav) => (
               <div
                 key={fav.id}
+                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 cursor-pointer group transition-colors"
                 onClick={() => onEventClick?.(fav.id)}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 cursor-pointer"
               >
                 <img
                   src={fav.image}
                   alt={fav.title}
-                  className="w-10 h-10 rounded-lg object-cover"
+                  className="w-11 h-11 rounded-lg object-cover shadow-sm"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-stone-800 truncate">{fav.title}</p>
@@ -212,47 +202,60 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                     {fav.location || "Schweiz"}
                   </p>
                 </div>
-                <Heart size={14} className="text-red-500 flex-shrink-0" fill="currentColor" />
+                {/* Abwählbares Herz */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(fav);
+                  }}
+                  className="flex-shrink-0 p-1.5 hover:scale-110 transition-transform"
+                  aria-label="Remove from favorites"
+                >
+                  <Heart 
+                    size={16} 
+                    className="text-red-500 fill-red-500 hover:fill-red-400 hover:text-red-400 transition-colors" 
+                  />
+                </button>
               </div>
             ))}
-            {favorites.length > 4 && (
+            {favorites.length > 5 && (
               <p className="text-xs text-stone-400 text-center pt-2">
-                +{favorites.length - 4} weitere
+                +{favorites.length - 5} weitere
               </p>
             )}
           </div>
         )}
       </div>
 
-      {/* Plan Button */}
-      <div className="p-4 pt-0">
+      {/* Plan Button - always at bottom */}
+      <div className="p-4 pt-0 mt-auto">
         <button
           disabled={favorites.length === 0}
           onClick={() => setIsExpanded(true)}
           className={cn(
-            "w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all",
+            "w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300",
             favorites.length > 0
-              ? "bg-stone-800 text-white hover:bg-stone-900"
+              ? "bg-stone-800 text-white hover:bg-stone-900 shadow-md hover:shadow-lg"
               : "bg-stone-100 text-stone-400 cursor-not-allowed"
           )}
         >
           <Sparkles size={16} />
-          Ablauf jetzt planen ✨
+          Deinen Trip planen ✨
         </button>
       </div>
     </div>
   );
 };
 
-// Snake Grid Component - 3x2 Grid with Snake Pattern Connections
+// Snake Grid Component - with connecting lines
 interface SnakeGridProps {
   favorites: FavoriteEvent[];
   transportMode: "auto" | "bahn";
   onEventClick?: (eventId: string) => void;
+  onRemoveFavorite?: (id: string) => void;
 }
 
-const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) => {
-  // Fill up to 6 slots
+const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }: SnakeGridProps) => {
   const slots = [...favorites];
   while (slots.length < 6) {
     slots.push(null as any);
@@ -261,61 +264,66 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) =
   // Row 1: indices 0, 1, 2 (left to right)
   // Row 2: indices 5, 4, 3 (right to left - snake pattern)
   const row1 = [slots[0], slots[1], slots[2]];
-  const row2 = [slots[5], slots[4], slots[3]]; // Reversed for snake
+  const row2 = [slots[5], slots[4], slots[3]];
 
   const getTransportPill = (idx: number) => {
     const opt = transportOptions[idx % transportOptions.length];
     const icon = transportMode === "bahn" ? "🚆" : "🚗";
-    return `${icon} ${opt.label} | ${opt.duration}`;
+    return { icon, label: opt.label, duration: opt.duration };
   };
 
   return (
-    <div className="relative px-4">
-      {/* Row 1 - GRÖSSERE Karten wie in Vorlage */}
-      <div className="grid grid-cols-3 gap-12 relative justify-items-center">
+    <div className="relative">
+      {/* Row 1 */}
+      <div className="flex justify-center items-center gap-0">
         {row1.map((fav, idx) => (
-          <div key={idx} className="relative">
-            <SnakeCard event={fav} onClick={() => fav && onEventClick?.(fav.id)} />
+          <div key={idx} className="flex items-center">
+            <SnakeCard 
+              event={fav} 
+              onClick={() => fav && onEventClick?.(fav.id)} 
+              onRemove={() => fav && onRemoveFavorite?.(fav.id)}
+            />
             
-            {/* Horizontal connection line to the right (except last card) */}
-            {idx < 2 && fav && row1[idx + 1] && (
-              <>
-                <div className="absolute top-1/2 -right-2 w-4 h-0.5 bg-stone-300" />
-                <div className="absolute top-1/2 right-[-2rem] -translate-y-1/2 z-10">
-                  <TransportPill text={getTransportPill(idx)} />
-                </div>
-              </>
+            {/* Connection line + transport pill */}
+            {idx < 2 && (
+              <div className="flex items-center">
+                <div className="w-8 h-0.5 bg-stone-300" />
+                <TransportPill {...getTransportPill(idx)} />
+                <div className="w-8 h-0.5 bg-stone-300" />
+              </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Vertical connection on the RIGHT side (from card 3 to card 4) */}
+      {/* Vertical connection on the right side */}
       {row1[2] && row2[2] && (
-        <div className="relative h-8">
-          {/* Vertical line on the right */}
-          <div className="absolute right-[calc(16.67%-0.5rem)] top-0 w-0.5 h-full bg-stone-300" />
-          {/* Transport pill on vertical line */}
-          <div className="absolute right-[calc(16.67%-2.5rem)] top-1/2 -translate-y-1/2 z-10">
-            <TransportPill text={getTransportPill(2)} />
+        <div className="flex justify-end pr-[calc(16.67%-28px)] py-2">
+          <div className="flex flex-col items-center">
+            <div className="w-0.5 h-6 bg-stone-300" />
+            <TransportPill {...getTransportPill(2)} />
+            <div className="w-0.5 h-6 bg-stone-300" />
           </div>
         </div>
       )}
 
-      {/* Row 2 (reversed order visually: shows 6, 5, 4 from left to right) */}
-      <div className="grid grid-cols-3 gap-12 relative justify-items-center">
+      {/* Row 2 (reversed) */}
+      <div className="flex justify-center items-center gap-0">
         {row2.map((fav, idx) => (
-          <div key={idx} className="relative">
-            <SnakeCard event={fav} onClick={() => fav && onEventClick?.(fav.id)} />
+          <div key={idx} className="flex items-center">
+            <SnakeCard 
+              event={fav} 
+              onClick={() => fav && onEventClick?.(fav.id)} 
+              onRemove={() => fav && onRemoveFavorite?.(fav.id)}
+            />
             
-            {/* Horizontal connection line (reversed direction: line to the LEFT, except first visual card) */}
-            {idx > 0 && fav && row2[idx - 1] && (
-              <>
-                <div className="absolute top-1/2 -left-2 w-4 h-0.5 bg-stone-300" />
-                <div className="absolute top-1/2 left-[-2rem] -translate-y-1/2 z-10">
-                  <TransportPill text={getTransportPill(3 + idx)} />
-                </div>
-              </>
+            {/* Connection line + transport pill (reversed direction) */}
+            {idx < 2 && row2[idx] && row2[idx + 1] && (
+              <div className="flex items-center">
+                <div className="w-8 h-0.5 bg-stone-300" />
+                <TransportPill {...getTransportPill(3 + idx)} />
+                <div className="w-8 h-0.5 bg-stone-300" />
+              </div>
             )}
           </div>
         ))}
@@ -324,24 +332,28 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) =
   );
 };
 
-// Transport Pill Component
-const TransportPill = ({ text }: { text: string }) => (
-  <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-[10px] font-medium text-stone-600 shadow-sm border border-stone-100 whitespace-nowrap">
-    {text}
+// Transport Pill Component - elegant centered between lines
+const TransportPill = ({ icon, label, duration }: { icon: string; label: string; duration: string }) => (
+  <div className="bg-white px-3 py-1.5 rounded-full text-xs font-medium text-stone-600 shadow-md border border-stone-100 whitespace-nowrap flex items-center gap-1.5">
+    <span>{icon}</span>
+    <span className="text-stone-500">{label}</span>
+    <span className="text-stone-400">|</span>
+    <span className="text-stone-700">{duration}</span>
   </div>
 );
 
-// Snake Card Component - Square card with overlay
+// Snake Card Component - LARGER square cards
 interface SnakeCardProps {
   event: FavoriteEvent | null;
   onClick?: () => void;
+  onRemove?: () => void;
 }
 
-const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
+const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
   if (!event) {
     return (
-      <div className="w-44 h-44 rounded-2xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
-        <Plus size={24} className="text-stone-300" />
+      <div className="w-48 h-48 rounded-2xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
+        <Plus size={28} className="text-stone-300" />
       </div>
     );
   }
@@ -349,33 +361,39 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-44 h-44 rounded-2xl overflow-hidden relative cursor-pointer group shadow-md hover:shadow-lg transition-shadow"
+      className="w-48 h-48 rounded-2xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     >
       <img 
         src={event.image} 
         alt={event.title} 
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
       />
       
-      {/* Dark gradient overlay at bottom */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      {/* Dark gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
       
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3">
+      <div className="absolute bottom-0 left-0 right-0 p-4">
         <h4 className="text-white font-semibold text-sm leading-tight line-clamp-2">{event.title}</h4>
-        <div className="flex items-center justify-between mt-1.5">
+        <div className="flex items-center justify-between mt-2">
           <p className="text-white/70 text-xs flex items-center gap-1">
-            <MapPin size={10} />
+            <MapPin size={11} />
             {event.location || "Schweiz"}
           </p>
-          <p className="text-white/70 text-xs">Buzz {Math.round(Math.random() * 30 + 60)}</p>
+          <p className="text-white/60 text-xs">Buzz {Math.round(Math.random() * 30 + 60)}</p>
         </div>
       </div>
       
-      {/* Heart outline top right */}
-      <div className="absolute top-2 right-2">
-        <Heart size={16} className="text-white/80" strokeWidth={1.5} />
-      </div>
+      {/* Abwählbares Herz top right */}
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove?.();
+        }}
+        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors"
+      >
+        <Heart size={16} className="text-white fill-red-500 hover:fill-red-400 transition-colors" />
+      </button>
     </div>
   );
 };
