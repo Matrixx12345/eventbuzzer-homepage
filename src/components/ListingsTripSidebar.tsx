@@ -86,9 +86,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* Right Content: Map + Trip Grid */}
-          <div className="flex-1 flex flex-col overflow-y-auto p-6">
+          <div className="flex-1 flex flex-col overflow-y-auto pt-16 pr-16 pl-8">
             {/* Map - with padding/border around it */}
-            <div className="h-64 rounded-2xl overflow-hidden shadow-lg border border-stone-200">
+            <div className="h-56 rounded-2xl overflow-hidden shadow-lg border border-stone-200">
               <Suspense fallback={
                 <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />

@@ -294,34 +294,63 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       const isCluster = feature.properties.cluster;
 
       if (isCluster) {
-        // CLUSTER marker - klein und dezent
+        // CLUSTER marker - check if any favorites are in this cluster
         const pointCount = feature.properties.point_count;
-        const size = Math.min(28, 18 + Math.log2(pointCount) * 3);
+        const size = Math.min(24, 16 + Math.log2(pointCount) * 2);
+        
+        // Check if cluster contains any selected events
+        const clusterLeaves = superclusterRef.current?.getLeaves(feature.properties.cluster_id, Infinity) || [];
+        const hasFavoriteInCluster = clusterLeaves.some((leaf: any) => {
+          const evt = leaf.properties.event as MapEvent;
+          return selectedEventIds.includes(evt.id) || selectedEventIds.includes(evt.external_id || '');
+        });
         
         const wrapper = document.createElement('div');
         wrapper.style.cssText = `
           width: ${size}px;
           height: ${size}px;
           cursor: pointer;
+          position: relative;
         `;
         
         const inner = document.createElement('div');
         inner.style.cssText = `
           width: 100%;
           height: 100%;
-          background: #a8a29e;
+          background: #d6d3d1;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
+          color: #78716c;
           font-weight: 600;
-          font-size: ${Math.min(11, 9 + Math.log2(pointCount))}px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+          font-size: ${Math.min(10, 8 + Math.log2(pointCount))}px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           transition: transform 0.2s ease-out;
         `;
         inner.textContent = pointCount.toString();
         wrapper.appendChild(inner);
+        
+        // Add small heart indicator if cluster contains favorites
+        if (hasFavoriteInCluster) {
+          const heartIndicator = document.createElement('div');
+          heartIndicator.style.cssText = `
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 10px;
+            height: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `;
+          heartIndicator.innerHTML = `
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          `;
+          wrapper.appendChild(heartIndicator);
+        }
 
         wrapper.addEventListener('mouseenter', () => {
           inner.style.transform = 'scale(1.1)';
