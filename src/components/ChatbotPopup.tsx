@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, ChevronLeft, Send, Sparkles, Loader2, MapPin, Calendar, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { streamChat } from "@/services/chatService";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -413,18 +413,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
   };
 
   const getPlaceholder = () => {
-    switch (step) {
-      case "mission":
-        return "z.B. 'date', 'Familie', 'Freunde'...";
-      case "time":
-        return "z.B. 'nächsten Samstag', 'Wochenende'...";
-      case "location":
-        return "Stadt oder PLZ eingeben...";
-      case "complete":
-        return "Frag mich nach weiteren Details...";
-      default:
-        return "Nachricht eingeben...";
-    }
+    return "Ich möchte diesen Samstag in ein Museum in Basel gehen.";
   };
 
   const resetWizard = () => {
@@ -681,14 +670,24 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
 
             {/* Input Area - ALWAYS VISIBLE in every step */}
             <div className="p-4 pt-2">
-              <div className="flex gap-2">
-                <Input
+              <div className="flex gap-2 items-end">
+                <Textarea
                   value={step === "location" ? locationInput : inputValue}
                   onChange={(e) => step === "location" ? setLocationInput(e.target.value) : setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !isLoading) {
+                      e.preventDefault();
+                      if (step === "location" && locationInput.trim()) {
+                        handleLocationSubmit();
+                      } else {
+                        handleSendMessage();
+                      }
+                    }
+                  }}
                   placeholder={getPlaceholder()}
                   disabled={isLoading}
-                  className="flex-1 bg-white/90 border-gray-200/60 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm h-11"
+                  className="flex-1 bg-white/90 border-gray-200/60 rounded-xl focus-visible:ring-[hsl(var(--wizard-accent))]/50 text-sm min-h-[70px] resize-none"
+                  rows={3}
                 />
                 <Button
                   onClick={step === "location" ? handleLocationSubmit : handleSendMessage}
