@@ -3,6 +3,7 @@ import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
+import ListingsTripSidebar from "@/components/ListingsTripSidebar";
 import ImageAttribution from "@/components/ImageAttribution";
 import { BuzzTracker } from "@/components/BuzzTracker";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
@@ -564,13 +565,8 @@ const Listings = () => {
     <div className="min-h-screen bg-listings">
       <Navbar />
       
-      {/* Hero Section with Filter Bar */}
-      <div 
-        className="relative w-full py-16 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80')`,
-        }}
-      >
+      {/* Hero Section with Sticky Filter Bar - Flacher cremefarbener Hintergrund */}
+      <div className="sticky top-16 z-40 bg-[#FDFBF7] border-b border-stone-200 py-4">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <ListingsFilterBar
             initialCategory={urlCategory}
@@ -591,11 +587,12 @@ const Listings = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Content - 2 Column Layout */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-[#FDFBF7]">
         
         {/* Header with View Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="text-sm text-foreground/60">
+          <div className="text-sm text-stone-500">
             {viewMode === "list" 
               ? (loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`)
               : `${mapEvents.length} Events im sichtbaren Bereich`
@@ -604,94 +601,69 @@ const Listings = () => {
           <ViewToggle mode={viewMode} onModeChange={setViewMode} />
         </div>
 
-        {/* Subcategory Sticky Bar - only in list mode */}
-        {viewMode === "list" && selectedCategoryId && subCategories.length > 0 && (
-          <div className="sticky top-0 z-10 bg-listings/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 overflow-x-auto">
-            <div className="flex gap-2 min-w-max">
-              <button
-                onClick={() => setSelectedSubcategoryId(null)}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                  selectedSubcategoryId === null
-                    ? "bg-listings-card-content text-listings-text shadow-md"
-                    : "bg-white/80 text-foreground border border-foreground/10 hover:bg-white",
-                )}
-              >
-                Alle
-              </button>
-              {subCategories.map((sub) => (
-                <button
-                  key={sub.id}
-                  onClick={() => setSelectedSubcategoryId(sub.id === selectedSubcategoryId ? null : sub.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                    selectedSubcategoryId === sub.id
-                      ? "bg-listings-card-content text-listings-text shadow-md"
-                      : "bg-white/80 text-foreground border border-foreground/10 hover:bg-white",
-                  )}
-                >
-                  {sub.name}
-                </button>
-              ))}
+        {/* 2-Column Layout: Events + Sidebar */}
+        <div className="flex gap-6">
+          {/* Left: Event Grid */}
+          <div className="flex-1 min-w-0">
+            {/* Subcategory Sticky Bar - only in list mode */}
+            {viewMode === "list" && selectedCategoryId && subCategories.length > 0 && (
+              <div className="sticky top-32 z-10 bg-[#FDFBF7] py-3 mb-4 -mx-2 px-2 overflow-x-auto">
+                <div className="flex gap-2 min-w-max">
+                  <button
+                    onClick={() => setSelectedSubcategoryId(null)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                      selectedSubcategoryId === null
+                        ? "bg-stone-800 text-white shadow-md"
+                        : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50",
+                    )}
+                  >
+                    Alle
+                  </button>
+                  {subCategories.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setSelectedSubcategoryId(sub.id === selectedSubcategoryId ? null : sub.id)}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                        selectedSubcategoryId === sub.id
+                          ? "bg-stone-800 text-white shadow-md"
+                          : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50",
+                      )}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Map View - Use visibility instead of display to preserve dimensions */}
+            <div className={viewMode === "map" ? "relative" : "absolute invisible pointer-events-none h-0 overflow-hidden"}>
+              <Suspense fallback={
+                <div className="w-full h-[600px] rounded-xl bg-stone-100 flex flex-col items-center justify-center border border-stone-200">
+                  <Loader2 className="w-8 h-8 text-stone-400 animate-spin mb-4" />
+                  <p className="text-stone-500 font-medium">Kartenansicht wird geladen...</p>
+                </div>
+              }>
+                <EventsMap 
+                  onEventsChange={handleEventsChange}
+                  onEventClick={handleEventClick}
+                  isVisible={viewMode === "map"}
+                />
+              </Suspense>
             </div>
-          </div>
-        )}
-        
-        {/* Map View - Use visibility instead of display to preserve dimensions */}
-        <div className={viewMode === "map" ? "relative" : "absolute invisible pointer-events-none h-0 overflow-hidden"}>
-          <Suspense fallback={
-            <div className="w-full h-[600px] rounded-xl bg-muted flex flex-col items-center justify-center border border-border">
-              <Loader2 className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
-              <p className="text-muted-foreground font-medium">Kartenansicht wird geladen...</p>
-            </div>
-          }>
-            <EventsMap 
-              onEventsChange={handleEventsChange}
-              onEventClick={handleEventClick}
-              isVisible={viewMode === "map"}
-            />
-          </Suspense>
-        </div>
 
-        {/* Events Grid - Alternating Layout with Featured Cards (only in list mode) */}
-        {viewMode === "list" && loading && !loadingMore ? (
-          <div className="space-y-5">
-            {/* Skeleton Grid - 5 cards like real layout */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[330px_330px] gap-4">
-              <EventCardSkeleton />
-              <EventCardSkeleton />
-              <EventCardSkeleton />
-              <EventCardSkeleton />
-              <EventCardSkeleton isFeatured />
-            </div>
-          </div>
-        ) : viewMode === "list" ? (
-          <div className="space-y-5">
-            {/* Group events into blocks of 5 with alternating featured position */}
-            {(() => {
-              const blocks: Array<{ events: typeof events; featuredRight: boolean }> = [];
-              let currentIndex = 0;
-              let blockIndex = 0;
-              
-              while (currentIndex < events.length) {
-                const blockEvents = events.slice(currentIndex, currentIndex + 5);
-                blocks.push({
-                  events: blockEvents,
-                  featuredRight: blockIndex % 2 === 0, // First block: right, second: left, etc.
-                });
-                currentIndex += 5;
-                blockIndex++;
-              }
-              
-              return blocks.map((block, bIdx) => {
-                const regularEvents = block.events.slice(0, 4);
-                const featuredEvent = block.events[4]; // 5th event becomes featured
-                
-                // Calculate the actual index offset for this block
-                const indexOffset = bIdx * 5;
-                
-                const renderEventCard = (event: typeof events[0], idx: number, isFeatured: boolean = false) => {
-                  const actualIndex = indexOffset + idx;
+            {/* Events Grid - Einheitliches 3-Spalten Grid */}
+            {viewMode === "list" && loading && !loadingMore ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(9)].map((_, i) => (
+                  <EventCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : viewMode === "list" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {events.map((event, idx) => {
                   const locationName = getEventLocation(event);
                   const distanceInfo =
                     event.latitude && event.longitude
@@ -709,7 +681,6 @@ const Listings = () => {
                   const getBadgeText = () => {
                     if (isMuseum) return 'MUSEUM';
                     if (isPermanentEvent) {
-                      // Kategorie-basierter Tag für permanente Attraktionen (mit sicherer String-Konvertierung)
                       const subCat = ensureString(event.category_sub_id) || ensureString(event.sub_category) || '';
                       if (subCat.includes('museum') || subCat.includes('kunst') || subCat.includes('galer')) return 'MUSEUM';
                       if (subCat.includes('wanderung') || subCat.includes('outdoor') || subCat.includes('trail')) return 'WANDERUNG';
@@ -721,7 +692,6 @@ const Listings = () => {
                       if (subCat.includes('zoo') || subCat.includes('tier') || subCat.includes('aquar')) return 'TIERPARK';
                       if (subCat.includes('familie') || subCat.includes('kinder')) return 'FAMILIENAUSFLUG';
                       if (subCat.includes('wissenschaft') || subCat.includes('technik') || subCat.includes('science')) return 'SCIENCE';
-                      // Fallback: versuche aus Tags zu lesen
                       const tags = ensureTagsArray(event.tags);
                       if (tags.includes('natur') || tags.includes('natur-erlebnisse')) return 'NATUR';
                       if (tags.includes('wellness') || tags.includes('wellness-selfcare')) return 'WELLNESS';
@@ -742,198 +712,123 @@ const Listings = () => {
                   return (
                     <article 
                       key={event.id}
-                      className="group relative rounded-xl overflow-hidden bg-listings-card shadow-md hover:shadow-lg border border-stone-200/50 hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col cursor-pointer"
+                      className="group relative rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md border border-stone-200 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                       onClick={() => {
                         trackEventClick(event.id);
                         setSelectedEventId(event.id);
                         setModalOpen(true);
                       }}
                     >
-                      <div className="flex-grow flex flex-col min-h-0">
-                        <div className="relative overflow-hidden flex-grow">
-                          <OptimizedEventImage
-                            src={event.image_url || getPlaceholderImage(actualIndex)}
-                            alt={event.title}
-                            isFeatured={isFeatured}
-                            className="group-hover:scale-105"
-                          />
-                          
-                          {/* Date or Category Badge */}
-                          <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm">
-                            <p className="text-[10px] font-semibold text-neutral-700 tracking-wide">
-                              {getBadgeText()}
-                            </p>
-                          </div>
-                          
-                          {/* Favorite Button */}
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              
-                              toggleFavorite({
-                                id: event.id,
-                                slug: event.id,
-                                title: event.title,
-                                venue: event.venue_name || "",
-                                image: event.image_url || getPlaceholderImage(actualIndex),
-                                location: locationName,
-                                date: formatEventDate(event.start_date),
-                              });
-                              
-                              try {
-                                const numericId = parseInt(event.id, 10);
-                                if (!isNaN(numericId)) {
-                                  const result = await toggleFavoriteApi(numericId);
-                                  setEvents(prev => prev.map(e => 
-                                    e.id === event.id 
-                                      ? { ...e, favorite_count: result.favoriteCount }
-                                      : e
-                                  ));
-                                }
-                              } catch (error) {
-                                console.error('Failed to toggle favorite:', error);
-                              }
-                            }}
-                            className="absolute top-3 right-3 p-2 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-all shadow-sm"
-                            aria-label="Add to favorites"
-                          >
-                            <Heart
-                              size={14}
-                              className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-neutral-500"}
-                            />
-                          </button>
-                          
-                          <ImageAttribution 
-                            author={event.image_author} 
-                            license={event.image_license} 
-                          />
-                        </div>
-                      </div>
-
-                      {/* Content Section - Dark elegant background */}
-                      <div className="p-4 flex-shrink-0 bg-listings-card-content rounded-b-xl">
-                        <div className="group/map relative inline-flex items-center gap-1.5 text-[11px] text-listings-text-muted uppercase tracking-wider font-medium mb-1.5 cursor-pointer w-fit">
-                          <MapPin size={11} className="text-listings-text-muted flex-shrink-0" />
-                          <span className="truncate border-b border-dotted border-listings-text/20 group-hover/map:text-listings-text transition-colors">
-                            {locationName || "Schweiz"}
-                            {distanceInfo && <span className="text-listings-text-muted/70 ml-1">• {distanceInfo}</span>}
-                          </span>
-                          
-                          {/* Mini-Map Tooltip */}
-                          {event.latitude && event.longitude && (
-                            <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                              <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
-                                <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
-                                  <img 
-                                    src="/swiss-outline.svg" 
-                                    className="w-full h-full object-contain opacity-30 p-2" 
-                                    alt="Switzerland Map" 
-                                  />
-                                  <div
-                                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
-                                    style={{
-                                      left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
-                                      top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                              <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
-                            </div>
-                          )}
+                      {/* Quadratisches Bild */}
+                      <div className="relative aspect-square overflow-hidden">
+                        <OptimizedEventImage
+                          src={event.image_url || getPlaceholderImage(idx)}
+                          alt={event.title}
+                          className="group-hover:scale-105"
+                        />
+                        
+                        {/* Date or Category Badge */}
+                        <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                          <p className="text-[10px] font-semibold text-stone-700 tracking-wide">
+                            {getBadgeText()}
+                          </p>
                         </div>
                         
-                        <h3 className="font-serif font-bold text-listings-text leading-tight hover:text-white transition-colors text-base line-clamp-1">
+                        {/* Favorite Button */}
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            toggleFavorite({
+                              id: event.id,
+                              slug: event.id,
+                              title: event.title,
+                              venue: event.venue_name || "",
+                              image: event.image_url || getPlaceholderImage(idx),
+                              location: locationName,
+                              date: formatEventDate(event.start_date),
+                            });
+                            
+                            try {
+                              const numericId = parseInt(event.id, 10);
+                              if (!isNaN(numericId)) {
+                                const result = await toggleFavoriteApi(numericId);
+                                setEvents(prev => prev.map(e => 
+                                  e.id === event.id 
+                                    ? { ...e, favorite_count: result.favoriteCount }
+                                    : e
+                                ));
+                              }
+                            } catch (error) {
+                              console.error('Failed to toggle favorite:', error);
+                            }
+                          }}
+                          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all shadow-sm"
+                          aria-label="Add to favorites"
+                        >
+                          <Heart
+                            size={16}
+                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-500"}
+                          />
+                        </button>
+                        
+                        <ImageAttribution 
+                          author={event.image_author} 
+                          license={event.image_license} 
+                        />
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-stone-900 leading-tight text-sm line-clamp-2 mb-2">
                           {convertToUmlauts(event.title)}
                         </h3>
                         
-                        <p className="text-xs text-listings-text/90 leading-normal mt-1 line-clamp-1">
-                          {convertToUmlauts(event.short_description) || "Entdecke dieses einzigartige Event."}
-                        </p>
-                        
-                        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-listings-text/10 text-[10px] text-listings-text/70">
-                          <span>
-                            {event.price_from && event.price_from >= 15 
-                              ? `ab CHF ${event.price_from}`
-                              : event.price_label 
-                                ? event.price_label
-                                : event.price_from !== null && event.price_from !== undefined
-                                  ? event.price_from === 0 ? 'Gratis' : event.price_from < 50 ? '$' : event.price_from < 120 ? '$$' : '$$$'
-                                  : ''
-                            }
+                        <div className="flex items-center gap-1.5 text-xs text-stone-500 mb-3">
+                          <MapPin size={12} className="flex-shrink-0" />
+                          <span className="truncate">
+                            {locationName || "Schweiz"}
+                            {distanceInfo && <span className="text-stone-400 ml-1">• {distanceInfo}</span>}
                           </span>
-                          <BuzzTracker 
-                            buzzScore={event.buzz_score} 
-                            editable={true}
-                            eventId={event.id}
-                            externalId={event.external_id}
-                            onBuzzChange={(newScore) => {
-                              setEvents(prev => prev.map(e => 
-                                e.id === event.id 
-                                  ? { ...e, buzz_score: newScore }
-                                  : e
-                              ));
-                            }}
-                          />
-                          <div className="ml-auto">
-                            <EventRatingButtons eventId={event.id} eventTitle={event.title} />
+                        </div>
+                        
+                        {/* Buzz Score Bar */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, (event.buzz_score || 0))}%` }}
+                            />
                           </div>
+                          <span className="text-[10px] font-medium text-stone-500 whitespace-nowrap">
+                            Buzz {event.buzz_score || 0} 🔥
+                          </span>
                         </div>
                       </div>
                     </article>
                   );
-                };
-                
-                // If less than 5 events, render simple 3-column grid
-                if (!featuredEvent) {
-                  return (
-                    <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[330px] gap-4">
-                      {block.events.map((event, idx) => renderEventCard(event, idx, false))}
-                    </div>
-                  );
-                }
-                
-                // 5 events: 4 regular in 2x2 + 1 featured spanning 2 rows
-                // Grid: 3 columns, 2 rows with FIXED heights
-                return (
-                  <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[330px_330px] gap-4">
-                    {block.featuredRight ? (
-                      <>
-                        {/* Row 1: Card 1, Card 2 */}
-                        <div className="lg:col-start-1 lg:row-start-1">{renderEventCard(regularEvents[0], 0, false)}</div>
-                        <div className="lg:col-start-2 lg:row-start-1">{renderEventCard(regularEvents[1], 1, false)}</div>
-                        {/* Featured: Column 3, spans both rows */}
-                        <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2">{renderEventCard(featuredEvent, 4, true)}</div>
-                        {/* Row 2: Card 3, Card 4 */}
-                        <div className="lg:col-start-1 lg:row-start-2">{renderEventCard(regularEvents[2], 2, false)}</div>
-                        <div className="lg:col-start-2 lg:row-start-2">{renderEventCard(regularEvents[3], 3, false)}</div>
-                      </>
-                    ) : (
-                      <>
-                        {/* Featured: Column 1, spans both rows */}
-                        <div className="lg:col-start-1 lg:row-start-1 lg:row-span-2">{renderEventCard(featuredEvent, 4, true)}</div>
-                        {/* Row 1: Card 1, Card 2 */}
-                        <div className="lg:col-start-2 lg:row-start-1">{renderEventCard(regularEvents[0], 0, false)}</div>
-                        <div className="lg:col-start-3 lg:row-start-1">{renderEventCard(regularEvents[1], 1, false)}</div>
-                        {/* Row 2: Card 3, Card 4 */}
-                        <div className="lg:col-start-2 lg:row-start-2">{renderEventCard(regularEvents[2], 2, false)}</div>
-                        <div className="lg:col-start-3 lg:row-start-2">{renderEventCard(regularEvents[3], 3, false)}</div>
-                      </>
-                    )}
-                  </div>
-                );
-              });
-            })()}
+                })}
+              </div>
+            ) : null}
+            
+            {/* Load more indicator - only in list mode */}
+            {viewMode === "list" && (
+              <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
+                {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-stone-400" />}
+              </div>
+            )}
           </div>
-        ) : null}
-        
-        {/* Load more indicator - only in list mode */}
-        {viewMode === "list" && (
-          <div ref={loadMoreRef} className="h-20 flex justify-center items-center">
-            {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />}
-          </div>
-        )}
+          
+          {/* Right: Trip Planner Sidebar - only in list mode */}
+          {viewMode === "list" && (
+            <div className="hidden lg:block w-80 flex-shrink-0">
+              <div className="sticky top-32">
+                <ListingsTripSidebar onEventClick={handleEventClick} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Event Detail Modal */}
