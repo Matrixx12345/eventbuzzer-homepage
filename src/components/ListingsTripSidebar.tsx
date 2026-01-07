@@ -47,46 +47,44 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     const gridFavorites = favorites.slice(0, 6);
     
     return (
-      <div className="fixed inset-0 z-50 bg-[#FDFBF7] overflow-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#FDFBF7] border-b border-stone-200 px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-stone-400 uppercase tracking-wider">Trip Composer</p>
-            <h2 className="text-xl font-serif font-bold text-stone-900">Dein Trip-Entwurf</h2>
-          </div>
-          <button
-            onClick={() => setIsExpanded(false)}
-            className="p-2 rounded-full hover:bg-stone-100 transition-colors"
-          >
-            <X size={20} className="text-stone-600" />
-          </button>
-        </div>
+      <div className="fixed inset-0 z-[100] bg-[#F5F3EE] overflow-auto">
+        {/* Minimaler Header - nur X Button rechts oben */}
+        <button
+          onClick={() => setIsExpanded(false)}
+          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-md transition-colors"
+        >
+          <X size={20} className="text-stone-600" />
+        </button>
 
-        <div className="flex min-h-[calc(100vh-80px)]">
-          {/* Left Sidebar: Suggestions */}
-          <div className="w-72 border-r border-stone-200 p-4 bg-white flex-shrink-0">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles size={16} className="text-amber-500" />
-              <h3 className="font-semibold text-stone-800">Vorschläge für dich</h3>
+        <div className="flex h-full">
+          {/* Left Sidebar: Vorschläge - Karten wie in Vorlage */}
+          <div className="w-80 p-5 flex-shrink-0 overflow-y-auto">
+            <div className="flex items-center gap-2 mb-5">
+              <h3 className="font-semibold text-stone-800 text-lg">Vorschläge für dich</h3>
+              <Sparkles size={18} className="text-amber-500" />
             </div>
             <div className="space-y-3">
               {suggestedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-stone-50 cursor-pointer group border border-stone-100"
+                  className="relative rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
                 >
+                  {/* Horizontales Bild */}
                   <img
                     src={event.image}
                     alt={event.title}
-                    className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+                    className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-stone-800 line-clamp-2 leading-tight">{event.title}</p>
-                    <p className="text-xs text-stone-500">{event.location}</p>
-                    <p className="text-xs text-stone-400">Buzz {event.buzzScore}</p>
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  {/* Text Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-semibold text-sm leading-tight">{event.title}</p>
+                    <p className="text-white/70 text-xs mt-0.5">{event.location}, Schweiz · Buzz {event.buzzScore}</p>
                   </div>
-                  <button className="p-1.5 rounded-full bg-stone-100 hover:bg-amber-100 transition-colors">
-                    <Plus size={14} className="text-stone-600" />
+                  {/* Plus Button */}
+                  <button className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors shadow-sm">
+                    <Plus size={14} className="text-stone-700" />
                   </button>
                 </div>
               ))}
@@ -94,9 +92,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* Right Content: Map + Timeline */}
-          <div className="flex-1 p-6 flex flex-col gap-6">
-            {/* Real Mapbox Map */}
-            <div className="rounded-2xl h-64 overflow-hidden border border-stone-200">
+          <div className="flex-1 p-6 flex flex-col gap-5 overflow-y-auto">
+            {/* Real Mapbox Map - größer */}
+            <div className="rounded-2xl h-72 overflow-hidden shadow-sm">
               <Suspense fallback={
                 <div className="w-full h-full bg-stone-100 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 text-stone-400 animate-spin" />
@@ -110,15 +108,15 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               </Suspense>
             </div>
 
-            {/* Transport Toggle */}
-            <div className="flex items-center justify-center gap-2">
+            {/* Transport Toggle - eleganter wie Vorlage */}
+            <div className="flex items-center justify-start gap-3">
               <button
                 onClick={() => setTransportMode("auto")}
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all",
                   transportMode === "auto"
-                    ? "bg-stone-800 text-white"
-                    : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50"
+                    ? "bg-stone-100 text-stone-800 shadow-sm"
+                    : "text-stone-500 hover:text-stone-700"
                 )}
               >
                 <Car size={16} />
@@ -129,8 +127,8 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all",
                   transportMode === "bahn"
-                    ? "bg-stone-800 text-white"
-                    : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50"
+                    ? "bg-stone-800 text-white shadow-sm"
+                    : "text-stone-500 hover:text-stone-700"
                 )}
               >
                 <Train size={16} />
@@ -139,24 +137,18 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             </div>
 
             {/* Trip Timeline - Snake Grid */}
-            <div>
-              <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-4">
-                Trip-Zeitstrahl
-              </h3>
-              
-              {favorites.length === 0 ? (
-                <div className="text-center py-12 text-stone-400">
-                  <Heart size={32} className="mx-auto mb-3 text-red-300" strokeWidth={1.5} />
-                  <p>Füge Favoriten hinzu, um deinen Trip zu planen</p>
-                </div>
-              ) : (
-                <SnakeGrid 
-                  favorites={gridFavorites} 
-                  transportMode={transportMode}
-                  onEventClick={onEventClick}
-                />
-              )}
-            </div>
+            {favorites.length === 0 ? (
+              <div className="text-center py-12 text-stone-400">
+                <Heart size={32} className="mx-auto mb-3 text-red-300" strokeWidth={1.5} />
+                <p>Füge Favoriten hinzu, um deinen Trip zu planen</p>
+              </div>
+            ) : (
+              <SnakeGrid 
+                favorites={gridFavorites} 
+                transportMode={transportMode}
+                onEventClick={onEventClick}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -278,9 +270,9 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) =
   };
 
   return (
-    <div className="relative">
-      {/* Row 1 - kleinere Karten */}
-      <div className="grid grid-cols-3 gap-6 relative">
+    <div className="relative px-4">
+      {/* Row 1 - GRÖSSERE Karten wie in Vorlage */}
+      <div className="grid grid-cols-3 gap-12 relative justify-items-center">
         {row1.map((fav, idx) => (
           <div key={idx} className="relative">
             <SnakeCard event={fav} onClick={() => fav && onEventClick?.(fav.id)} />
@@ -311,7 +303,7 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) =
       )}
 
       {/* Row 2 (reversed order visually: shows 6, 5, 4 from left to right) */}
-      <div className="grid grid-cols-3 gap-6 relative">
+      <div className="grid grid-cols-3 gap-12 relative justify-items-center">
         {row2.map((fav, idx) => (
           <div key={idx} className="relative">
             <SnakeCard event={fav} onClick={() => fav && onEventClick?.(fav.id)} />
@@ -348,8 +340,8 @@ interface SnakeCardProps {
 const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   if (!event) {
     return (
-      <div className="w-32 h-32 rounded-xl bg-stone-100 border-2 border-dashed border-stone-200 flex items-center justify-center mx-auto">
-        <Plus size={20} className="text-stone-300" />
+      <div className="w-44 h-44 rounded-2xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
+        <Plus size={24} className="text-stone-300" />
       </div>
     );
   }
@@ -357,7 +349,7 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-32 h-32 rounded-xl overflow-hidden relative cursor-pointer group flex-shrink-0 mx-auto"
+      className="w-44 h-44 rounded-2xl overflow-hidden relative cursor-pointer group shadow-md hover:shadow-lg transition-shadow"
     >
       <img 
         src={event.image} 
@@ -368,18 +360,21 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
       {/* Dark gradient overlay at bottom */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       
-      {/* Content - lesbar */}
-      <div className="absolute bottom-0 left-0 right-0 p-2.5">
-        <h4 className="text-white font-semibold text-xs leading-tight line-clamp-2">{event.title}</h4>
-        <p className="text-white/70 text-[10px] mt-1 flex items-center gap-1">
-          <MapPin size={10} />
-          {event.location || "Schweiz"}
-        </p>
+      {/* Content */}
+      <div className="absolute bottom-0 left-0 right-0 p-3">
+        <h4 className="text-white font-semibold text-sm leading-tight line-clamp-2">{event.title}</h4>
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-white/70 text-xs flex items-center gap-1">
+            <MapPin size={10} />
+            {event.location || "Schweiz"}
+          </p>
+          <p className="text-white/70 text-xs">Buzz {Math.round(Math.random() * 30 + 60)}</p>
+        </div>
       </div>
       
       {/* Heart outline top right */}
-      <div className="absolute top-1.5 right-1.5">
-        <Heart size={14} className="text-white" strokeWidth={1.5} />
+      <div className="absolute top-2 right-2">
+        <Heart size={16} className="text-white/80" strokeWidth={1.5} />
       </div>
     </div>
   );
