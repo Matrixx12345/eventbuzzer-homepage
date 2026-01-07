@@ -80,7 +80,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                     className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-stone-800 truncate">{event.title}</p>
+                    <p className="text-sm font-semibold text-stone-800 line-clamp-2 leading-tight">{event.title}</p>
                     <p className="text-xs text-stone-500">{event.location}</p>
                     <p className="text-xs text-stone-400">Buzz {event.buzzScore}</p>
                   </div>
@@ -145,7 +145,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               
               {favorites.length === 0 ? (
                 <div className="text-center py-12 text-stone-400">
-                  <Heart size={32} className="mx-auto mb-3 text-amber-300" />
+                  <Heart size={32} className="mx-auto mb-3 text-red-300" strokeWidth={1.5} />
                   <p>Füge Favoriten hinzu, um deinen Trip zu planen</p>
                 </div>
               ) : (
@@ -194,13 +194,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
       <div className="p-4">
         {favorites.length === 0 ? (
           <div className="text-center py-6">
-            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-              <Heart size={28} className="text-amber-500" fill="currentColor" />
-            </div>
+            <Heart size={48} className="text-red-400 mx-auto mb-3" strokeWidth={1.5} />
             <p className="text-sm text-stone-500 leading-relaxed">
-              Wähle Favoriten (❤️) –<br />
-              wir erstellen deinen<br />
-              perfekten Ablauf.
+              Wähle Favoriten (❤️) – wir erstellen deinen perfekten Ablauf.
             </p>
           </div>
         ) : (
@@ -282,8 +278,8 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) =
 
   return (
     <div className="relative">
-      {/* Row 1 */}
-      <div className="grid grid-cols-3 gap-4 relative">
+      {/* Row 1 - kleinere Karten */}
+      <div className="grid grid-cols-3 gap-6 relative">
         {row1.map((fav, idx) => (
           <div key={idx} className="relative">
             <SnakeCard event={fav} onClick={() => fav && onEventClick?.(fav.id)} />
@@ -314,7 +310,7 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick }: SnakeGridProps) =
       )}
 
       {/* Row 2 (reversed order visually: shows 6, 5, 4 from left to right) */}
-      <div className="grid grid-cols-3 gap-4 relative">
+      <div className="grid grid-cols-3 gap-6 relative">
         {row2.map((fav, idx) => (
           <div key={idx} className="relative">
             <SnakeCard event={fav} onClick={() => fav && onEventClick?.(fav.id)} />
@@ -351,8 +347,8 @@ interface SnakeCardProps {
 const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   if (!event) {
     return (
-      <div className="aspect-square rounded-xl bg-stone-100 border-2 border-dashed border-stone-200 flex items-center justify-center">
-        <Plus size={24} className="text-stone-300" />
+      <div className="w-24 h-24 rounded-xl bg-stone-100 border-2 border-dashed border-stone-200 flex items-center justify-center mx-auto">
+        <Plus size={16} className="text-stone-300" />
       </div>
     );
   }
@@ -360,7 +356,7 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="aspect-square rounded-xl overflow-hidden relative cursor-pointer group"
+      className="w-24 h-24 rounded-xl overflow-hidden relative cursor-pointer group flex-shrink-0 mx-auto"
     >
       <img 
         src={event.image} 
@@ -369,20 +365,20 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
       />
       
       {/* Dark gradient overlay at bottom */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h4 className="text-white font-semibold text-sm leading-tight line-clamp-2">{event.title}</h4>
-        <p className="text-white/70 text-xs mt-1 flex items-center gap-1">
-          <MapPin size={10} />
+      {/* Content - kompakter */}
+      <div className="absolute bottom-0 left-0 right-0 p-2">
+        <h4 className="text-white font-semibold text-[10px] leading-tight line-clamp-2">{event.title}</h4>
+        <p className="text-white/70 text-[8px] mt-0.5 flex items-center gap-0.5">
+          <MapPin size={8} />
           {event.location || "Schweiz"}
         </p>
       </div>
       
       {/* Heart outline top right */}
-      <div className="absolute top-2 right-2">
-        <Heart size={16} className="text-white" strokeWidth={1.5} />
+      <div className="absolute top-1 right-1">
+        <Heart size={12} className="text-white" strokeWidth={1.5} />
       </div>
     </div>
   );
