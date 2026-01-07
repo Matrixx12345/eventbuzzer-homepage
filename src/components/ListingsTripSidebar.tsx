@@ -49,11 +49,11 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           <X size={24} className="text-stone-700" />
         </button>
 
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen p-10 gap-8">
           {/* LEFT HALF: Map + Suggestions */}
-          <div className="w-1/2 flex flex-col p-8 pr-4">
-            {/* Map - takes most of the space */}
-            <div className="flex-1 rounded-2xl overflow-hidden shadow-lg border border-stone-200 min-h-[400px]">
+          <div className="w-1/2 flex flex-col">
+            {/* Map - aligned with right side content top */}
+            <div className="flex-1 rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 min-h-[500px]">
               <Suspense fallback={
                 <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
@@ -69,34 +69,34 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             </div>
 
             {/* Suggestions at bottom of left side */}
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="mt-8">
+              <div className="flex items-center gap-2 mb-5">
                 <Sparkles size={16} className="text-amber-500" />
-                <h3 className="font-medium text-stone-600 text-sm">Vorschläge für dich</h3>
+                <h3 className="font-medium text-stone-500 text-sm tracking-wide uppercase">Vorschläge für dich</h3>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 {suggestedEvents.map((event) => (
                   <div
                     key={event.id}
-                    className="bg-white rounded-xl p-3 flex gap-3 cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300 border border-stone-100"
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 flex gap-4 cursor-pointer group shadow-sm hover:shadow-lg transition-all duration-300 border border-stone-100/80 hover:border-stone-200"
                   >
                     <img
                       src={event.image}
                       alt={event.title}
-                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm"
                     />
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <p className="text-stone-800 font-medium text-sm leading-tight truncate">{event.title}</p>
-                      <p className="text-stone-400 text-xs mt-1 flex items-center gap-1">
+                      <p className="text-stone-400 text-xs mt-1.5 flex items-center gap-1">
                         <MapPin size={10} />
                         {event.location}
                       </p>
                     </div>
                     <button 
-                      className="self-center p-2 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors flex-shrink-0"
+                      className="self-center p-2.5 rounded-full bg-stone-100/80 hover:bg-amber-100 hover:text-amber-600 transition-all flex-shrink-0 group-hover:scale-105"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Plus size={14} className="text-stone-600" />
+                      <Plus size={14} className="text-stone-500 group-hover:text-amber-600" />
                     </button>
                   </div>
                 ))}
@@ -105,7 +105,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* RIGHT HALF: Trip Grid with Snake Pattern */}
-          <div className="w-1/2 flex flex-col p-8 pl-4">
+          <div className="w-1/2 flex flex-col">
             {/* Transport Toggle */}
             <div className="flex items-center gap-3 mb-6">
               <button
@@ -475,8 +475,8 @@ interface TripCardProps {
 const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   if (!event) {
     return (
-      <div className="w-full aspect-[4/3] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center flex-shrink-0">
-        <Plus size={28} className="text-stone-300" />
+      <div className="w-[90%] mx-auto aspect-[4/3] rounded-2xl bg-stone-100/30 border-2 border-dashed border-stone-200/60 flex items-center justify-center flex-shrink-0">
+        <Plus size={24} className="text-stone-300" />
       </div>
     );
   }
@@ -484,7 +484,7 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-full aspect-[4/3] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0"
+      className="w-[90%] mx-auto aspect-[4/3] rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 flex-shrink-0"
     >
       <img 
         src={event.image} 
@@ -492,14 +492,14 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
       />
       
-      {/* Gradient overlay */}
-      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
+      {/* Frosted glass overlay on bottom ~1/4 */}
+      <div className="absolute inset-x-0 bottom-0 h-[28%] bg-white/20 backdrop-blur-md border-t border-white/30" />
       
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <h4 className="text-white font-medium text-base leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
-        <p className="text-white/80 text-sm flex items-center gap-1 mt-1 drop-shadow-md">
-          <MapPin size={12} />
+      {/* Content on frosted glass */}
+      <div className="absolute bottom-0 left-0 right-0 p-3.5">
+        <h4 className="text-white font-semibold text-sm leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
+        <p className="text-white/90 text-xs flex items-center gap-1 mt-1 drop-shadow-md">
+          <MapPin size={10} />
           {event.location || "Schweiz"}
         </p>
       </div>
@@ -510,9 +510,9 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
           e.stopPropagation();
           onRemove?.();
         }}
-        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-md transition-all hover:scale-110"
+        className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg transition-all hover:scale-110"
       >
-        <Heart size={14} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
+        <Heart size={12} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
       </button>
     </div>
   );
