@@ -86,9 +86,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* Right Content: Map + Trip Grid */}
-          <div className="flex-1 flex flex-col overflow-y-auto pt-16 pr-16 pl-8">
-            {/* Map - with padding/border around it */}
-            <div className="h-56 rounded-2xl overflow-hidden shadow-lg border border-stone-200">
+          <div className="flex-1 flex flex-col overflow-y-auto pt-12 pr-12 pb-8">
+            {/* Map - bündig mit den Event-Karten (kein extra padding links) */}
+            <div className="h-52 rounded-2xl overflow-hidden shadow-lg border border-stone-200">
               <Suspense fallback={
                 <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
@@ -267,8 +267,8 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
   const transportData = [
     { minutes: 45, km: 52 },
     { minutes: 32, km: 38 },
+    { minutes: 28, km: 31 }, // vertical connection 3rd card to 4th
     { minutes: 63, km: 72 },
-    { minutes: 28, km: 31 },
     { minutes: 55, km: 64 },
   ];
 
@@ -278,11 +278,11 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
   const row2 = [slots[3], slots[4], slots[5]];
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col">
       {/* Row 1 - 3 cards with full-width connections between */}
-      <div className="flex items-center">
+      <div className="flex items-stretch">
         {row1.map((fav, idx) => (
-          <div key={idx} className="flex items-center flex-1">
+          <div key={idx} className="flex items-center" style={{ flex: 1 }}>
             <TripCard 
               event={fav} 
               onClick={() => fav && onEventClick?.(fav.id)} 
@@ -290,12 +290,12 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
             />
             {/* Connection line - fills remaining space between cards */}
             {idx < 2 && (
-              <div className="flex-1 flex items-center justify-center relative mx-1">
+              <div className="flex-1 flex items-center justify-center relative min-w-[60px]">
                 {/* The line */}
                 <div className="w-full h-[2px] bg-stone-300" />
                 {/* Centered pills with frosted glass */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm mb-1">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
                     <span className="text-[11px] text-stone-600 font-medium">{transportData[idx].minutes} min</span>
                   </div>
                   <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
@@ -308,10 +308,31 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
         ))}
       </div>
 
-      {/* Row 2 - directly below */}
-      <div className="flex items-center">
-        {row2.map((fav, idx) => (
-          <div key={idx} className="flex items-center flex-1">
+      {/* Vertical connection between row 1 (3rd card) and row 2 (1st card which is 4th) */}
+      <div className="flex">
+        {/* Empty space for first 2 columns */}
+        <div style={{ flex: 2 }} />
+        {/* Vertical line from 3rd to 4th card (actually under 3rd card going to row 2 first card) */}
+        <div style={{ flex: 1 }} className="flex justify-center relative py-2">
+          <div className="w-[2px] h-16 bg-stone-300" />
+          {/* Centered vertical pills */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-1">
+              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[11px] text-stone-600 font-medium">{transportData[2].minutes} min</span>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[11px] text-stone-500">{transportData[2].km} km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2 - reversed order to continue snake (right to left) */}
+      <div className="flex items-stretch">
+        {[...row2].reverse().map((fav, idx) => (
+          <div key={idx} className="flex items-center" style={{ flex: 1 }}>
             <TripCard 
               event={fav} 
               onClick={() => fav && onEventClick?.(fav.id)} 
@@ -319,14 +340,14 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
             />
             {/* Connection line */}
             {idx < 2 && (
-              <div className="flex-1 flex items-center justify-center relative mx-1">
+              <div className="flex-1 flex items-center justify-center relative min-w-[60px]">
                 <div className="w-full h-[2px] bg-stone-300" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm mb-1">
-                    <span className="text-[11px] text-stone-600 font-medium">{transportData[idx + 2].minutes} min</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                    <span className="text-[11px] text-stone-600 font-medium">{transportData[idx + 3].minutes} min</span>
                   </div>
                   <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                    <span className="text-[11px] text-stone-500">{transportData[idx + 2].km} km</span>
+                    <span className="text-[11px] text-stone-500">{transportData[idx + 3].km} km</span>
                   </div>
                 </div>
               </div>
@@ -348,7 +369,7 @@ interface TripCardProps {
 const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   if (!event) {
     return (
-      <div className="w-full max-w-[240px] aspect-[4/3] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center flex-shrink-0">
+      <div className="w-full aspect-[4/3] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center flex-shrink-0">
         <Plus size={28} className="text-stone-300" />
       </div>
     );
@@ -357,7 +378,7 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-full max-w-[240px] aspect-[4/3] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0"
+      className="w-full aspect-[4/3] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0"
     >
       <img 
         src={event.image} 
