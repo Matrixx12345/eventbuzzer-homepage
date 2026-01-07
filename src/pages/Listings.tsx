@@ -754,7 +754,10 @@ const Listings = () => {
                               <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
                                 {event.latitude && event.longitude ? (() => {
                                   const info = getNearestPlaceWithDistance(event.latitude, event.longitude);
-                                  return `${Math.round(info.distance)} km von ${info.name}`;
+                                  // Wenn < 2km -> "in Stadt", sonst "X km von Stadt"
+                                  return info.distance < 2 
+                                    ? `in ${info.name}` 
+                                    : `${Math.round(info.distance)} km von ${info.name}`;
                                 })() : (locationName || "Schweiz")}
                               </span>
 
