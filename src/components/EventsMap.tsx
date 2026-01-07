@@ -504,7 +504,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
+      style: 'mapbox://styles/mapbox/light-v11',
       center: [8.2275, 46.8182],
       zoom: 7.5,
       pitch: 0,
