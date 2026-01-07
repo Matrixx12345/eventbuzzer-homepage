@@ -744,7 +744,10 @@ const Listings = () => {
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-stone-900 leading-tight text-sm line-clamp-2 mb-1">
+                            <h3 
+                              className="font-semibold text-stone-900 leading-tight text-sm truncate mb-1 group-hover:whitespace-normal group-hover:overflow-visible"
+                              title={convertToUmlauts(event.title)}
+                            >
                               {convertToUmlauts(event.title)}
                             </h3>
                             
@@ -848,10 +851,10 @@ const Listings = () => {
             )}
           </div>
           
-          {/* Right: Trip Planner Sidebar - only in list mode */}
+          {/* Right: Trip Planner Sidebar - only in list mode, goes from top to bottom */}
           {viewMode === "list" && (
             <div className="hidden lg:block w-80 flex-shrink-0">
-              <div className="sticky top-32">
+              <div className="sticky top-24 h-[calc(100vh-7rem)]">
                 <ListingsTripSidebar onEventClick={handleEventClick} />
               </div>
             </div>
