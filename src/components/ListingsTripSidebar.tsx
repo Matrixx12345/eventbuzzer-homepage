@@ -37,45 +37,45 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     const gridFavorites = favorites.slice(0, 6);
     
     return (
-      <div className="fixed inset-0 z-[200] bg-[#FDFBF7] overflow-auto">
+      <div className="fixed inset-0 z-[9999] bg-[#FDFBF7] overflow-auto">
         {/* X Button top right - über alles */}
         <button
           onClick={() => setIsExpanded(false)}
-          className="fixed top-6 right-6 z-[210] p-3 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-xl transition-all hover:scale-105"
+          className="fixed top-6 right-6 z-[10000] p-3 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-xl transition-all hover:scale-105"
         >
           <X size={24} className="text-stone-700" />
         </button>
 
-        <div className="flex h-full">
-          {/* Left Sidebar: Vorschläge - Premium Cards */}
-          <div className="w-80 bg-white/70 backdrop-blur-md p-6 flex-shrink-0 overflow-y-auto border-r border-stone-200/30">
-            <div className="flex items-center gap-2.5 mb-6">
-              <Sparkles size={20} className="text-amber-500" />
-              <h3 className="font-serif font-semibold text-stone-800 text-xl">Vorschläge für dich</h3>
+        <div className="flex min-h-screen">
+          {/* Left Sidebar: Vorschläge - Premium Cards - BREITER und HÖHER */}
+          <div className="w-96 bg-white/50 p-8 flex-shrink-0 overflow-y-auto border-r border-stone-200/50">
+            <div className="flex items-center gap-2.5 mb-8">
+              <Sparkles size={22} className="text-amber-500" />
+              <h3 className="font-serif font-semibold text-stone-800 text-2xl">Vorschläge für dich</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               {suggestedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="relative h-24 rounded-2xl overflow-hidden cursor-pointer group shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+                  className="relative h-44 rounded-2xl overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <img
                     src={event.image}
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  {/* Frosted glass overlay at bottom */}
-                  <div className="absolute inset-x-0 bottom-0 h-14 bg-white/30 backdrop-blur-md border-t border-white/40" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
+                  {/* Minimales Frosted glass - nur ganz unten 1/4 */}
+                  <div className="absolute inset-x-0 bottom-0 h-11 bg-gradient-to-t from-black/50 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-stone-900 font-semibold text-sm leading-tight truncate">{event.title}</p>
-                      <p className="text-stone-600 text-xs mt-0.5">{event.location} · Buzz {event.buzzScore}</p>
+                      <p className="text-white font-semibold text-base leading-tight truncate drop-shadow-lg">{event.title}</p>
+                      <p className="text-white/80 text-sm mt-1 drop-shadow-md">{event.location} · Buzz {event.buzzScore}</p>
                     </div>
                     <button 
-                      className="ml-2 p-2 rounded-full bg-stone-800 hover:bg-stone-900 transition-colors shadow-lg hover:scale-110 flex-shrink-0"
+                      className="ml-3 p-2.5 rounded-full bg-white hover:bg-stone-100 transition-colors shadow-xl hover:scale-110 flex-shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Plus size={14} className="text-white" />
+                      <Plus size={18} className="text-stone-800" />
                     </button>
                   </div>
                 </div>
@@ -151,9 +151,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     );
   }
 
-  // Collapsed State - von oben bis unten, Map höher
+  // Collapsed State - KEIN internes Scrolling, Content fließt normal
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-stone-200/80 overflow-hidden h-full flex flex-col">
+    <div className="bg-white rounded-2xl shadow-lg border border-stone-200/80 overflow-visible">
       {/* Header */}
       <div className="p-4 border-b border-stone-100">
         <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-0.5">Trip Composer</p>
@@ -161,7 +161,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
       </div>
 
       {/* Map - QUADRATISCH */}
-      <div className="aspect-square w-full relative overflow-hidden flex-shrink-0">
+      <div className="aspect-square w-full relative overflow-hidden">
         <Suspense fallback={
           <div className="w-full h-full bg-stone-50 flex items-center justify-center">
             <img 
@@ -179,8 +179,8 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         </Suspense>
       </div>
 
-      {/* Favorites List or Empty State - flex-1 to fill remaining space */}
-      <div className="p-4 flex-1 overflow-y-auto">
+      {/* Favorites List or Empty State - KEIN overflow-y-auto, normaler Flow */}
+      <div className="p-4">
         {favorites.length === 0 ? (
           <div className="text-center py-8">
             <Heart size={48} className="text-stone-300 mx-auto mb-3" strokeWidth={1.5} />
@@ -190,7 +190,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
         ) : (
           <div className="space-y-2">
-            {favorites.slice(0, 5).map((fav) => (
+            {favorites.map((fav) => (
               <div
                 key={fav.id}
                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 cursor-pointer group transition-colors"
@@ -224,17 +224,12 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                 </button>
               </div>
             ))}
-            {favorites.length > 5 && (
-              <p className="text-xs text-stone-400 text-center pt-2">
-                +{favorites.length - 5} weitere
-              </p>
-            )}
           </div>
         )}
       </div>
 
-      {/* Plan Button - always at bottom */}
-      <div className="p-4 pt-0 mt-auto">
+      {/* Plan Button */}
+      <div className="p-4 pt-0">
         <button
           disabled={favorites.length === 0}
           onClick={() => setIsExpanded(true)}
@@ -360,8 +355,8 @@ interface SnakeCardProps {
 const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
   if (!event) {
     return (
-      <div className="w-56 h-56 rounded-2xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
-        <Plus size={32} className="text-stone-300" />
+      <div className="w-64 h-64 rounded-2xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
+        <Plus size={36} className="text-stone-300" />
       </div>
     );
   }
@@ -369,7 +364,7 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-56 h-56 rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+      className="w-64 h-64 rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
     >
       <img 
         src={event.image} 
@@ -377,18 +372,18 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
       />
       
-      {/* Frosted glass overlay at bottom */}
-      <div className="absolute inset-x-0 bottom-0 h-20 bg-white/25 backdrop-blur-md border-t border-white/30" />
+      {/* Frosted glass overlay - nur unteres 1/4 (h-16 von h-64) */}
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-white/20 backdrop-blur-sm" />
       
       {/* Content on frosted glass */}
       <div className="absolute bottom-0 left-0 right-0 p-4">
-        <h4 className="text-stone-900 font-semibold text-sm leading-tight line-clamp-2">{event.title}</h4>
-        <div className="flex items-center justify-between mt-1.5">
-          <p className="text-stone-700 text-xs flex items-center gap-1">
+        <h4 className="text-white font-semibold text-sm leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-white/90 text-xs flex items-center gap-1 drop-shadow-md">
             <MapPin size={11} />
             {event.location || "Schweiz"}
           </p>
-          <p className="text-stone-600 text-xs font-medium">Buzz {Math.round(Math.random() * 30 + 60)}</p>
+          <p className="text-white/80 text-xs font-medium drop-shadow-md">Buzz {Math.round(Math.random() * 30 + 60)}</p>
         </div>
       </div>
       
