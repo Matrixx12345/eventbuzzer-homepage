@@ -173,200 +173,202 @@ const HeroFilterBar = () => {
   };
 
   return (
-    <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-10 w-full px-4 md:px-6">
-      {/* Glassmorphism Container */}
-      <div className="backdrop-blur-xl bg-white/25 border border-white/40 rounded-2xl lg:rounded-full p-3 md:p-4 lg:px-6 lg:py-3 shadow-2xl mx-auto w-fit max-w-full">
-        
-        {/* Mobile: Stacked Layout */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-2">
+    <div className="sticky top-16 z-40 bg-background border-b border-border/50 py-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        {/* Flat Container - no glassmorphism */}
+        <div className="bg-white border border-border rounded-xl lg:rounded-full p-3 md:p-4 lg:px-6 lg:py-3 shadow-sm mx-auto w-fit max-w-full">
           
-          {/* Row 1 on mobile: Category & Mood */}
-          <div className="flex gap-2 lg:contents">
+          {/* Mobile: Stacked Layout */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-2">
             
-            {/* Kategorie Dropdown */}
-            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-              <PopoverTrigger asChild>
-                <button className="flex-1 lg:flex-none lg:min-w-[160px] px-4 py-2.5 rounded-xl lg:rounded-full bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
-                  <div className="flex items-center gap-2">
-                    <selectedCategory.icon size={16} className="text-foreground/60" />
-                    <span className="truncate">{selectedCategory.name}</span>
-                  </div>
-                  <ChevronDown size={14} className={cn("transition-transform", categoryOpen && "rotate-180")} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2 bg-white border shadow-xl rounded-xl z-50" align="start">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.slug || "all"}
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      setCategoryOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                      selectedCategory.slug === cat.slug 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "hover:bg-muted text-foreground/80"
-                    )}
-                  >
-                    <cat.icon size={18} />
-                    <span>{cat.name}</span>
+            {/* Row 1 on mobile: Category & Mood */}
+            <div className="flex gap-2 lg:contents">
+              
+              {/* Kategorie Dropdown */}
+              <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex-1 lg:flex-none lg:min-w-[160px] px-4 py-2.5 rounded-xl lg:rounded-full bg-muted border border-border hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
+                    <div className="flex items-center gap-2">
+                      <selectedCategory.icon size={16} className="text-foreground/60" />
+                      <span className="truncate">{selectedCategory.name}</span>
+                    </div>
+                    <ChevronDown size={14} className={cn("transition-transform", categoryOpen && "rotate-180")} />
                   </button>
-                ))}
-              </PopoverContent>
-            </Popover>
-
-            {/* Stimmung Dropdown */}
-            <Popover open={moodOpen} onOpenChange={setMoodOpen}>
-              <PopoverTrigger asChild>
-                <button className="flex-1 lg:flex-none lg:min-w-[150px] px-4 py-2.5 rounded-xl lg:rounded-full bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
-                  <div className="flex items-center gap-2">
-                    <selectedMood.icon size={16} className="text-foreground/60" />
-                    <span className="truncate">{selectedMood.name}</span>
-                  </div>
-                  <ChevronDown size={14} className={cn("transition-transform", moodOpen && "rotate-180")} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2 bg-white border shadow-xl rounded-xl z-50 max-h-80 overflow-y-auto" align="start">
-                {moods.map((mood) => (
-                  <button
-                    key={mood.slug || "all"}
-                    onClick={() => {
-                      setSelectedMood(mood);
-                      setMoodOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                      selectedMood.slug === mood.slug 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "hover:bg-muted text-foreground/80"
-                    )}
-                  >
-                    <mood.icon size={18} />
-                    <span>{mood.name}</span>
-                  </button>
-                ))}
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Divider - Desktop only */}
-          <div className="hidden lg:block w-px h-8 bg-foreground/10" />
-
-          {/* Row 2 on mobile: City Input with Radius */}
-          <div className="relative flex-1 lg:min-w-[180px]">
-            <div className="relative">
-              <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" />
-              <input
-                ref={cityInputRef}
-                type="text"
-                placeholder="Stadt (Optional)"
-                value={cityInput}
-                onChange={(e) => handleCityInputChange(e.target.value)}
-                onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl lg:rounded-full bg-white/90 border border-white/60 text-sm placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all"
-              />
-            </div>
-            
-            {/* City Suggestions Dropdown */}
-            {showCitySuggestions && filteredCities.length > 0 && (
-              <div 
-                ref={citySuggestionsRef}
-                className="absolute top-full left-0 right-0 mt-1 bg-white border shadow-xl rounded-xl z-50 overflow-hidden"
-              >
-                {filteredCities.map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => handleCitySelect(city)}
-                    className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2"
-                  >
-                    <MapPin size={14} className="text-foreground/40" />
-                    {city}
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            {/* Radius Slider - appears when city is selected */}
-            {showRadius && cityInput && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border shadow-xl rounded-xl z-40 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-foreground/60 font-medium">Umkreis</span>
-                  <span className="text-sm font-semibold">{radius[0]} km</span>
-                </div>
-                <Slider 
-                  value={radius} 
-                  onValueChange={setRadius} 
-                  max={100} 
-                  step={5} 
-                  className="w-full"
-                />
-                <button 
-                  onClick={() => setShowRadius(false)}
-                  className="mt-3 w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                  Übernehmen
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Divider - Desktop only */}
-          <div className="hidden lg:block w-px h-8 bg-foreground/10" />
-
-          {/* Row 3 on mobile: Date Picker */}
-          <Popover open={dateOpen} onOpenChange={setDateOpen}>
-            <PopoverTrigger asChild>
-              <button className="flex-1 lg:flex-none lg:min-w-[130px] px-4 py-2.5 rounded-xl lg:rounded-full bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon size={16} className="text-foreground/60" />
-                  <span>{getDateDisplayText()}</span>
-                </div>
-                <ChevronDown size={14} className={cn("transition-transform", dateOpen && "rotate-180")} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white border shadow-xl rounded-xl z-50" align="start">
-              <div className="p-3 border-b">
-                <div className="flex flex-wrap gap-2">
-                  {timePills.map((pill) => (
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 bg-white border shadow-xl rounded-xl z-50" align="start">
+                  {categories.map((cat) => (
                     <button
-                      key={pill.id}
+                      key={cat.slug || "all"}
                       onClick={() => {
-                        handleTimePillClick(pill.id);
-                        setDateOpen(false);
+                        setSelectedCategory(cat);
+                        setCategoryOpen(false);
                       }}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2",
-                        selectedTimePill === pill.id
-                          ? "bg-blue-900 text-white border-blue-900"
-                          : pill.id === "now"
-                          ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
-                          : "bg-gray-100 text-foreground/70 border-gray-100 hover:bg-gray-200"
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                        selectedCategory.slug === cat.slug 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "hover:bg-muted text-foreground/80"
                       )}
                     >
-                      {pill.label}
+                      <cat.icon size={18} />
+                      <span>{cat.name}</span>
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+
+              {/* Stimmung Dropdown */}
+              <Popover open={moodOpen} onOpenChange={setMoodOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex-1 lg:flex-none lg:min-w-[150px] px-4 py-2.5 rounded-xl lg:rounded-full bg-muted border border-border hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
+                    <div className="flex items-center gap-2">
+                      <selectedMood.icon size={16} className="text-foreground/60" />
+                      <span className="truncate">{selectedMood.name}</span>
+                    </div>
+                    <ChevronDown size={14} className={cn("transition-transform", moodOpen && "rotate-180")} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 bg-white border shadow-xl rounded-xl z-50 max-h-80 overflow-y-auto" align="start">
+                  {moods.map((mood) => (
+                    <button
+                      key={mood.slug || "all"}
+                      onClick={() => {
+                        setSelectedMood(mood);
+                        setMoodOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                        selectedMood.slug === mood.slug 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "hover:bg-muted text-foreground/80"
+                      )}
+                    >
+                      <mood.icon size={18} />
+                      <span>{mood.name}</span>
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Divider - Desktop only */}
+            <div className="hidden lg:block w-px h-8 bg-border" />
+
+            {/* Row 2 on mobile: City Input with Radius */}
+            <div className="relative flex-1 lg:min-w-[180px]">
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" />
+                <input
+                  ref={cityInputRef}
+                  type="text"
+                  placeholder="Stadt (Optional)"
+                  value={cityInput}
+                  onChange={(e) => handleCityInputChange(e.target.value)}
+                  onFocus={() => cityInput.length > 0 && setShowCitySuggestions(true)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl lg:rounded-full bg-muted border border-border text-sm placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all"
+                />
+              </div>
+              
+              {/* City Suggestions Dropdown */}
+              {showCitySuggestions && filteredCities.length > 0 && (
+                <div 
+                  ref={citySuggestionsRef}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white border shadow-xl rounded-xl z-50 overflow-hidden"
+                >
+                  {filteredCities.map((city) => (
+                    <button
+                      key={city}
+                      onClick={() => handleCitySelect(city)}
+                      className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2"
+                    >
+                      <MapPin size={14} className="text-foreground/40" />
+                      {city}
                     </button>
                   ))}
                 </div>
-              </div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                locale={de}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+              )}
+              
+              {/* Radius Slider - appears when city is selected */}
+              {showRadius && cityInput && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border shadow-xl rounded-xl z-40 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-foreground/60 font-medium">Umkreis</span>
+                    <span className="text-sm font-semibold">{radius[0]} km</span>
+                  </div>
+                  <Slider 
+                    value={radius} 
+                    onValueChange={setRadius} 
+                    max={100} 
+                    step={5} 
+                    className="w-full"
+                  />
+                  <button 
+                    onClick={() => setShowRadius(false)}
+                    className="mt-3 w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Übernehmen
+                  </button>
+                </div>
+              )}
+            </div>
 
-          {/* Search Button */}
-          <button
-            onClick={handleSearch}
-            className="lg:ml-2 px-6 py-2.5 rounded-xl lg:rounded-full bg-foreground text-background font-semibold text-sm hover:bg-foreground/90 transition-all flex items-center justify-center gap-2 shadow-lg"
-          >
-            <Search size={16} />
-            <span>SUCHEN</span>
-          </button>
+            {/* Divider - Desktop only */}
+            <div className="hidden lg:block w-px h-8 bg-border" />
+
+            {/* Row 3 on mobile: Date Picker */}
+            <Popover open={dateOpen} onOpenChange={setDateOpen}>
+              <PopoverTrigger asChild>
+                <button className="flex-1 lg:flex-none lg:min-w-[130px] px-4 py-2.5 rounded-xl lg:rounded-full bg-muted border border-border hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon size={16} className="text-foreground/60" />
+                    <span>{getDateDisplayText()}</span>
+                  </div>
+                  <ChevronDown size={14} className={cn("transition-transform", dateOpen && "rotate-180")} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-white border shadow-xl rounded-xl z-50" align="start">
+                <div className="p-3 border-b">
+                  <div className="flex flex-wrap gap-2">
+                    {timePills.map((pill) => (
+                      <button
+                        key={pill.id}
+                        onClick={() => {
+                          handleTimePillClick(pill.id);
+                          setDateOpen(false);
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2",
+                          selectedTimePill === pill.id
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : pill.id === "now"
+                            ? "bg-accent text-accent-foreground border-accent hover:opacity-90"
+                            : "bg-muted text-foreground/70 border-muted hover:bg-muted/80"
+                        )}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  locale={de}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Search Button - Charcoal */}
+            <button
+              onClick={handleSearch}
+              className="lg:ml-2 px-6 py-2.5 rounded-xl lg:rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-sm"
+            >
+              <Search size={16} />
+              <span>SUCHEN</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

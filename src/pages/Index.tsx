@@ -1,8 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import CleanGridSection from "@/components/CleanGridSection";
-import SideBySideSection from "@/components/SideBySideSection";
-import EliteExperiencesSection from "@/components/EliteExperiencesSection";
+import UnifiedEventsGrid from "@/components/UnifiedEventsGrid";
+import TripPlannerSidebar from "@/components/TripPlannerSidebar";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
 import { useEventModal } from "@/hooks/useEventModal";
@@ -23,49 +22,55 @@ const Index = () => {
       <main>
         <HeroSection />
         
-        {/* Sandiger Hintergrund für alle Event-Sektionen */}
-        <div className="bg-[#F5F0E8]">
-          {/* Sektion 1: Verpasse nicht an diesem Wochenende - Karussell */}
-          <ErrorBoundary>
-            <CleanGridSection 
-              title="Verpasse nicht an diesem Wochenende:"
-              sourceFilter="myswitzerland"
-              filterParam="source=myswitzerland"
-              onEventClick={openEvent}
-              maxEvents={10}
-            />
-          </ErrorBoundary>
+        {/* Main Content with Sidebar */}
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
+          <div className="flex gap-8">
+            {/* Left: Event Grids */}
+            <div className="flex-1 min-w-0">
+              <ErrorBoundary>
+                <UnifiedEventsGrid 
+                  title="Verpasse nicht an diesem Wochenende:"
+                  sourceFilter="myswitzerland"
+                  onEventClick={openEvent}
+                  maxEvents={9}
+                />
+              </ErrorBoundary>
 
-          {/* Sektion 2: Familien-Abenteuer - Karussell */}
-          <ErrorBoundary>
-            <SideBySideSection 
-              title="Familien-Abenteuer:" 
-              tagFilter="familie-freundlich"
-              filterParam="tags=familie-freundlich"
-              onEventClick={openEvent}
-              maxEvents={10}
-            />
-          </ErrorBoundary>
+              <ErrorBoundary>
+                <UnifiedEventsGrid 
+                  title="Familien-Abenteuer:" 
+                  tagFilter="familie-freundlich"
+                  onEventClick={openEvent}
+                  maxEvents={6}
+                />
+              </ErrorBoundary>
 
-          {/* Sektion 3: Wärmende Indoor-Erlebnisse - Karussell */}
-          <ErrorBoundary>
-            <CleanGridSection 
-              title="Wärmende Indoor-Erlebnisse:" 
-              tagFilter="mistwetter"
-              filterParam="tags=mistwetter"
-              onEventClick={openEvent}
-              maxEvents={10}
-            />
-          </ErrorBoundary>
+              <ErrorBoundary>
+                <UnifiedEventsGrid 
+                  title="Wärmende Indoor-Erlebnisse:" 
+                  tagFilter="mistwetter"
+                  onEventClick={openEvent}
+                  maxEvents={6}
+                />
+              </ErrorBoundary>
 
-          {/* Sektion 4: Die Schweizer Top Erlebnisse - Karussell */}
-          <ErrorBoundary>
-            <EliteExperiencesSection onEventClick={openEvent} />
-          </ErrorBoundary>
+              <ErrorBoundary>
+                <UnifiedEventsGrid 
+                  title="Die Schweizer Top Erlebnisse:" 
+                  tagFilter="elite"
+                  onEventClick={openEvent}
+                  maxEvents={6}
+                />
+              </ErrorBoundary>
+            </div>
+
+            {/* Right: Trip Planner Sidebar */}
+            <TripPlannerSidebar onEventClick={openEvent} />
+          </div>
         </div>
       </main>
       
-      {/* Global Event Detail Modal with URL sync */}
+      {/* Global Event Detail Modal */}
       <EventDetailModal 
         key={selectedEventId || "closed"}
         eventId={selectedEventId}
