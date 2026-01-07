@@ -666,30 +666,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
   }, [isVisible, mapReady]);
 
   return (
-    <div className="relative w-full">
-      {/* Filter Pills */}
-      <div className="mb-4 overflow-x-auto scrollbar-hide">
-        <div className="flex gap-2 pb-2">
-          {CATEGORY_FILTERS.map(filter => {
-            const isActive = activeFilters.includes(filter.key);
-            return (
-              <button
-                key={filter.key}
-                onClick={() => toggleFilter(filter.key)}
-                className="filter-pill whitespace-nowrap"
-                style={{
-                  borderColor: filter.color,
-                  backgroundColor: isActive ? filter.color : 'transparent',
-                  color: isActive ? 'white' : filter.color
-                }}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+    <div className="relative w-full h-full">
       {/* Map Container */}
       <div className="relative min-h-[600px] h-[calc(100vh-340px)] rounded-xl overflow-hidden border border-border shadow-lg">
         <div ref={mapContainer} className="w-full h-full" />
