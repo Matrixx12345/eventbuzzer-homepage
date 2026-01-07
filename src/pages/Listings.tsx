@@ -23,7 +23,7 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
-import { getNearestPlace } from "@/utils/swissPlaces";
+import { getNearestPlace, getNearestPlaceWithDistance } from "@/utils/swissPlaces";
 import { toggleFavoriteApi } from "@/services/favorites";
 import { toast } from "sonner";
 
@@ -740,12 +740,9 @@ const Listings = () => {
                         />
                       </div>
 
-                      {/* Buzz Score Bar - Direkt unter dem Bild */}
-                      <div className="h-1 bg-stone-100">
-                        <div 
-                          className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all"
-                          style={{ width: `${Math.min(100, (event.buzz_score || 0))}%` }}
-                        />
+{/* BuzzTracker Slider */}
+                      <div className="px-3 pt-2">
+                        <BuzzTracker buzzScore={event.buzz_score} />
                       </div>
 
                       {/* Content Section */}
@@ -756,11 +753,39 @@ const Listings = () => {
                               {convertToUmlauts(event.title)}
                             </h3>
                             
-                            <div className="flex items-center gap-1.5 text-xs text-stone-500">
-                              <MapPin size={11} className="flex-shrink-0" />
-                              <span className="truncate">
+                            {/* Location with Mini-Map Hover Tooltip + km-Angabe */}
+                            <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
+                              <span className="text-red-600">📍</span>
+                              <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
                                 {locationName || "Schweiz"}
+                                {event.latitude && event.longitude && (() => {
+                                  const info = getNearestPlaceWithDistance(event.latitude, event.longitude);
+                                  return info.distance > 0.5 ? ` • ${Math.round(info.distance)} km` : '';
+                                })()}
                               </span>
+
+                              {/* Mini-Map Tooltip */}
+                              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                                <div className="bg-white p-2 rounded-xl shadow-2xl border border-stone-200 w-44 h-32 overflow-hidden">
+                                  <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                                    <img 
+                                      src="/swiss-outline.svg" 
+                                      className="w-full h-full object-contain opacity-30 p-2" 
+                                      alt="Switzerland Map" 
+                                    />
+                                    {event.latitude && event.longitude && (
+                                      <div
+                                        className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
+                                        style={{
+                                          left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                                          top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="w-3 h-3 bg-white border-r border-b border-stone-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+                              </div>
                             </div>
                           </div>
                           
