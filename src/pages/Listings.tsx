@@ -846,12 +846,10 @@ const Listings = () => {
             )}
           </div>
           
-          {/* Right: Trip Planner Sidebar - only in list mode, goes from top to bottom */}
+          {/* Right: Trip Planner Sidebar - only in list mode, normaler Flow KEIN sticky */}
           {viewMode === "list" && (
             <div className="hidden lg:block w-80 flex-shrink-0">
-              <div className="sticky top-24 h-[calc(100vh-7rem)]">
-                <ListingsTripSidebar onEventClick={handleEventClick} />
-              </div>
+              <ListingsTripSidebar onEventClick={handleEventClick} />
             </div>
           )}
         </div>
