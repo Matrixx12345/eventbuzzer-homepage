@@ -166,7 +166,13 @@ interface EliteExperiencesSectionProps {
 }
 
 const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps) => {
-  const [events, setEvents] = useState<any[]>([]);
+  // Puffer: Lade doppelt so viele Events wie angezeigt werden
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const maxEvents = 12;
+  
+  // Sichtbare Events = alle minus versteckte, dann auf maxEvents begrenzen
+  const events = allEvents.filter(e => !hiddenIds.has(e.external_id)).slice(0, maxEvents);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -242,7 +248,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
         }));
 
         const diversified = diversifyEvents(filtered, 2);
-        setEvents(diversified.slice(0, 12));
+        setAllEvents(diversified.slice(0, maxEvents * 2));
       } catch (error) {
         console.error("Error loading elite events:", error);
       } finally {
@@ -348,12 +354,12 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
                 {...event}
                 eventId={event.externalId}
                 onBuzzChange={(newScore) => {
-                  setEvents(prev => prev.map(e => 
+                  setAllEvents(prev => prev.map(e => 
                     e.id === event.id ? { ...e, buzz_score: newScore } : e
                   ));
                 }}
                 onClick={() => onEventClick?.(event.id)}
-                onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
+                onHide={() => setHiddenIds(prev => new Set([...prev, event.externalId]))}
               />
             ))}
             
