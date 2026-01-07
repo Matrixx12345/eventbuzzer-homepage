@@ -347,8 +347,8 @@ interface SnakeCardProps {
 const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   if (!event) {
     return (
-      <div className="w-24 h-24 rounded-xl bg-stone-100 border-2 border-dashed border-stone-200 flex items-center justify-center mx-auto">
-        <Plus size={16} className="text-stone-300" />
+      <div className="w-32 h-32 rounded-xl bg-stone-100 border-2 border-dashed border-stone-200 flex items-center justify-center mx-auto">
+        <Plus size={20} className="text-stone-300" />
       </div>
     );
   }
@@ -356,7 +356,7 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-24 h-24 rounded-xl overflow-hidden relative cursor-pointer group flex-shrink-0 mx-auto"
+      className="w-32 h-32 rounded-xl overflow-hidden relative cursor-pointer group flex-shrink-0 mx-auto"
     >
       <img 
         src={event.image} 
@@ -367,18 +367,18 @@ const SnakeCard = ({ event, onClick }: SnakeCardProps) => {
       {/* Dark gradient overlay at bottom */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       
-      {/* Content - kompakter */}
-      <div className="absolute bottom-0 left-0 right-0 p-2">
-        <h4 className="text-white font-semibold text-[10px] leading-tight line-clamp-2">{event.title}</h4>
-        <p className="text-white/70 text-[8px] mt-0.5 flex items-center gap-0.5">
-          <MapPin size={8} />
+      {/* Content - lesbar */}
+      <div className="absolute bottom-0 left-0 right-0 p-2.5">
+        <h4 className="text-white font-semibold text-xs leading-tight line-clamp-2">{event.title}</h4>
+        <p className="text-white/70 text-[10px] mt-1 flex items-center gap-1">
+          <MapPin size={10} />
           {event.location || "Schweiz"}
         </p>
       </div>
       
       {/* Heart outline top right */}
-      <div className="absolute top-1 right-1">
-        <Heart size={12} className="text-white" strokeWidth={1.5} />
+      <div className="absolute top-1.5 right-1.5">
+        <Heart size={14} className="text-white" strokeWidth={1.5} />
       </div>
     </div>
   );

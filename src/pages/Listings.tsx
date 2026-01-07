@@ -740,11 +740,6 @@ const Listings = () => {
                         />
                       </div>
 
-{/* BuzzTracker Slider */}
-                      <div className="px-3 pt-2">
-                        <BuzzTracker buzzScore={event.buzz_score} />
-                      </div>
-
                       {/* Content Section */}
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -757,11 +752,10 @@ const Listings = () => {
                             <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
                               <span className="text-red-600">📍</span>
                               <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
-                                {locationName || "Schweiz"}
-                                {event.latitude && event.longitude && (() => {
+                                {event.latitude && event.longitude ? (() => {
                                   const info = getNearestPlaceWithDistance(event.latitude, event.longitude);
-                                  return info.distance > 0.5 ? ` • ${Math.round(info.distance)} km` : '';
-                                })()}
+                                  return `${Math.round(info.distance)} km von ${info.name}`;
+                                })() : (locationName || "Schweiz")}
                               </span>
 
                               {/* Mini-Map Tooltip */}
@@ -835,6 +829,11 @@ const Listings = () => {
                               className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-400"}
                             />
                           </button>
+                        </div>
+                        
+                        {/* BuzzTracker Slider - am Ende der Karte */}
+                        <div className="pt-2">
+                          <BuzzTracker buzzScore={event.buzz_score} />
                         </div>
                       </div>
                     </article>
