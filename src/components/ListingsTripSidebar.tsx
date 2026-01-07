@@ -24,6 +24,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [transportMode, setTransportMode] = useState<"auto" | "bahn">("bahn");
   const [, setMapEvents] = useState<any[]>([]);
+  
+  // Get favorite IDs for map highlighting
+  const favoriteIds = favorites.map(f => f.id);
 
   // Mock suggested events for expanded view
   const suggestedEvents = [
@@ -96,6 +99,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                   onEventClick={onEventClick}
                   onEventsChange={setMapEvents}
                   isVisible={true}
+                  selectedEventIds={favoriteIds}
                 />
               </Suspense>
             </div>
@@ -154,13 +158,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   // Collapsed State - KEIN internes Scrolling, Content fließt normal
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-stone-200/80 overflow-visible">
-      {/* Header */}
-      <div className="p-4 border-b border-stone-100">
-        <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wider mb-0.5">Trip Composer</p>
-        <h3 className="font-serif font-bold text-stone-900 text-lg">Dein Trip-Entwurf</h3>
-      </div>
-
-      {/* Map - QUADRATISCH mit sandfarbenem Hintergrund */}
+      {/* Map - QUADRATISCH bündig oben */}
       <div className="aspect-square w-full relative overflow-hidden">
         <Suspense fallback={
           <div className="w-full h-full bg-[hsl(var(--listings-bg))] flex items-center justify-center">
@@ -175,6 +173,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             onEventClick={onEventClick}
             onEventsChange={setMapEvents}
             isVisible={true}
+            selectedEventIds={favoriteIds}
           />
         </Suspense>
       </div>
@@ -267,17 +266,34 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
   const row1 = [slots[0], slots[1], slots[2]];
   const row2 = [slots[5], slots[4], slots[3]];
 
-  const getTransportPill = (idx: number) => {
-    const opt = transportOptions[idx % transportOptions.length];
-    const icon = transportMode === "bahn" ? "🚆" : "🚗";
-    const kmValues = ["45", "32", "78", "56", "63"];
-    return { icon, label: opt.label, duration: opt.duration, km: kmValues[idx % kmValues.length] };
+  // Mock transport data with minutes and km
+  const getTransportData = (idx: number) => {
+    const data = [
+      { minutes: 45, km: 52 },
+      { minutes: 32, km: 38 },
+      { minutes: 78, km: 85 },
+      { minutes: 56, km: 61 },
+      { minutes: 63, km: 72 },
+    ];
+    return data[idx % data.length];
+  };
+
+  // Connection line with min/km labels
+  const ConnectionLine = ({ index }: { index: number }) => {
+    const transport = getTransportData(index);
+    return (
+      <div className="flex flex-col items-center mx-2">
+        <span className="text-[10px] text-stone-400 font-medium mb-0.5">{transport.minutes} min</span>
+        <div className="w-10 h-px bg-stone-300" />
+        <span className="text-[10px] text-stone-400 mt-0.5">{transport.km} km</span>
+      </div>
+    );
   };
 
   return (
-    <div className="relative">
-      {/* Row 1 */}
-      <div className="flex justify-center items-center gap-4">
+    <div className="relative w-full">
+      {/* Row 1 - bündig mit Map-Breite */}
+      <div className="flex justify-between items-center w-full">
         {row1.map((fav, idx) => (
           <div key={idx} className="flex items-center">
             <SnakeCard 
@@ -285,24 +301,22 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
               onClick={() => fav && onEventClick?.(fav.id)} 
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
-            
-            {/* Nur dünne Linie ohne Icon */}
-            {idx < 2 && (
-              <div className="w-8 h-0.5 bg-stone-300 ml-4" />
-            )}
+            {idx < 2 && row1[idx + 1] && <ConnectionLine index={idx} />}
           </div>
         ))}
       </div>
 
-      {/* Vertical connection on the right side - minimalistisch */}
+      {/* Vertical connection on the right side */}
       {row1[2] && row2[2] && (
-        <div className="flex justify-end pr-28 py-2">
-          <div className="w-0.5 h-10 bg-stone-300" />
+        <div className="flex justify-end py-1">
+          <div className="flex flex-col items-center mr-[calc(50%-8px)] translate-x-1/2">
+            <div className="w-px h-6 bg-stone-300" />
+          </div>
         </div>
       )}
 
-      {/* Row 2 (reversed) */}
-      <div className="flex justify-center items-center gap-4">
+      {/* Row 2 (reversed) - bündig mit Map-Breite */}
+      <div className="flex justify-between items-center w-full">
         {row2.map((fav, idx) => (
           <div key={idx} className="flex items-center">
             <SnakeCard 
@@ -310,11 +324,7 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
               onClick={() => fav && onEventClick?.(fav.id)} 
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
-            
-            {/* Nur dünne Linie ohne Icon */}
-            {idx < 2 && row2[idx] && row2[idx + 1] && (
-              <div className="w-8 h-0.5 bg-stone-300 ml-4" />
-            )}
+            {idx < 2 && row2[idx] && row2[idx + 1] && <ConnectionLine index={idx + 3} />}
           </div>
         ))}
       </div>
@@ -333,7 +343,7 @@ const TransportPill = ({ icon, duration, km }: { icon: string; label: string; du
   </div>
 );
 
-// Snake Card Component - LARGER square cards
+// Snake Card Component - responsive width based on container
 interface SnakeCardProps {
   event: FavoriteEvent | null;
   onClick?: () => void;
@@ -343,8 +353,8 @@ interface SnakeCardProps {
 const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
   if (!event) {
     return (
-      <div className="w-64 h-64 rounded-2xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
-        <Plus size={36} className="text-stone-300" />
+      <div className="flex-1 aspect-square max-w-[180px] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
+        <Plus size={24} className="text-stone-300" />
       </div>
     );
   }
@@ -352,7 +362,7 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-64 h-64 rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+      className="flex-1 aspect-square max-w-[180px] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
     >
       <img 
         src={event.image} 
@@ -360,19 +370,16 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
       />
       
-      {/* Frosted glass overlay - nur unteres 1/4 (h-16 von h-64) */}
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-white/20 backdrop-blur-sm" />
+      {/* Gradient overlay am unteren Rand */}
+      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
       
-      {/* Content on frosted glass */}
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <h4 className="text-white font-semibold text-sm leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-white/90 text-xs flex items-center gap-1 drop-shadow-md">
-            <MapPin size={11} />
-            {event.location || "Schweiz"}
-          </p>
-          <p className="text-white/80 text-xs font-medium drop-shadow-md">Buzz {Math.round(Math.random() * 30 + 60)}</p>
-        </div>
+      {/* Content */}
+      <div className="absolute bottom-0 left-0 right-0 p-2.5">
+        <h4 className="text-white font-medium text-xs leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
+        <p className="text-white/80 text-[10px] flex items-center gap-0.5 mt-0.5 drop-shadow-md">
+          <MapPin size={9} />
+          {event.location || "Schweiz"}
+        </p>
       </div>
       
       {/* Abwählbares Herz top right */}
@@ -381,9 +388,9 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
           e.stopPropagation();
           onRemove?.();
         }}
-        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all hover:scale-110"
+        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white shadow-md transition-all hover:scale-110"
       >
-        <Heart size={16} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
+        <Heart size={12} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
       </button>
     </div>
   );

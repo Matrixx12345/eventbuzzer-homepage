@@ -14,6 +14,7 @@ interface EventsMapProps {
   onEventClick?: (eventId: string) => void;
   onEventsChange?: (events: MapEvent[]) => void;
   isVisible?: boolean;
+  selectedEventIds?: string[];
 }
 
 // Define GeoJSON feature type for Supercluster
@@ -103,7 +104,7 @@ function getDominantCategory(categories: Record<CategoryType, number>): Category
   return dominant;
 }
 
-export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true }: EventsMapProps) {
+export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true, selectedEventIds = [] }: EventsMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -293,9 +294,9 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       const isCluster = feature.properties.cluster;
 
       if (isCluster) {
-        // CLUSTER marker - einheitliche Farbe ohne Ring
+        // CLUSTER marker - klein und dezent
         const pointCount = feature.properties.point_count;
-        const size = Math.min(50, 34 + Math.log2(pointCount) * 5);
+        const size = Math.min(28, 18 + Math.log2(pointCount) * 3);
         
         const wrapper = document.createElement('div');
         wrapper.style.cssText = `
@@ -308,15 +309,15 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
         inner.style.cssText = `
           width: 100%;
           height: 100%;
-          background: #78716c;
+          background: #a8a29e;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
           font-weight: 600;
-          font-size: ${Math.min(14, 11 + Math.log2(pointCount) * 1.5)}px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          font-size: ${Math.min(11, 9 + Math.log2(pointCount))}px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.15);
           transition: transform 0.2s ease-out;
         `;
         inner.textContent = pointCount.toString();
@@ -350,17 +351,18 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
         markersRef.current.push(marker);
       } else {
-        // SINGLE event marker - einheitliche Farbe
+        // SINGLE event marker
         const event = feature.properties.event as MapEvent;
-        const isElite = event.buzz_boost === 100;
+        const isSelected = selectedEventIds.includes(event.id) || selectedEventIds.includes(event.external_id || '');
+        const markerColor = isSelected ? '#ef4444' : '#d6d3d1'; // red for selected, light gray for others
         
         const wrapper = document.createElement('div');
         const fallbackImage = 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=200';
         const imageUrl = event.image_url && event.image_url.trim() !== '' ? event.image_url : fallbackImage;
         
         if (showImages) {
-          // Large marker with image - einheitliche Farbe
-          const size = 56;
+          // Marker with image - selected are larger and red
+          const size = isSelected ? 36 : 20;
           wrapper.style.cssText = `
             width: ${size}px;
             height: ${size}px;
@@ -373,11 +375,11 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 3px solid #78716c;
-            background-color: #78716c;
+            border: ${isSelected ? '3px' : '2px'} solid ${markerColor};
+            background-color: ${markerColor};
             background-size: cover;
             background-position: center;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+            box-shadow: ${isSelected ? '0 2px 8px rgba(239,68,68,0.4)' : '0 1px 3px rgba(0,0,0,0.12)'};
             transition: transform 0.2s ease;
           `;
           
@@ -394,24 +396,18 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           
           wrapper.appendChild(inner);
 
-          if (isElite) {
-            const badge = document.createElement('div');
-            badge.className = 'elite-badge';
-            badge.textContent = '⭐';
-            wrapper.appendChild(badge);
-          }
-
           wrapper.addEventListener('mouseenter', () => {
-            inner.style.transform = 'scale(1.1)';
+            inner.style.transform = 'scale(1.15)';
           });
           wrapper.addEventListener('mouseleave', () => {
             inner.style.transform = 'scale(1)';
           });
         } else {
-          // Small marker - einheitliche Farbe, kein Ring
+          // Small marker - selected red, others gray
+          const size = isSelected ? 14 : 8;
           wrapper.style.cssText = `
-            width: 28px;
-            height: 28px;
+            width: ${size}px;
+            height: ${size}px;
             cursor: pointer;
             position: relative;
           `;
@@ -420,35 +416,15 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           inner.style.cssText = `
             width: 100%;
             height: 100%;
-            background: #78716c;
+            background: ${markerColor};
             border-radius: 50%;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            box-shadow: ${isSelected ? '0 1px 4px rgba(239,68,68,0.4)' : '0 1px 2px rgba(0,0,0,0.1)'};
             transition: transform 0.2s ease;
           `;
           wrapper.appendChild(inner);
 
-          if (isElite) {
-            const badge = document.createElement('div');
-            badge.style.cssText = `
-              position: absolute;
-              top: -4px;
-              right: -4px;
-              background: #FFD700;
-              border-radius: 50%;
-              width: 14px;
-              height: 14px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 8px;
-              box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-            `;
-            badge.textContent = '⭐';
-            wrapper.appendChild(badge);
-          }
-
           wrapper.addEventListener('mouseenter', () => {
-            inner.style.transform = 'scale(1.2)';
+            inner.style.transform = 'scale(1.3)';
           });
           wrapper.addEventListener('mouseleave', () => {
             inner.style.transform = 'scale(1)';
@@ -480,7 +456,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     });
 
     console.log(`Rendered ${clusters.length} markers/clusters`);
-  }, [onEventClick]);
+  }, [onEventClick, selectedEventIds]);
 
   // Initialize map
   useEffect(() => {
