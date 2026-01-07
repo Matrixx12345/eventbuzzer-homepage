@@ -86,9 +86,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* Right Content: Map + Trip Grid */}
-          <div className="flex-1 flex flex-col overflow-y-auto">
-            {/* Map - flush top, no padding */}
-            <div className="h-72 overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-y-auto p-6">
+            {/* Map - with padding/border around it */}
+            <div className="h-64 rounded-2xl overflow-hidden shadow-lg border border-stone-200">
               <Suspense fallback={
                 <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
@@ -104,7 +104,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             </div>
 
             {/* Transport Toggle */}
-            <div className="flex items-center gap-3 px-8 py-5">
+            <div className="flex items-center gap-3 py-5">
               <button
                 onClick={() => setTransportMode("auto")}
                 className={cn(
@@ -131,8 +131,8 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               </button>
             </div>
 
-            {/* Trip Grid - Clean 3-column layout */}
-            <div className="flex-1 px-8 pb-8">
+            {/* Trip Grid - Cards flush with map edges */}
+            <div className="flex-1">
               {favorites.length === 0 ? (
                 <div className="text-center py-16 text-stone-400">
                   <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
@@ -263,11 +263,13 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
     slots.push(null as any);
   }
 
-  // Mock transport data
+  // Mock transport data for connections
   const transportData = [
     { minutes: 45, km: 52 },
     { minutes: 32, km: 38 },
     { minutes: 63, km: 72 },
+    { minutes: 28, km: 31 },
+    { minutes: 55, km: 64 },
   ];
 
   // Row 1: slots 0, 1, 2
@@ -276,22 +278,30 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
   const row2 = [slots[3], slots[4], slots[5]];
 
   return (
-    <div className="space-y-6">
-      {/* Row 1 */}
-      <div className="grid grid-cols-3 gap-6 items-start">
+    <div className="space-y-5">
+      {/* Row 1 - 3 cards with full-width connections between */}
+      <div className="flex items-center">
         {row1.map((fav, idx) => (
-          <div key={idx} className="flex items-center">
+          <div key={idx} className="flex items-center flex-1">
             <TripCard 
               event={fav} 
               onClick={() => fav && onEventClick?.(fav.id)} 
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
-            {/* Connection line to next card */}
-            {idx < 2 && row1[idx + 1] && (
-              <div className="flex flex-col items-center mx-3 flex-shrink-0">
-                <span className="text-[11px] text-stone-400 font-medium whitespace-nowrap">{transportData[idx].minutes} min</span>
-                <div className="w-12 h-px bg-stone-300 my-1" />
-                <span className="text-[11px] text-stone-400 whitespace-nowrap">{transportData[idx].km} km</span>
+            {/* Connection line - fills remaining space between cards */}
+            {idx < 2 && (
+              <div className="flex-1 flex items-center justify-center relative mx-1">
+                {/* The line */}
+                <div className="w-full h-[2px] bg-stone-300" />
+                {/* Centered pills with frosted glass */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm mb-1">
+                    <span className="text-[11px] text-stone-600 font-medium">{transportData[idx].minutes} min</span>
+                  </div>
+                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                    <span className="text-[11px] text-stone-500">{transportData[idx].km} km</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -299,20 +309,26 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
       </div>
 
       {/* Row 2 - directly below */}
-      <div className="grid grid-cols-3 gap-6 items-start">
+      <div className="flex items-center">
         {row2.map((fav, idx) => (
-          <div key={idx} className="flex items-center">
+          <div key={idx} className="flex items-center flex-1">
             <TripCard 
               event={fav} 
               onClick={() => fav && onEventClick?.(fav.id)} 
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
             {/* Connection line */}
-            {idx < 2 && row2[idx] && row2[idx + 1] && (
-              <div className="flex flex-col items-center mx-3 flex-shrink-0">
-                <span className="text-[11px] text-stone-400 font-medium whitespace-nowrap">{transportData[2].minutes} min</span>
-                <div className="w-12 h-px bg-stone-300 my-1" />
-                <span className="text-[11px] text-stone-400 whitespace-nowrap">{transportData[2].km} km</span>
+            {idx < 2 && (
+              <div className="flex-1 flex items-center justify-center relative mx-1">
+                <div className="w-full h-[2px] bg-stone-300" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm mb-1">
+                    <span className="text-[11px] text-stone-600 font-medium">{transportData[idx + 2].minutes} min</span>
+                  </div>
+                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                    <span className="text-[11px] text-stone-500">{transportData[idx + 2].km} km</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -322,7 +338,7 @@ const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) 
   );
 };
 
-// Trip Card Component
+// Trip Card Component - 30% bigger
 interface TripCardProps {
   event: FavoriteEvent | null;
   onClick?: () => void;
@@ -332,8 +348,8 @@ interface TripCardProps {
 const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   if (!event) {
     return (
-      <div className="w-48 aspect-[4/3] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
-        <Plus size={24} className="text-stone-300" />
+      <div className="w-full max-w-[240px] aspect-[4/3] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center flex-shrink-0">
+        <Plus size={28} className="text-stone-300" />
       </div>
     );
   }
@@ -341,7 +357,7 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-48 aspect-[4/3] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300"
+      className="w-full max-w-[240px] aspect-[4/3] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0"
     >
       <img 
         src={event.image} 
@@ -350,13 +366,13 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
       />
       
       {/* Gradient overlay */}
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
       
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h4 className="text-white font-medium text-sm leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
-        <p className="text-white/80 text-xs flex items-center gap-1 mt-1 drop-shadow-md">
-          <MapPin size={10} />
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <h4 className="text-white font-medium text-base leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
+        <p className="text-white/80 text-sm flex items-center gap-1 mt-1 drop-shadow-md">
+          <MapPin size={12} />
           {event.location || "Schweiz"}
         </p>
       </div>
@@ -367,9 +383,9 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
           e.stopPropagation();
           onRemove?.();
         }}
-        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white shadow-md transition-all hover:scale-110"
+        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-md transition-all hover:scale-110"
       >
-        <Heart size={12} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
+        <Heart size={14} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
       </button>
     </div>
   );
