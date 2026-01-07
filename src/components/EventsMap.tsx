@@ -384,26 +384,28 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
         markersRef.current.push(marker);
       } else {
-        // SINGLE event marker - Selected = red heart, others = small gray dot
+        // SINGLE event marker - Selected = red pin, others = small gray dot
         const event = feature.properties.event as MapEvent;
         const isSelected = selectedEventIds.includes(event.id) || selectedEventIds.includes(event.external_id || '');
         
         const wrapper = document.createElement('div');
         
         if (isSelected) {
-          // FAVORITE: Small red heart icon
+          // FAVORITE: Big red map pin - ALWAYS visible
           wrapper.style.cssText = `
-            width: 16px;
-            height: 16px;
+            width: 32px;
+            height: 40px;
             cursor: pointer;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1000;
           `;
           wrapper.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            <svg width="32" height="40" viewBox="0 0 24 30" fill="none" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));">
+              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill="#ef4444"/>
+              <circle cx="12" cy="11" r="4" fill="white"/>
             </svg>
           `;
         } else {

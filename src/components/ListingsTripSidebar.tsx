@@ -475,8 +475,8 @@ interface TripCardProps {
 const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   if (!event) {
     return (
-      <div className="w-[90%] mx-auto aspect-[4/3] rounded-2xl bg-stone-100/30 border-2 border-dashed border-stone-200/60 flex items-center justify-center flex-shrink-0">
-        <Plus size={24} className="text-stone-300" />
+      <div className="w-[80%] mx-auto aspect-[4/3] rounded-2xl bg-stone-100/30 border-2 border-dashed border-stone-200/60 flex items-center justify-center flex-shrink-0">
+        <Plus size={20} className="text-stone-300" />
       </div>
     );
   }
@@ -484,7 +484,7 @@ const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="w-[90%] mx-auto aspect-[4/3] rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 flex-shrink-0"
+      className="w-[80%] mx-auto aspect-[4/3] rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 flex-shrink-0"
     >
       <img 
         src={event.image} 
