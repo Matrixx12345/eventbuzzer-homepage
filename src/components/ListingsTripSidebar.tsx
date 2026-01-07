@@ -37,7 +37,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   ];
 
   if (isExpanded) {
-    const gridFavorites = favorites.slice(0, 6);
+    const gridFavorites = favorites.slice(0, 8); // Support up to 8 cards for snake pattern
     
     return (
       <div className="fixed inset-0 z-[9999] bg-[#FDFBF7] overflow-auto">
@@ -50,45 +50,10 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         </button>
 
         <div className="flex min-h-screen">
-          {/* Left Sidebar: Vorschläge - Clean white cards on sand background */}
-          <div className="w-80 bg-[#F5F3EF] p-5 flex-shrink-0 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-5">
-              <Sparkles size={16} className="text-amber-500" />
-              <h3 className="font-medium text-stone-600 text-sm">Vorschläge für dich</h3>
-            </div>
-            <div className="space-y-3">
-              {suggestedEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-white rounded-xl p-3 flex gap-3 cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300 border border-stone-100"
-                >
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="text-stone-800 font-medium text-sm leading-tight truncate">{event.title}</p>
-                    <p className="text-stone-400 text-xs mt-1 flex items-center gap-1">
-                      <MapPin size={10} />
-                      {event.location}
-                    </p>
-                  </div>
-                  <button 
-                    className="self-center p-2 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Plus size={14} className="text-stone-600" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Content: Map + Trip Grid */}
-          <div className="flex-1 flex flex-col overflow-y-auto pt-12 pr-12 pb-8">
-            {/* Map - bündig mit den Event-Karten (kein extra padding links) */}
-            <div className="h-52 rounded-2xl overflow-hidden shadow-lg border border-stone-200">
+          {/* LEFT HALF: Map + Suggestions */}
+          <div className="w-1/2 flex flex-col p-8 pr-4">
+            {/* Map - takes most of the space */}
+            <div className="flex-1 rounded-2xl overflow-hidden shadow-lg border border-stone-200 min-h-[400px]">
               <Suspense fallback={
                 <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
@@ -103,8 +68,46 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               </Suspense>
             </div>
 
+            {/* Suggestions at bottom of left side */}
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles size={16} className="text-amber-500" />
+                <h3 className="font-medium text-stone-600 text-sm">Vorschläge für dich</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {suggestedEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="bg-white rounded-xl p-3 flex gap-3 cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300 border border-stone-100"
+                  >
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <p className="text-stone-800 font-medium text-sm leading-tight truncate">{event.title}</p>
+                      <p className="text-stone-400 text-xs mt-1 flex items-center gap-1">
+                        <MapPin size={10} />
+                        {event.location}
+                      </p>
+                    </div>
+                    <button 
+                      className="self-center p-2 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Plus size={14} className="text-stone-600" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT HALF: Trip Grid with Snake Pattern */}
+          <div className="w-1/2 flex flex-col p-8 pl-4">
             {/* Transport Toggle */}
-            <div className="flex items-center gap-3 py-5">
+            <div className="flex items-center gap-3 mb-6">
               <button
                 onClick={() => setTransportMode("auto")}
                 className={cn(
@@ -131,7 +134,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               </button>
             </div>
 
-            {/* Trip Grid - Cards flush with map edges */}
+            {/* Trip Grid - Snake Pattern */}
             <div className="flex-1">
               {favorites.length === 0 ? (
                 <div className="text-center py-16 text-stone-400">
@@ -139,7 +142,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                   <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
                 </div>
               ) : (
-                <TripGrid 
+                <SnakeTripGrid 
                   favorites={gridFavorites} 
                   transportMode={transportMode}
                   onEventClick={onEventClick}
@@ -248,112 +251,215 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   );
 };
 
-// Trip Grid Component - Clean 3-column layout like reference image
-interface TripGridProps {
+// Snake Trip Grid Component - 2 columns with snake pattern connections
+interface SnakeTripGridProps {
   favorites: FavoriteEvent[];
   transportMode: "auto" | "bahn";
   onEventClick?: (eventId: string) => void;
   onRemoveFavorite?: (id: string) => void;
 }
 
-const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) => {
-  // Fill to 6 slots
-  const slots = [...favorites];
-  while (slots.length < 6) {
-    slots.push(null as any);
+const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripGridProps) => {
+  // Fill to 8 slots for 4 rows of 2
+  const slots: (FavoriteEvent | null)[] = [...favorites];
+  while (slots.length < 8) {
+    slots.push(null);
   }
 
   // Mock transport data for connections
   const transportData = [
-    { minutes: 45, km: 52 },
-    { minutes: 32, km: 38 },
-    { minutes: 28, km: 31 }, // vertical connection 3rd card to 4th
-    { minutes: 63, km: 72 },
-    { minutes: 55, km: 64 },
+    { minutes: 45, km: 52 },  // 1 -> 2 (horizontal)
+    { minutes: 32, km: 38 },  // 2 -> 3 (vertical down)
+    { minutes: 28, km: 31 },  // 3 -> 4 (horizontal)
+    { minutes: 63, km: 72 },  // 4 -> 5 (vertical down)
+    { minutes: 55, km: 64 },  // 5 -> 6 (horizontal)
+    { minutes: 41, km: 48 },  // 6 -> 7 (vertical down)
+    { minutes: 37, km: 42 },  // 7 -> 8 (horizontal)
   ];
 
-  // Row 1: slots 0, 1, 2
-  // Row 2: slots 3, 4, 5 (directly below)
-  const row1 = [slots[0], slots[1], slots[2]];
-  const row2 = [slots[3], slots[4], slots[5]];
+  // Rows: alternating left-to-right and right-to-left
+  // Row 0: 0, 1 (left to right) - horizontal line between 0->1
+  // Row 1: 3, 2 (right to left, but stored as 2,3) - vertical from 1->2, horizontal 2->3
+  // Row 2: 4, 5 (left to right) - vertical from 3->4, horizontal 4->5
+  // Row 3: 7, 6 (right to left) - vertical from 5->6, horizontal 6->7
 
   return (
-    <div className="flex flex-col">
-      {/* Row 1 - 3 cards with full-width connections between */}
-      <div className="flex items-stretch">
-        {row1.map((fav, idx) => (
-          <div key={idx} className="flex items-center" style={{ flex: 1 }}>
-            <TripCard 
-              event={fav} 
-              onClick={() => fav && onEventClick?.(fav.id)} 
-              onRemove={() => fav && onRemoveFavorite?.(fav.id)}
-            />
-            {/* Connection line - fills remaining space between cards */}
-            {idx < 2 && (
-              <div className="flex-1 flex items-center justify-center relative min-w-[60px]">
-                {/* The line */}
-                <div className="w-full h-[2px] bg-stone-300" />
-                {/* Centered pills with frosted glass */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                    <span className="text-[11px] text-stone-600 font-medium">{transportData[idx].minutes} min</span>
-                  </div>
-                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                    <span className="text-[11px] text-stone-500">{transportData[idx].km} km</span>
-                  </div>
-                </div>
-              </div>
-            )}
+    <div className="flex flex-col gap-0">
+      {/* Row 1: Cards 1 & 2 (indices 0, 1) - left to right */}
+      <div className="flex items-center">
+        <div className="flex-1">
+          <TripCard 
+            event={slots[0]} 
+            onClick={() => slots[0] && onEventClick?.(slots[0].id)} 
+            onRemove={() => slots[0] && onRemoveFavorite?.(slots[0].id)}
+          />
+        </div>
+        {/* Horizontal connection 1->2 */}
+        <div className="w-20 flex items-center justify-center relative">
+          <div className="w-full h-[2px] bg-stone-300" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-600 font-medium">{transportData[0].minutes} min</span>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-500">{transportData[0].km} km</span>
+            </div>
           </div>
-        ))}
+        </div>
+        <div className="flex-1">
+          <TripCard 
+            event={slots[1]} 
+            onClick={() => slots[1] && onEventClick?.(slots[1].id)} 
+            onRemove={() => slots[1] && onRemoveFavorite?.(slots[1].id)}
+          />
+        </div>
       </div>
 
-      {/* Vertical connection between row 1 (3rd card) and row 2 (1st card which is 4th) */}
+      {/* Vertical connection 2->3 (on the right side) */}
       <div className="flex">
-        {/* Empty space for first 2 columns */}
-        <div style={{ flex: 2 }} />
-        {/* Vertical line from 3rd to 4th card (actually under 3rd card going to row 2 first card) */}
-        <div style={{ flex: 1 }} className="flex justify-center relative py-2">
-          <div className="w-[2px] h-16 bg-stone-300" />
-          {/* Centered vertical pills */}
+        <div className="flex-1" />
+        <div className="w-20" />
+        <div className="flex-1 flex justify-center relative py-2">
+          <div className="w-[2px] h-14 bg-stone-300" />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="flex flex-col items-center gap-1">
               <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-600 font-medium">{transportData[2].minutes} min</span>
+                <span className="text-[11px] text-stone-600 font-medium">{transportData[1].minutes} min</span>
               </div>
               <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-500">{transportData[2].km} km</span>
+                <span className="text-[11px] text-stone-500">{transportData[1].km} km</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Row 2 - reversed order to continue snake (right to left) */}
-      <div className="flex items-stretch">
-        {[...row2].reverse().map((fav, idx) => (
-          <div key={idx} className="flex items-center" style={{ flex: 1 }}>
-            <TripCard 
-              event={fav} 
-              onClick={() => fav && onEventClick?.(fav.id)} 
-              onRemove={() => fav && onRemoveFavorite?.(fav.id)}
-            />
-            {/* Connection line */}
-            {idx < 2 && (
-              <div className="flex-1 flex items-center justify-center relative min-w-[60px]">
-                <div className="w-full h-[2px] bg-stone-300" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                    <span className="text-[11px] text-stone-600 font-medium">{transportData[idx + 3].minutes} min</span>
-                  </div>
-                  <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                    <span className="text-[11px] text-stone-500">{transportData[idx + 3].km} km</span>
-                  </div>
-                </div>
-              </div>
-            )}
+      {/* Row 2: Cards 3 & 4 (indices 2, 3) - right to left (reversed display) */}
+      <div className="flex items-center">
+        <div className="flex-1">
+          <TripCard 
+            event={slots[3]} 
+            onClick={() => slots[3] && onEventClick?.(slots[3].id)} 
+            onRemove={() => slots[3] && onRemoveFavorite?.(slots[3].id)}
+          />
+        </div>
+        {/* Horizontal connection 3->4 */}
+        <div className="w-20 flex items-center justify-center relative">
+          <div className="w-full h-[2px] bg-stone-300" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-600 font-medium">{transportData[2].minutes} min</span>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-500">{transportData[2].km} km</span>
+            </div>
           </div>
-        ))}
+        </div>
+        <div className="flex-1">
+          <TripCard 
+            event={slots[2]} 
+            onClick={() => slots[2] && onEventClick?.(slots[2].id)} 
+            onRemove={() => slots[2] && onRemoveFavorite?.(slots[2].id)}
+          />
+        </div>
+      </div>
+
+      {/* Vertical connection 4->5 (on the left side) */}
+      <div className="flex">
+        <div className="flex-1 flex justify-center relative py-2">
+          <div className="w-[2px] h-14 bg-stone-300" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-1">
+              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[11px] text-stone-600 font-medium">{transportData[3].minutes} min</span>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[11px] text-stone-500">{transportData[3].km} km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="w-20" />
+        <div className="flex-1" />
+      </div>
+
+      {/* Row 3: Cards 5 & 6 (indices 4, 5) - left to right */}
+      <div className="flex items-center">
+        <div className="flex-1">
+          <TripCard 
+            event={slots[4]} 
+            onClick={() => slots[4] && onEventClick?.(slots[4].id)} 
+            onRemove={() => slots[4] && onRemoveFavorite?.(slots[4].id)}
+          />
+        </div>
+        {/* Horizontal connection 5->6 */}
+        <div className="w-20 flex items-center justify-center relative">
+          <div className="w-full h-[2px] bg-stone-300" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-600 font-medium">{transportData[4].minutes} min</span>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-500">{transportData[4].km} km</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1">
+          <TripCard 
+            event={slots[5]} 
+            onClick={() => slots[5] && onEventClick?.(slots[5].id)} 
+            onRemove={() => slots[5] && onRemoveFavorite?.(slots[5].id)}
+          />
+        </div>
+      </div>
+
+      {/* Vertical connection 6->7 (on the right side) */}
+      <div className="flex">
+        <div className="flex-1" />
+        <div className="w-20" />
+        <div className="flex-1 flex justify-center relative py-2">
+          <div className="w-[2px] h-14 bg-stone-300" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-1">
+              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[11px] text-stone-600 font-medium">{transportData[5].minutes} min</span>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[11px] text-stone-500">{transportData[5].km} km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 4: Cards 7 & 8 (indices 6, 7) - right to left */}
+      <div className="flex items-center">
+        <div className="flex-1">
+          <TripCard 
+            event={slots[7]} 
+            onClick={() => slots[7] && onEventClick?.(slots[7].id)} 
+            onRemove={() => slots[7] && onRemoveFavorite?.(slots[7].id)}
+          />
+        </div>
+        {/* Horizontal connection 7->8 */}
+        <div className="w-20 flex items-center justify-center relative">
+          <div className="w-full h-[2px] bg-stone-300" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-600 font-medium">{transportData[6].minutes} min</span>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[11px] text-stone-500">{transportData[6].km} km</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1">
+          <TripCard 
+            event={slots[6]} 
+            onClick={() => slots[6] && onEventClick?.(slots[6].id)} 
+            onRemove={() => slots[6] && onRemoveFavorite?.(slots[6].id)}
+          />
+        </div>
       </div>
     </div>
   );
