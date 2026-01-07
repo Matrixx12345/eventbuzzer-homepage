@@ -332,28 +332,28 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
         inner.textContent = pointCount.toString();
         wrapper.appendChild(inner);
         
-        // Add heart icon inside cluster if contains favorites
+        // Add PIN icon if cluster contains favorites
         if (hasFavoriteInCluster) {
-          const heartIndicator = document.createElement('div');
-          heartIndicator.style.cssText = `
+          const pinIndicator = document.createElement('div');
+          pinIndicator.style.cssText = `
             position: absolute;
-            top: -6px;
-            right: -6px;
-            width: 18px;
-            height: 18px;
-            background: white;
-            border-radius: 50%;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(239,68,68,0.5);
+            border: 2px solid white;
           `;
-          heartIndicator.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
+          pinIndicator.innerHTML = `
+            <div style="width: 6px; height: 6px; background: white; border-radius: 50%; transform: rotate(45deg);"></div>
           `;
-          wrapper.appendChild(heartIndicator);
+          wrapper.appendChild(pinIndicator);
         }
 
         wrapper.addEventListener('mouseenter', () => {
