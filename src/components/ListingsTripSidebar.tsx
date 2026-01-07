@@ -48,7 +48,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
 
         <div className="flex min-h-screen">
           {/* Left Sidebar: Vorschläge - Premium Cards mit Sandfarbenem Hintergrund */}
-          <div className="w-80 bg-[#F5F3EF] p-6 flex-shrink-0 overflow-y-auto">
+          <div className="w-80 bg-[hsl(var(--listings-bg))] p-6 flex-shrink-0 overflow-y-auto">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles size={18} className="text-amber-500" />
               <h3 className="font-serif font-medium text-stone-700 text-lg">Vorschläge für dich</h3>
@@ -86,9 +86,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           {/* Right Content: Map + Timeline */}
           <div className="flex-1 p-10 pt-16 flex flex-col gap-8 overflow-y-auto">
             {/* Map - größer mit Padding oben */}
-            <div className="rounded-2xl h-80 overflow-hidden shadow-xl bg-[#F5F3EF]">
+            <div className="rounded-2xl h-80 overflow-hidden shadow-xl">
               <Suspense fallback={
-                <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
+                <div className="w-full h-full bg-[hsl(var(--listings-bg))] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
                 </div>
               }>
@@ -161,11 +161,11 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
       </div>
 
       {/* Map - QUADRATISCH mit sandfarbenem Hintergrund */}
-      <div className="aspect-square w-full relative overflow-hidden bg-[#F5F3EF]">
+      <div className="aspect-square w-full relative overflow-hidden">
         <Suspense fallback={
-          <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
+          <div className="w-full h-full bg-[hsl(var(--listings-bg))] flex items-center justify-center">
             <img 
-              src="/swiss-outline.svg" 
+              src="/swiss-outline.svg"
               className="w-full h-full object-contain opacity-20 p-4" 
               alt="Switzerland" 
             />
