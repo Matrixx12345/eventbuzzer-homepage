@@ -734,6 +734,52 @@ const Listings = () => {
                           </p>
                         </div>
                         
+                        {/* Heart Button - TOP RIGHT im Bild */}
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const wasFavorite = isFavorite(event.id);
+                            
+                            toggleFavorite({
+                              id: event.id,
+                              slug: event.id,
+                              title: event.title,
+                              venue: event.venue_name || "",
+                              image: event.image_url || getPlaceholderImage(idx),
+                              location: locationName,
+                              date: formatEventDate(event.start_date),
+                            });
+                            
+                            if (!wasFavorite) {
+                              toast("Event geplant ✨", { duration: 2000 });
+                            }
+                            
+                            try {
+                              const numericId = parseInt(event.id, 10);
+                              if (!isNaN(numericId)) {
+                                const result = await toggleFavoriteApi(numericId);
+                                setEvents(prev => prev.map(e => 
+                                  e.id === event.id 
+                                    ? { ...e, favorite_count: result.favoriteCount }
+                                    : e
+                                ));
+                              }
+                            } catch (error) {
+                              console.error('Failed to toggle favorite:', error);
+                            }
+                          }}
+                          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md hover:scale-110 transition-all z-10"
+                          aria-label="Add to favorites"
+                        >
+                          <Heart
+                            size={16}
+                            strokeWidth={1.5}
+                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-500"}
+                          />
+                        </button>
+                        
                         <ImageAttribution 
                           author={event.image_author} 
                           license={event.image_license} 
@@ -742,97 +788,46 @@ const Listings = () => {
 
                       {/* Content Section */}
                       <div className="p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <h3 
-                              className="font-semibold text-stone-900 leading-tight text-sm truncate mb-1 group-hover:whitespace-normal group-hover:overflow-visible"
-                              title={convertToUmlauts(event.title)}
-                            >
-                              {convertToUmlauts(event.title)}
-                            </h3>
-                            
-                            {/* Location with Mini-Map Hover Tooltip + km-Angabe */}
-                            <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
-                              <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
-                                {event.latitude && event.longitude 
-                                  ? getLocationWithMajorCity(event.latitude, event.longitude, locationName)
-                                  : (locationName || "Schweiz")}
-                              </span>
+                        <h3 
+                          className="font-semibold text-stone-900 leading-tight text-sm truncate mb-1"
+                          title={convertToUmlauts(event.title)}
+                        >
+                          {convertToUmlauts(event.title)}
+                        </h3>
+                        
+                        {/* Location with Mini-Map Hover Tooltip */}
+                        <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
+                          <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
+                            {event.latitude && event.longitude 
+                              ? getLocationWithMajorCity(event.latitude, event.longitude, locationName)
+                              : (locationName || "Schweiz")}
+                          </span>
 
-                              {/* Mini-Map Tooltip */}
-                              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                                <div className="bg-white p-2 rounded-xl shadow-2xl border border-stone-200 w-44 h-32 overflow-hidden">
-                                  <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
-                                    <img 
-                                      src="/swiss-outline.svg" 
-                                      className="w-full h-full object-contain opacity-30 p-2" 
-                                      alt="Switzerland Map" 
-                                    />
-                                    {event.latitude && event.longitude && (
-                                      <div
-                                        className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
-                                        style={{
-                                          left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
-                                          top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
-                                        }}
-                                      />
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="w-3 h-3 bg-white border-r border-b border-stone-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
+                          {/* Mini-Map Tooltip */}
+                          <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                            <div className="bg-white p-2 rounded-xl shadow-2xl border border-stone-200 w-44 h-32 overflow-hidden">
+                              <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                                <img 
+                                  src="/swiss-outline.svg" 
+                                  className="w-full h-full object-contain opacity-30 p-2" 
+                                  alt="Switzerland Map" 
+                                />
+                                {event.latitude && event.longitude && (
+                                  <div
+                                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
+                                    style={{
+                                      left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
+                                      top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
+                                    }}
+                                  />
+                                )}
                               </div>
                             </div>
+                            <div className="w-3 h-3 bg-white border-r border-b border-stone-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
                           </div>
-                          
-                          {/* Outline Heart Button */}
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              
-                              const wasFavorite = isFavorite(event.id);
-                              
-                              toggleFavorite({
-                                id: event.id,
-                                slug: event.id,
-                                title: event.title,
-                                venue: event.venue_name || "",
-                                image: event.image_url || getPlaceholderImage(idx),
-                                location: locationName,
-                                date: formatEventDate(event.start_date),
-                              });
-                              
-                              // Show toast when adding to favorites
-                              if (!wasFavorite) {
-                                toast("Event geplant ✨", { duration: 2000 });
-                              }
-                              
-                              try {
-                                const numericId = parseInt(event.id, 10);
-                                if (!isNaN(numericId)) {
-                                  const result = await toggleFavoriteApi(numericId);
-                                  setEvents(prev => prev.map(e => 
-                                    e.id === event.id 
-                                      ? { ...e, favorite_count: result.favoriteCount }
-                                      : e
-                                  ));
-                                }
-                              } catch (error) {
-                                console.error('Failed to toggle favorite:', error);
-                              }
-                            }}
-                            className="flex-shrink-0 p-1 hover:scale-110 transition-transform"
-                            aria-label="Add to favorites"
-                          >
-                            <Heart
-                              size={18}
-                              strokeWidth={1.5}
-                              className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-400"}
-                            />
-                          </button>
                         </div>
                         
-                        {/* BuzzTracker Slider - am Ende der Karte */}
+                        {/* BuzzTracker Slider */}
                         <div className="pt-2">
                           <BuzzTracker buzzScore={event.buzz_score} />
                         </div>
