@@ -47,35 +47,35 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         </button>
 
         <div className="flex min-h-screen">
-          {/* Left Sidebar: Vorschläge - Premium Cards - BREITER und HÖHER */}
-          <div className="w-96 bg-white/50 p-8 flex-shrink-0 overflow-y-auto border-r border-stone-200/50">
-            <div className="flex items-center gap-2.5 mb-8">
-              <Sparkles size={22} className="text-amber-500" />
-              <h3 className="font-serif font-semibold text-stone-800 text-2xl">Vorschläge für dich</h3>
+          {/* Left Sidebar: Vorschläge - Premium Cards mit Sandfarbenem Hintergrund */}
+          <div className="w-80 bg-[#F5F3EF] p-6 flex-shrink-0 overflow-y-auto">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles size={18} className="text-amber-500" />
+              <h3 className="font-serif font-medium text-stone-700 text-lg">Vorschläge für dich</h3>
             </div>
-            <div className="space-y-5">
+            <div className="space-y-4">
               {suggestedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="relative h-44 rounded-2xl overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                  className="relative h-32 rounded-xl overflow-hidden cursor-pointer group shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   <img
                     src={event.image}
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  {/* Minimales Frosted glass - nur ganz unten 1/4 */}
-                  <div className="absolute inset-x-0 bottom-0 h-11 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+                  {/* Gradient overlay am unteren Rand */}
+                  <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold text-base leading-tight truncate drop-shadow-lg">{event.title}</p>
-                      <p className="text-white/80 text-sm mt-1 drop-shadow-md">{event.location} · Buzz {event.buzzScore}</p>
+                      <p className="text-white font-medium text-sm leading-tight truncate drop-shadow-lg">{event.title}</p>
+                      <p className="text-white/80 text-xs mt-0.5 drop-shadow-md">{event.location}</p>
                     </div>
                     <button 
-                      className="ml-3 p-2.5 rounded-full bg-white hover:bg-stone-100 transition-colors shadow-xl hover:scale-110 flex-shrink-0"
+                      className="ml-2 p-2 rounded-full bg-white/90 hover:bg-white transition-colors shadow-lg hover:scale-105 flex-shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Plus size={18} className="text-stone-800" />
+                      <Plus size={14} className="text-stone-700" />
                     </button>
                   </div>
                 </div>
@@ -84,11 +84,11 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* Right Content: Map + Timeline */}
-          <div className="flex-1 p-10 flex flex-col gap-8 overflow-y-auto">
-            {/* Map - größer */}
-            <div className="rounded-2xl h-80 overflow-hidden shadow-xl">
+          <div className="flex-1 p-10 pt-16 flex flex-col gap-8 overflow-y-auto">
+            {/* Map - größer mit Padding oben */}
+            <div className="rounded-2xl h-80 overflow-hidden shadow-xl bg-[#F5F3EF]">
               <Suspense fallback={
-                <div className="w-full h-full bg-stone-100 flex items-center justify-center">
+                <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
                 </div>
               }>
@@ -160,10 +160,10 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         <h3 className="font-serif font-bold text-stone-900 text-lg">Dein Trip-Entwurf</h3>
       </div>
 
-      {/* Map - QUADRATISCH */}
-      <div className="aspect-square w-full relative overflow-hidden">
+      {/* Map - QUADRATISCH mit sandfarbenem Hintergrund */}
+      <div className="aspect-square w-full relative overflow-hidden bg-[#F5F3EF]">
         <Suspense fallback={
-          <div className="w-full h-full bg-stone-50 flex items-center justify-center">
+          <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
             <img 
               src="/swiss-outline.svg" 
               className="w-full h-full object-contain opacity-20 p-4" 
@@ -277,7 +277,7 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
   return (
     <div className="relative">
       {/* Row 1 */}
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center gap-4">
         {row1.map((fav, idx) => (
           <div key={idx} className="flex items-center">
             <SnakeCard 
@@ -286,31 +286,23 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
             
-            {/* Connection line + transport pill */}
+            {/* Nur dünne Linie ohne Icon */}
             {idx < 2 && (
-              <div className="flex items-center mx-2">
-                <div className="w-6 h-0.5 bg-stone-300" />
-                <TransportPill {...getTransportPill(idx)} />
-                <div className="w-6 h-0.5 bg-stone-300" />
-              </div>
+              <div className="w-8 h-0.5 bg-stone-300 ml-4" />
             )}
           </div>
         ))}
       </div>
 
-      {/* Vertical connection on the right side */}
+      {/* Vertical connection on the right side - minimalistisch */}
       {row1[2] && row2[2] && (
-        <div className="flex justify-end pr-28 py-3">
-          <div className="flex flex-col items-center">
-            <div className="w-0.5 h-8 bg-stone-300" />
-            <TransportPill {...getTransportPill(2)} />
-            <div className="w-0.5 h-8 bg-stone-300" />
-          </div>
+        <div className="flex justify-end pr-28 py-2">
+          <div className="w-0.5 h-10 bg-stone-300" />
         </div>
       )}
 
       {/* Row 2 (reversed) */}
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center gap-4">
         {row2.map((fav, idx) => (
           <div key={idx} className="flex items-center">
             <SnakeCard 
@@ -319,13 +311,9 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
             
-            {/* Connection line + transport pill (reversed direction) */}
+            {/* Nur dünne Linie ohne Icon */}
             {idx < 2 && row2[idx] && row2[idx + 1] && (
-              <div className="flex items-center mx-2">
-                <div className="w-6 h-0.5 bg-stone-300" />
-                <TransportPill {...getTransportPill(3 + idx)} />
-                <div className="w-6 h-0.5 bg-stone-300" />
-              </div>
+              <div className="w-8 h-0.5 bg-stone-300 ml-4" />
             )}
           </div>
         ))}
