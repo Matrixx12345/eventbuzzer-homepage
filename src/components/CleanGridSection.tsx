@@ -228,7 +228,12 @@ const CleanGridSection = ({
   onEventClick,
   maxEvents = 10
 }: CleanGridSectionProps) => {
-  const [events, setEvents] = useState<any[]>([]);
+  // Puffer: Lade doppelt so viele Events wie angezeigt werden
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  
+  // Sichtbare Events = alle minus versteckte, dann auf maxEvents begrenzen
+  const events = allEvents.filter(e => !hiddenIds.has(e.external_id)).slice(0, maxEvents);
   const [loading, setLoading] = useState(true);
 
   // Embla Carousel - zeigt exakt 3 volle Karten
@@ -375,7 +380,7 @@ const CleanGridSection = ({
           filtered = diversifyEvents(refiltered, 3);
         }
 
-        setEvents(filtered.slice(0, maxEvents));
+        setAllEvents(filtered.slice(0, maxEvents * 2));
       } catch (error) {
         console.error(`Error loading events:`, error);
       } finally {
@@ -460,11 +465,11 @@ const CleanGridSection = ({
                     {...event} 
                     onClick={() => onEventClick?.(event.id)}
                     onBuzzChange={(newScore) => {
-                      setEvents(prev => prev.map(e => 
+                      setAllEvents(prev => prev.map(e => 
                         e.id === event.id ? { ...e, buzz_score: newScore } : e
                       ));
                     }}
-                    onHide={() => setEvents(prev => prev.filter(e => e.id !== event.id))}
+                    onHide={() => setHiddenIds(prev => new Set([...prev, event.externalId]))}
                   />
                 </div>
               ))}
