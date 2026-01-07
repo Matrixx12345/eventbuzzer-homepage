@@ -51,9 +51,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
 
         <div className="flex min-h-screen p-10 gap-8">
           {/* LEFT HALF: Map + Suggestions */}
-          <div className="w-1/2 flex flex-col">
-            {/* Map - aligned with right side content top */}
-            <div className="flex-1 rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 min-h-[500px]">
+          <div className="w-[42%] flex flex-col pt-14">
+            {/* Map - 15% smaller, top aligned with first event cards */}
+            <div className="rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 h-[420px]">
               <Suspense fallback={
                 <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
@@ -105,9 +105,9 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
 
           {/* RIGHT HALF: Trip Grid with Snake Pattern */}
-          <div className="w-1/2 flex flex-col">
-            {/* Transport Toggle */}
-            <div className="flex items-center gap-3 mb-6">
+          <div className="w-[58%] flex flex-col">
+            {/* Transport Toggle - same height as map padding to align */}
+            <div className="flex items-center gap-3 h-14 mb-0">
               <button
                 onClick={() => setTransportMode("auto")}
                 className={cn(
