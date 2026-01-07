@@ -351,60 +351,31 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
         markersRef.current.push(marker);
       } else {
-        // SINGLE event marker
+        // SINGLE event marker - Selected = red heart, others = small gray dot
         const event = feature.properties.event as MapEvent;
         const isSelected = selectedEventIds.includes(event.id) || selectedEventIds.includes(event.external_id || '');
-        const markerColor = isSelected ? '#ef4444' : '#d6d3d1'; // red for selected, light gray for others
         
         const wrapper = document.createElement('div');
-        const fallbackImage = 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=200';
-        const imageUrl = event.image_url && event.image_url.trim() !== '' ? event.image_url : fallbackImage;
         
-        if (showImages) {
-          // Marker with image - selected are larger and red
-          const size = isSelected ? 36 : 20;
+        if (isSelected) {
+          // FAVORITE: Small red heart icon
           wrapper.style.cssText = `
-            width: ${size}px;
-            height: ${size}px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           `;
-
-          const inner = document.createElement('div');
-          inner.style.cssText = `
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: ${isSelected ? '3px' : '2px'} solid ${markerColor};
-            background-color: ${markerColor};
-            background-size: cover;
-            background-position: center;
-            box-shadow: ${isSelected ? '0 2px 8px rgba(239,68,68,0.4)' : '0 1px 3px rgba(0,0,0,0.12)'};
-            transition: transform 0.2s ease;
+          wrapper.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
           `;
-          
-          const img = new Image();
-          img.onload = () => {
-            inner.style.backgroundImage = `url('${imageUrl}')`;
-            inner.style.backgroundColor = 'transparent';
-          };
-          img.onerror = () => {
-            inner.style.backgroundImage = `url('${fallbackImage}')`;
-          };
-          img.src = imageUrl;
-          inner.style.backgroundImage = `url('${imageUrl}')`;
-          
-          wrapper.appendChild(inner);
-
-          wrapper.addEventListener('mouseenter', () => {
-            inner.style.transform = 'scale(1.15)';
-          });
-          wrapper.addEventListener('mouseleave', () => {
-            inner.style.transform = 'scale(1)';
-          });
         } else {
-          // Small marker - selected red, others gray
-          const size = isSelected ? 14 : 8;
+          // NON-SELECTED: Tiny gray dot
+          const size = showImages ? 6 : 5;
           wrapper.style.cssText = `
             width: ${size}px;
             height: ${size}px;
@@ -416,15 +387,15 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           inner.style.cssText = `
             width: 100%;
             height: 100%;
-            background: ${markerColor};
+            background: #a8a29e;
             border-radius: 50%;
-            box-shadow: ${isSelected ? '0 1px 4px rgba(239,68,68,0.4)' : '0 1px 2px rgba(0,0,0,0.1)'};
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             transition: transform 0.2s ease;
           `;
           wrapper.appendChild(inner);
 
           wrapper.addEventListener('mouseenter', () => {
-            inner.style.transform = 'scale(1.3)';
+            inner.style.transform = 'scale(1.5)';
           });
           wrapper.addEventListener('mouseleave', () => {
             inner.style.transform = 'scale(1)';
@@ -462,12 +433,15 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     
+    // Center on Switzerland with bounds that show the whole country
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [8.2275, 46.8182],
-      zoom: 7.5,
+      style: 'mapbox://styles/mapbox/outdoors-v12', // Softer, less saturated colors
+      center: [8.3, 46.85], // Centered on Switzerland
+      zoom: 7, // Zoom out more to show entire Switzerland
       pitch: 0,
+      minZoom: 6.5,
+      maxBounds: [[5.5, 45.5], [11.0, 48.0]] // Limit to Switzerland area
     });
 
     map.current.addControl(

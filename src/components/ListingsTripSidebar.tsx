@@ -41,7 +41,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     
     return (
       <div className="fixed inset-0 z-[9999] bg-[#FDFBF7] overflow-auto">
-        {/* X Button top right - über alles */}
+        {/* X Button top right */}
         <button
           onClick={() => setIsExpanded(false)}
           className="fixed top-6 right-6 z-[10000] p-3 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-xl transition-all hover:scale-105"
@@ -50,48 +50,47 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         </button>
 
         <div className="flex min-h-screen">
-          {/* Left Sidebar: Vorschläge - Premium Cards mit Sandfarbenem Hintergrund */}
-          <div className="w-80 bg-[hsl(var(--listings-bg))] p-6 flex-shrink-0 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-6">
-              <Sparkles size={18} className="text-amber-500" />
-              <h3 className="font-serif font-medium text-stone-700 text-lg">Vorschläge für dich</h3>
+          {/* Left Sidebar: Vorschläge - Clean white cards on sand background */}
+          <div className="w-80 bg-[#F5F3EF] p-5 flex-shrink-0 overflow-y-auto">
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles size={16} className="text-amber-500" />
+              <h3 className="font-medium text-stone-600 text-sm">Vorschläge für dich</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {suggestedEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="relative h-32 rounded-xl overflow-hidden cursor-pointer group shadow-md hover:shadow-lg transition-all duration-300"
+                  className="bg-white rounded-xl p-3 flex gap-3 cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300 border border-stone-100"
                 >
                   <img
                     src={event.image}
                     alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
-                  {/* Gradient overlay am unteren Rand */}
-                  <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium text-sm leading-tight truncate drop-shadow-lg">{event.title}</p>
-                      <p className="text-white/80 text-xs mt-0.5 drop-shadow-md">{event.location}</p>
-                    </div>
-                    <button 
-                      className="ml-2 p-2 rounded-full bg-white/90 hover:bg-white transition-colors shadow-lg hover:scale-105 flex-shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Plus size={14} className="text-stone-700" />
-                    </button>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="text-stone-800 font-medium text-sm leading-tight truncate">{event.title}</p>
+                    <p className="text-stone-400 text-xs mt-1 flex items-center gap-1">
+                      <MapPin size={10} />
+                      {event.location}
+                    </p>
                   </div>
+                  <button 
+                    className="self-center p-2 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Plus size={14} className="text-stone-600" />
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right Content: Map + Timeline */}
-          <div className="flex-1 p-10 pt-16 flex flex-col gap-8 overflow-y-auto">
-            {/* Map - größer mit Padding oben */}
-            <div className="rounded-2xl h-80 overflow-hidden shadow-xl">
+          {/* Right Content: Map + Trip Grid */}
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Map - flush top, no padding */}
+            <div className="h-72 overflow-hidden">
               <Suspense fallback={
-                <div className="w-full h-full bg-[hsl(var(--listings-bg))] flex items-center justify-center">
+                <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
                 </div>
               }>
@@ -104,51 +103,53 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
               </Suspense>
             </div>
 
-            {/* Transport Toggle - elegant */}
-            <div className="flex items-center gap-3">
+            {/* Transport Toggle */}
+            <div className="flex items-center gap-3 px-8 py-5">
               <button
                 onClick={() => setTransportMode("auto")}
                 className={cn(
-                  "flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300",
+                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
                   transportMode === "auto"
-                    ? "bg-stone-800 text-white shadow-lg"
+                    ? "bg-stone-800 text-white shadow-md"
                     : "bg-white text-stone-500 hover:text-stone-700 shadow-sm border border-stone-200"
                 )}
               >
-                <Car size={18} />
+                <Car size={16} />
                 Auto
               </button>
               <button
                 onClick={() => setTransportMode("bahn")}
                 className={cn(
-                  "flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300",
+                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
                   transportMode === "bahn"
-                    ? "bg-stone-800 text-white shadow-lg"
+                    ? "bg-stone-800 text-white shadow-md"
                     : "bg-white text-stone-500 hover:text-stone-700 shadow-sm border border-stone-200"
                 )}
               >
-                <Train size={18} />
+                <Train size={16} />
                 Bahn
               </button>
             </div>
 
-            {/* Trip Timeline - Snake Grid with connecting lines */}
-            {favorites.length === 0 ? (
-              <div className="text-center py-16 text-stone-400">
-                <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
-                <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
-              </div>
-            ) : (
-              <SnakeGrid 
-                favorites={gridFavorites} 
-                transportMode={transportMode}
-                onEventClick={onEventClick}
-                onRemoveFavorite={(id) => {
-                  const fav = favorites.find(f => f.id === id);
-                  if (fav) toggleFavorite(fav);
-                }}
-              />
-            )}
+            {/* Trip Grid - Clean 3-column layout */}
+            <div className="flex-1 px-8 pb-8">
+              {favorites.length === 0 ? (
+                <div className="text-center py-16 text-stone-400">
+                  <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
+                  <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
+                </div>
+              ) : (
+                <TripGrid 
+                  favorites={gridFavorites} 
+                  transportMode={transportMode}
+                  onEventClick={onEventClick}
+                  onRemoveFavorite={(id) => {
+                    const fav = favorites.find(f => f.id === id);
+                    if (fav) toggleFavorite(fav);
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -247,84 +248,73 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   );
 };
 
-// Snake Grid Component - with connecting lines
-interface SnakeGridProps {
+// Trip Grid Component - Clean 3-column layout like reference image
+interface TripGridProps {
   favorites: FavoriteEvent[];
   transportMode: "auto" | "bahn";
   onEventClick?: (eventId: string) => void;
   onRemoveFavorite?: (id: string) => void;
 }
 
-const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }: SnakeGridProps) => {
+const TripGrid = ({ favorites, onEventClick, onRemoveFavorite }: TripGridProps) => {
+  // Fill to 6 slots
   const slots = [...favorites];
   while (slots.length < 6) {
     slots.push(null as any);
   }
 
-  // Row 1: indices 0, 1, 2 (left to right)
-  // Row 2: indices 5, 4, 3 (right to left - snake pattern)
+  // Mock transport data
+  const transportData = [
+    { minutes: 45, km: 52 },
+    { minutes: 32, km: 38 },
+    { minutes: 63, km: 72 },
+  ];
+
+  // Row 1: slots 0, 1, 2
+  // Row 2: slots 3, 4, 5 (directly below)
   const row1 = [slots[0], slots[1], slots[2]];
-  const row2 = [slots[5], slots[4], slots[3]];
-
-  // Mock transport data with minutes and km
-  const getTransportData = (idx: number) => {
-    const data = [
-      { minutes: 45, km: 52 },
-      { minutes: 32, km: 38 },
-      { minutes: 78, km: 85 },
-      { minutes: 56, km: 61 },
-      { minutes: 63, km: 72 },
-    ];
-    return data[idx % data.length];
-  };
-
-  // Connection line with min/km labels
-  const ConnectionLine = ({ index }: { index: number }) => {
-    const transport = getTransportData(index);
-    return (
-      <div className="flex flex-col items-center mx-2">
-        <span className="text-[10px] text-stone-400 font-medium mb-0.5">{transport.minutes} min</span>
-        <div className="w-10 h-px bg-stone-300" />
-        <span className="text-[10px] text-stone-400 mt-0.5">{transport.km} km</span>
-      </div>
-    );
-  };
+  const row2 = [slots[3], slots[4], slots[5]];
 
   return (
-    <div className="relative w-full">
-      {/* Row 1 - bündig mit Map-Breite */}
-      <div className="flex justify-between items-center w-full">
+    <div className="space-y-6">
+      {/* Row 1 */}
+      <div className="grid grid-cols-3 gap-6 items-start">
         {row1.map((fav, idx) => (
           <div key={idx} className="flex items-center">
-            <SnakeCard 
+            <TripCard 
               event={fav} 
               onClick={() => fav && onEventClick?.(fav.id)} 
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
-            {idx < 2 && row1[idx + 1] && <ConnectionLine index={idx} />}
+            {/* Connection line to next card */}
+            {idx < 2 && row1[idx + 1] && (
+              <div className="flex flex-col items-center mx-3 flex-shrink-0">
+                <span className="text-[11px] text-stone-400 font-medium whitespace-nowrap">{transportData[idx].minutes} min</span>
+                <div className="w-12 h-px bg-stone-300 my-1" />
+                <span className="text-[11px] text-stone-400 whitespace-nowrap">{transportData[idx].km} km</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Vertical connection on the right side */}
-      {row1[2] && row2[2] && (
-        <div className="flex justify-end py-1">
-          <div className="flex flex-col items-center mr-[calc(50%-8px)] translate-x-1/2">
-            <div className="w-px h-6 bg-stone-300" />
-          </div>
-        </div>
-      )}
-
-      {/* Row 2 (reversed) - bündig mit Map-Breite */}
-      <div className="flex justify-between items-center w-full">
+      {/* Row 2 - directly below */}
+      <div className="grid grid-cols-3 gap-6 items-start">
         {row2.map((fav, idx) => (
           <div key={idx} className="flex items-center">
-            <SnakeCard 
+            <TripCard 
               event={fav} 
               onClick={() => fav && onEventClick?.(fav.id)} 
               onRemove={() => fav && onRemoveFavorite?.(fav.id)}
             />
-            {idx < 2 && row2[idx] && row2[idx + 1] && <ConnectionLine index={idx + 3} />}
+            {/* Connection line */}
+            {idx < 2 && row2[idx] && row2[idx + 1] && (
+              <div className="flex flex-col items-center mx-3 flex-shrink-0">
+                <span className="text-[11px] text-stone-400 font-medium whitespace-nowrap">{transportData[2].minutes} min</span>
+                <div className="w-12 h-px bg-stone-300 my-1" />
+                <span className="text-[11px] text-stone-400 whitespace-nowrap">{transportData[2].km} km</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -332,28 +322,17 @@ const SnakeGrid = ({ favorites, transportMode, onEventClick, onRemoveFavorite }:
   );
 };
 
-// Transport Pill Component - simplified, km on hover
-const TransportPill = ({ icon, duration, km }: { icon: string; label: string; duration: string; km?: string }) => (
-  <div 
-    className="bg-white px-3 py-2 rounded-full text-xs font-semibold text-stone-700 shadow-lg border border-stone-100 whitespace-nowrap flex items-center gap-2 cursor-default group"
-    title={km ? `${km} km` : undefined}
-  >
-    <span className="text-base">{icon}</span>
-    <span>{duration}</span>
-  </div>
-);
-
-// Snake Card Component - responsive width based on container
-interface SnakeCardProps {
+// Trip Card Component
+interface TripCardProps {
   event: FavoriteEvent | null;
   onClick?: () => void;
   onRemove?: () => void;
 }
 
-const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
+const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
   if (!event) {
     return (
-      <div className="flex-1 aspect-square max-w-[180px] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
+      <div className="w-48 aspect-[4/3] rounded-xl bg-stone-100/50 border-2 border-dashed border-stone-200 flex items-center justify-center">
         <Plus size={24} className="text-stone-300" />
       </div>
     );
@@ -362,7 +341,7 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className="flex-1 aspect-square max-w-[180px] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+      className="w-48 aspect-[4/3] rounded-xl overflow-hidden relative cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300"
     >
       <img 
         src={event.image} 
@@ -370,19 +349,19 @@ const SnakeCard = ({ event, onClick, onRemove }: SnakeCardProps) => {
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
       />
       
-      {/* Gradient overlay am unteren Rand */}
-      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
       
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-2.5">
-        <h4 className="text-white font-medium text-xs leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
-        <p className="text-white/80 text-[10px] flex items-center gap-0.5 mt-0.5 drop-shadow-md">
-          <MapPin size={9} />
+      <div className="absolute bottom-0 left-0 right-0 p-3">
+        <h4 className="text-white font-medium text-sm leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
+        <p className="text-white/80 text-xs flex items-center gap-1 mt-1 drop-shadow-md">
+          <MapPin size={10} />
           {event.location || "Schweiz"}
         </p>
       </div>
       
-      {/* Abwählbares Herz top right */}
+      {/* Heart button top right */}
       <button 
         onClick={(e) => {
           e.stopPropagation();
