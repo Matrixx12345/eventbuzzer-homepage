@@ -293,11 +293,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       const isCluster = feature.properties.cluster;
 
       if (isCluster) {
-        // CLUSTER marker with colored border
+        // CLUSTER marker - einheitliche Farbe ohne Ring
         const pointCount = feature.properties.point_count;
-        const categoryCounts = feature.properties.categoryCounts || {};
-        const dominantCategory = getDominantCategory(categoryCounts);
-        const color = CATEGORY_COLORS[dominantCategory];
         const size = Math.min(50, 34 + Math.log2(pointCount) * 5);
         
         const wrapper = document.createElement('div');
@@ -311,16 +308,15 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
         inner.style.cssText = `
           width: 100%;
           height: 100%;
-          background: white;
-          border: 3px solid ${color};
+          background: #78716c;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: ${color};
+          color: white;
           font-weight: 600;
           font-size: ${Math.min(14, 11 + Math.log2(pointCount) * 1.5)}px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           transition: transform 0.2s ease-out;
         `;
         inner.textContent = pointCount.toString();
@@ -354,22 +350,17 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
         markersRef.current.push(marker);
       } else {
-        // SINGLE event marker
+        // SINGLE event marker - einheitliche Farbe
         const event = feature.properties.event as MapEvent;
-        const category = getCategoryForEvent(event);
-        const color = CATEGORY_COLORS[category];
         const isElite = event.buzz_boost === 100;
-        
-        // Debug: Log image URL
-        console.log(`Event "${event.title}" - image_url:`, event.image_url);
         
         const wrapper = document.createElement('div');
         const fallbackImage = 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=200';
         const imageUrl = event.image_url && event.image_url.trim() !== '' ? event.image_url : fallbackImage;
         
         if (showImages) {
-          // Large marker with image inlay
-          const size = 60;
+          // Large marker with image - einheitliche Farbe
+          const size = 56;
           wrapper.style.cssText = `
             width: ${size}px;
             height: ${size}px;
@@ -382,32 +373,27 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 4px solid ${color};
-            background-color: ${color}20;
+            border: 3px solid #78716c;
+            background-color: #78716c;
             background-size: cover;
             background-position: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
             transition: transform 0.2s ease;
           `;
           
-          // Load image properly with error handling
           const img = new Image();
           img.onload = () => {
             inner.style.backgroundImage = `url('${imageUrl}')`;
             inner.style.backgroundColor = 'transparent';
           };
           img.onerror = () => {
-            console.log(`Image failed to load for "${event.title}", using fallback`);
             inner.style.backgroundImage = `url('${fallbackImage}')`;
           };
           img.src = imageUrl;
-          
-          // Set fallback immediately to show something
           inner.style.backgroundImage = `url('${imageUrl}')`;
           
           wrapper.appendChild(inner);
 
-          // Add elite badge if applicable
           if (isElite) {
             const badge = document.createElement('div');
             badge.className = 'elite-badge';
@@ -422,10 +408,10 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
             inner.style.transform = 'scale(1)';
           });
         } else {
-          // Small marker with colored border
+          // Small marker - einheitliche Farbe, kein Ring
           wrapper.style.cssText = `
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             cursor: pointer;
             position: relative;
           `;
@@ -434,15 +420,13 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
           inner.style.cssText = `
             width: 100%;
             height: 100%;
-            background: white;
-            border: 3px solid ${color};
+            background: #78716c;
             border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             transition: transform 0.2s ease;
           `;
           wrapper.appendChild(inner);
 
-          // Add small elite indicator
           if (isElite) {
             const badge = document.createElement('div');
             badge.style.cssText = `
@@ -504,7 +488,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/streets-v12',
       center: [8.2275, 46.8182],
       zoom: 7.5,
       pitch: 0,
