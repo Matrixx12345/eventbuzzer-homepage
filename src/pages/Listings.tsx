@@ -750,7 +750,6 @@ const Listings = () => {
                             
                             {/* Location with Mini-Map Hover Tooltip + km-Angabe */}
                             <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
-                              <span className="text-red-600">📍</span>
                               <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
                                 {event.latitude && event.longitude 
                                   ? getLocationWithMajorCity(event.latitude, event.longitude, locationName)

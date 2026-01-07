@@ -390,7 +390,7 @@ export function getLocationWithMajorCity(lat: number, lng: number, locationName?
   
   // Wenn in der Großstadt selbst (< 3km)
   if (distance < 3) {
-    return `in ${nearestMajor.name}`;
+    return `In ${nearestMajor.name}`;
   }
   
   // Richtung berechnen (von Großstadt zum Event)

@@ -23,6 +23,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   const { favorites } = useFavorites();
   const [isExpanded, setIsExpanded] = useState(false);
   const [transportMode, setTransportMode] = useState<"auto" | "bahn">("bahn");
+  const [, setMapEvents] = useState<any[]>([]); // Dummy setter to trigger map loading
 
   // Mock suggested events for expanded view
   const suggestedEvents = [
@@ -102,8 +103,8 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                 </div>
               }>
                 <EventsMap 
-                  events={mapEvents as any}
                   onEventClick={onEventClick}
+                  onEventsChange={setMapEvents}
                   isVisible={true}
                 />
               </Suspense>
@@ -177,8 +178,8 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           </div>
         }>
           <EventsMap 
-            events={mapEvents as any}
             onEventClick={onEventClick}
+            onEventsChange={setMapEvents}
             isVisible={true}
           />
         </Suspense>
