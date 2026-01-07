@@ -620,11 +620,11 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        {/* SUCHEN Button */}
+        {/* SUCHEN Button - Charcoal statt Orange */}
         <div className="p-2 flex-shrink-0">
           <button
             onClick={() => onSearchChange(searchInput)}
-            className="h-full px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold flex items-center gap-2 transition-colors"
+            className="h-full px-6 rounded-xl bg-[#333333] hover:bg-[#222222] text-white font-semibold flex items-center gap-2 transition-colors"
           >
             <Search className="w-4 h-4" />
             <span>SUCHEN</span>
