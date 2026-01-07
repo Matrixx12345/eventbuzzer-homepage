@@ -719,8 +719,8 @@ const Listings = () => {
                         setModalOpen(true);
                       }}
                     >
-                      {/* Quadratisches Bild */}
-                      <div className="relative aspect-square overflow-hidden">
+                      {/* Rechteckiges Bild (4:3 Aspect Ratio) */}
+                      <div className="relative aspect-[4/3] overflow-hidden">
                         <OptimizedEventImage
                           src={event.image_url || getPlaceholderImage(idx)}
                           alt={event.title}
@@ -734,76 +734,82 @@ const Listings = () => {
                           </p>
                         </div>
                         
-                        {/* Favorite Button */}
-                        <button
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            toggleFavorite({
-                              id: event.id,
-                              slug: event.id,
-                              title: event.title,
-                              venue: event.venue_name || "",
-                              image: event.image_url || getPlaceholderImage(idx),
-                              location: locationName,
-                              date: formatEventDate(event.start_date),
-                            });
-                            
-                            try {
-                              const numericId = parseInt(event.id, 10);
-                              if (!isNaN(numericId)) {
-                                const result = await toggleFavoriteApi(numericId);
-                                setEvents(prev => prev.map(e => 
-                                  e.id === event.id 
-                                    ? { ...e, favorite_count: result.favoriteCount }
-                                    : e
-                                ));
-                              }
-                            } catch (error) {
-                              console.error('Failed to toggle favorite:', error);
-                            }
-                          }}
-                          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all shadow-sm"
-                          aria-label="Add to favorites"
-                        >
-                          <Heart
-                            size={16}
-                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-500"}
-                          />
-                        </button>
-                        
                         <ImageAttribution 
                           author={event.image_author} 
                           license={event.image_license} 
                         />
                       </div>
 
+                      {/* Buzz Score Bar - Direkt unter dem Bild */}
+                      <div className="h-1 bg-stone-100">
+                        <div 
+                          className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all"
+                          style={{ width: `${Math.min(100, (event.buzz_score || 0))}%` }}
+                        />
+                      </div>
+
                       {/* Content Section */}
-                      <div className="p-4">
-                        <h3 className="font-semibold text-stone-900 leading-tight text-sm line-clamp-2 mb-2">
-                          {convertToUmlauts(event.title)}
-                        </h3>
-                        
-                        <div className="flex items-center gap-1.5 text-xs text-stone-500 mb-3">
-                          <MapPin size={12} className="flex-shrink-0" />
-                          <span className="truncate">
-                            {locationName || "Schweiz"}
-                            {distanceInfo && <span className="text-stone-400 ml-1">• {distanceInfo}</span>}
-                          </span>
-                        </div>
-                        
-                        {/* Buzz Score Bar */}
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all"
-                              style={{ width: `${Math.min(100, (event.buzz_score || 0))}%` }}
-                            />
+                      <div className="p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-stone-900 leading-tight text-sm line-clamp-2 mb-1">
+                              {convertToUmlauts(event.title)}
+                            </h3>
+                            
+                            <div className="flex items-center gap-1.5 text-xs text-stone-500">
+                              <MapPin size={11} className="flex-shrink-0" />
+                              <span className="truncate">
+                                {locationName || "Schweiz"}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-[10px] font-medium text-stone-500 whitespace-nowrap">
-                            Buzz {event.buzz_score || 0} 🔥
-                          </span>
+                          
+                          {/* Outline Heart Button */}
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              const wasFavorite = isFavorite(event.id);
+                              
+                              toggleFavorite({
+                                id: event.id,
+                                slug: event.id,
+                                title: event.title,
+                                venue: event.venue_name || "",
+                                image: event.image_url || getPlaceholderImage(idx),
+                                location: locationName,
+                                date: formatEventDate(event.start_date),
+                              });
+                              
+                              // Show toast when adding to favorites
+                              if (!wasFavorite) {
+                                toast("Event geplant ✨", { duration: 2000 });
+                              }
+                              
+                              try {
+                                const numericId = parseInt(event.id, 10);
+                                if (!isNaN(numericId)) {
+                                  const result = await toggleFavoriteApi(numericId);
+                                  setEvents(prev => prev.map(e => 
+                                    e.id === event.id 
+                                      ? { ...e, favorite_count: result.favoriteCount }
+                                      : e
+                                  ));
+                                }
+                              } catch (error) {
+                                console.error('Failed to toggle favorite:', error);
+                              }
+                            }}
+                            className="flex-shrink-0 p-1 hover:scale-110 transition-transform"
+                            aria-label="Add to favorites"
+                          >
+                            <Heart
+                              size={18}
+                              strokeWidth={1.5}
+                              className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-400"}
+                            />
+                          </button>
                         </div>
                       </div>
                     </article>
