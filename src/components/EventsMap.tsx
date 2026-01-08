@@ -9,12 +9,20 @@ import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from '@/typ
 // Mapbox public token
 mapboxgl.accessToken = 'pk.eyJ1IjoibWF0cml4eDEyMyIsImEiOiJjbWp6eXUwOTAwZTk4M2ZzaTkycTg4eGs1In0.fThJ64zR4-7gi-ONMtglfQ';
 
+interface FavoriteEventWithCoords {
+  id: string;
+  latitude?: number;
+  longitude?: number;
+  title?: string;
+}
+
 interface EventsMapProps {
   events?: MapEvent[];
   onEventClick?: (eventId: string) => void;
   onEventsChange?: (events: MapEvent[]) => void;
   isVisible?: boolean;
   selectedEventIds?: string[];
+  favoriteEvents?: FavoriteEventWithCoords[];
 }
 
 // Define GeoJSON feature type for Supercluster
@@ -104,10 +112,11 @@ function getDominantCategory(categories: Record<CategoryType, number>): Category
   return dominant;
 }
 
-export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true, selectedEventIds = [] }: EventsMapProps) {
+export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true, selectedEventIds = [], favoriteEvents = [] }: EventsMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const favoriteMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const superclusterRef = useRef<Supercluster | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
@@ -463,6 +472,60 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
     console.log(`Rendered ${clusters.length} markers/clusters`);
   }, [onEventClick, selectedEventIds]);
+
+  // SEPARATE LAYER: Render favorite events as big red pins - ALWAYS VISIBLE
+  const renderFavoriteMarkers = useCallback(() => {
+    if (!map.current) return;
+
+    // Clear existing favorite markers
+    favoriteMarkersRef.current.forEach(m => m.remove());
+    favoriteMarkersRef.current = [];
+
+    // Render each favorite with coordinates as a big red pin
+    favoriteEvents.forEach((fav) => {
+      if (!fav.latitude || !fav.longitude) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        width: 40px;
+        height: 48px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 9999;
+      `;
+      wrapper.innerHTML = `
+        <svg width="40" height="48" viewBox="0 0 24 30" fill="none" style="filter: drop-shadow(0 4px 8px rgba(239,68,68,0.5));">
+          <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill="#ef4444"/>
+          <circle cx="12" cy="11" r="4" fill="white"/>
+        </svg>
+      `;
+
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (onEventClick) {
+          onEventClick(fav.id);
+        }
+      });
+
+      const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'bottom' })
+        .setLngLat([fav.longitude, fav.latitude])
+        .addTo(map.current!);
+
+      favoriteMarkersRef.current.push(marker);
+    });
+
+    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite pins`);
+  }, [favoriteEvents, onEventClick]);
+
+  // Re-render favorite markers when favorites change
+  useEffect(() => {
+    if (mapReady && favoriteEvents.length > 0) {
+      renderFavoriteMarkers();
+    }
+  }, [mapReady, favoriteEvents, renderFavoriteMarkers]);
 
   // Initialize map
   useEffect(() => {
