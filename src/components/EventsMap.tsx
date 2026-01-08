@@ -304,245 +304,203 @@ export function EventsMap({
     `;
   };
 
-  /  // Update markers using Supercluster
+  // Update markers using Supercluster
   const updateMarkers = useCallback(() => {
-    if (!mapRef.current || !superclusterRef.current) return;
+    if (!map.current || !superclusterRef.current) return;
 
-    const bounds = mapRef.current.getBounds();
+    // Clear existing markers
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    const bounds = map.current.getBounds();
+    if (!bounds) return;
+
     const bbox: [number, number, number, number] = [
       bounds.getWest(),
       bounds.getSouth(),
       bounds.getEast(),
-      bounds.getNorth()
+      bounds.getNorth(),
     ];
+    const zoom = Math.floor(map.current.getZoom());
+    const showImages = zoom >= 11;
 
-    const zoom = Math.floor(mapRef.current.getZoom());
+    // Get clusters for current viewport
     const clusters = superclusterRef.current.getClusters(bbox, zoom);
 
-    // Clear existing markers
-    Object.values(markersRef.current).forEach(marker => marker.remove());
-    markersRef.current = {};
-
-    // ========================================
-    // PHASE 1: Clusters & Normal Events
-    // z-index: 100 (clusters) / 500 (normal)
-    // ========================================
-    clusters.forEach((feature) => {
-      const [longitude, latitude] = feature.geometry.coordinates;
-      const { cluster: isCluster, point_count: pointCount } = feature.properties;
+    clusters.forEach((feature: any) => {
+      const [lng, lat] = feature.geometry.coordinates;
+      const isCluster = feature.properties.cluster;
 
       if (isCluster) {
-        // ==================
-        // CLUSTER RENDERING
-        // ==================
-        const clusterId = feature.properties.cluster_id;
-        const clusterLeaves = superclusterRef.current!.getLeaves(clusterId, Infinity);
+        // CLUSTER marker - check if any favorites are in this cluster
+        const pointCount = feature.properties.point_count;
+        const size = Math.min(32, 22 + Math.log2(pointCount) * 3);
 
-        // Check cluster content
-        const hasElite = clusterLeaves.some(leaf => leaf.properties.event.buzz_boost === 100);
-        const hasFavorite = clusterLeaves.some(leaf => 
-          selectedEventIds.includes(leaf.properties.event.id)
-        );
+        // Check if cluster contains any selected events
+        const clusterLeaves = superclusterRef.current?.getLeaves(feature.properties.cluster_id, Infinity) || [];
+        const hasFavoriteInCluster = clusterLeaves.some((leaf: any) => {
+          const evt = leaf.properties.event as MapEvent;
+          return selectedEventIds.includes(evt.id) || selectedEventIds.includes(evt.external_id || "");
+        });
 
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'cursor: pointer; z-index: 100;';
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText = `
+          width: ${size}px;
+          height: ${size}px;
+          cursor: pointer;
+          position: relative;
+        `;
 
-        const inner = document.createElement('div');
-
-        if (hasElite) {
-          // Gold Star Cluster (contains Elite events)
-          inner.style.cssText = `
-            width: 50px; height: 50px;
-            background: #FFF4E6;
-            border: 3px solid #FFD700;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 700;
-            box-shadow: 0 4px 12px rgba(255,215,0,0.4);
-          `;
-          inner.innerHTML = `⭐<span style="position: absolute; bottom: 2px; right: 2px; font-size: 12px; background: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">${pointCount}</span>`;
-        } else if (hasFavorite) {
-          // Red Heart Cluster (contains Favorites)
-          inner.style.cssText = `
-            width: 50px; height: 50px;
-            background: #fecaca;
-            border: 2px solid #ef4444;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
-          `;
-          inner.innerHTML = `❤️<span style="position: absolute; bottom: 2px; right: 2px; font-size: 12px; background: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">${pointCount}</span>`;
-        } else {
-          // Normal Cluster (no Elite/Favorites)
-          inner.style.cssText = `
-            width: 44px; height: 44px;
-            background: #E5E7EB;
-            border: 2px solid #9CA3AF;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #4B5563;
-            font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-          `;
-          inner.textContent = pointCount.toString();
-        }
-
+        const inner = document.createElement("div");
+        inner.style.cssText = `
+          width: 100%;
+          height: 100%;
+          background: ${hasFavoriteInCluster ? "#fecaca" : "#d6d3d1"};
+          border: ${hasFavoriteInCluster ? "2px solid #ef4444" : "none"};
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${hasFavoriteInCluster ? "#dc2626" : "#78716c"};
+          font-weight: 600;
+          font-size: ${Math.min(12, 9 + Math.log2(pointCount))}px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          transition: transform 0.2s ease-out;
+        `;
+        inner.textContent = pointCount.toString();
         wrapper.appendChild(inner);
 
-        wrapper.addEventListener('click', () => {
+        // Add PIN icon if cluster contains favorites
+        if (hasFavoriteInCluster) {
+          const pinIndicator = document.createElement("div");
+          pinIndicator.style.cssText = `
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(239,68,68,0.5);
+            border: 2px solid white;
+          `;
+          pinIndicator.innerHTML = `
+            <div style="width: 6px; height: 6px; background: white; border-radius: 50%; transform: rotate(45deg);"></div>
+          `;
+          wrapper.appendChild(pinIndicator);
+        }
+
+        wrapper.addEventListener("mouseenter", () => {
+          inner.style.transform = "scale(1.1)";
+        });
+        wrapper.addEventListener("mouseleave", () => {
+          inner.style.transform = "scale(1)";
+        });
+
+        wrapper.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!superclusterRef.current || !map.current) return;
+
           const expansionZoom = Math.min(
-            superclusterRef.current!.getClusterExpansionZoom(clusterId),
-            20
+            superclusterRef.current.getClusterExpansionZoom(feature.properties.cluster_id),
+            18,
           );
-          mapRef.current?.easeTo({
-            center: [longitude, latitude],
-            zoom: expansionZoom
+          map.current.flyTo({
+            center: [lng, lat],
+            zoom: expansionZoom,
+            duration: 500,
           });
         });
 
-        const marker = new mapboxgl.Marker({ element: wrapper })
-          .setLngLat([longitude, latitude])
-          .addTo(mapRef.current!);
+        const marker = new mapboxgl.Marker({ element: wrapper, anchor: "center" })
+          .setLngLat([lng, lat])
+          .addTo(map.current!);
 
-        markersRef.current[`cluster-${clusterId}`] = marker;
-
+        markersRef.current.push(marker);
       } else {
-        // ==================
-        // NORMAL EVENT PIN (Photo Circle)
-        // Skip Elite & Favorites - they render in Phase 2
-        // ==================
-        const event = feature.properties.event;
-        const isElite = event.buzz_boost === 100;
-        const isFavorite = selectedEventIds.includes(event.id);
+        // SINGLE event marker - Selected = red pin, others = small gray dot
+        const event = feature.properties.event as MapEvent;
+        const isSelected = selectedEventIds.includes(event.id) || selectedEventIds.includes(event.external_id || "");
 
-        if (isElite || isFavorite) {
-          return; // Skip - render in Phase 2
-        }
+        const wrapper = document.createElement("div");
 
-        // Normal Event: Round photo pin
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'cursor: pointer; z-index: 500;';
-
-        const inner = document.createElement('div');
-        inner.style.cssText = `
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 2px solid #D8CDB8;
-          overflow: hidden;
-          background: white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-
-        if (event.image_url) {
-          const img = document.createElement('img');
-          img.src = event.image_url;
-          img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-          inner.appendChild(img);
+        if (isSelected) {
+          // FAVORITE: Big red map pin - ALWAYS visible
+          wrapper.style.cssText = `
+            width: 32px;
+            height: 40px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+          `;
+          wrapper.innerHTML = `
+            <svg width="32" height="40" viewBox="0 0 24 30" fill="none" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));">
+              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill="#ef4444"/>
+              <circle cx="12" cy="11" r="4" fill="white"/>
+            </svg>
+          `;
         } else {
-          inner.style.background = '#E8DCC8';
-          inner.innerHTML = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px;">📅</div>';
+          // NON-SELECTED: Tiny gray dot
+          const size = showImages ? 6 : 5;
+          wrapper.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            cursor: pointer;
+            position: relative;
+          `;
+
+          const inner = document.createElement("div");
+          inner.style.cssText = `
+            width: 100%;
+            height: 100%;
+            background: #a8a29e;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+          `;
+          wrapper.appendChild(inner);
+
+          wrapper.addEventListener("mouseenter", () => {
+            inner.style.transform = "scale(1.5)";
+          });
+          wrapper.addEventListener("mouseleave", () => {
+            inner.style.transform = "scale(1)";
+          });
         }
 
-        wrapper.appendChild(inner);
+        // Create popup
+        const popup = new mapboxgl.Popup({
+          offset: showImages ? 35 : 20,
+          closeButton: true,
+          closeOnClick: false,
+          maxWidth: "220px",
+        }).setHTML(createPopupHTML(event));
 
-        wrapper.addEventListener('click', () => onEventClick(event));
+        const marker = new mapboxgl.Marker({ element: wrapper, anchor: "center" })
+          .setLngLat([lng, lat])
+          .setPopup(popup)
+          .addTo(map.current!);
 
-        const marker = new mapboxgl.Marker({ element: wrapper })
-          .setLngLat([longitude, latitude])
-          .addTo(mapRef.current!);
+        wrapper.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (onEventClick) {
+            onEventClick(event.id);
+          }
+        });
 
-        markersRef.current[`event-${event.id}`] = marker;
+        markersRef.current.push(marker);
       }
     });
 
-    // ========================================
-    // PHASE 2: Elite Stars & Favorite Hearts
-    // z-index: 10000 (Elite) / 10001 (Favorites)
-    // ========================================
-    clusters.forEach((feature) => {
-      const [longitude, latitude] = feature.geometry.coordinates;
-      const { cluster: isCluster } = feature.properties;
-
-      if (!isCluster) {
-        const event = feature.properties.event;
-        const isElite = event.buzz_boost === 100;
-        const isFavorite = selectedEventIds.includes(event.id);
-
-        if (isElite) {
-          // ⭐ ELITE EVENT - Gold Star
-          const wrapper = document.createElement('div');
-          wrapper.style.cssText = 'cursor: pointer; z-index: 10000;';
-
-          const inner = document.createElement('div');
-          inner.style.cssText = `
-            font-size: 40px;
-            filter: drop-shadow(0 0 8px rgba(255,215,0,0.6)) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-            transition: transform 0.2s;
-          `;
-          inner.textContent = '⭐';
-
-          wrapper.appendChild(inner);
-
-          wrapper.addEventListener('mouseenter', () => {
-            inner.style.transform = 'scale(1.2)';
-          });
-          wrapper.addEventListener('mouseleave', () => {
-            inner.style.transform = 'scale(1)';
-          });
-          wrapper.addEventListener('click', () => onEventClick(event));
-
-          const marker = new mapboxgl.Marker({ element: wrapper })
-            .setLngLat([longitude, latitude])
-            .addTo(mapRef.current!);
-
-          markersRef.current[`elite-${event.id}`] = marker;
-
-        } else if (isFavorite) {
-          // ❤️ FAVORITE EVENT - Red Heart
-          const wrapper = document.createElement('div');
-          wrapper.style.cssText = 'cursor: pointer; z-index: 10001;';
-
-          const inner = document.createElement('div');
-          inner.style.cssText = `
-            font-size: 36px;
-            filter: drop-shadow(0 0 6px rgba(239,68,68,0.6)) drop-shadow(0 3px 10px rgba(0,0,0,0.3));
-            transition: transform 0.2s;
-          `;
-          inner.textContent = '❤️';
-
-          wrapper.appendChild(inner);
-
-          wrapper.addEventListener('mouseenter', () => {
-            inner.style.transform = 'scale(1.2)';
-          });
-          wrapper.addEventListener('mouseleave', () => {
-            inner.style.transform = 'scale(1)';
-          });
-          wrapper.addEventListener('click', () => onEventClick(event));
-
-          const marker = new mapboxgl.Marker({ element: wrapper })
-            .setLngLat([longitude, latitude])
-            .addTo(mapRef.current!);
-
-          markersRef.current[`favorite-${event.id}`] = marker;
-        }
-      }
-    });
-
-    console.log('✅ Markers rendered - Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray)');
+    console.log(`Rendered ${clusters.length} markers/clusters`);
   }, [onEventClick, selectedEventIds]);
-
 
   // SEPARATE LAYER: Render favorite events as big red pins - ALWAYS VISIBLE
   const renderFavoriteMarkers = useCallback(() => {
