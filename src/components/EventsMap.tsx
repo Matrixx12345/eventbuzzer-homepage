@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Supercluster from 'supercluster';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Heart, Star } from 'lucide-react';
 import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from '@/types/map';
 
 // Mapbox public token
@@ -14,6 +14,14 @@ interface FavoriteEventWithCoords {
   latitude?: number;
   longitude?: number;
   title?: string;
+  image?: string;
+}
+
+interface MustSeeEvent {
+  id: string;
+  latitude: number;
+  longitude: number;
+  title: string;
 }
 
 interface EventsMapProps {
@@ -23,6 +31,7 @@ interface EventsMapProps {
   isVisible?: boolean;
   selectedEventIds?: string[];
   favoriteEvents?: FavoriteEventWithCoords[];
+  mustSeeEvents?: MustSeeEvent[];
 }
 
 // Define GeoJSON feature type for Supercluster
@@ -112,11 +121,12 @@ function getDominantCategory(categories: Record<CategoryType, number>): Category
   return dominant;
 }
 
-export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true, selectedEventIds = [], favoriteEvents = [] }: EventsMapProps) {
+export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true, selectedEventIds = [], favoriteEvents = [], mustSeeEvents = [] }: EventsMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
   const favoriteMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const mustSeeMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const superclusterRef = useRef<Supercluster | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
@@ -473,7 +483,7 @@ const markersRef = useRef<mapboxgl.Marker[]>([]);
     console.log(`Rendered ${clusters.length} markers/clusters`);
   }, [onEventClick, selectedEventIds]);
 
-  // SEPARATE LAYER: Render favorite events as big red pins - ALWAYS VISIBLE
+  // LAYER 2: Render favorite events as ROUND IMAGE MARKERS with HEART - ALWAYS VISIBLE
   const renderFavoriteMarkers = useCallback(() => {
     if (!map.current) return;
 
@@ -481,27 +491,67 @@ const markersRef = useRef<mapboxgl.Marker[]>([]);
     favoriteMarkersRef.current.forEach(m => m.remove());
     favoriteMarkersRef.current = [];
 
-    // Render each favorite with coordinates as a big red pin
+    // Render each favorite with coordinates as a round image marker
     favoriteEvents.forEach((fav) => {
       if (!fav.latitude || !fav.longitude) return;
 
       const wrapper = document.createElement('div');
       wrapper.style.cssText = `
-        width: 40px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         cursor: pointer;
         position: relative;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
         z-index: 9999;
       `;
-      wrapper.innerHTML = `
-        <svg width="40" height="48" viewBox="0 0 24 30" fill="none" style="filter: drop-shadow(0 4px 8px rgba(239,68,68,0.5));">
-          <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill="#ef4444"/>
-          <circle cx="12" cy="11" r="4" fill="white"/>
+
+      // Round image container with border
+      const imageContainer = document.createElement('div');
+      imageContainer.style.cssText = `
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 3px solid #ef4444;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+        background: white;
+      `;
+
+      const img = document.createElement('img');
+      img.src = fav.image || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&q=80';
+      img.alt = fav.title || 'Favorite';
+      img.style.cssText = `
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      `;
+      img.onerror = () => {
+        img.src = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&q=80';
+      };
+      imageContainer.appendChild(img);
+      wrapper.appendChild(imageContainer);
+
+      // Heart icon overlay
+      const heartBadge = document.createElement('div');
+      heartBadge.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        background: #ef4444;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      `;
+      heartBadge.innerHTML = `
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
         </svg>
       `;
+      wrapper.appendChild(heartBadge);
 
       wrapper.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -510,15 +560,63 @@ const markersRef = useRef<mapboxgl.Marker[]>([]);
         }
       });
 
-      const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'bottom' })
+      const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
         .setLngLat([fav.longitude, fav.latitude])
         .addTo(map.current!);
 
       favoriteMarkersRef.current.push(marker);
     });
 
-    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite pins`);
+    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite image markers`);
   }, [favoriteEvents, onEventClick]);
+
+  // LAYER 3: Render must-see/elite events as GOLDEN STAR MARKERS - ALWAYS VISIBLE
+  const renderMustSeeMarkers = useCallback(() => {
+    if (!map.current) return;
+
+    // Clear existing must-see markers
+    mustSeeMarkersRef.current.forEach(m => m.remove());
+    mustSeeMarkersRef.current = [];
+
+    // Get must-sees from internal events (buzz_boost === 100)
+    const eliteEvents = internalEvents.filter(e => e.buzz_boost === 100);
+
+    eliteEvents.forEach((event) => {
+      if (!event.latitude || !event.longitude) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        width: 44px;
+        height: 44px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 8888;
+      `;
+      wrapper.innerHTML = `
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="#F59E0B" style="filter: drop-shadow(0 3px 6px rgba(245,158,11,0.5));">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      `;
+
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (onEventClick) {
+          onEventClick(event.id);
+        }
+      });
+
+      const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
+        .setLngLat([event.mapbox_lng ?? event.longitude, event.mapbox_lat ?? event.latitude])
+        .addTo(map.current!);
+
+      mustSeeMarkersRef.current.push(marker);
+    });
+
+    console.log(`Rendered ${mustSeeMarkersRef.current.length} must-see star markers`);
+  }, [internalEvents, onEventClick]);
 
   // Re-render favorite markers when favorites change
   useEffect(() => {
@@ -527,6 +625,13 @@ const markersRef = useRef<mapboxgl.Marker[]>([]);
     }
   }, [mapReady, favoriteEvents, renderFavoriteMarkers]);
 
+  // Re-render must-see markers when internal events change
+  useEffect(() => {
+    if (mapReady) {
+      renderMustSeeMarkers();
+    }
+  }, [mapReady, internalEvents, renderMustSeeMarkers]);
+
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -534,7 +639,7 @@ const markersRef = useRef<mapboxgl.Marker[]>([]);
     // Center on Switzerland with bounds that show the whole country
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12', // Softer, less saturated colors
+      style: 'mapbox://styles/mapbox/light-v11', // Muted topo style - clean and subtle
       center: [8.3, 46.85], // Centered on Switzerland
       zoom: 7, // Zoom out more to show entire Switzerland
       pitch: 0,
@@ -593,6 +698,8 @@ const markersRef = useRef<mapboxgl.Marker[]>([]);
         clearTimeout(debounceRef.current);
       }
       markersRef.current.forEach(marker => marker.remove());
+      favoriteMarkersRef.current.forEach(marker => marker.remove());
+      mustSeeMarkersRef.current.forEach(marker => marker.remove());
       map.current?.remove();
       map.current = null;
     };
