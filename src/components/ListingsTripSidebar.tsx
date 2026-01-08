@@ -1,13 +1,21 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { useFavorites, FavoriteEvent } from "@/contexts/FavoritesContext";
 import { Heart, MapPin, Sparkles, Car, Train, X, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load the EventsMap for Mapbox
 const EventsMap = lazy(() => import("@/components/EventsMap"));
 
 interface ListingsTripSidebarProps {
   onEventClick?: (eventId: string) => void;
+}
+
+interface FavoriteWithCoords {
+  id: string;
+  latitude?: number;
+  longitude?: number;
+  title?: string;
 }
 
 // Transport pills data for snake connections
@@ -24,9 +32,67 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [transportMode, setTransportMode] = useState<"auto" | "bahn">("bahn");
   const [, setMapEvents] = useState<any[]>([]);
+  const [favoriteEventsWithCoords, setFavoriteEventsWithCoords] = useState<FavoriteWithCoords[]>([]);
   
   // Get favorite IDs for map highlighting
   const favoriteIds = favorites.map(f => f.id);
+
+  // Fetch coordinates for favorites from the backend
+  useEffect(() => {
+    const fetchFavoriteCoords = async () => {
+      if (favorites.length === 0) {
+        setFavoriteEventsWithCoords([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke('get-external-events', {
+          body: {
+            limit: 100,
+            offset: 0,
+            filters: {
+              ids: favoriteIds
+            }
+          }
+        });
+
+        if (error) {
+          console.error('Error fetching favorite coords:', error);
+          return;
+        }
+
+        if (data?.events && Array.isArray(data.events)) {
+          const coordsMap = new Map<string, FavoriteWithCoords>();
+          data.events.forEach((e: any) => {
+            const id = e.external_id || String(e.id);
+            if (e.latitude && e.longitude) {
+              coordsMap.set(id, {
+                id,
+                latitude: e.latitude,
+                longitude: e.longitude,
+                title: e.title
+              });
+            }
+          });
+
+          // Map favorites to include coordinates
+          const withCoords = favorites.map(f => ({
+            id: f.id,
+            latitude: coordsMap.get(f.id)?.latitude,
+            longitude: coordsMap.get(f.id)?.longitude,
+            title: f.title
+          })).filter(f => f.latitude && f.longitude);
+
+          setFavoriteEventsWithCoords(withCoords);
+          console.log(`Fetched coords for ${withCoords.length} favorites`);
+        }
+      } catch (err) {
+        console.error('Failed to fetch favorite coords:', err);
+      }
+    };
+
+    fetchFavoriteCoords();
+  }, [favorites, favoriteIds]);
 
   // Mock suggested events for expanded view
   const suggestedEvents = [
@@ -59,11 +125,12 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                   <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
                 </div>
               }>
-                <EventsMap 
+              <EventsMap 
                   onEventClick={onEventClick}
                   onEventsChange={setMapEvents}
                   isVisible={true}
                   selectedEventIds={favoriteIds}
+                  favoriteEvents={favoriteEventsWithCoords}
                 />
               </Suspense>
             </div>
@@ -173,11 +240,12 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             />
           </div>
         }>
-          <EventsMap 
+        <EventsMap 
             onEventClick={onEventClick}
             onEventsChange={setMapEvents}
             isVisible={true}
             selectedEventIds={favoriteIds}
+            favoriteEvents={favoriteEventsWithCoords}
           />
         </Suspense>
       </div>
@@ -287,29 +355,33 @@ const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripG
     <div className="flex flex-col gap-0">
       {/* Row 1: Cards 1 & 2 (indices 0, 1) - left to right */}
       <div className="flex items-center">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <TripCard 
             event={slots[0]} 
             onClick={() => slots[0] && onEventClick?.(slots[0].id)} 
             onRemove={() => slots[0] && onRemoveFavorite?.(slots[0].id)}
           />
+          {/* Line extending from card edge */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
         </div>
-        {/* Horizontal connection 1->2 */}
-        <div className="w-20 flex items-center justify-center relative">
+        {/* Horizontal connection 1->2 - Linien berühren Karten */}
+        <div className="w-12 flex items-center justify-center relative -mx-1">
           <div className="w-full h-[2px] bg-stone-300" />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-600 font-medium">{transportData[0].minutes} min</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-600 font-medium">{transportData[0].minutes}m</span>
             </div>
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-500">{transportData[0].km} km</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-500">{transportData[0].km}km</span>
             </div>
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          {/* Line extending to card edge */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
           <TripCard 
             event={slots[1]} 
-            onClick={() => slots[1] && onEventClick?.(slots[1].id)} 
+            onClick={() => slots[1] && onEventClick?.(slots[1].id)}
             onRemove={() => slots[1] && onRemoveFavorite?.(slots[1].id)}
           />
         </div>
@@ -318,16 +390,16 @@ const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripG
       {/* Vertical connection 2->3 (on the right side) */}
       <div className="flex">
         <div className="flex-1" />
-        <div className="w-20" />
-        <div className="flex-1 flex justify-center relative py-2">
-          <div className="w-[2px] h-14 bg-stone-300" />
+        <div className="w-12 -mx-1" />
+        <div className="flex-1 flex justify-center relative py-1">
+          <div className="w-[2px] h-10 bg-stone-300" />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-1">
-              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-600 font-medium">{transportData[1].minutes} min</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[10px] text-stone-600 font-medium">{transportData[1].minutes}m</span>
               </div>
-              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-500">{transportData[1].km} km</span>
+              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[10px] text-stone-500">{transportData[1].km}km</span>
               </div>
             </div>
           </div>
@@ -336,26 +408,28 @@ const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripG
 
       {/* Row 2: Cards 3 & 4 (indices 2, 3) - right to left (reversed display) */}
       <div className="flex items-center">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <TripCard 
             event={slots[3]} 
             onClick={() => slots[3] && onEventClick?.(slots[3].id)} 
             onRemove={() => slots[3] && onRemoveFavorite?.(slots[3].id)}
           />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
         </div>
         {/* Horizontal connection 3->4 */}
-        <div className="w-20 flex items-center justify-center relative">
+        <div className="w-12 flex items-center justify-center relative -mx-1">
           <div className="w-full h-[2px] bg-stone-300" />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-600 font-medium">{transportData[2].minutes} min</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-600 font-medium">{transportData[2].minutes}m</span>
             </div>
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-500">{transportData[2].km} km</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-500">{transportData[2].km}km</span>
             </div>
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
           <TripCard 
             event={slots[2]} 
             onClick={() => slots[2] && onEventClick?.(slots[2].id)} 
@@ -366,45 +440,47 @@ const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripG
 
       {/* Vertical connection 4->5 (on the left side) */}
       <div className="flex">
-        <div className="flex-1 flex justify-center relative py-2">
-          <div className="w-[2px] h-14 bg-stone-300" />
+        <div className="flex-1 flex justify-center relative py-1">
+          <div className="w-[2px] h-10 bg-stone-300" />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-1">
-              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-600 font-medium">{transportData[3].minutes} min</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[10px] text-stone-600 font-medium">{transportData[3].minutes}m</span>
               </div>
-              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-500">{transportData[3].km} km</span>
+              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[10px] text-stone-500">{transportData[3].km}km</span>
               </div>
             </div>
           </div>
         </div>
-        <div className="w-20" />
+        <div className="w-12 -mx-1" />
         <div className="flex-1" />
       </div>
 
       {/* Row 3: Cards 5 & 6 (indices 4, 5) - left to right */}
       <div className="flex items-center">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <TripCard 
             event={slots[4]} 
             onClick={() => slots[4] && onEventClick?.(slots[4].id)} 
             onRemove={() => slots[4] && onRemoveFavorite?.(slots[4].id)}
           />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
         </div>
         {/* Horizontal connection 5->6 */}
-        <div className="w-20 flex items-center justify-center relative">
+        <div className="w-12 flex items-center justify-center relative -mx-1">
           <div className="w-full h-[2px] bg-stone-300" />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-600 font-medium">{transportData[4].minutes} min</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-600 font-medium">{transportData[4].minutes}m</span>
             </div>
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-500">{transportData[4].km} km</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-500">{transportData[4].km}km</span>
             </div>
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
           <TripCard 
             event={slots[5]} 
             onClick={() => slots[5] && onEventClick?.(slots[5].id)} 
@@ -416,16 +492,16 @@ const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripG
       {/* Vertical connection 6->7 (on the right side) */}
       <div className="flex">
         <div className="flex-1" />
-        <div className="w-20" />
-        <div className="flex-1 flex justify-center relative py-2">
-          <div className="w-[2px] h-14 bg-stone-300" />
+        <div className="w-12 -mx-1" />
+        <div className="flex-1 flex justify-center relative py-1">
+          <div className="w-[2px] h-10 bg-stone-300" />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-1">
-              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-600 font-medium">{transportData[5].minutes} min</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[10px] text-stone-600 font-medium">{transportData[5].minutes}m</span>
               </div>
-              <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[11px] text-stone-500">{transportData[5].km} km</span>
+              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+                <span className="text-[10px] text-stone-500">{transportData[5].km}km</span>
               </div>
             </div>
           </div>
@@ -434,26 +510,28 @@ const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripG
 
       {/* Row 4: Cards 7 & 8 (indices 6, 7) - right to left */}
       <div className="flex items-center">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <TripCard 
             event={slots[7]} 
             onClick={() => slots[7] && onEventClick?.(slots[7].id)} 
             onRemove={() => slots[7] && onRemoveFavorite?.(slots[7].id)}
           />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
         </div>
         {/* Horizontal connection 7->8 */}
-        <div className="w-20 flex items-center justify-center relative">
+        <div className="w-12 flex items-center justify-center relative -mx-1">
           <div className="w-full h-[2px] bg-stone-300" />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-600 font-medium">{transportData[6].minutes} min</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-600 font-medium">{transportData[6].minutes}m</span>
             </div>
-            <div className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[11px] text-stone-500">{transportData[6].km} km</span>
+            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+              <span className="text-[10px] text-stone-500">{transportData[6].km}km</span>
             </div>
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
           <TripCard 
             event={slots[6]} 
             onClick={() => slots[6] && onEventClick?.(slots[6].id)} 
