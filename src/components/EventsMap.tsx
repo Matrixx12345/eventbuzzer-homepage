@@ -1,19 +1,27 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-import Supercluster from "supercluster";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from "@/types/map";
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import Supercluster from 'supercluster';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Heart, Star } from 'lucide-react';
+import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from '@/types/map';
 
 // Mapbox public token
-mapboxgl.accessToken = "pk.eyJ1IjoibWF0cml4eDEyMyIsImEiOiJjbWp6eXUwOTAwZTk4M2ZzaTkycTg4eGs1In0.fThJ64zR4-7gi-ONMtglfQ";
+mapboxgl.accessToken = 'pk.eyJ1IjoibWF0cml4eDEyMyIsImEiOiJjbWp6eXUwOTAwZTk4M2ZzaTkycTg4eGs1In0.fThJ64zR4-7gi-ONMtglfQ';
 
 interface FavoriteEventWithCoords {
   id: string;
   latitude?: number;
   longitude?: number;
   title?: string;
+  image?: string;
+}
+
+interface MustSeeEvent {
+  id: string;
+  latitude: number;
+  longitude: number;
+  title: string;
 }
 
 interface EventsMapProps {
@@ -23,11 +31,12 @@ interface EventsMapProps {
   isVisible?: boolean;
   selectedEventIds?: string[];
   favoriteEvents?: FavoriteEventWithCoords[];
+  mustSeeEvents?: MustSeeEvent[];
 }
 
 // Define GeoJSON feature type for Supercluster
 interface EventFeature {
-  type: "Feature";
+  type: 'Feature';
   properties: {
     cluster: false;
     eventId: string;
@@ -35,7 +44,7 @@ interface EventFeature {
     category: CategoryType;
   };
   geometry: {
-    type: "Point";
+    type: 'Point';
     coordinates: [number, number];
   };
 }
@@ -44,127 +53,101 @@ interface EventFeature {
 function getCategoryForEvent(event: MapEvent): CategoryType {
   // Elite check first (buzz_boost === 100)
   if (event.buzz_boost === 100) {
-    return "elite";
+    return 'elite';
   }
-
+  
   const tags = event.tags || [];
-  const tagsLower = tags.map((t) => t.toLowerCase());
-
+  const tagsLower = tags.map(t => t.toLowerCase());
+  
   // Wellness: category_main_id = 2 or tags contain wellness-related terms
-  if (
-    event.category_main_id === 2 ||
-    tagsLower.some((t) => t.includes("wellness") || t.includes("spa") || t.includes("therme"))
-  ) {
-    return "wellness";
+  if (event.category_main_id === 2 || 
+      tagsLower.some(t => t.includes('wellness') || t.includes('spa') || t.includes('therme'))) {
+    return 'wellness';
   }
-
+  
   // Nature: category_main_id = 3 or tags contain nature-related terms
-  if (
-    event.category_main_id === 3 ||
-    tagsLower.some((t) => t.includes("berg") || t.includes("gletscher") || t.includes("natur") || t.includes("wandern"))
-  ) {
-    return "nature";
+  if (event.category_main_id === 3 || 
+      tagsLower.some(t => t.includes('berg') || t.includes('gletscher') || t.includes('natur') || t.includes('wandern'))) {
+    return 'nature';
   }
-
+  
   // Markets: category_main_id = 6
-  if (event.category_main_id === 6 || tagsLower.some((t) => t.includes("markt") || t.includes("weihnacht"))) {
-    return "markets";
+  if (event.category_main_id === 6 || 
+      tagsLower.some(t => t.includes('markt') || t.includes('weihnacht'))) {
+    return 'markets';
   }
-
+  
   // Culture: tags contain culture-related terms
-  if (
-    tagsLower.some(
-      (t) =>
-        t.includes("museum") ||
-        t.includes("konzert") ||
-        t.includes("ausstellung") ||
-        t.includes("theater") ||
-        t.includes("oper"),
-    )
-  ) {
-    return "culture";
+  if (tagsLower.some(t => t.includes('museum') || t.includes('konzert') || t.includes('ausstellung') || t.includes('theater') || t.includes('oper'))) {
+    return 'culture';
   }
-
+  
   // Food: tags contain food-related terms
-  if (
-    tagsLower.some(
-      (t) => t.includes("restaurant") || t.includes("food") || t.includes("kulinarisch") || t.includes("wein"),
-    )
-  ) {
-    return "food";
+  if (tagsLower.some(t => t.includes('restaurant') || t.includes('food') || t.includes('kulinarisch') || t.includes('wein'))) {
+    return 'food';
   }
-
+  
   // Sports: category_main_id = 4 or tags contain sports terms
-  if (
-    event.category_main_id === 4 ||
-    tagsLower.some((t) => t.includes("sport") || t.includes("ski") || t.includes("bike") || t.includes("action"))
-  ) {
-    return "sports";
+  if (event.category_main_id === 4 || 
+      tagsLower.some(t => t.includes('sport') || t.includes('ski') || t.includes('bike') || t.includes('action'))) {
+    return 'sports';
   }
-
+  
   // Family: category_main_id = 5 or tags contain family terms
-  if (
-    event.category_main_id === 5 ||
-    tagsLower.some((t) => t.includes("familie") || t.includes("kinder") || t.includes("family"))
-  ) {
-    return "family";
+  if (event.category_main_id === 5 || 
+      tagsLower.some(t => t.includes('familie') || t.includes('kinder') || t.includes('family'))) {
+    return 'family';
   }
-
-  return "default";
+  
+  return 'default';
 }
 
 // Get dominant category for a cluster
 function getDominantCategory(categories: Record<CategoryType, number>): CategoryType {
   let maxCount = 0;
-  let dominant: CategoryType = "default";
-
+  let dominant: CategoryType = 'default';
+  
   for (const [category, count] of Object.entries(categories)) {
     // Elite always takes priority if present
-    if (category === "elite" && count > 0) {
-      return "elite";
+    if (category === 'elite' && count > 0) {
+      return 'elite';
     }
     if (count > maxCount) {
       maxCount = count;
       dominant = category as CategoryType;
     }
   }
-
+  
   return dominant;
 }
 
-export function EventsMap({
-  events = [],
-  onEventClick,
-  onEventsChange,
-  isVisible = true,
-  selectedEventIds = [],
-  favoriteEvents = [],
-}: EventsMapProps) {
+export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible = true, selectedEventIds = [], favoriteEvents = [], mustSeeEvents = [] }: EventsMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const favoriteMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const mustSeeMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const superclusterRef = useRef<Supercluster | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  
   const [loading, setLoading] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const [internalEvents, setInternalEvents] = useState<MapEvent[]>([]);
-  const [activeFilters, setActiveFilters] = useState<string[]>(["all"]);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
 
   // Toggle filter
   const toggleFilter = useCallback((filterKey: string) => {
-    setActiveFilters((prev) => {
-      if (filterKey === "all") {
-        return ["all"];
+    setActiveFilters(prev => {
+      if (filterKey === 'all') {
+        return ['all'];
       }
-
-      const newFilters = prev.filter((f) => f !== "all");
-
+      
+      const newFilters = prev.filter(f => f !== 'all');
+      
       if (newFilters.includes(filterKey)) {
-        const filtered = newFilters.filter((f) => f !== filterKey);
-        return filtered.length === 0 ? ["all"] : filtered;
+        const filtered = newFilters.filter(f => f !== filterKey);
+        return filtered.length === 0 ? ['all'] : filtered;
       } else {
         return [...newFilters, filterKey];
       }
@@ -173,11 +156,11 @@ export function EventsMap({
 
   // Filter events based on active filters
   const filteredEvents = useMemo(() => {
-    if (activeFilters.includes("all")) {
+    if (activeFilters.includes('all')) {
       return internalEvents;
     }
-
-    return internalEvents.filter((event) => {
+    
+    return internalEvents.filter(event => {
       const category = getCategoryForEvent(event);
       return activeFilters.includes(category);
     });
@@ -186,26 +169,26 @@ export function EventsMap({
   // Load events from Edge Function based on map bounds
   const loadEventsInView = useCallback(async () => {
     if (!map.current || !onEventsChange) return;
-
+    
     setLoading(true);
-
+    
     try {
       const bounds = map.current.getBounds();
       if (!bounds) return;
-
+      
       // ADD PADDING: Expand bounds by 20% in each direction
       // This pre-loads events slightly outside viewport for smooth experience
       const latPadding = (bounds.getNorth() - bounds.getSouth()) * 0.2;
       const lngPadding = (bounds.getEast() - bounds.getWest()) * 0.2;
-
+      
       const paddedBounds = {
         minLat: bounds.getSouth() - latPadding,
         maxLat: bounds.getNorth() + latPadding,
         minLng: bounds.getWest() - lngPadding,
-        maxLng: bounds.getEast() + lngPadding,
+        maxLng: bounds.getEast() + lngPadding
       };
-
-      const { data, error } = await supabase.functions.invoke("get-external-events", {
+      
+      const { data, error } = await supabase.functions.invoke('get-external-events', {
         body: {
           limit: 100,
           offset: 0,
@@ -213,51 +196,49 @@ export function EventsMap({
             minLat: paddedBounds.minLat,
             maxLat: paddedBounds.maxLat,
             minLng: paddedBounds.minLng,
-            maxLng: paddedBounds.maxLng,
-          },
-        },
+            maxLng: paddedBounds.maxLng
+          }
+        }
       });
-
+      
       if (error) {
-        console.error("Edge Function Error:", error);
+        console.error('Edge Function Error:', error);
         return;
       }
-
+      
       if (data?.events && Array.isArray(data.events)) {
-        const mappedEvents: MapEvent[] = data.events
-          .map((e: any) => ({
-            id: e.external_id || String(e.id),
-            external_id: e.external_id,
-            title: e.title,
-            venue_name: e.venue_name,
-            address_city: e.address_city,
-            image_url: e.image_url,
-            start_date: e.start_date,
-            latitude: e.latitude,
-            longitude: e.longitude,
-            // Use mapbox coords if available, otherwise fallback to regular coords
-            mapbox_lng: e.mapbox_lng ?? e.longitude,
-            mapbox_lat: e.mapbox_lat ?? e.latitude,
-            buzz_score: e.buzz_score,
-            price_from: e.price_from,
-            price_to: e.price_to,
-            category_main_id: e.category_main_id,
-            tags: Array.isArray(e.tags) ? e.tags : [],
-            buzz_boost: e.buzz_boost,
-          }))
-          .filter((e: MapEvent) => e.latitude && e.longitude);
-
+        const mappedEvents: MapEvent[] = data.events.map((e: any) => ({
+          id: e.external_id || String(e.id),
+          external_id: e.external_id,
+          title: e.title,
+          venue_name: e.venue_name,
+          address_city: e.address_city,
+          image_url: e.image_url,
+          start_date: e.start_date,
+          latitude: e.latitude,
+          longitude: e.longitude,
+          // Use mapbox coords if available, otherwise fallback to regular coords
+          mapbox_lng: e.mapbox_lng ?? e.longitude,
+          mapbox_lat: e.mapbox_lat ?? e.latitude,
+          buzz_score: e.buzz_score,
+          price_from: e.price_from,
+          price_to: e.price_to,
+          category_main_id: e.category_main_id,
+          tags: Array.isArray(e.tags) ? e.tags : [],
+          buzz_boost: e.buzz_boost
+        })).filter((e: MapEvent) => e.latitude && e.longitude);
+        
         console.log(`Loaded ${mappedEvents.length} events with coordinates`);
-
+        
         setInternalEvents(mappedEvents);
         setEventCount(mappedEvents.length);
-
+        
         if (onEventsChange) {
           onEventsChange(mappedEvents);
         }
       }
     } catch (err) {
-      console.error("Failed to load events:", err);
+      console.error('Failed to load events:', err);
     } finally {
       setLoading(false);
     }
@@ -274,11 +255,11 @@ export function EventsMap({
 
   // Create popup HTML
   const createPopupHTML = (event: MapEvent) => {
-    const imageUrl = event.image_url || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400";
-    const city = event.address_city || event.venue_name || "";
+    const imageUrl = event.image_url || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400';
+    const city = event.address_city || event.venue_name || '';
     const category = getCategoryForEvent(event);
     const categoryColor = CATEGORY_COLORS[category];
-
+    
     return `
       <div style="width: 200px; cursor: pointer;" class="event-popup">
         <img 
@@ -291,14 +272,14 @@ export function EventsMap({
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
             <div style="width: 8px; height: 8px; border-radius: 50%; background: ${categoryColor};"></div>
             <span style="font-size: 10px; color: ${categoryColor}; font-weight: 600; text-transform: uppercase;">
-              ${category === "elite" ? "⭐ Elite" : category}
+              ${category === 'elite' ? '⭐ Elite' : category}
             </span>
           </div>
           <div style="font-weight: 600; font-size: 14px; line-height: 1.3; color: #1a1a1a; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
             ${event.title}
           </div>
-          ${city ? `<div style="font-size: 12px; color: #666;">${city}</div>` : ""}
-          ${event.buzz_score ? `<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">🔥 Buzz: ${event.buzz_score.toFixed(1)}</div>` : ""}
+          ${city ? `<div style="font-size: 12px; color: #666;">${city}</div>` : ''}
+          ${event.buzz_score ? `<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">🔥 Buzz: ${event.buzz_score.toFixed(1)}</div>` : ''}
         </div>
       </div>
     `;
@@ -309,7 +290,7 @@ export function EventsMap({
     if (!map.current || !superclusterRef.current) return;
 
     // Clear existing markers
-    markersRef.current.forEach((m) => m.remove());
+    markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
     const bounds = map.current.getBounds();
@@ -319,7 +300,7 @@ export function EventsMap({
       bounds.getWest(),
       bounds.getSouth(),
       bounds.getEast(),
-      bounds.getNorth(),
+      bounds.getNorth()
     ];
     const zoom = Math.floor(map.current.getZoom());
     const showImages = zoom >= 11;
@@ -335,33 +316,33 @@ export function EventsMap({
         // CLUSTER marker - check if any favorites are in this cluster
         const pointCount = feature.properties.point_count;
         const size = Math.min(32, 22 + Math.log2(pointCount) * 3);
-
+        
         // Check if cluster contains any selected events
         const clusterLeaves = superclusterRef.current?.getLeaves(feature.properties.cluster_id, Infinity) || [];
         const hasFavoriteInCluster = clusterLeaves.some((leaf: any) => {
           const evt = leaf.properties.event as MapEvent;
-          return selectedEventIds.includes(evt.id) || selectedEventIds.includes(evt.external_id || "");
+          return selectedEventIds.includes(evt.id) || selectedEventIds.includes(evt.external_id || '');
         });
-
-        const wrapper = document.createElement("div");
+        
+        const wrapper = document.createElement('div');
         wrapper.style.cssText = `
           width: ${size}px;
           height: ${size}px;
           cursor: pointer;
           position: relative;
         `;
-
-        const inner = document.createElement("div");
+        
+        const inner = document.createElement('div');
         inner.style.cssText = `
           width: 100%;
           height: 100%;
-          background: ${hasFavoriteInCluster ? "#fecaca" : "#d6d3d1"};
-          border: ${hasFavoriteInCluster ? "2px solid #ef4444" : "none"};
+          background: ${hasFavoriteInCluster ? '#fecaca' : '#d6d3d1'};
+          border: ${hasFavoriteInCluster ? '2px solid #ef4444' : 'none'};
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: ${hasFavoriteInCluster ? "#dc2626" : "#78716c"};
+          color: ${hasFavoriteInCluster ? '#dc2626' : '#78716c'};
           font-weight: 600;
           font-size: ${Math.min(12, 9 + Math.log2(pointCount))}px;
           box-shadow: 0 2px 6px rgba(0,0,0,0.15);
@@ -369,10 +350,10 @@ export function EventsMap({
         `;
         inner.textContent = pointCount.toString();
         wrapper.appendChild(inner);
-
+        
         // Add PIN icon if cluster contains favorites
         if (hasFavoriteInCluster) {
-          const pinIndicator = document.createElement("div");
+          const pinIndicator = document.createElement('div');
           pinIndicator.style.cssText = `
             position: absolute;
             top: -8px;
@@ -394,29 +375,29 @@ export function EventsMap({
           wrapper.appendChild(pinIndicator);
         }
 
-        wrapper.addEventListener("mouseenter", () => {
-          inner.style.transform = "scale(1.1)";
+        wrapper.addEventListener('mouseenter', () => {
+          inner.style.transform = 'scale(1.1)';
         });
-        wrapper.addEventListener("mouseleave", () => {
-          inner.style.transform = "scale(1)";
+        wrapper.addEventListener('mouseleave', () => {
+          inner.style.transform = 'scale(1)';
         });
 
-        wrapper.addEventListener("click", (e) => {
+        wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!superclusterRef.current || !map.current) return;
-
+          
           const expansionZoom = Math.min(
             superclusterRef.current.getClusterExpansionZoom(feature.properties.cluster_id),
-            18,
+            18
           );
-          map.current.flyTo({
-            center: [lng, lat],
+          map.current.flyTo({ 
+            center: [lng, lat], 
             zoom: expansionZoom,
-            duration: 500,
+            duration: 500
           });
         });
 
-        const marker = new mapboxgl.Marker({ element: wrapper, anchor: "center" })
+        const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
           .setLngLat([lng, lat])
           .addTo(map.current!);
 
@@ -424,10 +405,10 @@ export function EventsMap({
       } else {
         // SINGLE event marker - Selected = red pin, others = small gray dot
         const event = feature.properties.event as MapEvent;
-        const isSelected = selectedEventIds.includes(event.id) || selectedEventIds.includes(event.external_id || "");
-
-        const wrapper = document.createElement("div");
-
+        const isSelected = selectedEventIds.includes(event.id) || selectedEventIds.includes(event.external_id || '');
+        
+        const wrapper = document.createElement('div');
+        
         if (isSelected) {
           // FAVORITE: Big red map pin - ALWAYS visible
           wrapper.style.cssText = `
@@ -456,7 +437,7 @@ export function EventsMap({
             position: relative;
           `;
 
-          const inner = document.createElement("div");
+          const inner = document.createElement('div');
           inner.style.cssText = `
             width: 100%;
             height: 100%;
@@ -467,11 +448,11 @@ export function EventsMap({
           `;
           wrapper.appendChild(inner);
 
-          wrapper.addEventListener("mouseenter", () => {
-            inner.style.transform = "scale(1.5)";
+          wrapper.addEventListener('mouseenter', () => {
+            inner.style.transform = 'scale(1.5)';
           });
-          wrapper.addEventListener("mouseleave", () => {
-            inner.style.transform = "scale(1)";
+          wrapper.addEventListener('mouseleave', () => {
+            inner.style.transform = 'scale(1)';
           });
         }
 
@@ -480,15 +461,15 @@ export function EventsMap({
           offset: showImages ? 35 : 20,
           closeButton: true,
           closeOnClick: false,
-          maxWidth: "220px",
+          maxWidth: '220px'
         }).setHTML(createPopupHTML(event));
 
-        const marker = new mapboxgl.Marker({ element: wrapper, anchor: "center" })
+        const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
           .setLngLat([lng, lat])
           .setPopup(popup)
           .addTo(map.current!);
 
-        wrapper.addEventListener("click", (e) => {
+        wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           if (onEventClick) {
             onEventClick(event.id);
@@ -502,52 +483,176 @@ export function EventsMap({
     console.log(`Rendered ${clusters.length} markers/clusters`);
   }, [onEventClick, selectedEventIds]);
 
-  // SEPARATE LAYER: Render favorite events as big red pins - ALWAYS VISIBLE
+  // LAYER 2: Render favorite events as ROUND IMAGE MARKERS with HEART GLOW - ALWAYS VISIBLE
   const renderFavoriteMarkers = useCallback(() => {
     if (!map.current) return;
 
     // Clear existing favorite markers
-    favoriteMarkersRef.current.forEach((m) => m.remove());
+    favoriteMarkersRef.current.forEach(m => m.remove());
     favoriteMarkersRef.current = [];
 
-    // Render each favorite with coordinates as a big red pin
+    // Render each favorite with coordinates as a round image marker with glow
     favoriteEvents.forEach((fav) => {
       if (!fav.latitude || !fav.longitude) return;
 
-      const wrapper = document.createElement("div");
+      const wrapper = document.createElement('div');
       wrapper.style.cssText = `
-        width: 40px;
-        height: 48px;
+        width: 64px;
+        height: 64px;
         cursor: pointer;
         position: relative;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
         z-index: 9999;
       `;
-      wrapper.innerHTML = `
-        <svg width="40" height="48" viewBox="0 0 24 30" fill="none" style="filter: drop-shadow(0 4px 8px rgba(239,68,68,0.5));">
-          <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill="#ef4444"/>
-          <circle cx="12" cy="11" r="4" fill="white"/>
-        </svg>
+
+      // Round image container with white border and golden glow
+      const imageContainer = document.createElement('div');
+      imageContainer.style.cssText = `
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: 3px solid white;
+        overflow: hidden;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.6), 0 4px 12px rgba(0,0,0,0.2);
+        background: white;
+        transition: transform 0.2s ease;
       `;
 
-      wrapper.addEventListener("click", (e) => {
+      const img = document.createElement('img');
+      img.src = fav.image || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&q=80';
+      img.alt = fav.title || 'Favorite';
+      img.style.cssText = `
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      `;
+      img.onerror = () => {
+        img.src = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&q=80';
+      };
+      imageContainer.appendChild(img);
+      wrapper.appendChild(imageContainer);
+
+      // Heart icon with radial glow
+      const heartBadge = document.createElement('div');
+      heartBadge.style.cssText = `
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 22px;
+        height: 22px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        box-shadow: 0 0 12px rgba(239,68,68,0.5), 0 2px 6px rgba(0,0,0,0.2);
+      `;
+      heartBadge.innerHTML = `
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      `;
+      wrapper.appendChild(heartBadge);
+
+      // Hover effect
+      wrapper.addEventListener('mouseenter', () => {
+        imageContainer.style.transform = 'scale(1.1)';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        imageContainer.style.transform = 'scale(1)';
+      });
+
+      wrapper.addEventListener('click', (e) => {
         e.stopPropagation();
         if (onEventClick) {
           onEventClick(fav.id);
         }
       });
 
-      const marker = new mapboxgl.Marker({ element: wrapper, anchor: "bottom" })
+      const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
         .setLngLat([fav.longitude, fav.latitude])
         .addTo(map.current!);
 
       favoriteMarkersRef.current.push(marker);
     });
 
-    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite pins`);
+    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite image markers with glow`);
   }, [favoriteEvents, onEventClick]);
+
+  // LAYER 3: Render must-see/elite events as GOLDEN STAR MARKERS with RADIAL GLOW - ALWAYS VISIBLE
+  const renderMustSeeMarkers = useCallback(() => {
+    if (!map.current) return;
+
+    // Clear existing must-see markers
+    mustSeeMarkersRef.current.forEach(m => m.remove());
+    mustSeeMarkersRef.current = [];
+
+    // Get must-sees from internal events (buzz_boost === 100)
+    const eliteEvents = internalEvents.filter(e => e.buzz_boost === 100);
+
+    eliteEvents.forEach((event) => {
+      if (!event.latitude || !event.longitude) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 8888;
+      `;
+      
+      // Golden star with radial glow effect
+      wrapper.innerHTML = `
+        <div style="
+          position: absolute;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(212,175,55,0.4) 0%, rgba(212,175,55,0) 70%);
+          animation: pulse 2s ease-in-out infinite;
+        "></div>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="url(#goldGradient)" style="filter: drop-shadow(0 0 8px rgba(212,175,55,0.7)); position: relative; z-index: 1;">
+          <defs>
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#F5D742"/>
+              <stop offset="50%" style="stop-color:#D4AF37"/>
+              <stop offset="100%" style="stop-color:#AA8500"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      `;
+
+      // Add CSS animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.7; }
+        }
+      `;
+      wrapper.appendChild(style);
+
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (onEventClick) {
+          onEventClick(event.id);
+        }
+      });
+
+      const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
+        .setLngLat([event.mapbox_lng ?? event.longitude, event.mapbox_lat ?? event.latitude])
+        .addTo(map.current!);
+
+      mustSeeMarkersRef.current.push(marker);
+    });
+
+    console.log(`Rendered ${mustSeeMarkersRef.current.length} must-see star markers with glow`);
+  }, [internalEvents, onEventClick]);
 
   // Re-render favorite markers when favorites change
   useEffect(() => {
@@ -556,147 +661,81 @@ export function EventsMap({
     }
   }, [mapReady, favoriteEvents, renderFavoriteMarkers]);
 
+  // Re-render must-see markers when internal events change
+  useEffect(() => {
+    if (mapReady) {
+      renderMustSeeMarkers();
+    }
+  }, [mapReady, internalEvents, renderMustSeeMarkers]);
+
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-
+    
+    // Center on Switzerland with bounds that show the whole country
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: {
-        version: 8,
-        name: "Beige Switzerland",
-        sources: {
-          "mapbox-streets": {
-            type: "vector",
-            url: "mapbox://mapbox.mapbox-streets-v8",
-          },
-        },
-        layers: [
-          {
-            id: "background",
-            type: "background",
-            paint: {
-              "background-color": "#F5F5DC",
-            },
-          },
-          {
-            id: "water",
-            type: "fill",
-            source: "mapbox-streets",
-            "source-layer": "water",
-            paint: {
-              "fill-color": "#E8F4F8",
-            },
-          },
-          {
-            id: "landcover",
-            type: "fill",
-            source: "mapbox-streets",
-            "source-layer": "landcover",
-            paint: {
-              "fill-color": "#E8DCC8",
-              "fill-opacity": 0.3,
-            },
-          },
-          {
-            id: "landuse",
-            type: "fill",
-            source: "mapbox-streets",
-            "source-layer": "landuse",
-            paint: {
-              "fill-color": "#E8DCC8",
-              "fill-opacity": 0.2,
-            },
-          },
-          {
-            id: "roads",
-            type: "line",
-            source: "mapbox-streets",
-            "source-layer": "road",
-            paint: {
-              "line-color": "#C8B89A",
-              "line-width": 1,
-            },
-          },
-          {
-            id: "place-labels",
-            type: "symbol",
-            source: "mapbox-streets",
-            "source-layer": "place_label",
-            layout: {
-              "text-field": ["get", "name"],
-              "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-              "text-size": 12,
-            },
-            paint: {
-              "text-color": "#8B7355",
-              "text-halo-color": "#FAF8F3",
-              "text-halo-width": 2,
-            },
-          },
-        ],
-      },
-      center: [8.3, 46.85],
-      zoom: 7,
+      style: 'mapbox://styles/mapbox/light-v11', // Muted topo style - clean and subtle
+      center: [8.3, 46.85], // Centered on Switzerland
+      zoom: 7, // Zoom out more to show entire Switzerland
       pitch: 0,
       minZoom: 6.5,
-      maxBounds: [
-        [5.5, 45.5],
-        [11.0, 48.0],
-      ],
+      maxBounds: [[5.5, 45.5], [11.0, 48.0]] // Limit to Switzerland area
     });
 
     map.current.addControl(
       new mapboxgl.NavigationControl({
         visualizePitch: true,
       }),
-      "top-right",
+      'top-right'
     );
 
-    map.current.on("load", () => {
+    map.current.on('load', () => {
       if (map.current) {
-        map.current.addSource("countries", {
-          type: "vector",
-          url: "mapbox://mapbox.country-boundaries-v1",
+        map.current.addSource('countries', {
+          type: 'vector',
+          url: 'mapbox://mapbox.country-boundaries-v1'
         });
-
+        
         map.current.addLayer({
-          id: "country-dim",
-          type: "fill",
-          source: "countries",
-          "source-layer": "country_boundaries",
-          filter: ["!=", ["get", "iso_3166_1"], "CH"],
+          id: 'country-dim',
+          type: 'fill',
+          source: 'countries',
+          'source-layer': 'country_boundaries',
+          filter: ['!=', ['get', 'iso_3166_1'], 'CH'],
           paint: {
-            "fill-color": "#6b7280",
-            "fill-opacity": 0.35,
-          },
-        });
-
+            'fill-color': '#6b7280',
+            'fill-opacity': 0.35
+          }
+        }, 'country-label');
+        
         map.current.addLayer({
-          id: "switzerland-border",
-          type: "line",
-          source: "countries",
-          "source-layer": "country_boundaries",
-          filter: ["==", ["get", "iso_3166_1"], "CH"],
+          id: 'switzerland-border',
+          type: 'line',
+          source: 'countries',
+          'source-layer': 'country_boundaries',
+          filter: ['==', ['get', 'iso_3166_1'], 'CH'],
           paint: {
-            "line-color": "#8B7355",
-            "line-width": 2.5,
-            "line-opacity": 0.8,
-          },
+            'line-color': '#ef4444',
+            'line-width': 2.5,
+            'line-opacity': 0.8
+          }
         });
       }
-
+      
       setMapReady(true);
       loadEventsInView();
     });
 
-    map.current.on("moveend", debouncedLoad);
+    map.current.on('moveend', debouncedLoad);
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
-      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current.forEach(marker => marker.remove());
+      favoriteMarkersRef.current.forEach(marker => marker.remove());
+      mustSeeMarkersRef.current.forEach(marker => marker.remove());
       map.current?.remove();
       map.current = null;
     };
@@ -706,7 +745,7 @@ export function EventsMap({
   useEffect(() => {
     if (filteredEvents.length === 0) {
       superclusterRef.current = null;
-      markersRef.current.forEach((m) => m.remove());
+      markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       return;
     }
@@ -722,34 +761,34 @@ export function EventsMap({
       minPoints: 3,
       map: (props: any) => ({
         category: props.category,
-        categoryCounts: { [props.category]: 1 },
+        categoryCounts: { [props.category]: 1 }
       }),
       reduce: (accumulated: any, props: any) => {
         accumulated.categoryCounts = accumulated.categoryCounts || {};
         for (const [cat, count] of Object.entries(props.categoryCounts || {})) {
           accumulated.categoryCounts[cat] = (accumulated.categoryCounts[cat] || 0) + (count as number);
         }
-      },
+      }
     });
 
     // Convert events to GeoJSON features with category
     // Use mapbox_lng/lat for accurate positioning (already normalized in mapping above)
     // Round to 6 decimal places for consistent precision (~0.1m accuracy)
-    const points: EventFeature[] = filteredEvents.map((event) => {
+    const points: EventFeature[] = filteredEvents.map(event => {
       const lng = Number((event.mapbox_lng ?? event.longitude).toFixed(6));
       const lat = Number((event.mapbox_lat ?? event.latitude).toFixed(6));
       return {
-        type: "Feature",
+        type: 'Feature',
         properties: {
           cluster: false,
           eventId: event.id,
           event: event,
-          category: getCategoryForEvent(event),
+          category: getCategoryForEvent(event)
         },
         geometry: {
-          type: "Point",
-          coordinates: [lng, lat],
-        },
+          type: 'Point',
+          coordinates: [lng, lat]
+        }
       };
     });
 
@@ -771,12 +810,12 @@ export function EventsMap({
       updateMarkers();
     };
 
-    map.current.on("zoomend", handleMove);
-    map.current.on("moveend", handleMove);
+    map.current.on('zoomend', handleMove);
+    map.current.on('moveend', handleMove);
 
     return () => {
-      map.current?.off("zoomend", handleMove);
-      map.current?.off("moveend", handleMove);
+      map.current?.off('zoomend', handleMove);
+      map.current?.off('moveend', handleMove);
     };
   }, [mapReady, updateMarkers]);
 
@@ -806,14 +845,14 @@ export function EventsMap({
       {/* Map Container */}
       <div className="relative min-h-[600px] h-[calc(100vh-340px)] rounded-xl overflow-hidden border border-border shadow-lg">
         <div ref={mapContainer} className="w-full h-full" />
-
+        
         {loading && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 shadow-lg border border-border">
             <Loader2 className="w-4 h-4 animate-spin text-primary" />
             <span className="text-sm font-medium">Events werden geladen...</span>
           </div>
         )}
-
+        
         {!loading && eventCount > 0 && (
           <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-border">
             <span className="text-sm font-medium">
@@ -821,22 +860,22 @@ export function EventsMap({
             </span>
           </div>
         )}
-
+        
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border">
           <div className="text-xs font-medium mb-2 text-foreground">Kategorien</div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             {[
-              { key: "wellness", label: "Wellness" },
-              { key: "nature", label: "Natur" },
-              { key: "culture", label: "Kultur" },
-              { key: "markets", label: "Märkte" },
-              { key: "elite", label: "Elite ⭐" },
-            ].map((item) => (
+              { key: 'wellness', label: 'Wellness' },
+              { key: 'nature', label: 'Natur' },
+              { key: 'culture', label: 'Kultur' },
+              { key: 'markets', label: 'Märkte' },
+              { key: 'elite', label: 'Elite ⭐' }
+            ].map(item => (
               <div key={item.key} className="flex items-center gap-2 text-xs text-muted-foreground">
-                <div
-                  className="w-3 h-3 rounded-full border-2"
-                  style={{ borderColor: CATEGORY_COLORS[item.key as CategoryType], backgroundColor: "white" }}
+                <div 
+                  className="w-3 h-3 rounded-full border-2" 
+                  style={{ borderColor: CATEGORY_COLORS[item.key as CategoryType], backgroundColor: 'white' }}
                 />
                 <span>{item.label}</span>
               </div>
