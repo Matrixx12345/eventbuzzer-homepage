@@ -580,16 +580,6 @@ export function EventsMap({
             },
           },
           {
-            id: "landcover",
-            type: "fill",
-            source: "mapbox-streets",
-            "source-layer": "landcover",
-            paint: {
-              "fill-color": "#E8DCC8",
-              "fill-opacity": 0.5,
-            },
-          },
-          {
             id: "water",
             type: "fill",
             source: "mapbox-streets",
@@ -599,13 +589,33 @@ export function EventsMap({
             },
           },
           {
+            id: "landcover",
+            type: "fill",
+            source: "mapbox-streets",
+            "source-layer": "landcover",
+            paint: {
+              "fill-color": "#E8DCC8",
+              "fill-opacity": 0.3,
+            },
+          },
+          {
+            id: "landuse",
+            type: "fill",
+            source: "mapbox-streets",
+            "source-layer": "landuse",
+            paint: {
+              "fill-color": "#E8DCC8",
+              "fill-opacity": 0.2,
+            },
+          },
+          {
             id: "roads",
             type: "line",
             source: "mapbox-streets",
             "source-layer": "road",
             paint: {
               "line-color": "#C8B89A",
-              "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1, 15, 2],
+              "line-width": 1,
             },
           },
           {
@@ -615,13 +625,13 @@ export function EventsMap({
             "source-layer": "place_label",
             layout: {
               "text-field": ["get", "name"],
-              "text-font": ["Open Sans Regular"],
-              "text-size": ["interpolate", ["linear"], ["zoom"], 5, 10, 10, 14],
+              "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+              "text-size": 12,
             },
             paint: {
               "text-color": "#8B7355",
               "text-halo-color": "#FAF8F3",
-              "text-halo-width": 1,
+              "text-halo-width": 2,
             },
           },
         ],
@@ -650,20 +660,17 @@ export function EventsMap({
           url: "mapbox://mapbox.country-boundaries-v1",
         });
 
-        map.current.addLayer(
-          {
-            id: "country-dim",
-            type: "fill",
-            source: "countries",
-            "source-layer": "country_boundaries",
-            filter: ["!=", ["get", "iso_3166_1"], "CH"],
-            paint: {
-              "fill-color": "#6b7280",
-              "fill-opacity": 0.35,
-            },
+        map.current.addLayer({
+          id: "country-dim",
+          type: "fill",
+          source: "countries",
+          "source-layer": "country_boundaries",
+          filter: ["!=", ["get", "iso_3166_1"], "CH"],
+          paint: {
+            "fill-color": "#6b7280",
+            "fill-opacity": 0.35,
           },
-          "country-label",
-        );
+        });
 
         map.current.addLayer({
           id: "switzerland-border",
