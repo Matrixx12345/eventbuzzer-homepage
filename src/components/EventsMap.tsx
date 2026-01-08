@@ -304,7 +304,7 @@ export function EventsMap({
     `;
   };
 
-  // Update markers using Supercluster
+  /  // Update markers using Supercluster
   const updateMarkers = useCallback(() => {
     if (!mapRef.current || !superclusterRef.current) return;
 
@@ -313,14 +313,14 @@ export function EventsMap({
       bounds.getWest(),
       bounds.getSouth(),
       bounds.getEast(),
-      bounds.getNorth(),
+      bounds.getNorth()
     ];
 
     const zoom = Math.floor(mapRef.current.getZoom());
     const clusters = superclusterRef.current.getClusters(bbox, zoom);
 
     // Clear existing markers
-    Object.values(markersRef.current).forEach((marker) => marker.remove());
+    Object.values(markersRef.current).forEach(marker => marker.remove());
     markersRef.current = {};
 
     // ========================================
@@ -339,13 +339,15 @@ export function EventsMap({
         const clusterLeaves = superclusterRef.current!.getLeaves(clusterId, Infinity);
 
         // Check cluster content
-        const hasElite = clusterLeaves.some((leaf) => leaf.properties.event.buzz_boost === 100);
-        const hasFavorite = clusterLeaves.some((leaf) => selectedEventIds.includes(leaf.properties.event.id));
+        const hasElite = clusterLeaves.some(leaf => leaf.properties.event.buzz_boost === 100);
+        const hasFavorite = clusterLeaves.some(leaf => 
+          selectedEventIds.includes(leaf.properties.event.id)
+        );
 
-        const wrapper = document.createElement("div");
-        wrapper.style.cssText = "cursor: pointer; z-index: 100;";
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'cursor: pointer; z-index: 100;';
 
-        const inner = document.createElement("div");
+        const inner = document.createElement('div');
 
         if (hasElite) {
           // Gold Star Cluster (contains Elite events)
@@ -397,11 +399,14 @@ export function EventsMap({
 
         wrapper.appendChild(inner);
 
-        wrapper.addEventListener("click", () => {
-          const expansionZoom = Math.min(superclusterRef.current!.getClusterExpansionZoom(clusterId), 20);
+        wrapper.addEventListener('click', () => {
+          const expansionZoom = Math.min(
+            superclusterRef.current!.getClusterExpansionZoom(clusterId),
+            20
+          );
           mapRef.current?.easeTo({
             center: [longitude, latitude],
-            zoom: expansionZoom,
+            zoom: expansionZoom
           });
         });
 
@@ -410,6 +415,7 @@ export function EventsMap({
           .addTo(mapRef.current!);
 
         markersRef.current[`cluster-${clusterId}`] = marker;
+
       } else {
         // ==================
         // NORMAL EVENT PIN (Photo Circle)
@@ -424,10 +430,10 @@ export function EventsMap({
         }
 
         // Normal Event: Round photo pin
-        const wrapper = document.createElement("div");
-        wrapper.style.cssText = "cursor: pointer; z-index: 500;";
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'cursor: pointer; z-index: 500;';
 
-        const inner = document.createElement("div");
+        const inner = document.createElement('div');
         inner.style.cssText = `
           width: 40px;
           height: 40px;
@@ -439,19 +445,18 @@ export function EventsMap({
         `;
 
         if (event.image_url) {
-          const img = document.createElement("img");
+          const img = document.createElement('img');
           img.src = event.image_url;
-          img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+          img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
           inner.appendChild(img);
         } else {
-          inner.style.background = "#E8DCC8";
-          inner.innerHTML =
-            '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px;">📅</div>';
+          inner.style.background = '#E8DCC8';
+          inner.innerHTML = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px;">📅</div>';
         }
 
         wrapper.appendChild(inner);
 
-        wrapper.addEventListener("click", () => onEventClick(event));
+        wrapper.addEventListener('click', () => onEventClick(event));
 
         const marker = new mapboxgl.Marker({ element: wrapper })
           .setLngLat([longitude, latitude])
@@ -476,54 +481,55 @@ export function EventsMap({
 
         if (isElite) {
           // ⭐ ELITE EVENT - Gold Star
-          const wrapper = document.createElement("div");
-          wrapper.style.cssText = "cursor: pointer; z-index: 10000;";
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = 'cursor: pointer; z-index: 10000;';
 
-          const inner = document.createElement("div");
+          const inner = document.createElement('div');
           inner.style.cssText = `
             font-size: 40px;
             filter: drop-shadow(0 0 8px rgba(255,215,0,0.6)) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
             transition: transform 0.2s;
           `;
-          inner.textContent = "⭐";
+          inner.textContent = '⭐';
 
           wrapper.appendChild(inner);
 
-          wrapper.addEventListener("mouseenter", () => {
-            inner.style.transform = "scale(1.2)";
+          wrapper.addEventListener('mouseenter', () => {
+            inner.style.transform = 'scale(1.2)';
           });
-          wrapper.addEventListener("mouseleave", () => {
-            inner.style.transform = "scale(1)";
+          wrapper.addEventListener('mouseleave', () => {
+            inner.style.transform = 'scale(1)';
           });
-          wrapper.addEventListener("click", () => onEventClick(event));
+          wrapper.addEventListener('click', () => onEventClick(event));
 
           const marker = new mapboxgl.Marker({ element: wrapper })
             .setLngLat([longitude, latitude])
             .addTo(mapRef.current!);
 
           markersRef.current[`elite-${event.id}`] = marker;
+
         } else if (isFavorite) {
           // ❤️ FAVORITE EVENT - Red Heart
-          const wrapper = document.createElement("div");
-          wrapper.style.cssText = "cursor: pointer; z-index: 10001;";
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = 'cursor: pointer; z-index: 10001;';
 
-          const inner = document.createElement("div");
+          const inner = document.createElement('div');
           inner.style.cssText = `
             font-size: 36px;
             filter: drop-shadow(0 0 6px rgba(239,68,68,0.6)) drop-shadow(0 3px 10px rgba(0,0,0,0.3));
             transition: transform 0.2s;
           `;
-          inner.textContent = "❤️";
+          inner.textContent = '❤️';
 
           wrapper.appendChild(inner);
 
-          wrapper.addEventListener("mouseenter", () => {
-            inner.style.transform = "scale(1.2)";
+          wrapper.addEventListener('mouseenter', () => {
+            inner.style.transform = 'scale(1.2)';
           });
-          wrapper.addEventListener("mouseleave", () => {
-            inner.style.transform = "scale(1)";
+          wrapper.addEventListener('mouseleave', () => {
+            inner.style.transform = 'scale(1)';
           });
-          wrapper.addEventListener("click", () => onEventClick(event));
+          wrapper.addEventListener('click', () => onEventClick(event));
 
           const marker = new mapboxgl.Marker({ element: wrapper })
             .setLngLat([longitude, latitude])
@@ -534,8 +540,9 @@ export function EventsMap({
       }
     });
 
-    console.log("✅ Markers rendered - Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray)");
+    console.log('✅ Markers rendered - Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray)');
   }, [onEventClick, selectedEventIds]);
+
 
   // SEPARATE LAYER: Render favorite events as big red pins - ALWAYS VISIBLE
   const renderFavoriteMarkers = useCallback(() => {
