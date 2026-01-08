@@ -136,13 +136,25 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     const gridFavorites = favorites.slice(0, 6); // Support up to 6 for the snake pattern
     
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#FDFBF7] overflow-auto">
+      <div 
+        className="fixed inset-0 z-[9999] overflow-auto"
+        style={{ 
+          backgroundColor: 'rgba(253, 251, 247, 0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)'
+        }}
+      >
         {/* X Button top right */}
         <button
           onClick={() => setIsExpanded(false)}
-          className="fixed top-6 right-6 z-[10000] p-3 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-xl transition-all hover:scale-105"
+          className="fixed top-6 right-6 z-[10000] p-3 rounded-full shadow-xl transition-all hover:scale-105"
+          style={{
+            backgroundColor: 'rgba(253, 251, 247, 0.95)',
+            backdropFilter: 'blur(15px)',
+            border: '1px solid rgba(212, 200, 180, 0.3)'
+          }}
         >
-          <X size={24} className="text-stone-700" />
+          <X size={24} style={{ color: '#333333' }} />
         </button>
 
         <div className="flex flex-col min-h-screen">
@@ -180,12 +192,20 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
 
           {/* BOTTOM: Map (50%) + Tagesplan (50%) */}
           <div className="flex flex-1 px-8 pb-8 gap-6">
-            {/* LEFT: Map with 3 layers */}
+            {/* LEFT: Map with 3 layers - Frosted Glass Container */}
             <div className="w-1/2">
-              <div className="rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 h-full min-h-[500px] bg-white/60 backdrop-blur-sm">
+              <div 
+                className="rounded-3xl overflow-hidden h-full min-h-[500px]"
+                style={{
+                  backgroundColor: 'rgba(253, 251, 247, 0.6)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(212, 200, 180, 0.35)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.1)'
+                }}
+              >
                 <Suspense fallback={
-                  <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
+                  <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#F5F3EF' }}>
+                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#999999' }} />
                   </div>
                 }>
                   <EventsMap 
@@ -201,20 +221,32 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
 
             {/* RIGHT: Dein Tagesplan */}
             <div className="w-1/2 flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-serif text-3xl font-bold text-stone-800">Dein Tagesplan</h2>
+            {/* Header */}
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="font-serif text-4xl font-bold" style={{ color: '#333333' }}>Dein Tagesplan</h2>
                 
-                {/* Auto/Bahn Toggle */}
-                <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm border border-stone-200/60">
+                {/* Auto/Bahn Toggle - Frosted Glass */}
+                <div 
+                  className="flex items-center gap-1 rounded-full p-1.5"
+                  style={{
+                    backgroundColor: 'rgba(253, 251, 247, 0.85)',
+                    backdropFilter: 'blur(15px)',
+                    border: '1px solid rgba(212, 200, 180, 0.4)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+                  }}
+                >
                   <button
                     onClick={() => setTransportMode("auto")}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                      "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
                       transportMode === "auto"
-                        ? "bg-stone-800 text-white shadow-md"
-                        : "text-stone-500 hover:text-stone-700"
+                        ? "shadow-md"
+                        : "hover:bg-white/40"
                     )}
+                    style={{
+                      backgroundColor: transportMode === "auto" ? '#4a5568' : 'transparent',
+                      color: transportMode === "auto" ? '#fff' : '#666666'
+                    }}
                   >
                     <Car size={16} />
                     Auto
@@ -222,11 +254,15 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                   <button
                     onClick={() => setTransportMode("bahn")}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                      "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
                       transportMode === "bahn"
-                        ? "bg-stone-800 text-white shadow-md"
-                        : "text-stone-500 hover:text-stone-700"
+                        ? "shadow-md"
+                        : "hover:bg-white/40"
                     )}
+                    style={{
+                      backgroundColor: transportMode === "bahn" ? '#64748b' : 'transparent',
+                      color: transportMode === "bahn" ? '#fff' : '#666666'
+                    }}
                   >
                     <Train size={16} />
                     Bahn
@@ -234,11 +270,19 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                 </div>
               </div>
 
-              {/* Snake Flow Trip Plan */}
-              <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-stone-200/40">
+              {/* Snake Flow Trip Plan - Frosted Glass Panel */}
+              <div 
+                className="flex-1 rounded-3xl p-8"
+                style={{
+                  backgroundColor: 'rgba(253, 251, 247, 0.75)',
+                  backdropFilter: 'blur(15px)',
+                  border: '1px solid rgba(212, 200, 180, 0.35)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+                }}
+              >
                 {favorites.length === 0 ? (
-                  <div className="text-center py-16 text-stone-400">
-                    <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
+                  <div className="text-center py-16" style={{ color: '#999999' }}>
+                    <Heart size={44} className="mx-auto mb-4" style={{ color: '#cccccc' }} strokeWidth={1.5} />
                     <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
                   </div>
                 ) : (
@@ -372,10 +416,16 @@ const SuggestionCard = ({ event, onClick, isHighlighted }: SuggestionCardProps) 
     <div 
       onClick={onClick}
       className={cn(
-        "aspect-square rounded-xl overflow-hidden cursor-pointer group relative transition-all duration-300",
-        "bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-lg border border-stone-100/80",
-        isHighlighted && "ring-2 ring-amber-400 ring-offset-2"
+        "aspect-square rounded-xl overflow-hidden cursor-pointer group relative transition-all duration-300"
       )}
+      style={{
+        backgroundColor: 'rgba(253, 251, 247, 0.85)',
+        backdropFilter: 'blur(10px)',
+        border: isHighlighted ? '2px solid #D4AF37' : '1px solid rgba(212, 200, 180, 0.4)',
+        boxShadow: isHighlighted 
+          ? '0 0 15px rgba(212, 175, 55, 0.4), 0 6px 20px rgba(0,0,0,0.1)' 
+          : '0 4px 15px rgba(0,0,0,0.06)'
+      }}
     >
       <img
         src={event.image}
@@ -399,7 +449,13 @@ const SuggestionCard = ({ event, onClick, isHighlighted }: SuggestionCardProps) 
 };
 
 const EmptySuggestionCard = () => (
-  <div className="aspect-square rounded-xl bg-stone-100/30 border border-dashed border-stone-200/60" />
+  <div 
+    className="aspect-square rounded-xl" 
+    style={{
+      backgroundColor: 'rgba(253, 251, 247, 0.3)',
+      border: '1px dashed rgba(212, 200, 180, 0.5)'
+    }}
+  />
 );
 
 // Snake Trip Flow - Circular images with snake connection
@@ -432,9 +488,9 @@ const SnakeTripFlow = ({ favorites, transportMode, onEventClick, onRemoveFavorit
   const row2 = [slots[5], slots[4], slots[3]]; // Reversed for snake
 
   return (
-    <div className="flex flex-col gap-0 relative">
+    <div className="flex flex-col gap-4 relative py-2">
       {/* Row 1: Left to Right */}
-      <div className="flex items-center justify-center gap-0">
+      <div className="flex items-center justify-center gap-4">
         {row1.map((event, idx) => (
           <div key={idx} className="flex items-center">
             <CircularEventCard 
@@ -447,8 +503,13 @@ const SnakeTripFlow = ({ favorites, transportMode, onEventClick, onRemoveFavorit
             />
             {/* Horizontal connection line with transport pill */}
             {idx < 2 && (
-              <div className="flex items-center relative mx-2">
-                <div className="w-16 h-[2px] bg-stone-300" />
+              <div className="flex items-center relative mx-3">
+                <div 
+                  className="w-20 h-[2px]" 
+                  style={{ 
+                    background: 'linear-gradient(90deg, rgba(212,200,180,0.3) 0%, rgba(212,200,180,0.6) 50%, rgba(212,200,180,0.3) 100%)' 
+                  }} 
+                />
                 <TransportPill 
                   minutes={transportData[idx]?.minutes || 15} 
                   km={transportData[idx]?.km || 10}
@@ -460,28 +521,43 @@ const SnakeTripFlow = ({ favorites, transportMode, onEventClick, onRemoveFavorit
         ))}
       </div>
 
-      {/* Vertical connection on RIGHT side (going down) */}
-      <div className="flex justify-end pr-16 relative">
+      {/* Vertical connection on RIGHT side (going down) - curved path */}
+      <div className="flex justify-end pr-20 relative">
         <div className="flex flex-col items-center">
-          <div className="w-[2px] h-12 bg-stone-300" />
+          <div 
+            className="w-[2px] h-14" 
+            style={{ 
+              background: 'linear-gradient(180deg, rgba(212,200,180,0.6) 0%, rgba(212,200,180,0.4) 100%)' 
+            }} 
+          />
           <TransportPill 
             minutes={transportData[2]?.minutes || 18} 
             km={transportData[2]?.km || 12}
             mode={transportMode}
             vertical
           />
-          <div className="w-[2px] h-6 bg-stone-300" />
+          <div 
+            className="w-[2px] h-8" 
+            style={{ 
+              background: 'linear-gradient(180deg, rgba(212,200,180,0.4) 0%, rgba(212,200,180,0.6) 100%)' 
+            }} 
+          />
         </div>
       </div>
 
       {/* Row 2: Right to Left (reversed visually) */}
-      <div className="flex items-center justify-center gap-0">
+      <div className="flex items-center justify-center gap-4">
         {row2.map((event, idx) => (
           <div key={idx} className="flex items-center">
             {/* Horizontal connection line BEFORE (except first) */}
             {idx > 0 && (
-              <div className="flex items-center relative mx-2">
-                <div className="w-16 h-[2px] bg-stone-300" />
+              <div className="flex items-center relative mx-3">
+                <div 
+                  className="w-20 h-[2px]" 
+                  style={{ 
+                    background: 'linear-gradient(90deg, rgba(212,200,180,0.3) 0%, rgba(212,200,180,0.6) 50%, rgba(212,200,180,0.3) 100%)' 
+                  }} 
+                />
                 <TransportPill 
                   minutes={transportData[3 + idx - 1]?.minutes || 15} 
                   km={transportData[3 + idx - 1]?.km || 10}
@@ -515,14 +591,23 @@ interface CircularEventCardProps {
 }
 
 const CircularEventCard = ({ event, onClick, onRemove, label, subLabel, isHighlighted }: CircularEventCardProps) => {
+  // 15% larger: 20 * 1.15 ≈ 23 (w-23 h-23)
   if (!event) {
     return (
       <div className="flex flex-col items-center">
-        <div className="w-20 h-20 rounded-full bg-stone-100/50 border-2 border-dashed border-stone-200/60 flex items-center justify-center">
-          <Plus size={20} className="text-stone-300" />
+        <div 
+          className="rounded-full flex items-center justify-center"
+          style={{
+            width: '92px',
+            height: '92px',
+            backgroundColor: 'rgba(253, 251, 247, 0.5)',
+            border: '2px dashed rgba(212, 200, 180, 0.5)'
+          }}
+        >
+          <Plus size={24} style={{ color: '#cccccc' }} />
         </div>
-        <div className="mt-2 text-center">
-          <p className="text-xs text-stone-400">Leer</p>
+        <div className="mt-3 text-center">
+          <p className="text-xs" style={{ color: '#999999' }}>Leer</p>
         </div>
       </div>
     );
@@ -530,14 +615,18 @@ const CircularEventCard = ({ event, onClick, onRemove, label, subLabel, isHighli
 
   return (
     <div className="flex flex-col items-center">
-      {/* Circular Image with border */}
+      {/* Circular Image with golden/white border - 15% LARGER */}
       <div 
         onClick={onClick}
-        className={cn(
-          "relative w-20 h-20 rounded-full overflow-hidden cursor-pointer group transition-all duration-300",
-          "ring-4 ring-stone-200 hover:ring-amber-400 shadow-lg",
-          isHighlighted && "ring-amber-400 ring-offset-2"
-        )}
+        className="relative rounded-full overflow-hidden cursor-pointer group transition-all duration-300"
+        style={{
+          width: '92px',
+          height: '92px',
+          boxShadow: isHighlighted 
+            ? '0 0 20px rgba(212, 175, 55, 0.6), 0 8px 25px rgba(0,0,0,0.15)' 
+            : '0 8px 25px rgba(0,0,0,0.12)',
+          border: isHighlighted ? '4px solid #D4AF37' : '4px solid rgba(255,255,255,0.9)'
+        }}
       >
         <img 
           src={event.image} 
@@ -550,22 +639,27 @@ const CircularEventCard = ({ event, onClick, onRemove, label, subLabel, isHighli
             e.stopPropagation();
             onRemove?.();
           }}
-          className="absolute top-1 right-1 p-1 rounded-full bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+          className="absolute top-1.5 right-1.5 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+          }}
         >
-          <Heart size={10} className="text-red-500 fill-red-500" />
+          <Heart size={12} className="text-red-500 fill-red-500" />
         </button>
       </div>
       {/* Label below */}
-      <div className="mt-2 text-center max-w-24">
+      <div className="mt-3 text-center" style={{ maxWidth: '100px' }}>
         {label ? (
           <>
-            <p className="text-xs font-semibold text-stone-700 line-clamp-1">{label}</p>
-            <p className="text-[10px] text-stone-500">{subLabel}</p>
+            <p className="text-xs font-semibold line-clamp-1" style={{ color: '#333333' }}>{label}</p>
+            <p className="text-[11px]" style={{ color: '#666666' }}>{subLabel}</p>
           </>
         ) : (
           <>
-            <p className="text-xs font-medium text-stone-700 line-clamp-1">{event.title.split(':')[0]}</p>
-            <p className="text-[10px] text-stone-500">{subLabel}</p>
+            <p className="text-xs font-medium line-clamp-1" style={{ color: '#333333' }}>{event.title.split(':')[0]}</p>
+            <p className="text-[11px]" style={{ color: '#666666' }}>{subLabel}</p>
           </>
         )}
       </div>
@@ -584,19 +678,37 @@ interface TransportPillProps {
 const TransportPill = ({ minutes, km, mode, vertical }: TransportPillProps) => {
   return (
     <div className={cn(
-      "absolute flex flex-col items-center gap-0.5 pointer-events-none",
+      "absolute flex flex-col items-center gap-1 pointer-events-none",
       vertical ? "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
     )}>
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/50 shadow-sm">
+      {/* Frosted Glass Pill for time */}
+      <div 
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full"
+        style={{
+          backgroundColor: 'rgba(253, 251, 247, 0.85)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(212, 200, 180, 0.4)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+        }}
+      >
         {mode === "bahn" ? (
-          <Train size={10} className="text-red-600" />
+          <Train size={11} className="text-red-600" />
         ) : (
-          <Car size={10} className="text-stone-600" />
+          <Car size={11} style={{ color: '#555555' }} />
         )}
-        <span className="text-[10px] text-stone-600 font-medium">{minutes}min</span>
+        <span className="text-[11px] font-medium" style={{ color: '#444444' }}>{minutes}min</span>
       </div>
-      <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-        <span className="text-[9px] text-stone-500">{km}km</span>
+      {/* Frosted Glass Pill for distance */}
+      <div 
+        className="px-2.5 py-0.5 rounded-full"
+        style={{
+          backgroundColor: 'rgba(253, 251, 247, 0.75)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(212, 200, 180, 0.3)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        }}
+      >
+        <span className="text-[10px]" style={{ color: '#666666' }}>{km}km</span>
       </div>
     </div>
   );

@@ -483,7 +483,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     console.log(`Rendered ${clusters.length} markers/clusters`);
   }, [onEventClick, selectedEventIds]);
 
-  // LAYER 2: Render favorite events as ROUND IMAGE MARKERS with HEART - ALWAYS VISIBLE
+  // LAYER 2: Render favorite events as ROUND IMAGE MARKERS with HEART GLOW - ALWAYS VISIBLE
   const renderFavoriteMarkers = useCallback(() => {
     if (!map.current) return;
 
@@ -491,29 +491,30 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
     favoriteMarkersRef.current.forEach(m => m.remove());
     favoriteMarkersRef.current = [];
 
-    // Render each favorite with coordinates as a round image marker
+    // Render each favorite with coordinates as a round image marker with glow
     favoriteEvents.forEach((fav) => {
       if (!fav.latitude || !fav.longitude) return;
 
       const wrapper = document.createElement('div');
       wrapper.style.cssText = `
-        width: 56px;
-        height: 56px;
+        width: 64px;
+        height: 64px;
         cursor: pointer;
         position: relative;
         z-index: 9999;
       `;
 
-      // Round image container with border
+      // Round image container with white border and golden glow
       const imageContainer = document.createElement('div');
       imageContainer.style.cssText = `
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
-        border: 3px solid #ef4444;
+        border: 3px solid white;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.6), 0 4px 12px rgba(0,0,0,0.2);
         background: white;
+        transition: transform 0.2s ease;
       `;
 
       const img = document.createElement('img');
@@ -530,28 +531,36 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       imageContainer.appendChild(img);
       wrapper.appendChild(imageContainer);
 
-      // Heart icon overlay
+      // Heart icon with radial glow
       const heartBadge = document.createElement('div');
       heartBadge.style.cssText = `
         position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 20px;
-        height: 20px;
-        background: #ef4444;
+        bottom: 2px;
+        right: 2px;
+        width: 22px;
+        height: 22px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 0 12px rgba(239,68,68,0.5), 0 2px 6px rgba(0,0,0,0.2);
       `;
       heartBadge.innerHTML = `
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
         </svg>
       `;
       wrapper.appendChild(heartBadge);
+
+      // Hover effect
+      wrapper.addEventListener('mouseenter', () => {
+        imageContainer.style.transform = 'scale(1.1)';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        imageContainer.style.transform = 'scale(1)';
+      });
 
       wrapper.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -567,10 +576,10 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       favoriteMarkersRef.current.push(marker);
     });
 
-    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite image markers`);
+    console.log(`Rendered ${favoriteMarkersRef.current.length} favorite image markers with glow`);
   }, [favoriteEvents, onEventClick]);
 
-  // LAYER 3: Render must-see/elite events as GOLDEN STAR MARKERS - ALWAYS VISIBLE
+  // LAYER 3: Render must-see/elite events as GOLDEN STAR MARKERS with RADIAL GLOW - ALWAYS VISIBLE
   const renderMustSeeMarkers = useCallback(() => {
     if (!map.current) return;
 
@@ -586,8 +595,8 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
 
       const wrapper = document.createElement('div');
       wrapper.style.cssText = `
-        width: 44px;
-        height: 44px;
+        width: 50px;
+        height: 50px;
         cursor: pointer;
         position: relative;
         display: flex;
@@ -595,11 +604,38 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
         justify-content: center;
         z-index: 8888;
       `;
+      
+      // Golden star with radial glow effect
       wrapper.innerHTML = `
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="#F59E0B" style="filter: drop-shadow(0 3px 6px rgba(245,158,11,0.5));">
+        <div style="
+          position: absolute;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(212,175,55,0.4) 0%, rgba(212,175,55,0) 70%);
+          animation: pulse 2s ease-in-out infinite;
+        "></div>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="url(#goldGradient)" style="filter: drop-shadow(0 0 8px rgba(212,175,55,0.7)); position: relative; z-index: 1;">
+          <defs>
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#F5D742"/>
+              <stop offset="50%" style="stop-color:#D4AF37"/>
+              <stop offset="100%" style="stop-color:#AA8500"/>
+            </linearGradient>
+          </defs>
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
       `;
+
+      // Add CSS animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.7; }
+        }
+      `;
+      wrapper.appendChild(style);
 
       wrapper.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -615,7 +651,7 @@ export function EventsMap({ events = [], onEventClick, onEventsChange, isVisible
       mustSeeMarkersRef.current.push(marker);
     });
 
-    console.log(`Rendered ${mustSeeMarkersRef.current.length} must-see star markers`);
+    console.log(`Rendered ${mustSeeMarkersRef.current.length} must-see star markers with glow`);
   }, [internalEvents, onEventClick]);
 
   // Re-render favorite markers when favorites change
