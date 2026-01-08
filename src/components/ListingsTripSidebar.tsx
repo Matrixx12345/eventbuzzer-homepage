@@ -1,6 +1,6 @@
-import { useState, lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense, useEffect, useCallback } from "react";
 import { useFavorites, FavoriteEvent } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Sparkles, Car, Train, X, Plus, Loader2 } from "lucide-react";
+import { Heart, MapPin, Sparkles, Car, Train, X, Plus, Loader2, Star, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,23 +16,37 @@ interface FavoriteWithCoords {
   latitude?: number;
   longitude?: number;
   title?: string;
+  image?: string;
 }
 
-// Transport pills data for snake connections
-const transportOptions = [
-  { label: "IC 8", duration: "5h 12m" },
-  { label: "S3", duration: "24m" },
-  { label: "IR 50", duration: "1h 05m" },
-  { label: "PE", duration: "1h 50m" },
-  { label: "IC 3", duration: "45m" },
+interface SuggestedEvent {
+  id: string;
+  title: string;
+  location: string;
+  image: string;
+  buzzScore?: number;
+  distance?: string;
+}
+
+// SBB Transport pill data
+const sbbTransportData = [
+  { line: "IC 8", icon: "train" },
+  { line: "S3", icon: "train" },
+  { line: "IR 50", icon: "train" },
+  { line: "PE", icon: "train" },
+  { line: "IC 3", icon: "train" },
+  { line: "S12", icon: "train" },
+  { line: "IR 36", icon: "train" },
 ];
 
 const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
-  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { favorites, toggleFavorite } = useFavorites();
   const [isExpanded, setIsExpanded] = useState(false);
   const [transportMode, setTransportMode] = useState<"auto" | "bahn">("bahn");
-  const [, setMapEvents] = useState<any[]>([]);
+  const [mapEvents, setMapEvents] = useState<any[]>([]);
   const [favoriteEventsWithCoords, setFavoriteEventsWithCoords] = useState<FavoriteWithCoords[]>([]);
+  const [suggestedEvents, setSuggestedEvents] = useState<SuggestedEvent[]>([]);
+  const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   
   // Get favorite IDs for map highlighting
   const favoriteIds = favorites.map(f => f.id);
@@ -70,7 +84,8 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                 id,
                 latitude: e.latitude,
                 longitude: e.longitude,
-                title: e.title
+                title: e.title,
+                image: e.image_url
               });
             }
           });
@@ -80,11 +95,11 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             id: f.id,
             latitude: coordsMap.get(f.id)?.latitude,
             longitude: coordsMap.get(f.id)?.longitude,
-            title: f.title
+            title: f.title,
+            image: f.image
           })).filter(f => f.latitude && f.longitude);
 
           setFavoriteEventsWithCoords(withCoords);
-          console.log(`Fetched coords for ${withCoords.length} favorites`);
         }
       } catch (err) {
         console.error('Failed to fetch favorite coords:', err);
@@ -94,16 +109,31 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     fetchFavoriteCoords();
   }, [favorites, favoriteIds]);
 
-  // Mock suggested events for expanded view
-  const suggestedEvents = [
-    { id: "1", title: "Kunsthaus Zürich", location: "Zürich", buzzScore: 87, image: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=200&q=80" },
-    { id: "2", title: "Rheinfall Schaffhausen", location: "Schaffhausen", buzzScore: 92, image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80" },
-    { id: "3", title: "Berner Altstadt", location: "Bern", buzzScore: 88, image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=200&q=80" },
-    { id: "4", title: "Luzerner Kapellbrücke", location: "Luzern", buzzScore: 85, image: "https://images.unsplash.com/photo-1527668752968-14dc70a27c95?w=200&q=80" },
-  ];
+  // Update suggestions based on map events
+  const handleEventsChange = useCallback((events: any[]) => {
+    setMapEvents(events);
+    // Transform map events to suggestions (16 for 2x8 grid)
+    const suggestions = events.slice(0, 16).map((e: any) => ({
+      id: e.id || e.external_id,
+      title: e.title,
+      location: e.address_city || e.venue_name || "Schweiz",
+      image: e.image_url || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+      buzzScore: e.buzz_score,
+      distance: "~1.2 km"
+    }));
+    setSuggestedEvents(suggestions);
+  }, []);
+
+  // Handle marker click - highlight in grid/plan
+  const handleMarkerClick = useCallback((eventId: string) => {
+    setHighlightedEventId(eventId);
+    onEventClick?.(eventId);
+    // Clear highlight after 3 seconds
+    setTimeout(() => setHighlightedEventId(null), 3000);
+  }, [onEventClick]);
 
   if (isExpanded) {
-    const gridFavorites = favorites.slice(0, 8); // Support up to 8 cards for snake pattern
+    const gridFavorites = favorites.slice(0, 6); // Support up to 6 for the snake pattern
     
     return (
       <div className="fixed inset-0 z-[9999] bg-[#FDFBF7] overflow-auto">
@@ -115,110 +145,126 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
           <X size={24} className="text-stone-700" />
         </button>
 
-        <div className="flex min-h-screen p-10 gap-8">
-          {/* LEFT HALF: Map + Suggestions */}
-          <div className="w-[42%] flex flex-col pt-14">
-            {/* Map - 15% smaller, top aligned with first event cards */}
-            <div className="rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 h-[420px]">
-              <Suspense fallback={
-                <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
-                </div>
-              }>
-              <EventsMap 
-                  onEventClick={onEventClick}
-                  onEventsChange={setMapEvents}
-                  isVisible={true}
-                  selectedEventIds={favoriteIds}
-                  favoriteEvents={favoriteEventsWithCoords}
+        <div className="flex flex-col min-h-screen">
+          {/* TOP: 2x8 Suggestions Grid */}
+          <div className="px-8 pt-6 pb-4">
+            <div className="grid grid-cols-8 gap-3">
+              {/* Row 1 */}
+              {suggestedEvents.slice(0, 8).map((event, idx) => (
+                <SuggestionCard 
+                  key={event.id} 
+                  event={event} 
+                  onClick={() => handleMarkerClick(event.id)}
+                  isHighlighted={highlightedEventId === event.id}
                 />
-              </Suspense>
-            </div>
-
-            {/* Suggestions at bottom of left side */}
-            <div className="mt-8">
-              <div className="flex items-center gap-2 mb-5">
-                <Sparkles size={16} className="text-amber-500" />
-                <h3 className="font-medium text-stone-500 text-sm tracking-wide uppercase">Vorschläge für dich</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {suggestedEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 flex gap-4 cursor-pointer group shadow-sm hover:shadow-lg transition-all duration-300 border border-stone-100/80 hover:border-stone-200"
-                  >
-                    <img
-                      src={event.image}
-                      alt={event.title}
-                      className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm"
-                    />
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <p className="text-stone-800 font-medium text-sm leading-tight truncate">{event.title}</p>
-                      <p className="text-stone-400 text-xs mt-1.5 flex items-center gap-1">
-                        <MapPin size={10} />
-                        {event.location}
-                      </p>
-                    </div>
-                    <button 
-                      className="self-center p-2.5 rounded-full bg-stone-100/80 hover:bg-amber-100 hover:text-amber-600 transition-all flex-shrink-0 group-hover:scale-105"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Plus size={14} className="text-stone-500 group-hover:text-amber-600" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              ))}
+              {/* Fill empty slots in row 1 */}
+              {Array.from({ length: Math.max(0, 8 - suggestedEvents.slice(0, 8).length) }).map((_, i) => (
+                <EmptySuggestionCard key={`empty-1-${i}`} />
+              ))}
+              {/* Row 2 */}
+              {suggestedEvents.slice(8, 16).map((event, idx) => (
+                <SuggestionCard 
+                  key={event.id} 
+                  event={event} 
+                  onClick={() => handleMarkerClick(event.id)}
+                  isHighlighted={highlightedEventId === event.id}
+                />
+              ))}
+              {/* Fill empty slots in row 2 */}
+              {Array.from({ length: Math.max(0, 8 - suggestedEvents.slice(8, 16).length) }).map((_, i) => (
+                <EmptySuggestionCard key={`empty-2-${i}`} />
+              ))}
             </div>
           </div>
 
-          {/* RIGHT HALF: Trip Grid with Snake Pattern */}
-          <div className="w-[58%] flex flex-col">
-            {/* Transport Toggle - same height as map padding to align */}
-            <div className="flex items-center gap-3 h-14 mb-0">
-              <button
-                onClick={() => setTransportMode("auto")}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
-                  transportMode === "auto"
-                    ? "bg-stone-800 text-white shadow-md"
-                    : "bg-white text-stone-500 hover:text-stone-700 shadow-sm border border-stone-200"
-                )}
-              >
-                <Car size={16} />
-                Auto
-              </button>
-              <button
-                onClick={() => setTransportMode("bahn")}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
-                  transportMode === "bahn"
-                    ? "bg-stone-800 text-white shadow-md"
-                    : "bg-white text-stone-500 hover:text-stone-700 shadow-sm border border-stone-200"
-                )}
-              >
-                <Train size={16} />
-                Bahn
-              </button>
+          {/* BOTTOM: Map (50%) + Tagesplan (50%) */}
+          <div className="flex flex-1 px-8 pb-8 gap-6">
+            {/* LEFT: Map with 3 layers */}
+            <div className="w-1/2">
+              <div className="rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 h-full min-h-[500px] bg-white/60 backdrop-blur-sm">
+                <Suspense fallback={
+                  <div className="w-full h-full bg-[#F5F3EF] flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
+                  </div>
+                }>
+                  <EventsMap 
+                    onEventClick={handleMarkerClick}
+                    onEventsChange={handleEventsChange}
+                    isVisible={true}
+                    selectedEventIds={favoriteIds}
+                    favoriteEvents={favoriteEventsWithCoords}
+                  />
+                </Suspense>
+              </div>
             </div>
 
-            {/* Trip Grid - Snake Pattern */}
-            <div className="flex-1">
-              {favorites.length === 0 ? (
-                <div className="text-center py-16 text-stone-400">
-                  <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
-                  <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
+            {/* RIGHT: Dein Tagesplan */}
+            <div className="w-1/2 flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-3xl font-bold text-stone-800">Dein Tagesplan</h2>
+                
+                {/* Auto/Bahn Toggle */}
+                <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm border border-stone-200/60">
+                  <button
+                    onClick={() => setTransportMode("auto")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                      transportMode === "auto"
+                        ? "bg-stone-800 text-white shadow-md"
+                        : "text-stone-500 hover:text-stone-700"
+                    )}
+                  >
+                    <Car size={16} />
+                    Auto
+                  </button>
+                  <button
+                    onClick={() => setTransportMode("bahn")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                      transportMode === "bahn"
+                        ? "bg-stone-800 text-white shadow-md"
+                        : "text-stone-500 hover:text-stone-700"
+                    )}
+                  >
+                    <Train size={16} />
+                    Bahn
+                  </button>
                 </div>
-              ) : (
-                <SnakeTripGrid 
-                  favorites={gridFavorites} 
-                  transportMode={transportMode}
-                  onEventClick={onEventClick}
-                  onRemoveFavorite={(id) => {
-                    const fav = favorites.find(f => f.id === id);
-                    if (fav) toggleFavorite(fav);
-                  }}
-                />
-              )}
+              </div>
+
+              {/* Snake Flow Trip Plan */}
+              <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-stone-200/40">
+                {favorites.length === 0 ? (
+                  <div className="text-center py-16 text-stone-400">
+                    <Heart size={40} className="mx-auto mb-4 text-stone-300" strokeWidth={1.5} />
+                    <p className="text-lg">Füge Favoriten hinzu, um deinen Trip zu planen</p>
+                  </div>
+                ) : (
+                  <SnakeTripFlow 
+                    favorites={gridFavorites} 
+                    transportMode={transportMode}
+                    onEventClick={handleMarkerClick}
+                    onRemoveFavorite={(id) => {
+                      const fav = favorites.find(f => f.id === id);
+                      if (fav) toggleFavorite(fav);
+                    }}
+                    highlightedId={highlightedEventId}
+                  />
+                )}
+              </div>
+
+              {/* SBB Footer */}
+              <div className="flex items-center justify-between mt-4 px-2">
+                <div className="flex items-center gap-2">
+                  <div className="bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold">SBB</div>
+                  <span className="text-xs text-stone-400">Fahrplanvorschläge</span>
+                </div>
+                <span className="text-xs text-stone-400">
+                  Letzte Aktualisierung: {new Date().toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })} | {new Date().toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -226,10 +272,10 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
     );
   }
 
-  // Collapsed State - KEIN internes Scrolling, Content fließt normal
+  // Collapsed State
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-stone-200/80 overflow-visible">
-      {/* Map - QUADRATISCH bündig oben */}
+      {/* Map - QUADRATISCH */}
       <div className="aspect-square w-full relative overflow-hidden">
         <Suspense fallback={
           <div className="w-full h-full bg-[hsl(var(--listings-bg))] flex items-center justify-center">
@@ -240,7 +286,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
             />
           </div>
         }>
-        <EventsMap 
+          <EventsMap 
             onEventClick={onEventClick}
             onEventsChange={setMapEvents}
             isVisible={true}
@@ -250,7 +296,7 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
         </Suspense>
       </div>
 
-      {/* Favorites List or Empty State - KEIN overflow-y-auto, normaler Flow */}
+      {/* Favorites List */}
       <div className="p-4">
         {favorites.length === 0 ? (
           <div className="text-center py-8">
@@ -279,19 +325,14 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
                     {fav.location || "Schweiz"}
                   </p>
                 </div>
-                {/* Abwählbares Herz */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(fav);
                   }}
                   className="flex-shrink-0 p-1.5 hover:scale-110 transition-transform"
-                  aria-label="Remove from favorites"
                 >
-                  <Heart 
-                    size={16} 
-                    className="text-red-500 fill-red-500 hover:fill-red-400 hover:text-red-400 transition-colors" 
-                  />
+                  <Heart size={16} className="text-red-500 fill-red-500" />
                 </button>
               </div>
             ))}
@@ -319,279 +360,244 @@ const ListingsTripSidebar = ({ onEventClick }: ListingsTripSidebarProps) => {
   );
 };
 
-// Snake Trip Grid Component - 2 columns with snake pattern connections
-interface SnakeTripGridProps {
-  favorites: FavoriteEvent[];
-  transportMode: "auto" | "bahn";
-  onEventClick?: (eventId: string) => void;
-  onRemoveFavorite?: (id: string) => void;
+// Suggestion Card - Square aspect ratio
+interface SuggestionCardProps {
+  event: SuggestedEvent;
+  onClick?: () => void;
+  isHighlighted?: boolean;
 }
 
-const SnakeTripGrid = ({ favorites, onEventClick, onRemoveFavorite }: SnakeTripGridProps) => {
-  // Fill to 8 slots for 4 rows of 2
-  const slots: (FavoriteEvent | null)[] = [...favorites];
-  while (slots.length < 8) {
-    slots.push(null);
-  }
-
-  // Mock transport data for connections
-  const transportData = [
-    { minutes: 45, km: 52 },  // 1 -> 2 (horizontal)
-    { minutes: 32, km: 38 },  // 2 -> 3 (vertical down)
-    { minutes: 28, km: 31 },  // 3 -> 4 (horizontal)
-    { minutes: 63, km: 72 },  // 4 -> 5 (vertical down)
-    { minutes: 55, km: 64 },  // 5 -> 6 (horizontal)
-    { minutes: 41, km: 48 },  // 6 -> 7 (vertical down)
-    { minutes: 37, km: 42 },  // 7 -> 8 (horizontal)
-  ];
-
-  // Rows: alternating left-to-right and right-to-left
-  // Row 0: 0, 1 (left to right) - horizontal line between 0->1
-  // Row 1: 3, 2 (right to left, but stored as 2,3) - vertical from 1->2, horizontal 2->3
-  // Row 2: 4, 5 (left to right) - vertical from 3->4, horizontal 4->5
-  // Row 3: 7, 6 (right to left) - vertical from 5->6, horizontal 6->7
-
+const SuggestionCard = ({ event, onClick, isHighlighted }: SuggestionCardProps) => {
   return (
-    <div className="flex flex-col gap-0">
-      {/* Row 1: Cards 1 & 2 (indices 0, 1) - left to right */}
-      <div className="flex items-center">
-        <div className="flex-1 relative">
-          <TripCard 
-            event={slots[0]} 
-            onClick={() => slots[0] && onEventClick?.(slots[0].id)} 
-            onRemove={() => slots[0] && onRemoveFavorite?.(slots[0].id)}
-          />
-          {/* Line extending from card edge */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-        </div>
-        {/* Horizontal connection 1->2 - Linien berühren Karten */}
-        <div className="w-12 flex items-center justify-center relative -mx-1">
-          <div className="w-full h-[2px] bg-stone-300" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-600 font-medium">{transportData[0].minutes}m</span>
-            </div>
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-500">{transportData[0].km}km</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 relative">
-          {/* Line extending to card edge */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-          <TripCard 
-            event={slots[1]} 
-            onClick={() => slots[1] && onEventClick?.(slots[1].id)}
-            onRemove={() => slots[1] && onRemoveFavorite?.(slots[1].id)}
-          />
-        </div>
-      </div>
-
-      {/* Vertical connection 2->3 (on the right side) */}
-      <div className="flex">
-        <div className="flex-1" />
-        <div className="w-12 -mx-1" />
-        <div className="flex-1 flex justify-center relative py-1">
-          <div className="w-[2px] h-10 bg-stone-300" />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[10px] text-stone-600 font-medium">{transportData[1].minutes}m</span>
-              </div>
-              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[10px] text-stone-500">{transportData[1].km}km</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Cards 3 & 4 (indices 2, 3) - right to left (reversed display) */}
-      <div className="flex items-center">
-        <div className="flex-1 relative">
-          <TripCard 
-            event={slots[3]} 
-            onClick={() => slots[3] && onEventClick?.(slots[3].id)} 
-            onRemove={() => slots[3] && onRemoveFavorite?.(slots[3].id)}
-          />
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-        </div>
-        {/* Horizontal connection 3->4 */}
-        <div className="w-12 flex items-center justify-center relative -mx-1">
-          <div className="w-full h-[2px] bg-stone-300" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-600 font-medium">{transportData[2].minutes}m</span>
-            </div>
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-500">{transportData[2].km}km</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-          <TripCard 
-            event={slots[2]} 
-            onClick={() => slots[2] && onEventClick?.(slots[2].id)} 
-            onRemove={() => slots[2] && onRemoveFavorite?.(slots[2].id)}
-          />
-        </div>
-      </div>
-
-      {/* Vertical connection 4->5 (on the left side) */}
-      <div className="flex">
-        <div className="flex-1 flex justify-center relative py-1">
-          <div className="w-[2px] h-10 bg-stone-300" />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[10px] text-stone-600 font-medium">{transportData[3].minutes}m</span>
-              </div>
-              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[10px] text-stone-500">{transportData[3].km}km</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="w-12 -mx-1" />
-        <div className="flex-1" />
-      </div>
-
-      {/* Row 3: Cards 5 & 6 (indices 4, 5) - left to right */}
-      <div className="flex items-center">
-        <div className="flex-1 relative">
-          <TripCard 
-            event={slots[4]} 
-            onClick={() => slots[4] && onEventClick?.(slots[4].id)} 
-            onRemove={() => slots[4] && onRemoveFavorite?.(slots[4].id)}
-          />
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-        </div>
-        {/* Horizontal connection 5->6 */}
-        <div className="w-12 flex items-center justify-center relative -mx-1">
-          <div className="w-full h-[2px] bg-stone-300" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-600 font-medium">{transportData[4].minutes}m</span>
-            </div>
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-500">{transportData[4].km}km</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-          <TripCard 
-            event={slots[5]} 
-            onClick={() => slots[5] && onEventClick?.(slots[5].id)} 
-            onRemove={() => slots[5] && onRemoveFavorite?.(slots[5].id)}
-          />
-        </div>
-      </div>
-
-      {/* Vertical connection 6->7 (on the right side) */}
-      <div className="flex">
-        <div className="flex-1" />
-        <div className="w-12 -mx-1" />
-        <div className="flex-1 flex justify-center relative py-1">
-          <div className="w-[2px] h-10 bg-stone-300" />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[10px] text-stone-600 font-medium">{transportData[5].minutes}m</span>
-              </div>
-              <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-                <span className="text-[10px] text-stone-500">{transportData[5].km}km</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 4: Cards 7 & 8 (indices 6, 7) - right to left */}
-      <div className="flex items-center">
-        <div className="flex-1 relative">
-          <TripCard 
-            event={slots[7]} 
-            onClick={() => slots[7] && onEventClick?.(slots[7].id)} 
-            onRemove={() => slots[7] && onRemoveFavorite?.(slots[7].id)}
-          />
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-        </div>
-        {/* Horizontal connection 7->8 */}
-        <div className="w-12 flex items-center justify-center relative -mx-1">
-          <div className="w-full h-[2px] bg-stone-300" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-600 font-medium">{transportData[6].minutes}m</span>
-            </div>
-            <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
-              <span className="text-[10px] text-stone-500">{transportData[6].km}km</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[10%] h-[2px] bg-stone-300" />
-          <TripCard 
-            event={slots[6]} 
-            onClick={() => slots[6] && onEventClick?.(slots[6].id)} 
-            onRemove={() => slots[6] && onRemoveFavorite?.(slots[6].id)}
-          />
-        </div>
+    <div 
+      onClick={onClick}
+      className={cn(
+        "aspect-square rounded-xl overflow-hidden cursor-pointer group relative transition-all duration-300",
+        "bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-lg border border-stone-100/80",
+        isHighlighted && "ring-2 ring-amber-400 ring-offset-2"
+      )}
+    >
+      <img
+        src={event.image}
+        alt={event.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      {/* Content */}
+      <div className="absolute bottom-0 left-0 right-0 p-2">
+        <p className="text-white font-medium text-[10px] leading-tight line-clamp-2 drop-shadow-lg">
+          {event.title}
+        </p>
+        <p className="text-white/80 text-[8px] mt-0.5 flex items-center gap-0.5">
+          <MapPin size={8} />
+          {event.distance}
+        </p>
       </div>
     </div>
   );
 };
 
-// Trip Card Component - 30% bigger
-interface TripCardProps {
+const EmptySuggestionCard = () => (
+  <div className="aspect-square rounded-xl bg-stone-100/30 border border-dashed border-stone-200/60" />
+);
+
+// Snake Trip Flow - Circular images with snake connection
+interface SnakeTripFlowProps {
+  favorites: FavoriteEvent[];
+  transportMode: "auto" | "bahn";
+  onEventClick?: (eventId: string) => void;
+  onRemoveFavorite?: (id: string) => void;
+  highlightedId?: string | null;
+}
+
+const SnakeTripFlow = ({ favorites, transportMode, onEventClick, onRemoveFavorite, highlightedId }: SnakeTripFlowProps) => {
+  // Mock transport data between events (calculated based on coordinates)
+  const transportData = [
+    { minutes: 12, km: 8.5 },
+    { minutes: 24, km: 18.2 },
+    { minutes: 18, km: 12.4 },
+    { minutes: 15, km: 9.8 },
+    { minutes: 9, km: 5.2 },
+  ];
+
+  // Fill to 6 slots for 2 rows of 3
+  const slots: (FavoriteEvent | null)[] = [...favorites];
+  while (slots.length < 6) {
+    slots.push(null);
+  }
+
+  // Snake pattern: Row 1 L->R (0,1,2), Row 2 R->L (5,4,3)
+  const row1 = [slots[0], slots[1], slots[2]];
+  const row2 = [slots[5], slots[4], slots[3]]; // Reversed for snake
+
+  return (
+    <div className="flex flex-col gap-0 relative">
+      {/* Row 1: Left to Right */}
+      <div className="flex items-center justify-center gap-0">
+        {row1.map((event, idx) => (
+          <div key={idx} className="flex items-center">
+            <CircularEventCard 
+              event={event}
+              onClick={() => event && onEventClick?.(event.id)}
+              onRemove={() => event && onRemoveFavorite?.(event.id)}
+              label={idx === 0 ? "Zürich HB: Start" : undefined}
+              subLabel={idx === 0 ? "Abfahrt: 09:00" : `Aufenthalt: ~2h`}
+              isHighlighted={event?.id === highlightedId}
+            />
+            {/* Horizontal connection line with transport pill */}
+            {idx < 2 && (
+              <div className="flex items-center relative mx-2">
+                <div className="w-16 h-[2px] bg-stone-300" />
+                <TransportPill 
+                  minutes={transportData[idx]?.minutes || 15} 
+                  km={transportData[idx]?.km || 10}
+                  mode={transportMode}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Vertical connection on RIGHT side (going down) */}
+      <div className="flex justify-end pr-16 relative">
+        <div className="flex flex-col items-center">
+          <div className="w-[2px] h-12 bg-stone-300" />
+          <TransportPill 
+            minutes={transportData[2]?.minutes || 18} 
+            km={transportData[2]?.km || 12}
+            mode={transportMode}
+            vertical
+          />
+          <div className="w-[2px] h-6 bg-stone-300" />
+        </div>
+      </div>
+
+      {/* Row 2: Right to Left (reversed visually) */}
+      <div className="flex items-center justify-center gap-0">
+        {row2.map((event, idx) => (
+          <div key={idx} className="flex items-center">
+            {/* Horizontal connection line BEFORE (except first) */}
+            {idx > 0 && (
+              <div className="flex items-center relative mx-2">
+                <div className="w-16 h-[2px] bg-stone-300" />
+                <TransportPill 
+                  minutes={transportData[3 + idx - 1]?.minutes || 15} 
+                  km={transportData[3 + idx - 1]?.km || 10}
+                  mode={transportMode}
+                />
+              </div>
+            )}
+            <CircularEventCard 
+              event={event}
+              onClick={() => event && onEventClick?.(event.id)}
+              onRemove={() => event && onRemoveFavorite?.(event.id)}
+              label={idx === 0 ? "Zürich HB: Ende" : undefined}
+              subLabel={idx === 0 ? "Ankunft: 18:30" : `Aufenthalt: ~2h`}
+              isHighlighted={event?.id === highlightedId}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Circular Event Card
+interface CircularEventCardProps {
   event: FavoriteEvent | null;
   onClick?: () => void;
   onRemove?: () => void;
+  label?: string;
+  subLabel?: string;
+  isHighlighted?: boolean;
 }
 
-const TripCard = ({ event, onClick, onRemove }: TripCardProps) => {
+const CircularEventCard = ({ event, onClick, onRemove, label, subLabel, isHighlighted }: CircularEventCardProps) => {
   if (!event) {
     return (
-      <div className="w-[80%] mx-auto aspect-[4/3] rounded-2xl bg-stone-100/30 border-2 border-dashed border-stone-200/60 flex items-center justify-center flex-shrink-0">
-        <Plus size={20} className="text-stone-300" />
+      <div className="flex flex-col items-center">
+        <div className="w-20 h-20 rounded-full bg-stone-100/50 border-2 border-dashed border-stone-200/60 flex items-center justify-center">
+          <Plus size={20} className="text-stone-300" />
+        </div>
+        <div className="mt-2 text-center">
+          <p className="text-xs text-stone-400">Leer</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div 
-      onClick={onClick}
-      className="w-[80%] mx-auto aspect-[4/3] rounded-2xl overflow-hidden relative cursor-pointer group shadow-xl hover:shadow-2xl transition-all duration-300 flex-shrink-0"
-    >
-      <img 
-        src={event.image} 
-        alt={event.title} 
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-      />
-      
-      {/* Frosted glass overlay on bottom ~1/4 */}
-      <div className="absolute inset-x-0 bottom-0 h-[28%] bg-white/20 backdrop-blur-md border-t border-white/30" />
-      
-      {/* Content on frosted glass */}
-      <div className="absolute bottom-0 left-0 right-0 p-3.5">
-        <h4 className="text-white font-semibold text-sm leading-tight line-clamp-1 drop-shadow-lg">{event.title}</h4>
-        <p className="text-white/90 text-xs flex items-center gap-1 mt-1 drop-shadow-md">
-          <MapPin size={10} />
-          {event.location || "Schweiz"}
-        </p>
-      </div>
-      
-      {/* Heart button top right */}
-      <button 
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove?.();
-        }}
-        className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg transition-all hover:scale-110"
+    <div className="flex flex-col items-center">
+      {/* Circular Image with border */}
+      <div 
+        onClick={onClick}
+        className={cn(
+          "relative w-20 h-20 rounded-full overflow-hidden cursor-pointer group transition-all duration-300",
+          "ring-4 ring-stone-200 hover:ring-amber-400 shadow-lg",
+          isHighlighted && "ring-amber-400 ring-offset-2"
+        )}
       >
-        <Heart size={12} className="text-red-500 fill-red-500 hover:fill-red-400 transition-colors" />
-      </button>
+        <img 
+          src={event.image} 
+          alt={event.title}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+        />
+        {/* Heart overlay */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove?.();
+          }}
+          className="absolute top-1 right-1 p-1 rounded-full bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+        >
+          <Heart size={10} className="text-red-500 fill-red-500" />
+        </button>
+      </div>
+      {/* Label below */}
+      <div className="mt-2 text-center max-w-24">
+        {label ? (
+          <>
+            <p className="text-xs font-semibold text-stone-700 line-clamp-1">{label}</p>
+            <p className="text-[10px] text-stone-500">{subLabel}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-medium text-stone-700 line-clamp-1">{event.title.split(':')[0]}</p>
+            <p className="text-[10px] text-stone-500">{subLabel}</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Transport Pill Component
+interface TransportPillProps {
+  minutes: number;
+  km: number;
+  mode: "auto" | "bahn";
+  vertical?: boolean;
+}
+
+const TransportPill = ({ minutes, km, mode, vertical }: TransportPillProps) => {
+  return (
+    <div className={cn(
+      "absolute flex flex-col items-center gap-0.5 pointer-events-none",
+      vertical ? "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+    )}>
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/50 shadow-sm">
+        {mode === "bahn" ? (
+          <Train size={10} className="text-red-600" />
+        ) : (
+          <Car size={10} className="text-stone-600" />
+        )}
+        <span className="text-[10px] text-stone-600 font-medium">{minutes}min</span>
+      </div>
+      <div className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm">
+        <span className="text-[9px] text-stone-500">{km}km</span>
+      </div>
     </div>
   );
 };
