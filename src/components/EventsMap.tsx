@@ -338,7 +338,10 @@ export function EventsMap({
         const clusterLeaves = superclusterRef.current!.getLeaves(clusterId, Infinity);
 
         // Check cluster content
-        const hasElite = clusterLeaves.some(leaf => leaf.properties.event.buzz_boost === 100);
+        const hasElite = clusterLeaves.some(leaf => {
+          const bb = leaf.properties.event.buzz_boost;
+          return bb === 100 || bb === "100";
+        });
         const hasFavorite = clusterLeaves.some(leaf => 
           selectedEventIds.includes(leaf.properties.event.id)
         );
@@ -421,7 +424,7 @@ export function EventsMap({
         // Skip Elite & Favorites - they render in Phase 2
         // ==================
         const event = feature.properties.event;
-        const isElite = event.buzz_boost === 100;
+        const isElite = event.buzz_boost === 100 || event.buzz_boost === "100";
         const isFavorite = selectedEventIds.includes(event.id);
 
         if (isElite || isFavorite) {
@@ -473,7 +476,7 @@ export function EventsMap({
 
       if (!isCluster) {
         const event = feature.properties.event;
-        const isElite = event.buzz_boost === 100;
+        const isElite = event.buzz_boost === 100 || event.buzz_boost === "100";
         const isFavorite = selectedEventIds.includes(event.id);
 
         if (isElite) {
