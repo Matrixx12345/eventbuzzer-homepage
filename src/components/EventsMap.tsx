@@ -569,20 +569,17 @@ export function EventsMap({
           url: "mapbox://mapbox.country-boundaries-v1",
         });
 
-        map.current.addLayer(
-          {
-            id: "country-dim",
-            type: "fill",
-            source: "countries",
-            "source-layer": "country_boundaries",
-            filter: ["!=", ["get", "iso_3166_1"], "CH"],
-            paint: {
-              "fill-color": "#6b7280",
-              "fill-opacity": 0.35,
-            },
+        map.current.addLayer({
+          id: "country-dim",
+          type: "fill",
+          source: "countries",
+          "source-layer": "country_boundaries",
+          filter: ["!=", ["get", "iso_3166_1"], "CH"],
+          paint: {
+            "fill-color": "#6b7280",
+            "fill-opacity": 0.35,
           },
-          "country-label",
-        );
+        });
 
         map.current.addLayer({
           id: "switzerland-border",
