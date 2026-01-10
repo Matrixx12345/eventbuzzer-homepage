@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
 import Favorites from "./pages/Favorites";
 import Listings from "./pages/Listings";
+import TripPlanner from "./pages/TripPlanner";
 import Impressum from "./pages/Impressum";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SupabaseTest from "./pages/SupabaseTest";
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/event/:slug" element={<EventDetail />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/listings" element={<ErrorBoundary><Listings /></ErrorBoundary>} />
+              <Route path="/trip-planner" element={<ErrorBoundary><TripPlanner /></ErrorBoundary>} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/supabase-test" element={<SupabaseTest />} />
               <Route path="/admin-upload" element={<AdminUpload />} />
