@@ -18,6 +18,7 @@ const Navbar = () => {
   const navLinks = [
     { label: "Startseite", href: "/" },
     { label: "Alle Events", href: "/listings" },
+    { label: "🗺️ Trip Planner", href: "/trip-planner" },
     { label: "Favoriten", href: "/favorites" },
   ];
 
