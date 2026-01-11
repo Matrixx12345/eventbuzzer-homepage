@@ -1,13 +1,12 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import Chatbot from "@/components/Chatbot";
 import { Button } from "@/components/ui/button";
 import { MapEvent } from "@/types/map";
 import { 
   Home, Car, Train, Footprints, Sparkles, Mountain, Building2, 
-  Heart, UtensilsCrossed, TreePine, Loader2, ChevronRight, ChevronLeft,
-  RefreshCw, Star, Clock, MapPin, X
+  Heart, UtensilsCrossed, TreePine, Loader2, RefreshCw, Star, X,
+  Minus, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,12 +35,20 @@ interface TripStop {
   time?: string;
 }
 
-type WizardStep = 1 | 2 | 3 | 4;
+interface ChatMessage {
+  id: string;
+  type: "bot" | "user";
+  content: string;
+  options?: { id: string; label: string; icon?: React.ComponentType<{ className?: string }> }[];
+  multiSelect?: boolean;
+}
 
-// Wizard Options
-const TRIP_TYPES = [
-  { id: "homebase", label: "Homebase", icon: Home, description: "Tagesausflüge von einem festen Ort" },
-  { id: "roadtrip", label: "Roadtrip", icon: Car, description: "Von Ort zu Ort weiterziehen" },
+type ChatStep = "type" | "duration" | "mobility" | "vibes" | "complete";
+
+// Options
+const TRIP_TYPE_OPTIONS = [
+  { id: "homebase", label: "🏠 Homebase - Tagesausflüge von einem Ort" },
+  { id: "roadtrip", label: "🚗 Roadtrip - Von Ort zu Ort weiterziehen" },
 ];
 
 const DURATION_OPTIONS = [
@@ -52,18 +59,18 @@ const DURATION_OPTIONS = [
 ];
 
 const MOBILITY_OPTIONS = [
-  { id: "public", label: "Öffentliche Verkehrsmittel", icon: Train },
-  { id: "car", label: "Auto", icon: Car },
-  { id: "walk", label: "Zu Fuß / City", icon: Footprints },
+  { id: "public", label: "🚆 Öffentliche Verkehrsmittel" },
+  { id: "car", label: "🚗 Auto" },
+  { id: "walk", label: "🚶 Zu Fuß / City" },
 ];
 
 const VIBE_OPTIONS = [
-  { id: "nature", label: "Natur", icon: TreePine },
-  { id: "mountains", label: "Berge & Aussicht", icon: Mountain },
-  { id: "culture", label: "Kultur & Städte", icon: Building2 },
-  { id: "wellness", label: "Wellness & Erholung", icon: Heart },
-  { id: "food", label: "Food & Kulinarik", icon: UtensilsCrossed },
-  { id: "hidden", label: "Hidden Gems", icon: Sparkles },
+  { id: "nature", label: "🌲 Natur" },
+  { id: "mountains", label: "🏔️ Berge & Aussicht" },
+  { id: "culture", label: "🏛️ Kultur & Städte" },
+  { id: "wellness", label: "💆 Wellness & Erholung" },
+  { id: "food", label: "🍽️ Food & Kulinarik" },
+  { id: "hidden", label: "✨ Hidden Gems" },
 ];
 
 // Mock timeline stops
@@ -233,8 +240,7 @@ const MOCK_DISCOVERIES = [
 const TripPlanner = () => {
   const navigate = useNavigate();
   
-  // Wizard State
-  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
+  // Trip Setup State
   const [tripSetup, setTripSetup] = useState<TripSetup>({
     type: null,
     duration: null,
@@ -242,7 +248,13 @@ const TripPlanner = () => {
     vibes: [],
     startLocation: null,
   });
-  const [wizardComplete, setWizardComplete] = useState(false);
+  const [setupComplete, setSetupComplete] = useState(false);
+  
+  // Chatbot State
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatStep, setChatStep] = useState<ChatStep>("type");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   
   // Builder State
   const [timelineStops, setTimelineStops] = useState(MOCK_TIMELINE);
@@ -250,37 +262,129 @@ const TripPlanner = () => {
   const [selectedEvent, setSelectedEvent] = useState<typeof MOCK_DISCOVERIES[0] | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
-  
-  // Chatbot State
-  const [chatOpen, setChatOpen] = useState(false);
 
-  // Wizard Handlers
-  const handleTypeSelect = (type: "homebase" | "roadtrip") => {
-    setTripSetup(prev => ({ ...prev, type }));
-    setWizardStep(2);
+  // Auto-open chatbot after 1 second
+  useEffect(() => {
+    if (!setupComplete) {
+      const timer = setTimeout(() => {
+        setChatOpen(true);
+        // Add initial bot message
+        setMessages([{
+          id: "1",
+          type: "bot",
+          content: "Hey! 👋 Lass uns deinen perfekten Trip planen. Wie möchtest du reisen?",
+          options: TRIP_TYPE_OPTIONS,
+        }]);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [setupComplete]);
+
+  // Handle chat option selection
+  const handleOptionSelect = (optionId: string, optionLabel: string) => {
+    // Add user response
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      type: "user",
+      content: optionLabel,
+    }]);
+
+    // Handle based on current step
+    setTimeout(() => {
+      switch (chatStep) {
+        case "type":
+          setTripSetup(prev => ({ ...prev, type: optionId as "homebase" | "roadtrip" }));
+          setChatStep("duration");
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content: "Super! Wie lange soll dein Trip dauern?",
+            options: DURATION_OPTIONS,
+          }]);
+          break;
+
+        case "duration":
+          setTripSetup(prev => ({ ...prev, duration: optionId }));
+          setChatStep("mobility");
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content: "Wie bist du unterwegs?",
+            options: MOBILITY_OPTIONS,
+          }]);
+          break;
+
+        case "mobility":
+          setTripSetup(prev => ({ ...prev, mobility: optionId as "public" | "car" | "walk" }));
+          setChatStep("vibes");
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content: "Worauf hast du Lust? Wähle alles aus, was dich interessiert:",
+            options: VIBE_OPTIONS,
+            multiSelect: true,
+          }]);
+          break;
+
+        default:
+          break;
+      }
+    }, 400);
   };
 
-  const handleDurationSelect = (duration: string) => {
-    setTripSetup(prev => ({ ...prev, duration }));
-    setWizardStep(3);
+  // Handle vibe toggle (multi-select)
+  const handleVibeToggle = (vibeId: string) => {
+    setSelectedVibes(prev => 
+      prev.includes(vibeId)
+        ? prev.filter(v => v !== vibeId)
+        : [...prev, vibeId]
+    );
   };
 
-  const handleMobilitySelect = (mobility: "public" | "car" | "walk") => {
-    setTripSetup(prev => ({ ...prev, mobility }));
-    setWizardStep(4);
+  // Handle vibes confirmation
+  const handleVibesConfirm = () => {
+    if (selectedVibes.length === 0) return;
+
+    const vibeLabels = selectedVibes.map(id => 
+      VIBE_OPTIONS.find(v => v.id === id)?.label || id
+    ).join(", ");
+
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      type: "user",
+      content: vibeLabels,
+    }]);
+
+    setTripSetup(prev => ({ ...prev, vibes: selectedVibes }));
+    setChatStep("complete");
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        type: "bot",
+        content: "Perfekt! 🎉 Ich habe deinen Trip basierend auf deinen Wünschen zusammengestellt. Schau dir die Vorschläge an!",
+      }]);
+
+      // Close chatbot after 2 seconds
+      setTimeout(() => {
+        setChatOpen(false);
+        setSetupComplete(true);
+      }, 2000);
+    }, 400);
   };
 
-  const handleVibeToggle = (vibe: string) => {
-    setTripSetup(prev => ({
-      ...prev,
-      vibes: prev.vibes.includes(vibe)
-        ? prev.vibes.filter(v => v !== vibe)
-        : [...prev.vibes, vibe]
-    }));
+  // Close chatbot
+  const handleCloseChatbot = () => {
+    setChatOpen(false);
+    if (chatStep !== "complete") {
+      // If closing early, mark as complete anyway
+      setSetupComplete(true);
+    }
   };
 
-  const handleCreatePlan = () => {
-    setWizardComplete(true);
+  // Minimize chatbot
+  const handleMinimizeChatbot = () => {
+    setChatOpen(false);
   };
 
   // Builder Handlers
@@ -307,189 +411,142 @@ const TripPlanner = () => {
       ? discoveries.filter(d => d.isElite)
       : discoveries.filter(d => d.category.toLowerCase().includes(activeFilter));
 
-  // Render Wizard
-  if (!wizardComplete) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F8F6F2]">
-        <Navbar />
-        
-        <div className="container mx-auto px-4 py-12 max-w-2xl">
-          {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-500 tracking-wide">Schritt {wizardStep}/4</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-              <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out"
-                style={{ width: `${(wizardStep / 4) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Step 1: Trip Type */}
-          {wizardStep === 1 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">
-                  🗺️ Plane deine perfekte Schweiz-Tour
-                </h1>
-                <p className="text-gray-600">Wie möchtest du reisen?</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {TRIP_TYPES.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => handleTypeSelect(type.id as "homebase" | "roadtrip")}
-                    className={cn(
-                      "p-6 rounded-2xl border-2 text-left transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                      tripSetup.type === type.id
-                        ? "border-gray-900 bg-white shadow-xl"
-                        : "border-gray-200 bg-white hover:border-gray-300 shadow-md"
-                    )}
-                  >
-                    <type.icon className="w-8 h-8 mb-3 text-gray-700" />
-                    <h3 className="font-bold text-lg text-gray-900">{type.label}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{type.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Duration */}
-          {wizardStep === 2 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
-                  Wie lange soll dein Trip dauern?
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {DURATION_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleDurationSelect(option.id)}
-                    className={cn(
-                      "py-4 px-6 rounded-xl border-2 font-semibold transition-all duration-300 shadow-md hover:shadow-lg",
-                      tripSetup.duration === option.id
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setWizardStep(1)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mt-4 font-medium"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Zurück
-              </button>
-            </div>
-          )}
-
-          {/* Step 3: Mobility */}
-          {wizardStep === 3 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
-                  Wie bist du unterwegs?
-                </h2>
-              </div>
-
-              <div className="space-y-3">
-                {MOBILITY_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleMobilitySelect(option.id as "public" | "car" | "walk")}
-                    className={cn(
-                      "w-full py-4 px-6 rounded-xl border-2 font-semibold transition-all duration-300 flex items-center gap-4 shadow-md hover:shadow-lg",
-                      tripSetup.mobility === option.id
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
-                    )}
-                  >
-                    <option.icon className="w-5 h-5" />
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setWizardStep(2)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mt-4 font-medium"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Zurück
-              </button>
-            </div>
-          )}
-
-          {/* Step 4: Vibes */}
-          {wizardStep === 4 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
-                  Worauf hast du Lust?
-                </h2>
-                <p className="text-gray-500 text-sm">Mehrfachauswahl möglich</p>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {VIBE_OPTIONS.map((vibe) => (
-                  <button
-                    key={vibe.id}
-                    onClick={() => handleVibeToggle(vibe.id)}
-                    className={cn(
-                      "py-4 px-4 rounded-xl border-2 font-semibold transition-all duration-300 flex flex-col items-center gap-2 text-center shadow-md hover:shadow-lg",
-                      tripSetup.vibes.includes(vibe.id)
-                        ? "border-gray-900 bg-gradient-to-br from-[#FDFBF7] to-white text-gray-900 shadow-lg"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    )}
-                  >
-                    <vibe.icon className="w-6 h-6" />
-                    <span className="text-sm">{vibe.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between pt-4">
-                <button
-                  onClick={() => setWizardStep(3)}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 font-medium"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Zurück
-                </button>
-
-                <Button
-                  onClick={handleCreatePlan}
-                  disabled={tripSetup.vibes.length === 0}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  ✨ Plan erstellen
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Render Premium 3-Column Builder
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F8F6F2]">
       <Navbar />
       
-      {/* Main 3-Column Layout */}
+      {/* Chatbot Backdrop */}
+      {chatOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] transition-opacity duration-300"
+          onClick={handleMinimizeChatbot}
+        />
+      )}
+      
+      {/* Chatbot Window (centered at top) */}
+      {chatOpen && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 w-[480px] max-h-[600px] bg-white rounded-3xl shadow-2xl flex flex-col z-[10000] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 p-5 flex items-center justify-between text-white flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center shadow-lg">
+                <span className="text-xl">🤖</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-base">Trip Planer</h3>
+                <p className="text-xs text-white/90">Lass uns planen</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleMinimizeChatbot}
+                className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"
+              >
+                <Minus className="w-4 h-4 text-white" />
+              </button>
+              <button 
+                onClick={handleCloseChatbot}
+                className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Messages */}
+          <div className="flex-1 p-5 overflow-y-auto bg-gray-50 space-y-4">
+            {messages.map((message) => (
+              <div key={message.id}>
+                {message.type === "bot" ? (
+                  <div className="flex gap-3 animate-in fade-in duration-300">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <span className="text-base">🤖</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-md border border-gray-100 max-w-[85%]">
+                        <p className="text-sm text-gray-900 leading-relaxed">{message.content}</p>
+                      </div>
+                      
+                      {/* Options (if any) */}
+                      {message.options && !message.multiSelect && chatStep !== "complete" && (
+                        <div className="mt-3 space-y-2">
+                          {message.options.map((option) => (
+                            <button
+                              key={option.id}
+                              onClick={() => handleOptionSelect(option.id, option.label)}
+                              className="w-full text-left px-4 py-3 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all shadow-sm hover:shadow-md text-sm font-medium text-gray-900"
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Multi-Select Options (Vibes) */}
+                      {message.multiSelect && chatStep === "vibes" && (
+                        <div className="mt-3 space-y-2">
+                          {message.options?.map((option) => (
+                            <button
+                              key={option.id}
+                              onClick={() => handleVibeToggle(option.id)}
+                              className={cn(
+                                "w-full text-left px-4 py-3 rounded-xl border-2 transition-all shadow-sm hover:shadow-md text-sm font-medium flex items-center justify-between",
+                                selectedVibes.includes(option.id)
+                                  ? "border-blue-500 bg-blue-50 text-blue-900"
+                                  : "bg-white border-gray-200 hover:border-blue-300 text-gray-900"
+                              )}
+                            >
+                              <span>{option.label}</span>
+                              {selectedVibes.includes(option.id) && (
+                                <Check className="w-5 h-5 text-blue-600" />
+                              )}
+                            </button>
+                          ))}
+                          
+                          {/* Confirm Button */}
+                          <button
+                            onClick={handleVibesConfirm}
+                            disabled={selectedVibes.length === 0}
+                            className={cn(
+                              "w-full mt-3 px-5 py-3.5 rounded-xl font-bold text-sm shadow-lg transition-all duration-300",
+                              selectedVibes.length > 0
+                                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-xl hover:scale-[1.02]"
+                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            )}
+                          >
+                            ✨ Los geht's! ({selectedVibes.length} ausgewählt)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-end animate-in fade-in duration-300">
+                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl rounded-tr-sm p-4 max-w-[75%] shadow-md">
+                      <p className="text-sm text-white font-medium">{message.content}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Floating Chat Bubble (when minimized) */}
+      {!chatOpen && !setupComplete && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-8 right-8 z-[10000] group"
+        >
+          <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-25" />
+          <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+            <span className="text-2xl">💬</span>
+          </div>
+        </button>
+      )}
+      
+      {/* Main 3-Column Layout - ALWAYS VISIBLE */}
       <div 
         className="h-[calc(100vh-64px)] p-6 gap-6"
         style={{ 
@@ -831,13 +888,13 @@ const TripPlanner = () => {
               {/* Close Button */}
               <button 
                 onClick={() => setSelectedEvent(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all z-10"
               >
                 <X className="w-4 h-4 text-gray-600" />
               </button>
               
               {/* Image */}
-              <div className="relative h-48 rounded-xl overflow-hidden mb-5 bg-gray-100 shadow-md">
+              <div className="relative h-48 rounded-xl overflow-hidden mb-5 bg-gray-100 shadow-md -mx-2 -mt-2">
                 <img 
                   src={selectedEvent.image} 
                   alt={selectedEvent.title}
@@ -845,60 +902,40 @@ const TripPlanner = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                 
-                {/* Actions */}
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <button 
-                    onClick={() => handleToggleFavorite(selectedEvent.id)}
-                    className="w-11 h-11 rounded-full bg-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                  >
-                    <Heart className={cn(
-                      "w-5 h-5",
-                      selectedEvent.isFavorite ? "text-red-500 fill-red-500" : "text-gray-400"
-                    )} />
-                  </button>
-                </div>
-                
                 {/* Category Badge */}
                 <div className="absolute bottom-4 left-4">
                   <span className="px-4 py-2 rounded-full bg-white text-gray-900 text-xs font-bold shadow-lg">
-                    🏛️ {selectedEvent.category}
+                    {selectedEvent.category}
                   </span>
                 </div>
               </div>
               
               {/* Content */}
-              <h3 className="font-bold text-xl text-gray-900 mb-3">
-                {selectedEvent.title}
-              </h3>
+              <h3 className="font-bold text-xl text-gray-900 mb-3">{selectedEvent.title}</h3>
               
               <p className="text-sm text-gray-600 mb-5 leading-relaxed">
-                Wunderschöne Sehenswürdigkeit mit Blick auf die Altstadt und moderne Architektur.
+                Ein wunderbares Erlebnis mit einzigartigem Charakter und besonderen Momenten.
               </p>
               
-              {/* Rating & Location */}
+              {/* Rating */}
               <div className="flex items-center gap-5 mb-6">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white font-bold text-base shadow-md">
-                    {selectedEvent.rating.toFixed(1)}
+                    {selectedEvent.rating}
                   </div>
                   <div className="flex flex-col">
                     <div className="text-yellow-400 text-sm">{"⭐".repeat(Math.floor(selectedEvent.rating))}</div>
                     <span className="text-xs text-gray-500 font-semibold">256 Reviews</span>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-xs font-bold text-gray-700">
-                  <MapPin className="w-3 h-3" />
-                  <span>8.9 Location</span>
-                </div>
               </div>
               
-              {/* Action Buttons */}
+              {/* Actions */}
               <div className="flex gap-3">
-                <button className="flex-1 px-5 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-sm shadow-md hover:shadow-lg transition-all duration-300">
+                <button className="flex-1 px-5 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-sm shadow-md hover:shadow-lg transition-all">
                   Details
                 </button>
-                <button className="flex-1 px-5 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                <button className="flex-1 px-5 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all">
                   Hinzufügen
                 </button>
               </div>
@@ -906,15 +943,6 @@ const TripPlanner = () => {
           )}
         </div>
       </div>
-
-      {/* Chatbot */}
-      <Chatbot 
-        context="trip-planner" 
-        variant="bubble"
-        isOpen={chatOpen}
-        onOpen={() => setChatOpen(true)}
-        onClose={() => setChatOpen(false)}
-      />
     </div>
   );
 };
