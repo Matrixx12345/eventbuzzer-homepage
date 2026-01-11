@@ -7,7 +7,7 @@ import { MapEvent } from "@/types/map";
 import { 
   Home, Car, Train, Footprints, Sparkles, Mountain, Building2, 
   Heart, UtensilsCrossed, TreePine, Loader2, ChevronRight, ChevronLeft,
-  GripVertical, Trash2, Map as MapIcon, List
+  RefreshCw, Star, Clock, MapPin, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,13 +28,15 @@ interface TripStop {
   eventId: string;
   title: string;
   image: string;
-  duration: number; // hours
-  travelTime: number; // minutes to next
+  duration: number;
+  travelTime: number;
   reason: string;
+  category: string;
+  price?: string;
+  time?: string;
 }
 
 type WizardStep = 1 | 2 | 3 | 4;
-type BuilderMode = "explore" | "plan";
 
 // Wizard Options
 const TRIP_TYPES = [
@@ -64,57 +66,167 @@ const VIBE_OPTIONS = [
   { id: "hidden", label: "Hidden Gems", icon: Sparkles },
 ];
 
-// Mock proposals for demo
-const MOCK_PROPOSALS = [
+// Mock timeline stops
+const MOCK_TIMELINE: TripStop[] = [
   {
-    id: "1",
+    id: "t1",
     eventId: "123",
-    title: "Rheinfall bei Schaffhausen",
-    image: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=400",
-    duration: 2,
-    travelTime: 45,
-    reason: "⭐ Must-see Naturwunder, nur 45 Min. von Zürich",
-    elite: true,
-  },
-  {
-    id: "2",
-    eventId: "124",
-    title: "Technorama Winterthur",
-    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400",
-    duration: 3,
-    travelTime: 30,
-    reason: "Perfekt für Familien, interaktives Science-Museum",
-    elite: false,
-  },
-  {
-    id: "3",
-    eventId: "125",
-    title: "Lindt Home of Chocolate",
-    image: "https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=400",
-    duration: 2,
-    travelTime: 20,
-    reason: "Schokoladen-Erlebnis mit Verkostung",
-    elite: true,
-  },
-  {
-    id: "4",
-    eventId: "126",
-    title: "Altstadt Zürich",
-    image: "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=400",
-    duration: 3,
+    title: "Frühstück",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400",
+    duration: 0.5,
     travelTime: 15,
-    reason: "✨ Hidden Gem: Verwinkelte Gassen und Cafés",
-    elite: false,
+    reason: "Gemütlich am Wasser",
+    category: "Café Spitz",
+    time: "09:00",
   },
   {
-    id: "5",
+    id: "t2",
+    eventId: "124",
+    title: "Museum Tinguely",
+    image: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=400",
+    duration: 1.5,
+    travelTime: 5,
+    reason: "Moderne Kunst",
+    category: "Kunst Museum",
+    price: "€18",
+    time: "10:00",
+  },
+  {
+    id: "t3",
+    eventId: "125",
+    title: "Lunch Markthalle",
+    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400",
+    duration: 1,
+    travelTime: 15,
+    reason: "Lokale Spezialitäten",
+    category: "Restaurant",
+    time: "12:30",
+  },
+  {
+    id: "t4",
+    eventId: "126",
+    title: "Rheinschifffahrt",
+    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
+    duration: 1,
+    travelTime: 15,
+    reason: "Entspannte Bootsfahrt",
+    category: "Aktivität",
+    time: "14:00",
+  },
+  {
+    id: "t5",
     eventId: "127",
-    title: "Uetliberg Aussichtspunkt",
-    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400",
+    title: "Altstadtbummel",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+    duration: 1,
+    travelTime: 15,
+    reason: "Historische Gassen",
+    category: "Sightseeing",
+    time: "16:00",
+  },
+  {
+    id: "t6",
+    eventId: "128",
+    title: "Dinner Chez Donati",
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400",
     duration: 2,
-    travelTime: 25,
-    reason: "🏔️ Top-Aussicht über Zürich und die Alpen",
-    elite: true,
+    travelTime: 0,
+    reason: "Italienische Küche",
+    category: "Restaurant",
+    price: "€€€",
+    time: "19:00",
+  },
+];
+
+// Mock discoveries
+const MOCK_DISCOVERIES = [
+  {
+    id: "d1",
+    eventId: "201",
+    title: "Kunstmuseum Basel",
+    image: "https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?w=400",
+    category: "Kunst",
+    price: "€25",
+    rating: 4.8,
+    isFavorite: true,
+    isElite: true,
+  },
+  {
+    id: "d2",
+    eventId: "202",
+    title: "Spalentor",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+    category: "Wahrzeichen",
+    price: "Kostenlos",
+    rating: 4.5,
+    isFavorite: false,
+    isElite: false,
+  },
+  {
+    id: "d3",
+    eventId: "203",
+    title: "Basler Münster",
+    image: "https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=400",
+    category: "Kirche",
+    price: "€5",
+    rating: 4.7,
+    isFavorite: false,
+    isElite: false,
+  },
+  {
+    id: "d4",
+    eventId: "204",
+    title: "Zoo Basel",
+    image: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=400",
+    category: "Natur",
+    price: "€20",
+    rating: 4.6,
+    isFavorite: true,
+    isElite: false,
+  },
+  {
+    id: "d5",
+    eventId: "205",
+    title: "Fondation Beyeler",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
+    category: "Kunst",
+    price: "€30",
+    rating: 4.9,
+    isFavorite: false,
+    isElite: true,
+  },
+  {
+    id: "d6",
+    eventId: "206",
+    title: "Tinguely Museum",
+    image: "https://images.unsplash.com/photo-1541367777708-7905fe3296c0?w=400",
+    category: "Kunst",
+    price: "€20",
+    rating: 4.5,
+    isFavorite: false,
+    isElite: false,
+  },
+  {
+    id: "d7",
+    eventId: "207",
+    title: "Vitra Design Museum",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+    category: "Design",
+    price: "€25",
+    rating: 4.8,
+    isFavorite: true,
+    isElite: false,
+  },
+  {
+    id: "d8",
+    eventId: "208",
+    title: "Roche Turm",
+    image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400",
+    category: "Architektur",
+    price: "Kostenlos",
+    rating: 4.3,
+    isFavorite: false,
+    isElite: false,
   },
 ];
 
@@ -133,10 +245,10 @@ const TripPlanner = () => {
   const [wizardComplete, setWizardComplete] = useState(false);
   
   // Builder State
-  const [builderMode, setBuilderMode] = useState<BuilderMode>("explore");
-  const [currentDay, setCurrentDay] = useState(1);
-  const [proposals, setProposals] = useState(MOCK_PROPOSALS);
-  const [tripStops, setTripStops] = useState<Record<number, TripStop[]>>({ 1: [] });
+  const [timelineStops, setTimelineStops] = useState(MOCK_TIMELINE);
+  const [discoveries, setDiscoveries] = useState(MOCK_DISCOVERIES);
+  const [selectedEvent, setSelectedEvent] = useState<typeof MOCK_DISCOVERIES[0] | null>(null);
+  const [activeFilter, setActiveFilter] = useState("all");
   const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
   
   // Chatbot State
@@ -172,63 +284,44 @@ const TripPlanner = () => {
   };
 
   // Builder Handlers
-  const handleAcceptProposal = (proposalId: string) => {
-    const proposal = proposals.find(p => p.id === proposalId);
-    if (!proposal) return;
-
-    const newStop: TripStop = {
-      id: proposal.id,
-      eventId: proposal.eventId,
-      title: proposal.title,
-      image: proposal.image,
-      duration: proposal.duration,
-      travelTime: proposal.travelTime,
-      reason: proposal.reason,
-    };
-
-    setTripStops(prev => ({
-      ...prev,
-      [currentDay]: [...(prev[currentDay] || []), newStop]
-    }));
-    setProposals(prev => prev.filter(p => p.id !== proposalId));
-  };
-
-  const handleRejectProposal = (proposalId: string) => {
-    setProposals(prev => prev.filter(p => p.id !== proposalId));
-  };
-
-  const handleRemoveStop = (stopId: string) => {
-    setTripStops(prev => ({
-      ...prev,
-      [currentDay]: prev[currentDay].filter(s => s.id !== stopId)
-    }));
-  };
-
   const handleEventsChange = useCallback((events: MapEvent[]) => {
     setMapEvents(events);
   }, []);
 
   const handleEventClick = useCallback((eventId: string) => {
-    console.log("Event clicked:", eventId);
-  }, []);
+    const discovery = discoveries.find(d => d.eventId === eventId);
+    if (discovery) {
+      setSelectedEvent(discovery);
+    }
+  }, [discoveries]);
 
-  const selectedCount = tripStops[currentDay]?.length || 0;
+  const handleToggleFavorite = (id: string) => {
+    setDiscoveries(prev => prev.map(d => 
+      d.id === id ? { ...d, isFavorite: !d.isFavorite } : d
+    ));
+  };
+
+  const filteredDiscoveries = activeFilter === "all" 
+    ? discoveries 
+    : activeFilter === "elite"
+      ? discoveries.filter(d => d.isElite)
+      : discoveries.filter(d => d.category.toLowerCase().includes(activeFilter));
 
   // Render Wizard
   if (!wizardComplete) {
     return (
-      <div className="min-h-screen bg-[#FDFBF7]">
+      <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F8F6F2]">
         <Navbar />
         
         <div className="container mx-auto px-4 py-12 max-w-2xl">
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">Schritt {wizardStep}/4</span>
+              <span className="text-sm font-semibold text-gray-500 tracking-wide">Schritt {wizardStep}/4</span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
               <div 
-                className="h-full bg-gray-900 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out"
                 style={{ width: `${(wizardStep / 4) * 100}%` }}
               />
             </div>
@@ -250,14 +343,14 @@ const TripPlanner = () => {
                     key={type.id}
                     onClick={() => handleTypeSelect(type.id as "homebase" | "roadtrip")}
                     className={cn(
-                      "p-6 rounded-2xl border-2 text-left transition-all hover:shadow-lg hover:-translate-y-1",
+                      "p-6 rounded-2xl border-2 text-left transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
                       tripSetup.type === type.id
-                        ? "border-gray-900 bg-white shadow-md"
-                        : "border-gray-200 bg-white hover:border-gray-300"
+                        ? "border-gray-900 bg-white shadow-xl"
+                        : "border-gray-200 bg-white hover:border-gray-300 shadow-md"
                     )}
                   >
                     <type.icon className="w-8 h-8 mb-3 text-gray-700" />
-                    <h3 className="font-semibold text-lg text-gray-900">{type.label}</h3>
+                    <h3 className="font-bold text-lg text-gray-900">{type.label}</h3>
                     <p className="text-sm text-gray-500 mt-1">{type.description}</p>
                   </button>
                 ))}
@@ -280,7 +373,7 @@ const TripPlanner = () => {
                     key={option.id}
                     onClick={() => handleDurationSelect(option.id)}
                     className={cn(
-                      "py-4 px-6 rounded-xl border-2 font-medium transition-all",
+                      "py-4 px-6 rounded-xl border-2 font-semibold transition-all duration-300 shadow-md hover:shadow-lg",
                       tripSetup.duration === option.id
                         ? "border-gray-900 bg-gray-900 text-white"
                         : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
@@ -293,7 +386,7 @@ const TripPlanner = () => {
 
               <button
                 onClick={() => setWizardStep(1)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mt-4"
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mt-4 font-medium"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Zurück
@@ -316,7 +409,7 @@ const TripPlanner = () => {
                     key={option.id}
                     onClick={() => handleMobilitySelect(option.id as "public" | "car" | "walk")}
                     className={cn(
-                      "w-full py-4 px-6 rounded-xl border-2 font-medium transition-all flex items-center gap-4",
+                      "w-full py-4 px-6 rounded-xl border-2 font-semibold transition-all duration-300 flex items-center gap-4 shadow-md hover:shadow-lg",
                       tripSetup.mobility === option.id
                         ? "border-gray-900 bg-gray-900 text-white"
                         : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
@@ -330,7 +423,7 @@ const TripPlanner = () => {
 
               <button
                 onClick={() => setWizardStep(2)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mt-4"
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mt-4 font-medium"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Zurück
@@ -354,9 +447,9 @@ const TripPlanner = () => {
                     key={vibe.id}
                     onClick={() => handleVibeToggle(vibe.id)}
                     className={cn(
-                      "py-4 px-4 rounded-xl border-2 font-medium transition-all flex flex-col items-center gap-2 text-center",
+                      "py-4 px-4 rounded-xl border-2 font-semibold transition-all duration-300 flex flex-col items-center gap-2 text-center shadow-md hover:shadow-lg",
                       tripSetup.vibes.includes(vibe.id)
-                        ? "border-gray-900 bg-[#FDFBF7] text-gray-900 shadow-sm"
+                        ? "border-gray-900 bg-gradient-to-br from-[#FDFBF7] to-white text-gray-900 shadow-lg"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     )}
                   >
@@ -369,7 +462,7 @@ const TripPlanner = () => {
               <div className="flex items-center justify-between pt-4">
                 <button
                   onClick={() => setWizardStep(3)}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 font-medium"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Zurück
@@ -378,7 +471,7 @@ const TripPlanner = () => {
                 <Button
                   onClick={handleCreatePlan}
                   disabled={tripSetup.vibes.length === 0}
-                  className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-xl font-semibold"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   ✨ Plan erstellen
                   <ChevronRight className="w-4 h-4 ml-2" />
@@ -391,238 +484,426 @@ const TripPlanner = () => {
     );
   }
 
-  // Render Builder
+  // Render Premium 3-Column Builder
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
+    <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F8F6F2]">
       <Navbar />
       
-      {/* Trip Header */}
-      <div className="border-b border-gray-200 bg-white">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-serif font-bold text-gray-900">
-                🗺️ Mein Trip: "Schweiz Weekend"
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {tripSetup.type === "homebase" ? "🏠 Homebase" : "🚗 Roadtrip"} · 
-                {tripSetup.duration} Tage · 
-                {tripSetup.mobility === "car" ? "🚗 Auto" : tripSetup.mobility === "public" ? "🚆 ÖV" : "🚶 Zu Fuß"} · 
-                {tripSetup.vibes.map(v => VIBE_OPTIONS.find(o => o.id === v)?.label).join(" + ")}
-              </p>
-            </div>
-            <Button variant="outline" onClick={() => setWizardComplete(false)}>
-              Bearbeiten
-            </Button>
+      {/* Main 3-Column Layout */}
+      <div 
+        className="h-[calc(100vh-64px)] p-6 gap-6"
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '25% 30% 45%'
+        }}
+      >
+        {/* Column 1: Dein Tag (Timeline) */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-1">
+              Dein Tag
+            </h2>
+            <p className="text-sm text-gray-500">Basel, Samstag 15. Jan</p>
           </div>
-
-          {/* Mode Toggle */}
-          <div className="flex gap-0 border-2 border-gray-300 rounded-lg overflow-hidden mt-4 w-fit">
-            <button
-              onClick={() => setBuilderMode("explore")}
-              className={cn(
-                "px-6 py-2.5 font-medium text-sm transition-all flex items-center gap-2",
-                builderMode === "explore"
-                  ? "bg-[#FDFBF7] text-gray-900"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              )}
-            >
-              <Sparkles className="w-4 h-4" />
-              Explore
-            </button>
-            <button
-              onClick={() => setBuilderMode("plan")}
-              className={cn(
-                "px-6 py-2.5 font-medium text-sm transition-all flex items-center gap-2",
-                builderMode === "plan"
-                  ? "bg-[#FDFBF7] text-gray-900"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              )}
-            >
-              <List className="w-4 h-4" />
-              Plan
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-6">
           
-          {/* Left: Map */}
-          <div className="relative">
-            <Suspense fallback={
-              <div className="w-full h-[600px] rounded-xl bg-gray-100 flex flex-col items-center justify-center border border-gray-200">
-                <Loader2 className="w-8 h-8 text-gray-400 animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Karte wird geladen...</p>
+          {/* Timeline Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-2">
+            {/* Morgens Section */}
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold mb-5 shadow-md">
+                ☀️ Morgens
               </div>
-            }>
-              <EventsMap 
-                onEventsChange={handleEventsChange}
-                onEventClick={handleEventClick}
-                isVisible={true}
-              />
-            </Suspense>
-            
-            {/* Route overlay for plan mode */}
-            {builderMode === "plan" && tripStops[currentDay]?.length >= 2 && (
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm">
-                Route: {tripStops[currentDay].length} Stops
-              </div>
-            )}
-          </div>
-
-          {/* Right: Trip Drawer */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-gray-900">
-                  📅 Tag {currentDay} - {builderMode === "explore" ? "Vorschläge" : "Dein Plan"}
-                </h2>
-                <span className="text-sm text-gray-500">
-                  {selectedCount}/5 ausgewählt
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
-              {builderMode === "explore" ? (
-                // Explore Mode: Proposals
-                <>
-                  {proposals.map((proposal) => (
-                    <div 
-                      key={proposal.id}
-                      className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden"
-                    >
-                      <img 
-                        src={proposal.image} 
-                        alt={proposal.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-bold text-lg text-gray-900">{proposal.title}</h3>
-                          {proposal.elite && (
-                            <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                              ⭐ Must-see
+              
+              {/* Timeline Items */}
+              <div className="relative">
+                {/* Vertical Line */}
+                <div className="absolute left-5 top-6 bottom-0 w-0.5 bg-gradient-to-b from-amber-400 via-orange-400 to-amber-300 rounded-full" />
+                
+                {timelineStops.slice(0, 2).map((stop, index) => (
+                  <div key={stop.id} className="relative pl-14 mb-6 group">
+                    {/* Icon Circle */}
+                    <div className="absolute left-0 top-2 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg border-2 border-amber-400 group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 z-10">
+                      <span className="text-lg">
+                        {index === 0 ? "☕" : "🏛️"}
+                      </span>
+                    </div>
+                    
+                    {/* Stop Card */}
+                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-gray-500 tracking-wide">{stop.time}</span>
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                          ⏱ {stop.duration * 60} min
+                        </span>
+                      </div>
+                      
+                      <h3 className="font-bold text-gray-900 text-base mb-3">{stop.title}</h3>
+                      
+                      <div className="relative overflow-hidden rounded-lg mb-3 aspect-[16/9] bg-gray-100 shadow-sm">
+                        <img 
+                          src={stop.image} 
+                          alt={stop.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                        {stop.price && (
+                          <div className="absolute top-2 right-2">
+                            <span className="px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold shadow-md">
+                              ⭐ Elite
                             </span>
-                          )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-900">{stop.category}</p>
+                          <p className="text-xs text-gray-500">{stop.reason}</p>
                         </div>
-                        
-                        <p className="text-sm text-gray-700 mb-3">
-                          <strong>Warum:</strong> {proposal.reason}
-                        </p>
-                        
-                        <div className="flex gap-2 text-sm text-gray-500 mb-4">
-                          <span>🕐 {proposal.duration}h</span>
-                          <span>🚗 {proposal.travelTime} Min. Fahrt</span>
-                        </div>
-                        
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleAcceptProposal(proposal.id)}
-                            className="flex-1 py-2.5 bg-[#FDFBF7] hover:bg-[#F5F0E8] border-2 border-gray-900 font-semibold rounded-lg transition-all text-sm"
-                          >
-                            ✅ In Tag {currentDay} aufnehmen
-                          </button>
-                          <button
-                            onClick={() => handleRejectProposal(proposal.id)}
-                            className="px-4 py-2.5 border-2 border-gray-300 hover:bg-gray-50 rounded-lg transition-all"
-                          >
-                            ❌
-                          </button>
-                        </div>
+                        <button className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all shadow-sm hover:shadow-md">
+                          <RefreshCw className="w-4 h-4 text-gray-600" />
+                        </button>
                       </div>
                     </div>
-                  ))}
-                  
-                  {proposals.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>Keine weiteren Vorschläge</p>
-                      <Button
-                        onClick={() => setBuilderMode("plan")}
-                        className="mt-4"
-                      >
-                        Zum Plan wechseln
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                // Plan Mode: Itinerary
-                <>
-                  {tripStops[currentDay]?.length > 0 ? (
-                    <div className="space-y-3">
-                      {tripStops[currentDay].map((stop, index) => (
-                        <div
-                          key={stop.id}
-                          className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow flex items-center gap-3"
-                        >
-                          <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
-                          <span className="w-8 h-8 rounded-full bg-[#FDFBF7] border-2 border-gray-900 flex items-center justify-center font-bold text-sm">
-                            {index + 1}
-                          </span>
-                          <img 
-                            src={stop.image} 
-                            alt={stop.title}
-                            className="w-16 h-16 rounded-lg object-cover"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 truncate">{stop.title}</h4>
-                            <p className="text-xs text-gray-500">
-                              🕐 {stop.duration}h · 🚗 {stop.travelTime} Min. zum nächsten
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveStop(stop.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <MapIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>Noch keine Stops geplant</p>
-                      <Button
-                        onClick={() => setBuilderMode("explore")}
-                        variant="outline"
-                        className="mt-4"
-                      >
-                        Vorschläge ansehen
-                      </Button>
-                    </div>
-                  )}
-
-                  {tripStops[currentDay]?.length >= 2 && (
-                    <div className="pt-4 border-t border-gray-100 space-y-3">
-                      <Button className="w-full bg-gray-900 text-white">
-                        ✨ Plan optimieren (mit KI)
-                      </Button>
-                      <Button variant="outline" className="w-full">
-                        📤 Exportieren (PDF/iCal)
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Day Actions */}
-            {selectedCount >= 3 && builderMode === "explore" && (
-              <div className="p-4 border-t border-gray-100 bg-gray-50">
-                <Button
-                  onClick={() => setBuilderMode("plan")}
-                  className="w-full bg-gray-900 text-white"
-                >
-                  Tag {currentDay} speichern
-                </Button>
+                  </div>
+                ))}
+                
+                {/* Travel Indicator */}
+                <div className="pl-14 mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+                    <Car className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-700">15 min Fahrt</span>
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-300 to-transparent rounded-full" />
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
+            
+            {/* Mittags Section */}
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold mb-5 shadow-md">
+                🌤 Mittags
+              </div>
+              
+              <div className="relative">
+                <div className="absolute left-5 top-6 bottom-0 w-0.5 bg-gradient-to-b from-blue-400 via-cyan-400 to-blue-300 rounded-full" />
+                
+                {timelineStops.slice(2, 4).map((stop, index) => (
+                  <div key={stop.id} className="relative pl-14 mb-6 group">
+                    <div className="absolute left-0 top-2 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg border-2 border-blue-400 group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 z-10">
+                      <span className="text-lg">
+                        {index === 0 ? "🍽️" : "⛵"}
+                      </span>
+                    </div>
+                    
+                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-gray-500 tracking-wide">{stop.time}</span>
+                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+                          ⏱ {stop.duration * 60} min
+                        </span>
+                      </div>
+                      
+                      <h3 className="font-bold text-gray-900 text-base mb-3">{stop.title}</h3>
+                      
+                      <div className="relative overflow-hidden rounded-lg mb-3 aspect-[16/9] bg-gray-100 shadow-sm">
+                        <img 
+                          src={stop.image} 
+                          alt={stop.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-900">{stop.category}</p>
+                          <p className="text-xs text-gray-500">{stop.reason}</p>
+                        </div>
+                        <button className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all shadow-sm hover:shadow-md">
+                          <RefreshCw className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Travel Indicator */}
+                <div className="pl-14 mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+                    <Footprints className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-700">15 min Fahrt</span>
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-purple-300 to-transparent rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Abends Section */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold mb-5 shadow-md">
+                🌙 Abends
+              </div>
+              
+              <div className="relative">
+                <div className="absolute left-5 top-6 bottom-0 w-0.5 bg-gradient-to-b from-purple-400 via-pink-400 to-purple-300 rounded-full" />
+                
+                {timelineStops.slice(4).map((stop, index) => (
+                  <div key={stop.id} className="relative pl-14 mb-6 group">
+                    <div className="absolute left-0 top-2 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg border-2 border-purple-400 group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 z-10">
+                      <span className="text-lg">
+                        {index === 0 ? "🚶" : "🍝"}
+                      </span>
+                    </div>
+                    
+                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-gray-500 tracking-wide">{stop.time}</span>
+                        <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold">
+                          ⏱ {stop.duration * 60} min
+                        </span>
+                      </div>
+                      
+                      <h3 className="font-bold text-gray-900 text-base mb-3">{stop.title}</h3>
+                      
+                      <div className="relative overflow-hidden rounded-lg mb-3 aspect-[16/9] bg-gray-100 shadow-sm">
+                        <img 
+                          src={stop.image} 
+                          alt={stop.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-900">{stop.category}</p>
+                          <p className="text-xs text-gray-500">{stop.reason} {stop.price && `| ${stop.price}`}</p>
+                        </div>
+                        <button className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all shadow-sm hover:shadow-md">
+                          <RefreshCw className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+        
+        {/* Column 2: Entdeckungen (Discoveries) */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-1">
+              Entdeckungen
+            </h2>
+            <p className="text-sm text-gray-500">Handverlesen für dich</p>
+          </div>
+          
+          {/* Filter Pills */}
+          <div className="px-6 py-4 flex gap-2 overflow-x-auto scrollbar-hide border-b border-gray-100">
+            {[
+              { id: "all", label: "Alle" },
+              { id: "natur", label: "🌲 Natur" },
+              { id: "kunst", label: "🏛️ Kultur" },
+              { id: "elite", label: "⭐ Elite" },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                className={cn(
+                  "px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300",
+                  activeFilter === filter.id
+                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm hover:shadow-md"
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          
+          {/* Discovery Cards */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {filteredDiscoveries.map((discovery) => (
+              <div 
+                key={discovery.id}
+                onClick={() => setSelectedEvent(discovery)}
+                className="bg-white rounded-2xl p-4 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+              >
+                <div className="flex gap-4">
+                  {/* Image */}
+                  <div className="relative w-28 h-28 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 shadow-sm">
+                    <img 
+                      src={discovery.image} 
+                      alt={discovery.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30" />
+                    
+                    {/* Elite Badge */}
+                    {discovery.isElite && (
+                      <div className="absolute top-2 left-2">
+                        <span className="px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold shadow-md flex items-center gap-1">
+                          <Star className="w-3 h-3" />
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Favorite Heart */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(discovery.id);
+                      }}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                    >
+                      <Heart 
+                        className={cn(
+                          "w-4 h-4 transition-colors",
+                          discovery.isFavorite ? "text-red-500 fill-red-500" : "text-gray-300"
+                        )} 
+                      />
+                    </button>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-base mb-2 truncate group-hover:text-blue-600 transition-colors">
+                        {discovery.title}
+                      </h3>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold">
+                          {discovery.category}
+                        </span>
+                        <span className="text-xs font-semibold text-gray-600">{discovery.price}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="flex text-yellow-400 text-sm">
+                          {"⭐".repeat(Math.floor(discovery.rating))}
+                        </div>
+                        <span className="text-xs font-semibold text-gray-500">({discovery.rating})</span>
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="flex gap-2 mt-3">
+                      <button className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+                        + Zu Trip
+                      </button>
+                      <button className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all shadow-sm">
+                        <RefreshCw className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Column 3: Map + Detail */}
+        <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+          {/* Map */}
+          <Suspense fallback={
+            <div className="w-full h-full bg-gray-100 flex flex-col items-center justify-center">
+              <Loader2 className="w-8 h-8 text-gray-400 animate-spin mb-4" />
+              <p className="text-gray-500 font-medium">Karte wird geladen...</p>
+            </div>
+          }>
+            <EventsMap 
+              onEventsChange={handleEventsChange}
+              onEventClick={handleEventClick}
+              isVisible={true}
+            />
+          </Suspense>
+          
+          {/* Detail Card (shown when event selected) */}
+          {selectedEvent && (
+            <div className="absolute bottom-8 right-8 w-[380px] bg-white rounded-2xl p-6 shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
+              {/* Close Button */}
+              <button 
+                onClick={() => setSelectedEvent(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+              
+              {/* Image */}
+              <div className="relative h-48 rounded-xl overflow-hidden mb-5 bg-gray-100 shadow-md">
+                <img 
+                  src={selectedEvent.image} 
+                  alt={selectedEvent.title}
+                  className="w-full h-full object-cover" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                
+                {/* Actions */}
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button 
+                    onClick={() => handleToggleFavorite(selectedEvent.id)}
+                    className="w-11 h-11 rounded-full bg-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                  >
+                    <Heart className={cn(
+                      "w-5 h-5",
+                      selectedEvent.isFavorite ? "text-red-500 fill-red-500" : "text-gray-400"
+                    )} />
+                  </button>
+                </div>
+                
+                {/* Category Badge */}
+                <div className="absolute bottom-4 left-4">
+                  <span className="px-4 py-2 rounded-full bg-white text-gray-900 text-xs font-bold shadow-lg">
+                    🏛️ {selectedEvent.category}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <h3 className="font-bold text-xl text-gray-900 mb-3">
+                {selectedEvent.title}
+              </h3>
+              
+              <p className="text-sm text-gray-600 mb-5 leading-relaxed">
+                Wunderschöne Sehenswürdigkeit mit Blick auf die Altstadt und moderne Architektur.
+              </p>
+              
+              {/* Rating & Location */}
+              <div className="flex items-center gap-5 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white font-bold text-base shadow-md">
+                    {selectedEvent.rating.toFixed(1)}
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="text-yellow-400 text-sm">{"⭐".repeat(Math.floor(selectedEvent.rating))}</div>
+                    <span className="text-xs text-gray-500 font-semibold">256 Reviews</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-xs font-bold text-gray-700">
+                  <MapPin className="w-3 h-3" />
+                  <span>8.9 Location</span>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button className="flex-1 px-5 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-sm shadow-md hover:shadow-lg transition-all duration-300">
+                  Details
+                </button>
+                <button className="flex-1 px-5 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                  Hinzufügen
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
