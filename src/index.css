@@ -52,6 +52,20 @@
     /* Wizard Accent - Warm Terracotta/Gold */
     --wizard-accent: 24 60% 48%;
     --wizard-accent-foreground: 0 0% 100%;
+
+    /* Trip Planner Premium Colors */
+    --trip-bg: 40 33% 98%;
+    --trip-bg-secondary: 40 20% 96%;
+    --trip-card: 0 0% 100%;
+    --trip-text: 0 0% 10%;
+    --trip-text-secondary: 0 0% 42%;
+    --trip-border: 0 0% 94%;
+    --trip-gradient-gold-start: 38 92% 50%;
+    --trip-gradient-gold-end: 33 92% 45%;
+    --trip-gradient-blue-start: 217 91% 60%;
+    --trip-gradient-blue-end: 224 76% 48%;
+    --trip-gradient-purple-start: 258 90% 66%;
+    --trip-gradient-purple-end: 262 83% 58%;
  
     --border: 0 0% 88%;
     --input: 0 0% 88%;
