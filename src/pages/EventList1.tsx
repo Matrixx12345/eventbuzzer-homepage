@@ -1,33 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
+import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Star, ChevronDown, Calendar, Grid3X3, Maximize2 } from "lucide-react";
+import { Heart, MapPin, Star, Maximize2, Minimize2, MessageCircle, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import mapTeaser from "@/assets/map-teaser.jpg";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
 import eventVenue from "@/assets/event-venue.jpg";
 import eventConcert from "@/assets/event-concert.jpg";
 import swissZurich from "@/assets/swiss-zurich.jpg";
-import mapTeaser from "@/assets/map-teaser.jpg";
 
 const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
-
-// Helper to ensure tags is an array
-const ensureTagsArray = (tags: unknown): string[] => {
-  if (!tags) return [];
-  if (Array.isArray(tags)) return tags.filter(t => typeof t === 'string');
-  return [];
-};
 
 interface Event {
   id: string;
@@ -51,9 +39,8 @@ interface Event {
   buzz_score?: number;
 }
 
-// Star Rating Component
+// Star Rating Component - aligned left
 const StarRating = ({ score, className }: { score: number; className?: string }) => {
-  // Convert buzz score (0-100) to stars (0-5)
   const starCount = Math.min(5, Math.max(0, Math.round((score / 100) * 5)));
   
   return (
@@ -61,7 +48,7 @@ const StarRating = ({ score, className }: { score: number; className?: string })
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          size={16}
+          size={14}
           className={cn(
             "transition-colors",
             star <= starCount
@@ -95,7 +82,7 @@ const EventCard = ({
     <article className="group bg-[hsl(var(--listings-card))] rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-[hsl(var(--trip-border))]">
       <div className="flex gap-0">
         {/* Image Section */}
-        <div className="relative w-48 h-40 flex-shrink-0 overflow-hidden">
+        <div className="relative w-44 h-36 flex-shrink-0 overflow-hidden">
           <img
             src={imageUrl}
             alt={event.title}
@@ -108,40 +95,40 @@ const EventCard = ({
               onToggleFavorite(event);
             }}
             className={cn(
-              "absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-md",
+              "absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md",
               isFavorited
                 ? "bg-red-500 text-white"
                 : "bg-white/90 text-gray-600 hover:bg-white hover:text-red-500"
             )}
           >
-            <Heart size={16} className={isFavorited ? "fill-current" : ""} />
+            <Heart size={14} className={isFavorited ? "fill-current" : ""} />
           </button>
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 p-5 flex flex-col justify-between">
+        <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
           <div>
             {/* Title */}
-            <h3 className="font-serif text-lg font-semibold text-[hsl(var(--listings-text))] mb-1 line-clamp-1 group-hover:text-amber-700 transition-colors">
+            <h3 className="font-serif text-base font-semibold text-[hsl(var(--listings-text))] mb-1 line-clamp-1 group-hover:text-amber-700 transition-colors">
               {event.title}
             </h3>
             
             {/* Location */}
-            <div className="flex items-center gap-1.5 text-sm text-[hsl(var(--listings-text-muted))] mb-3">
-              <MapPin size={14} className="text-amber-600" />
-              <span>{location}</span>
+            <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--listings-text-muted))] mb-2">
+              <MapPin size={12} className="text-amber-600 flex-shrink-0" />
+              <span className="truncate">{location}</span>
             </div>
 
             {/* Description */}
-            <p className="text-sm text-[hsl(var(--listings-text-muted))] line-clamp-2 leading-relaxed">
+            <p className="text-xs text-[hsl(var(--listings-text-muted))] line-clamp-2 leading-relaxed mb-2">
               {description}
             </p>
           </div>
 
-          {/* Star Rating - Bottom Right */}
-          <div className="flex items-center justify-end mt-3 gap-2">
-            <span className="text-xs font-medium text-amber-700">Buzz</span>
+          {/* Star Rating - Left aligned */}
+          <div className="flex items-center gap-1.5">
             <StarRating score={buzzScore} />
+            <span className="text-xs text-amber-600 font-medium">({Math.round(buzzScore / 20)}/5)</span>
           </div>
         </div>
       </div>
@@ -149,36 +136,103 @@ const EventCard = ({
   );
 };
 
-// Filter Accordion Component
-const FilterAccordion = ({ 
-  icon: Icon, 
-  label, 
-  isOpen, 
-  onToggle 
-}: { 
-  icon: React.ElementType;
-  label: string;
-  isOpen: boolean;
-  onToggle: () => void;
-}) => (
-  <button
-    onClick={onToggle}
-    className="w-full flex items-center justify-between py-3 px-4 text-sm text-[hsl(var(--listings-text))] hover:bg-[hsl(var(--trip-bg-secondary))] rounded-lg transition-colors"
-  >
-    <div className="flex items-center gap-3">
-      <Icon size={18} className="text-amber-600" />
-      <span className="font-medium">{label}</span>
+// Chatbot Widget Component (collapsed state)
+const ChatbotWidget = ({ onExpand }: { onExpand: () => void }) => {
+  return (
+    <button
+      onClick={onExpand}
+      className="w-full bg-white rounded-xl shadow-md border border-[hsl(var(--trip-border))] p-3 flex items-center gap-3 hover:shadow-lg transition-all group"
+    >
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
+        <MessageCircle size={18} className="text-white" />
+      </div>
+      <div className="flex-1 text-left">
+        <p className="text-sm font-medium text-[hsl(var(--listings-text))]">Event-Assistent</p>
+        <p className="text-xs text-[hsl(var(--listings-text-muted))]">Frag mich nach Empfehlungen...</p>
+      </div>
+      <ChevronRight size={18} className="text-gray-400 group-hover:text-amber-600 transition-colors" />
+    </button>
+  );
+};
+
+// Expanded Chatbot Modal
+const ChatbotExpanded = ({ onClose }: { onClose: () => void }) => {
+  const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState([
+    { role: "bot", content: "Hi! 👋 Was suchst du heute? Ich helfe dir, das perfekte Event zu finden!" }
+  ]);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border border-[hsl(var(--trip-border))] overflow-hidden flex flex-col h-[400px]">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 flex items-center justify-between text-white">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+            <MessageCircle size={16} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">Event-Assistent</h3>
+            <p className="text-xs text-white/80">Powered by AI</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors">
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-3">
+        {messages.map((msg, i) => (
+          <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+            <div className={cn(
+              "max-w-[80%] px-3 py-2 rounded-xl text-sm",
+              msg.role === "user" 
+                ? "bg-amber-500 text-white rounded-br-sm" 
+                : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm"
+            )}>
+              {msg.content}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Input */}
+      <div className="p-3 bg-white border-t border-gray-200">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Schreib eine Nachricht..."
+            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+          />
+          <button className="w-10 h-10 rounded-lg bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center transition-colors">
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
     </div>
-    <ChevronDown size={18} className={cn("text-gray-400 transition-transform", isOpen && "rotate-180")} />
-  </button>
-);
+  );
+};
 
 const EventList1 = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openFilter, setOpenFilter] = useState<string | null>(null);
-  const [mapOpen, setMapOpen] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const [chatbotExpanded, setChatbotExpanded] = useState(false);
   const { favorites, toggleFavorite } = useFavorites();
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    category: null as string | null,
+    categoryId: null as number | null,
+    mood: null as string | null,
+    city: "",
+    radius: 25,
+    time: null as string | null,
+    date: undefined as Date | undefined,
+    search: "",
+  });
 
   // Fetch events on mount
   useEffect(() => {
@@ -229,156 +283,162 @@ const EventList1 = () => {
 
   const isFavorited = (eventId: string) => favorites.some(f => f.id === eventId);
 
+  // Filter handlers
+  const handleCategoryChange = (categoryId: number | null, categorySlug: string | null) => {
+    setFilters(prev => ({ ...prev, categoryId, category: categorySlug }));
+  };
+
+  const handleMoodChange = (mood: string | null) => {
+    setFilters(prev => ({ ...prev, mood }));
+  };
+
+  const handleCityChange = (city: string) => {
+    setFilters(prev => ({ ...prev, city }));
+  };
+
+  const handleRadiusChange = (radius: number) => {
+    setFilters(prev => ({ ...prev, radius }));
+  };
+
+  const handleTimeChange = (time: string | null) => {
+    setFilters(prev => ({ ...prev, time }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setFilters(prev => ({ ...prev, date }));
+  };
+
+  const handleSearchChange = (search: string) => {
+    setFilters(prev => ({ ...prev, search }));
+  };
+
   return (
     <div className="min-h-screen bg-[hsl(var(--listings-bg))]">
       <Navbar />
       
-      <main className="container mx-auto px-6 py-8 max-w-7xl">
-        <div className="flex gap-8">
-          {/* Left: Event List */}
-          <div className="flex-1 space-y-4">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-serif font-bold text-[hsl(var(--listings-text))] mb-2">
-                Eventliste 1
-              </h1>
-              <p className="text-[hsl(var(--listings-text-muted))]">
-                Entdecke die besten Events in der Schweiz
-              </p>
-            </div>
+      {/* Full-width Filter Bar */}
+      <div className="sticky top-16 z-40 bg-[hsl(var(--listings-bg))] border-b border-[hsl(var(--trip-border))]">
+        <div className="container mx-auto px-6 py-4 max-w-7xl">
+          <ListingsFilterBar
+            initialCategory={filters.category}
+            initialMood={filters.mood}
+            initialCity={filters.city}
+            initialRadius={filters.radius}
+            initialTime={filters.time}
+            initialDate={filters.date}
+            initialSearch={filters.search}
+            onCategoryChange={handleCategoryChange}
+            onMoodChange={handleMoodChange}
+            onCityChange={handleCityChange}
+            onRadiusChange={handleRadiusChange}
+            onTimeChange={handleTimeChange}
+            onDateChange={handleDateChange}
+            onSearchChange={handleSearchChange}
+          />
+        </div>
+      </div>
+      
+      <main className="container mx-auto px-6 py-6 max-w-7xl">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-serif font-bold text-[hsl(var(--listings-text))] mb-1">
+            Eventliste 1
+          </h1>
+          <p className="text-sm text-[hsl(var(--listings-text-muted))]">
+            Entdecke die besten Events in der Schweiz
+          </p>
+        </div>
 
-            {/* Event Cards */}
+        {/* Split Layout */}
+        <div className="flex gap-6 items-start">
+          {/* Left: Fixed-width Event List */}
+          <div 
+            className="space-y-3 flex-shrink-0 transition-all duration-300"
+            style={{ width: mapExpanded ? '550px' : '100%', maxWidth: mapExpanded ? '550px' : '600px' }}
+          >
             {loading ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl h-40 animate-pulse" />
+                  <div key={i} className="bg-white rounded-2xl h-36 animate-pulse" />
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                {events.map((event, index) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    index={index}
-                    isFavorited={isFavorited(event.id)}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
-              </div>
+              events.map((event, index) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  index={index}
+                  isFavorited={isFavorited(event.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ))
             )}
           </div>
 
-          {/* Right: Sidebar */}
-          <div className="w-80 flex-shrink-0 space-y-6">
-            {/* Map Teaser */}
+          {/* Right: Expandable Map + Chatbot */}
+          <div 
+            className={cn(
+              "flex-shrink-0 space-y-4 transition-all duration-300 sticky top-36",
+              mapExpanded ? "flex-1" : "w-80"
+            )}
+          >
+            {/* Map Container */}
             <div 
-              className="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-[hsl(var(--trip-border))] cursor-pointer group"
-              onClick={() => setMapOpen(true)}
+              className={cn(
+                "relative bg-white rounded-2xl overflow-hidden shadow-sm border border-[hsl(var(--trip-border))] transition-all duration-300",
+                mapExpanded ? "h-[500px]" : "h-52"
+              )}
             >
-              <div className="relative h-52 overflow-hidden">
-                <img
-                  src={mapTeaser}
-                  alt="Karte der Schweiz"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-white font-medium bg-black/50 px-4 py-2 rounded-full">
-                    <Maximize2 size={18} />
-                    <span>Karte vergrößern</span>
-                  </div>
-                </div>
-                {/* Always visible expand icon */}
-                <div className="absolute bottom-3 right-3 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                  <Maximize2 size={18} className="text-gray-700" />
-                </div>
-                {/* Map pins overlay */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute top-1/4 left-1/3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-                    <MapPin size={12} className="text-white" />
-                  </div>
-                  <div className="absolute top-1/2 right-1/3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-                    <MapPin size={12} className="text-white" />
-                  </div>
-                  <div className="absolute bottom-1/3 left-1/2 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-                    <MapPin size={12} className="text-white" />
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 bg-white text-center text-sm font-medium text-[hsl(var(--listings-text-muted))]">
-                Switzerland
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white rounded-2xl shadow-sm border border-[hsl(var(--trip-border))] overflow-hidden">
-              <div className="p-4 border-b border-[hsl(var(--trip-border))]">
-                <h3 className="font-serif font-semibold text-[hsl(var(--listings-text))]">Filters</h3>
-              </div>
-              <div className="p-2">
-                <FilterAccordion
-                  icon={Calendar}
-                  label="Date"
-                  isOpen={openFilter === 'date'}
-                  onToggle={() => setOpenFilter(openFilter === 'date' ? null : 'date')}
-                />
-                <FilterAccordion
-                  icon={Grid3X3}
-                  label="Category"
-                  isOpen={openFilter === 'category'}
-                  onToggle={() => setOpenFilter(openFilter === 'category' ? null : 'category')}
-                />
-                <FilterAccordion
-                  icon={MapPin}
-                  label="Location"
-                  isOpen={openFilter === 'location'}
-                  onToggle={() => setOpenFilter(openFilter === 'location' ? null : 'location')}
-                />
-                <FilterAccordion
-                  icon={Heart}
-                  label="Favoriten"
-                  isOpen={openFilter === 'favorites'}
-                  onToggle={() => setOpenFilter(openFilter === 'favorites' ? null : 'favorites')}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Map Dialog */}
-      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
-        <DialogContent className="max-w-5xl h-[80vh] p-0 overflow-hidden">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle className="font-serif">Karte - Events in der Schweiz</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 h-full bg-gray-100 flex items-center justify-center">
-            <div className="relative w-full h-full">
               <img
                 src={mapTeaser}
                 alt="Karte der Schweiz"
                 className="w-full h-full object-cover"
               />
-              {/* Map pins */}
-              <div className="absolute inset-0">
-                {events.slice(0, 5).map((event, i) => (
-                  <div
-                    key={event.id}
-                    className="absolute w-8 h-8 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                    style={{
-                      top: `${20 + (i * 15)}%`,
-                      left: `${15 + (i * 18)}%`,
-                    }}
-                  >
-                    <MapPin size={14} className="text-white" />
-                  </div>
-                ))}
+              
+              {/* Map pins overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/4 left-1/3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                  <MapPin size={12} className="text-white" />
+                </div>
+                <div className="absolute top-1/2 right-1/3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                  <MapPin size={12} className="text-white" />
+                </div>
+                <div className="absolute bottom-1/3 left-1/2 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                  <MapPin size={12} className="text-white" />
+                </div>
+              </div>
+
+              {/* Toggle Button with hover tooltip */}
+              <button
+                onClick={() => setMapExpanded(!mapExpanded)}
+                className="absolute bottom-3 right-3 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform group"
+              >
+                {mapExpanded ? (
+                  <Minimize2 size={18} className="text-gray-700" />
+                ) : (
+                  <Maximize2 size={18} className="text-gray-700" />
+                )}
+                {/* Tooltip */}
+                <span className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  {mapExpanded ? "Karte verkleinern" : "Karte vergrößern"}
+                </span>
+              </button>
+
+              {/* Label */}
+              <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-white/95 rounded-full text-xs font-medium text-[hsl(var(--listings-text-muted))] shadow-sm">
+                Switzerland
               </div>
             </div>
+
+            {/* Chatbot Widget */}
+            {chatbotExpanded ? (
+              <ChatbotExpanded onClose={() => setChatbotExpanded(false)} />
+            ) : (
+              <ChatbotWidget onExpand={() => setChatbotExpanded(true)} />
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </main>
     </div>
   );
 };
