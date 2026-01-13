@@ -180,10 +180,11 @@ const EventCard = ({
 
   // Get pills from tags
   const eventTags = Array.isArray(event.tags) ? event.tags.slice(0, 2) : [];
-  // Add category-based pill
-  if (event.category_sub_id?.includes('konzert') || event.category_sub_id?.includes('musik')) {
+  // Add category-based pill - ensure category_sub_id is a string before using includes
+  const categoryStr = typeof event.category_sub_id === 'string' ? event.category_sub_id : '';
+  if (categoryStr.includes('konzert') || categoryStr.includes('musik')) {
     eventTags.unshift('konzert');
-  } else if (event.category_sub_id?.includes('kunst') || event.category_sub_id?.includes('museum')) {
+  } else if (categoryStr.includes('kunst') || categoryStr.includes('museum')) {
     eventTags.unshift('kunst');
   }
 
@@ -407,10 +408,9 @@ const ChatbotExpanded = ({ onClose }: { onClose: () => void }) => {
 
 const EventPlanner2 = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatbotExpanded, setChatbotExpanded] = useState(false);
-  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { toggleFavorite, isFavorite } = useFavorites();
   
   // Modal state
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -481,10 +481,7 @@ const EventPlanner2 = () => {
     setModalOpen(true);
   }, []);
 
-  const handleEventsChange = useCallback((newEvents: MapEvent[]) => {
-    setMapEvents(newEvents);
-  }, []);
-
+  // Map event click handler (unused for now, but kept for future integration)
   const handleMapEventClick = useCallback((eventId: string) => {
     trackEventClick(eventId);
     setSelectedEventId(eventId);
