@@ -1,87 +1,84 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface FavoriteEvent {
   id: string;
   slug: string;
   title: string;
   venue: string;
-  location: string;
   image: string;
-  date?: string;
-  addedAt: number;
+  location: string;
+  date: string;
+  addedAt?: number;
 }
 
 interface FavoritesContextType {
   favorites: FavoriteEvent[];
-  addFavorite: (event: Omit<FavoriteEvent, "addedAt">) => void;
-  removeFavorite: (id: string) => void;
-  isFavorite: (id: string) => boolean;
-  toggleFavorite: (event: Omit<FavoriteEvent, "addedAt">) => void;
+  toggleFavorite: (event: FavoriteEvent) => void;
+  isFavorite: (eventId: string) => boolean;
 }
 
-const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
+const FavoritesContext = createContext<FavoritesContextType>({
+  favorites: [],
+  toggleFavorite: () => {},
+  isFavorite: () => false,
+});
 
 export const useFavorites = () => {
   const context = useContext(FavoritesContext);
   if (!context) {
-    throw new Error("useFavorites must be used within a FavoritesProvider");
+    throw new Error('useFavorites must be used within a FavoritesProvider');
   }
   return context;
 };
 
-export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
-  const [favorites, setFavorites] = useState<FavoriteEvent[]>(() => {
-    try {
-      const stored = localStorage.getItem("eventbuzzer-favorites");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Validate that it's an array
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      }
-      return [];
-    } catch (error) {
-      console.error("Error parsing favorites from localStorage:", error);
-      return [];
-    }
-  });
+const STORAGE_KEY = 'eventbuzzer_favorites';
 
+export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [favorites, setFavorites] = useState<FavoriteEvent[]>([]);
+
+  // Load favorites from localStorage on mount
   useEffect(() => {
     try {
-      localStorage.setItem("eventbuzzer-favorites", JSON.stringify(favorites));
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setFavorites(Array.isArray(parsed) ? parsed : []);
+      }
     } catch (error) {
-      console.error("Error saving favorites to localStorage:", error);
+      console.error('Error loading favorites from localStorage:', error);
+      setFavorites([]);
+    }
+  }, []);
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    } catch (error) {
+      console.error('Error saving favorites to localStorage:', error);
     }
   }, [favorites]);
 
-  const addFavorite = (event: Omit<FavoriteEvent, "addedAt">) => {
+  const toggleFavorite = (event: FavoriteEvent) => {
     setFavorites((prev) => {
-      if (prev.some((f) => f.id === event.id)) return prev;
-      return [...prev, { ...event, addedAt: Date.now() }];
+      const exists = prev.some((fav) => fav.id === event.id);
+
+      if (exists) {
+        // Remove from favorites
+        return prev.filter((fav) => fav.id !== event.id);
+      } else {
+        // Add to favorites with timestamp
+        return [...prev, { ...event, addedAt: Date.now() }];
+      }
     });
   };
 
-  const removeFavorite = (id: string) => {
-    setFavorites((prev) => prev.filter((f) => f.id !== id));
-  };
-
-  const isFavorite = (id: string) => {
-    return favorites.some((f) => f.id === id);
-  };
-
-  const toggleFavorite = (event: Omit<FavoriteEvent, "addedAt">) => {
-    if (isFavorite(event.id)) {
-      removeFavorite(event.id);
-    } else {
-      addFavorite(event);
-    }
+  const isFavorite = (eventId: string) => {
+    return favorites.some((fav) => fav.id === eventId);
   };
 
   return (
-    <FavoritesContext.Provider
-      value={{ favorites, addFavorite, removeFavorite, isFavorite, toggleFavorite }}
-    >
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );

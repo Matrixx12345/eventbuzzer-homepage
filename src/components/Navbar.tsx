@@ -19,8 +19,7 @@ const Navbar = () => {
     { label: "Startseite", href: "/" },
     { label: "Alle Events", href: "/listings" },
     { label: "Eventliste 1", href: "/eventlist1" },
-    { label: "Eventplaner 2", href: "/eventplanner2" },
-    { label: "🗺️ Trip Planner", href: "/trip-planner" },
+    { label: "Trip Planer", href: "/trip-planner" },
     { label: "Favoriten", href: "/favorites" },
   ];
 

@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import EventsMap from "@/components/EventsMap";
+import EventDetailModal from "@/components/EventDetailModal";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { toggleFavoriteApi } from "@/services/favorites";
@@ -616,6 +617,10 @@ const EventList1 = () => {
   const [similarEventsFilter, setSimilarEventsFilter] = useState<string | null>(null);
   const [nearbyEventsFilter, setNearbyEventsFilter] = useState<string | null>(null);
 
+  // Event Detail Modal State
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // SIMPLE: Map Events Handler - stores raw events without filtering
   const handleMapEventsChange = useCallback((newEvents: Event[]) => {
     setRawEvents(newEvents);
@@ -1084,7 +1089,10 @@ const EventList1 = () => {
                         isFavorited={isFavorited(event.id)}
                         onToggleFavorite={handleToggleFavorite}
                         isMapExpanded={mapExpanded}
-                        onClick={(event) => navigate(`/event/${event.external_id || event.id}`)}
+                        onClick={(event) => {
+                          setSelectedEvent(event);
+                          setIsModalOpen(true);
+                        }}
                         similarEventsFilter={similarEventsFilter}
                         setSimilarEventsFilter={setSimilarEventsFilter}
                         nearbyEventsFilter={nearbyEventsFilter}
@@ -1315,6 +1323,18 @@ const EventList1 = () => {
           </div>
         </div>
       </main>
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedEvent(null);
+          }}
+        />
+      )}
     </div>
   );
 };

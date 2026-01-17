@@ -2,20 +2,26 @@ export interface MapEvent {
   id: string;
   external_id?: string;
   title: string;
+  description?: string;
+  short_description?: string;
   venue_name?: string;
   address_city?: string;
+  location?: string;
   image_url?: string;
   start_date?: string;
+  end_date?: string;
   latitude: number;
   longitude: number;
   mapbox_lng?: number;
   mapbox_lat?: number;
   buzz_score?: number;
+  relevance_score?: number;
   price_from?: number;
   price_to?: number;
   category_main_id?: number;
   tags?: string[];
   buzz_boost?: number;
+  source?: string;
 }
 
 export type CategoryType = 

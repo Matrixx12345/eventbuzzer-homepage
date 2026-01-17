@@ -3,11 +3,12 @@ import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
-import ListingsTripSidebar from "@/components/ListingsTripSidebar";
 import ImageAttribution from "@/components/ImageAttribution";
 import { BuzzTracker } from "@/components/BuzzTracker";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { MapEvent } from "@/types/map";
+import ChatbotPopup from "@/components/ChatbotPopup";
+import { useChatbot } from "@/hooks/useChatbot";
 
 import { trackEventClick } from "@/services/buzzTracking";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
@@ -192,11 +193,27 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
 
 const Listings = () => {
   const [searchParams] = useSearchParams();
-  
+
+  // Chatbot state with 1 second delay
+  const { isOpen, closeChatbot, openChatbot } = useChatbot();
+  const [hasOpenedChatbot, setHasOpenedChatbot] = useState(false);
+
   // Scroll to top when URL params change (e.g., from "Mehr anzeigen" links)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams]);
+
+  // Open chatbot after 1 second - NUR EINMAL beim ersten Mount
+  useEffect(() => {
+    if (!hasOpenedChatbot) {
+      const timer = setTimeout(() => {
+        openChatbot();
+        setHasOpenedChatbot(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []); // Leeres Array = nur beim Mount
+
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
   const [events, setEvents] = useState<ExternalEvent[]>([]);
@@ -209,10 +226,10 @@ const Listings = () => {
   const [hasMore, setHasMore] = useState(true);
   const [nextOffset, setNextOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  
+
   // View mode (list or map)
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  
+
   // Modal state for event details
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -564,7 +581,10 @@ const Listings = () => {
   return (
     <div className="min-h-screen bg-listings">
       <Navbar />
-      
+
+      {/* Chatbot Popup with 1 second delay */}
+      <ChatbotPopup isOpen={isOpen} onClose={closeChatbot} onOpen={openChatbot} />
+
       {/* Hero Section with Sticky Filter Bar - Flacher cremefarbener Hintergrund */}
       <div className="sticky top-16 z-40 bg-[#FDFBF7] border-b border-stone-200 py-4">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -601,10 +621,8 @@ const Listings = () => {
           <ViewToggle mode={viewMode} onModeChange={setViewMode} />
         </div>
 
-        {/* 2-Column Layout: Events + Sidebar */}
-        <div className="flex gap-6">
-          {/* Left: Event Grid */}
-          <div className="flex-1 min-w-0">
+        {/* Full-Width Event Grid - No Sidebar */}
+        <div className="w-full">
             {/* Subcategory Sticky Bar - only in list mode */}
             {viewMode === "list" && selectedCategoryId && subCategories.length > 0 && (
               <div className="sticky top-32 z-10 bg-[#FDFBF7] py-3 mb-4 -mx-2 px-2 overflow-x-auto">
@@ -654,15 +672,15 @@ const Listings = () => {
               </Suspense>
             </div>
 
-            {/* Events Grid - Einheitliches 3-Spalten Grid */}
+            {/* Events Grid - 3-Spalten Grid mit mehr Padding */}
             {viewMode === "list" && loading && !loadingMore ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(9)].map((_, i) => (
                   <EventCardSkeleton key={i} />
                 ))}
               </div>
             ) : viewMode === "list" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {events.map((event, idx) => {
                   const locationName = getEventLocation(event);
                   const distanceInfo =
@@ -710,16 +728,16 @@ const Listings = () => {
                   };
 
                   return (
-                    <article 
+                    <article
                       key={event.id}
-                      className="group relative rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md border border-stone-200 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+                      className="group relative rounded-2xl overflow-hidden bg-white shadow-lg hover:shadow-2xl border border-stone-100 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                       onClick={() => {
                         trackEventClick(event.id);
                         setSelectedEventId(event.id);
                         setModalOpen(true);
                       }}
                     >
-                      {/* Rechteckiges Bild (4:3 Aspect Ratio) */}
+                      {/* Größeres Bild (4:3 Aspect Ratio für mehr Bild-Dominanz) */}
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <OptimizedEventImage
                           src={event.image_url || getPlaceholderImage(idx)}
@@ -727,21 +745,21 @@ const Listings = () => {
                           className="group-hover:scale-105"
                         />
                         
-                        {/* Date or Category Badge */}
-                        <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
-                          <p className="text-[10px] font-semibold text-stone-700 tracking-wide">
+                        {/* Date or Category Badge - größer und prominenter */}
+                        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg">
+                          <p className="text-xs font-bold text-stone-800 tracking-wide">
                             {getBadgeText()}
                           </p>
                         </div>
                         
-                        {/* Heart Button - TOP RIGHT im Bild */}
+                        {/* Heart Button - größer und prominenter */}
                         <button
                           onClick={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            
+
                             const wasFavorite = isFavorite(event.id);
-                            
+
                             toggleFavorite({
                               id: event.id,
                               slug: event.id,
@@ -751,17 +769,17 @@ const Listings = () => {
                               location: locationName,
                               date: formatEventDate(event.start_date),
                             });
-                            
+
                             if (!wasFavorite) {
                               toast("Event geplant ✨", { duration: 2000 });
                             }
-                            
+
                             try {
                               const numericId = parseInt(event.id, 10);
                               if (!isNaN(numericId)) {
                                 const result = await toggleFavoriteApi(numericId);
-                                setEvents(prev => prev.map(e => 
-                                  e.id === event.id 
+                                setEvents(prev => prev.map(e =>
+                                  e.id === event.id
                                     ? { ...e, favorite_count: result.favoriteCount }
                                     : e
                                 ));
@@ -770,13 +788,13 @@ const Listings = () => {
                               console.error('Failed to toggle favorite:', error);
                             }
                           }}
-                          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md hover:scale-110 transition-all z-10"
+                          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/95 backdrop-blur-md hover:bg-white shadow-lg hover:scale-110 transition-all z-10"
                           aria-label="Add to favorites"
                         >
                           <Heart
-                            size={16}
-                            strokeWidth={1.5}
-                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-500"}
+                            size={18}
+                            strokeWidth={2}
+                            className={isFavorite(event.id) ? "fill-red-500 text-red-500" : "text-stone-600"}
                           />
                         </button>
                         
@@ -786,19 +804,27 @@ const Listings = () => {
                         />
                       </div>
 
-                      {/* Content Section */}
-                      <div className="p-3">
-                        <h3 
-                          className="font-semibold text-stone-900 leading-tight text-sm truncate mb-1"
+                      {/* Content Section - kompakter mit weniger Padding */}
+                      <div className="p-4">
+                        <h3
+                          className="font-bold text-stone-900 leading-tight text-base mb-2 truncate"
                           title={convertToUmlauts(event.title)}
                         >
                           {convertToUmlauts(event.title)}
                         </h3>
-                        
+
+                        {/* Short Description - AI Generated - NUR 1 Zeile */}
+                        {event.short_description && (
+                          <p className="text-sm text-stone-600 leading-relaxed mb-2 line-clamp-1">
+                            {convertToUmlauts(event.short_description)}
+                          </p>
+                        )}
+
                         {/* Location with Mini-Map Hover Tooltip */}
-                        <div className="group/map relative inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-help w-fit">
+                        <div className="group/map relative inline-flex items-center gap-1.5 text-sm text-stone-600 cursor-help w-fit mb-2">
+                          <MapPin size={14} className="text-stone-400" />
                           <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
-                            {event.latitude && event.longitude 
+                            {event.latitude && event.longitude
                               ? getLocationWithMajorCity(event.latitude, event.longitude, locationName)
                               : (locationName || "Schweiz")}
                           </span>
@@ -826,10 +852,17 @@ const Listings = () => {
                             <div className="w-3 h-3 bg-white border-r border-b border-stone-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
                           </div>
                         </div>
-                        
-                        {/* BuzzTracker Slider */}
-                        <div className="pt-2">
-                          <BuzzTracker buzzScore={event.buzz_score} />
+
+
+                        {/* BuzzTracker Slider & Flaggen-Button */}
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <div className="flex-1">
+                            <BuzzTracker buzzScore={event.buzz_score} />
+                          </div>
+                          <EventRatingButtons
+                            eventId={event.id}
+                            eventTitle={event.title}
+                          />
                         </div>
                       </div>
                     </article>
@@ -844,14 +877,6 @@ const Listings = () => {
                 {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-stone-400" />}
               </div>
             )}
-          </div>
-          
-          {/* Right: Trip Planner Sidebar - only in list mode, normaler Flow KEIN sticky */}
-          {viewMode === "list" && (
-            <div className="hidden lg:block w-80 flex-shrink-0">
-              <ListingsTripSidebar onEventClick={handleEventClick} />
-            </div>
-          )}
         </div>
       </div>
       

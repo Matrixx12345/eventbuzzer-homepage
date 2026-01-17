@@ -2060,3 +2060,202 @@ After implementing hover effect changes:
 **This is a CSS fundamentals issue, not a React/Tailwind bug.**
 
 ---
+
+## 🔧 Git Repository Recovery & EventList1 Modal Implementation (January 17, 2026)
+
+### Problem: Corrupted Git Repository + iCloud Sync Issues
+
+**Situation discovered:**
+- User reported project "missing" from Desktop after attempting to move it
+- Project was found in `/Users/jj/Development/eventbuzzer-homepage/` (not `/Developer/`)
+- Git repository was corrupted - `git status` failed with "fatal: mmap failed: Operation timed out"
+- Last GitHub commit: January 13, 2026
+- Local changes from January 14-16 were not pushed to GitHub
+
+**Root Cause:**
+- iCloud was attempting to sync files during git operations
+- Corrupted git index and object files
+- macOS moved project to `/Development/` instead of `/Developer/` during user's manual move attempt
+
+### Solution Applied
+
+**1. Backup Created:**
+```bash
+# Backup 1: Changed files from Jan 14-16
+/Users/jj/Desktop/eventbuzzer-backup-20260116-2121/
+- README.md (67KB - extensive documentation)
+- EventList1.tsx (55KB - major improvements)
+- check-supabase.js (new utility)
+
+# Backup 2: Full corrupted repository
+/Users/jj/Development/eventbuzzer-homepage-KORRUPT-backup/ (213MB)
+- Complete project with all 222 files
+- Includes newer EventsMap.tsx (37KB, Jan 14) with Supercluster implementation
+```
+
+**2. Git Repository Rebuilt:**
+```bash
+# Fresh clone from GitHub
+git clone https://github.com/Matrixx12345/eventbuzzer-homepage.git
+
+# Restored missing files from KORRUPT backup:
+- EventsMap.tsx (1077 lines) - Supercluster, zoom-based markers, Google Maps style
+- ChatbotPopupRight.tsx - Missing from GitHub
+- map.ts - Updated type definitions
+- FavoritesContext.tsx - Newer version
+- EventDetailModal.tsx - Newer version
+- Navbar.tsx - Newer version
+- Listings.tsx - Newer Map integration
+- index.css - Fixed @import order (must precede @tailwind)
+
+# Committed and pushed to GitHub
+git commit -m "Restore work from Jan 16 - EventList1 improvements + README updates"
+git push origin main
+```
+
+**3. Dependencies Fixed:**
+```bash
+# Activated nvm (node/npm were installed but not in PATH)
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
+
+# Installed dependencies
+npm install --legacy-peer-deps
+# (Required due to React 18/19 peer dependency conflict with react-leaflet)
+```
+
+### EventList1 - Modal Implementation (January 17, 2026)
+
+**Problem:** Events opened in new page with `navigate()`, losing filter state and poor UX.
+
+**Solution:** Implemented EventDetailModal popup instead.
+
+**Changes Made:**
+
+**File:** `/src/pages/EventList1.tsx`
+
+**1. Import EventDetailModal:**
+```typescript
+import EventDetailModal from "@/components/EventDetailModal";
+```
+
+**2. Add Modal State (lines 620-622):**
+```typescript
+// Event Detail Modal State
+const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+const [isModalOpen, setIsModalOpen] = useState(false);
+```
+
+**3. Change onClick Handler (lines 1092-1095):**
+```typescript
+// OLD - navigated to new page:
+onClick={(event) => navigate(`/event/${event.external_id || event.id}`)}
+
+// NEW - opens modal:
+onClick={(event) => {
+  setSelectedEvent(event);
+  setIsModalOpen(true);
+}}
+```
+
+**4. Render Modal (lines 1327-1337):**
+```typescript
+{/* Event Detail Modal */}
+{selectedEvent && (
+  <EventDetailModal
+    event={selectedEvent}
+    isOpen={isModalOpen}
+    onClose={() => {
+      setIsModalOpen(false);
+      setSelectedEvent(null);
+    }}
+  />
+)}
+```
+
+**Benefits:**
+- ✅ Filter state preserved (no page navigation)
+- ✅ Better UX - overlay modal, can close and return to exact scroll position
+- ✅ SEO intact - event pages still exist at `/event/:id` for direct access
+- ✅ Faster interaction - no page reload
+
+### Features Already Implemented (Just Needed Browser Refresh)
+
+**All features were already in code but not visible due to browser caching:**
+
+**1. Star Ratings (EventList1.tsx lines 299-302):**
+```typescript
+<div className="flex items-center gap-1.5">
+  <span className="text-yellow-400 text-lg">⭐</span>
+  <span className="text-sm font-semibold text-gray-600">
+    {rating.toFixed(1)}
+  </span>
+</div>
+```
+
+**2. Zoom Controls (EventsMap.tsx lines 1033-1061):**
+- Position: `bottom-4 right-4` (bottom-right, not left!)
+- Custom +/− buttons with Google Maps styling
+- Only shown when `customControls={true}` prop is set
+
+**3. Cluster Hover Highlighting (EventsMap.tsx lines 514-533):**
+```typescript
+// Check if hovered event is inside cluster
+const hasHovered = clusterLeaves.some(leaf =>
+  leaf.properties.event.id === hoveredEventId
+);
+
+// RED border when hovered
+border: 3px solid ${hasHovered ? '#ef4444' : 'white'};
+box-shadow: ${hasHovered ? '0 0 0 2px #ef4444' : '0 2px 6px rgba(0,0,0,0.3)'};
+```
+
+**4. Event Marker Hover Highlighting (EventsMap.tsx lines 567-603):**
+- Small dots (zoom < 9): Scale to 28px with red border
+- Event images (zoom >= 9): Scale to 56px with red border
+- Smooth 0.3s transitions
+
+**5. Filter Settings:**
+All filters intact and functional:
+- Category/Subcategory filter
+- City + Radius filter (25km default)
+- Date picker
+- Time filter (heute, diese-woche, dieses-wochenende, naechste-woche, dieser-monat)
+- Search (minimum 3 characters)
+- Similar Events filter (Amazon-style)
+- Nearby Events filter
+
+### Testing Checklist
+
+After recovery and implementation:
+
+- [x] Git repository functions correctly
+- [x] All files restored from backup
+- [x] Dependencies installed
+- [x] Dev server runs without errors
+- [x] EventDetailModal opens on event click
+- [x] Filter state preserved when closing modal
+- [ ] Hard refresh browser (Cmd+Shift+R) to see all features
+- [ ] Verify star ratings visible
+- [ ] Verify zoom controls bottom-right
+- [ ] Verify cluster red border on hover
+- [ ] Verify event marker scaling on hover
+
+### Important Notes
+
+**Browser Caching:**
+- Many features appear "missing" but are actually cached
+- **SOLUTION:** Hard refresh with Cmd+Shift+R (macOS) or Ctrl+Shift+R (Windows)
+- Clear site data if issues persist: DevTools → Application → Clear Storage
+
+**Backup Locations (Can delete after verification):**
+```
+/Users/jj/Desktop/eventbuzzer-backup-20260116-2121/
+/Users/jj/Development/eventbuzzer-homepage-KORRUPT-backup/
+```
+
+**npm Peer Dependencies:**
+- Always use `--legacy-peer-deps` flag when installing packages
+- React 18 vs React 19 conflict with react-leaflet@5.0.0
+
+---

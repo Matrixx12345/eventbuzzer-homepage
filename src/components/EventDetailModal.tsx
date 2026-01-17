@@ -1,1156 +1,210 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Heart,
-  MapPin,
-  Calendar,
-  Navigation,
-  ExternalLink,
-  Share2,
-  CalendarPlus,
-  Copy,
-  Mail,
-  X,
-  Loader2,
-  ArrowRight,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { useFavorites } from "@/contexts/FavoritesContext";
-import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/externalClient";
-import { toast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking";
-import { getNearestPlace } from "@/utils/swissPlaces";
-import { BuzzTracker } from "@/components/BuzzTracker";
-import { EventRatingButtons } from "@/components/EventRatingButtons";
-import { ImageGallery } from "@/components/ImageGallery";
-import ImageAttribution from "@/components/ImageAttribution";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-
-// Fallback image
-import weekendJazz from "@/assets/weekend-jazz.jpg";
-
-
-// Partner products
-import partnerChampagne from "@/assets/partner-champagne.jpg";
-import partnerRoses from "@/assets/partner-roses.jpg";
-import partnerTeddy from "@/assets/partner-teddy.jpg";
-import partnerChocolate from "@/assets/partner-chocolate.jpg";
-import rainySpa from "@/assets/rainy-spa.jpg";
-import weekendWine from "@/assets/weekend-wine.jpg";
-import weekendArt from "@/assets/weekend-art.jpg";
-import rainyChocolate from "@/assets/rainy-chocolate.jpg";
-
-interface DynamicEvent {
-  id: string;
-  external_id?: string;
-  title: string;
-  description?: string;
-  long_description?: string;
-  short_description?: string;
-  venue_name?: string;
-  address_street?: string;
-  address_city?: string;
-  address_zip?: string;
-  location?: string;
-  start_date?: string;
-  end_date?: string;
-  image_url?: string;
-  image_author?: string | null;
-  image_license?: string | null;
-  price_from?: number;
-  price_to?: number;
-  price_label?: string;
-  ticket_link?: string;
-  latitude?: number;
-  longitude?: number;
-  category_sub_id?: string;
-  created_at?: string;
-  gallery_urls?: string[];
-  buzz_score?: number | null;
-  opening_hours_note?: string;
-  tags?: string[];
-}
-
-// Tag display mapping and styling
-// Tag display mapping - milky style mit besserer Lesbarkeit (60% Deckkraft)
-const TAG_DISPLAY_MAP: Record<string, { label: string; bgColor: string; textColor: string }> = {
-  'elite': { label: 'MUST-SEE', bgColor: 'rgba(212, 175, 55, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'mistwetter': { label: 'BEI MISTWETTER', bgColor: 'rgba(120, 115, 117, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'natur': { label: 'NATUR', bgColor: 'rgba(130, 145, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'outdoor': { label: 'OUTDOOR', bgColor: 'rgba(130, 145, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'wandern': { label: 'WANDERN', bgColor: 'rgba(130, 145, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'winter-special': { label: 'WINTER', bgColor: 'rgba(100, 160, 180, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'ski': { label: 'SKI', bgColor: 'rgba(100, 160, 180, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'schnee': { label: 'SCHNEE', bgColor: 'rgba(100, 160, 180, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'familie-freundlich': { label: 'FAMILIEN', bgColor: 'rgba(200, 140, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'gruppe': { label: 'GRUPPEN', bgColor: 'rgba(200, 140, 100, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'romantik': { label: 'ROMANTIK', bgColor: 'rgba(180, 130, 150, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'kultur': { label: 'KULTUR', bgColor: 'rgba(160, 140, 120, 0.6)', textColor: 'rgb(255, 255, 255)' },
-  'kunst': { label: 'KUNST', bgColor: 'rgba(160, 140, 120, 0.6)', textColor: 'rgb(255, 255, 255)' },
-};
-
-// Category to label mapping
-const CATEGORY_LABEL_MAP: Record<string, string> = {
-  'museum-kunst': 'MUSEUM',
-  'konzert': 'KONZERT',
-  'theater': 'THEATER',
-  'sport': 'SPORT',
-  'festival': 'FESTIVAL',
-  'outdoor': 'OUTDOOR',
-  'wellness': 'WELLNESS',
-  'family': 'FAMILIE',
-  'food': 'KULINARIK',
-  'nightlife': 'NIGHTLIFE',
-};
-
-const COUNTRY_NAMES = [
-  "schweiz", "switzerland", "suisse", "svizzera",
-  "germany", "deutschland", "france", "frankreich",
-  "austria", "österreich", "italy", "italien", "liechtenstein",
-];
-
-const isCountryName = (str?: string) => {
-  if (!str || typeof str !== 'string') return true;
-  return COUNTRY_NAMES.includes(str.toLowerCase().trim());
-};
-
-// Safe string helper
-const safeString = (val: unknown): string => {
-  if (typeof val === 'string') return val;
-  return '';
-};
-
-const getEventLocation = (event: DynamicEvent): string => {
-  const city = safeString(event.address_city).trim();
-  if (city && city.length > 0 && !isCountryName(city)) {
-    return city;
-  }
-  const venueName = safeString(event.venue_name).trim();
-  const title = safeString(event.title).trim();
-  if (venueName && venueName !== title && !isCountryName(venueName)) {
-    return venueName;
-  }
-  const location = safeString(event.location).trim();
-  if (location && !isCountryName(location)) {
-    return location;
-  }
-  if (event.latitude && event.longitude) {
-    return getNearestPlace(event.latitude, event.longitude);
-  }
-  return "";
-};
-
-const getDistanceInfo = (lat: number, lng: number): { city: string; distance: string } => {
-  const centers = [
-    { name: "Zürich", lat: 47.3769, lng: 8.5417 },
-    { name: "Genf", lat: 46.2044, lng: 6.1432 },
-    { name: "Basel", lat: 47.5596, lng: 7.5886 },
-    { name: "Bern", lat: 46.948, lng: 7.4474 },
-    { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
-    { name: "Luzern", lat: 47.0502, lng: 8.3093 },
-  ];
-
-  let nearest = centers[0], minDist = Infinity;
-  centers.forEach((c) => {
-    const d = Math.sqrt(Math.pow((lat - c.lat) * 111, 2) + Math.pow((lng - c.lng) * 85, 2));
-    if (d < minDist) {
-      minDist = d;
-      nearest = c;
-    }
-  });
-
-  if (minDist < 5) {
-    return { city: nearest.name, distance: `In ${nearest.name}` };
-  }
-
-  const dLat = lat - nearest.lat;
-  const dLng = lng - nearest.lng;
-  let direction = "";
-  if (Math.round(minDist) > 2) {
-    if (dLat > 0.02) direction += "N";
-    else if (dLat < -0.02) direction += "S";
-    if (dLng > 0.02) direction += "O";
-    else if (dLng < -0.02) direction += "W";
-  }
-
-  const distanceText = direction
-    ? `~${Math.round(minDist)} km ${direction} von ${nearest.name}`
-    : `~${Math.round(minDist)} km von ${nearest.name}`;
-
-  return { city: nearest.name, distance: distanceText };
-};
-
-// Similar event type
-interface SimilarEvent {
-  id: string;
-  image: string;
-  title: string;
-  venue: string;
-  location: string;
-  date: string;
-  distance?: number;
-}
-
-// Partner products
-const partnerProducts = [
-  { image: partnerRoses, name: "12 Red Roses Bouquet", price: "CHF 39", partner: "Fleurop" },
-  { image: partnerChampagne, name: "Moët & Chandon Impérial", price: "CHF 49", partner: "Galaxus" },
-  { image: partnerChocolate, name: "Lindt Pralinés Selection", price: "CHF 29", partner: "Lindt" },
-  { image: partnerTeddy, name: "Premium Teddy Bear", price: "CHF 35", partner: "Manor" },
-  { image: rainySpa, name: "Late Night Spa Access", price: "CHF 79", partner: "Hürlimann" },
-  { image: weekendWine, name: "Scented Candle Set", price: "CHF 45", partner: "Westwing" },
-  { image: weekendArt, name: "Cashmere Red Gloves", price: "CHF 89", partner: "Globus" },
-  { image: rainyChocolate, name: "Artisan Coffee Set", price: "CHF 55", partner: "Sprüngli" },
-];
-
-// Similar Event Card
-const SimilarEventCard = ({ id, image, title, venue, location, date, distance, onSwap }: SimilarEvent & {
-  onSwap: (eventId: string) => void;
-}) => {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('SimilarEventCard clicked, id:', id, 'type:', typeof id);
-    const safeId = typeof id === 'string' ? id.trim() : String(id || '');
-    console.log('safeId:', safeId, 'onSwap:', typeof onSwap);
-    if (safeId !== '' && typeof onSwap === 'function') {
-      onSwap(safeId);
-    } else {
-      console.warn('Cannot swap: safeId empty or onSwap not a function');
-    }
-  };
-  
-  return (
-    <button 
-      type="button"
-      onClick={handleClick}
-      className="block group h-full cursor-pointer text-left w-full hover:opacity-95 active:scale-[0.98] transition-all"
-    >
-      <article className="bg-white rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-shadow duration-300">
-        <div className="relative aspect-video overflow-hidden">
-          <img
-            src={image || weekendJazz}
-            alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = weekendJazz;
-            }}
-          />
-        </div>
-        <div className="p-3 pointer-events-none">
-          <p className="text-neutral-500 text-xs mb-1">{date}</p>
-          <h3 className="font-serif text-neutral-900 text-sm font-semibold leading-tight mb-1 line-clamp-1">{title}</h3>
-          <p className="text-neutral-500 text-xs line-clamp-1">{venue} • {location}</p>
-          {distance !== undefined && (
-            <p className="text-neutral-400 text-xs mt-1">~ {distance.toFixed(1)} km entfernt</p>
-          )}
-        </div>
-      </article>
-    </button>
-  );
-};
-
-// Partner Product Card
-const PartnerProductCard = ({ image, name, price, partner }: {
-  image: string;
-  name: string;
-  price: string;
-  partner: string;
-}) => {
-  return (
-    <article className="relative rounded-xl overflow-hidden group cursor-pointer aspect-[4/5]">
-      <img
-        src={image}
-        alt={name}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-3">
-        <p className="text-white/70 text-[9px] uppercase tracking-wider mb-0.5">via {partner}</p>
-        <h3 className="text-white font-serif text-sm font-semibold leading-tight mb-1 line-clamp-2">{name}</h3>
-        <div className="flex items-center justify-between">
-          <span className="text-white text-sm font-semibold">{price}</span>
-          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-2 py-1 rounded-full text-[10px] font-medium transition-colors flex items-center gap-0.5">
-            <Plus size={10} /> Add
-          </button>
-        </div>
-      </div>
-    </article>
-  );
-};
-
-// Event cache for faster repeated loads
-const eventCache = new Map<string, { event: DynamicEvent; similar: SimilarEvent[] }>();
-
-// Skeleton component for loading state
-const ModalSkeleton = () => (
-  <div className="animate-pulse">
-    {/* Hero skeleton */}
-    <div className="h-48 sm:h-56 bg-neutral-200" />
-    
-    {/* Content skeleton */}
-    <div className="p-5 sm:p-6 space-y-4">
-      {/* Title */}
-      <div className="h-7 bg-neutral-200 rounded-md w-3/4" />
-      
-      {/* Meta info */}
-      <div className="flex gap-3">
-        <div className="h-4 bg-neutral-100 rounded w-24" />
-        <div className="h-4 bg-neutral-100 rounded w-32" />
-        <div className="h-4 bg-neutral-100 rounded w-20" />
-      </div>
-      
-      {/* Buttons */}
-      <div className="flex gap-2">
-        <div className="h-10 bg-neutral-200 rounded-lg w-32" />
-        <div className="h-10 bg-neutral-100 rounded-lg w-10" />
-        <div className="h-10 bg-neutral-100 rounded-lg w-10" />
-      </div>
-      
-      {/* Description */}
-      <div className="space-y-2 pt-4 border-t border-neutral-100">
-        <div className="h-5 bg-neutral-200 rounded w-40 mb-3" />
-        <div className="h-4 bg-neutral-100 rounded w-full" />
-        <div className="h-4 bg-neutral-100 rounded w-full" />
-        <div className="h-4 bg-neutral-100 rounded w-5/6" />
-        <div className="h-4 bg-neutral-100 rounded w-4/5" />
-      </div>
-    </div>
-    
-    {/* Similar events skeleton */}
-    <div className="bg-stone-50 px-5 sm:px-6 py-5">
-      <div className="h-6 bg-neutral-200 rounded w-40 mb-4" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-xl overflow-hidden bg-white border border-neutral-200">
-            <div className="aspect-video bg-neutral-200" />
-            <div className="p-3 space-y-2">
-              <div className="h-3 bg-neutral-100 rounded w-16" />
-              <div className="h-4 bg-neutral-200 rounded w-full" />
-              <div className="h-3 bg-neutral-100 rounded w-24" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Heart, CalendarPlus } from 'lucide-react';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { toast } from 'sonner';
 
 interface EventDetailModalProps {
-  eventId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onEventSwap?: (eventId: string) => void;
-  eventIds?: string[];
-  onNavigatePrev?: () => void;
-  onNavigateNext?: () => void;
+  event: any;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export const EventDetailModal = ({ 
-  eventId, 
-  open, 
-  onOpenChange, 
-  onEventSwap,
-  eventIds = [],
-  onNavigatePrev,
-  onNavigateNext 
-}: EventDetailModalProps) => {
+export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onClose }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [showFullDescription, setShowFullDescription] = useState(false);
-  const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
-  const [similarEvents, setSimilarEvents] = useState<SimilarEvent[]>([]);
-  const [shareOpen, setShareOpen] = useState(false);
-  const isMobile = useIsMobile();
-const [loading, setLoading] = useState(false);
-  const referralTrackedRef = useRef(false);
-  const [needsReadMore, setNeedsReadMore] = useState(false);
-  const descriptionRef = useRef<HTMLParagraphElement>(null);
-  const [nearbyEvents, setNearbyEvents] = useState<SimilarEvent[]>([]);
 
-  // Navigation state
-  const currentIndex = eventIds.length > 0 && eventId ? eventIds.indexOf(eventId) : -1;
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex < eventIds.length - 1 && currentIndex !== -1;
+  if (!event) return null;
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (!open) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && hasPrev && onNavigatePrev) {
-        e.preventDefault();
-        onNavigatePrev();
-      } else if (e.key === 'ArrowRight' && hasNext && onNavigateNext) {
-        e.preventDefault();
-        onNavigateNext();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, hasPrev, hasNext, onNavigatePrev, onNavigateNext]);
+  const isFavorited = isFavorite(event.id);
 
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!open) {
-      setShowFullDescription(false);
-      setDynamicEvent(null);
-      setSimilarEvents([]);
-      setNearbyEvents([]);
-      setShareOpen(false);
-      referralTrackedRef.current = false;
-      setNeedsReadMore(false);
-    }
-  }, [open]);
-
-  // Check if description needs "read more" (more than 6 lines)
-  useEffect(() => {
-    if (descriptionRef.current && !showFullDescription) {
-      const lineHeight = parseFloat(getComputedStyle(descriptionRef.current).lineHeight);
-      const height = descriptionRef.current.scrollHeight;
-      const lines = Math.ceil(height / lineHeight);
-      setNeedsReadMore(lines > 6);
-    }
-  }, [dynamicEvent, showFullDescription]);
-
-  // Fetch event when modal opens OR eventId changes (for swap)
-  useEffect(() => {
-    if (open && eventId) {
-      // Reset UI state immediately when eventId changes
-      setShowFullDescription(false);
-      setNeedsReadMore(false);
-      
-      // Check cache first
-      const cached = eventCache.get(eventId);
-      if (cached) {
-        setDynamicEvent(cached.event);
-        setSimilarEvents(cached.similar);
-        setLoading(false);
-        return;
-      }
-      
-      // Not cached - fetch from API
-      setDynamicEvent(null);
-      setSimilarEvents([]);
-      setNearbyEvents([]);
-      
-      const fetchEvent = async () => {
-        setLoading(true);
-        try {
-          // Fetch main event
-          const { data, error } = await supabase.functions.invoke("get-external-events", {
-            body: { eventId }
-          });
-          if (error) throw error;
-          if (data?.events?.[0]) {
-            const eventData = data.events[0];
-            setDynamicEvent(eventData);
-            
-            // Fetch similar events (random 4 events, excluding current)
-            const { data: similarData } = await supabase.functions.invoke("get-external-events", {
-              body: { limit: 8 }
-            });
-            
-            let similarList: SimilarEvent[] = [];
-            if (similarData?.events) {
-              similarList = similarData.events
-                .filter((e: DynamicEvent) => e.id !== eventId && e.external_id !== eventId)
-                .slice(0, 4)
-                .map((e: DynamicEvent) => ({
-                  id: e.external_id || e.id,
-                  image: e.image_url || weekendJazz,
-                  title: e.title,
-                  venue: e.venue_name || '',
-                  location: getEventLocation(e),
-                  date: e.start_date 
-                    ? new Date(e.start_date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
-                    : ''
-                }));
-              setSimilarEvents(similarList);
-            }
-            
-            // Fetch nearby events if coordinates available
-            // First try 10km radius, expand to 25km if fewer than 3 events found
-            if (eventData.latitude && eventData.longitude) {
-              let nearbyData = null;
-              let usedRadius = 10;
-              
-              // First attempt: 10km radius
-              const { data: nearbyData10km } = await externalSupabase.rpc('get_nearby_events', {
-                current_event_id: eventData.id,
-                current_lat: eventData.latitude,
-                current_lng: eventData.longitude,
-                radius_km: 10
-              });
-              
-              // If fewer than 3 events, expand to 25km
-              if (!nearbyData10km || nearbyData10km.length < 3) {
-                const { data: nearbyData25km } = await externalSupabase.rpc('get_nearby_events', {
-                  current_event_id: eventData.id,
-                  current_lat: eventData.latitude,
-                  current_lng: eventData.longitude,
-                  radius_km: 25
-                });
-                nearbyData = nearbyData25km;
-                usedRadius = 25;
-              } else {
-                nearbyData = nearbyData10km;
-              }
-              
-              if (nearbyData && Array.isArray(nearbyData) && nearbyData.length > 0) {
-                const nearbyList = nearbyData.slice(0, 10).map((e: any) => ({
-                  id: e.external_id || e.id,
-                  image: e.image_url || weekendJazz,
-                  title: e.title,
-                  venue: e.venue_name || '',
-                  location: getEventLocation(e),
-                  date: e.start_date 
-                    ? new Date(e.start_date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
-                    : '',
-                  distance: e.distance_km
-                }));
-                setNearbyEvents(nearbyList);
-              }
-            }
-            
-            // Cache for future use
-            eventCache.set(eventId, { event: eventData, similar: similarList });
-          }
-        } catch (err) {
-          console.error("Error fetching event:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchEvent();
-    }
-  }, [open, eventId]);
-
-  // Track referral visits
-  useEffect(() => {
-    if (dynamicEvent && !referralTrackedRef.current && isExternalReferral()) {
-      referralTrackedRef.current = true;
-      trackEventReferral(dynamicEvent.id);
-    }
-  }, [dynamicEvent]);
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return null;
-    try {
-      return new Date(dateStr).toLocaleDateString("de-CH", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatTime = (dateStr?: string) => {
-    if (!dateStr) return null;
-    try {
-      return new Date(dateStr).toLocaleTimeString("de-CH", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return null;
-    }
-  };
-
-  if (!eventId) return null;
-
-  // Build event display data
-  let event: {
-    image: string;
-    title: string;
-    venue: string;
-    location: string;
-    address?: string;
-    date: string;
-    time: string;
-    distance: string;
-    description: string;
-    ticketLink?: string;
-    priceFrom?: number;
-    priceTo?: number;
-    priceLabel?: string;
-    latitude?: number;
-    longitude?: number;
-    imageAuthor?: string | null;
-    imageLicense?: string | null;
-    isMuseum?: boolean;
-    buzzScore?: number | null;
-    galleryUrls?: string[];
-    categoryLabel?: string;
-    tags?: string[];
-  };
-
-  if (dynamicEvent) {
-    const addressParts = [
-      dynamicEvent.address_street,
-      [dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean).join(" "),
-      "Schweiz"
-    ].filter(Boolean);
-
-    const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';
-    const isMuseum = dynamicEvent.category_sub_id === 'museum-kunst' || dynamicEvent.external_id?.startsWith('manual_');
-    const isPermanentAttraction = !dynamicEvent.start_date;
-
-    let dateDisplay: string;
-    let timeDisplay: string;
-
-    if (isMuseum) {
-      dateDisplay = "";
-      timeDisplay = "";
-    } else if (isPermanentAttraction) {
-      // Use opening_hours_note if available, fallback to "Jederzeit verfügbar"
-      dateDisplay = dynamicEvent.opening_hours_note || "Jederzeit verfügbar";
-      timeDisplay = "";  // No time for permanent attractions
-    } else {
-      dateDisplay = formatDate(dynamicEvent.start_date) || "Datum folgt";
-      timeDisplay = formatTime(dynamicEvent.start_date) || "";
-    }
-
-    const locationName = getEventLocation(dynamicEvent);
-    const distanceInfo = dynamicEvent.latitude && dynamicEvent.longitude
-      ? getDistanceInfo(dynamicEvent.latitude, dynamicEvent.longitude)
-      : null;
-
-    event = {
-      image: hasValidImage ? dynamicEvent.image_url! : weekendJazz,
-      title: dynamicEvent.title,
-      venue: dynamicEvent.venue_name || (dynamicEvent.location !== dynamicEvent.title ? dynamicEvent.location : null) || "",
-      location: locationName || "Schweiz",
-      address: addressParts.length > 0 ? addressParts.join(", ") : "",
-      date: dateDisplay,
-      time: timeDisplay,
-      distance: distanceInfo?.distance || "",
-      description: dynamicEvent.long_description || dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
-      ticketLink: dynamicEvent.ticket_link,
-      priceFrom: dynamicEvent.price_from,
-      priceTo: dynamicEvent.price_to,
-      priceLabel: dynamicEvent.price_label,
-      latitude: dynamicEvent.latitude,
-      longitude: dynamicEvent.longitude,
-      imageAuthor: dynamicEvent.image_author,
-      imageLicense: dynamicEvent.image_license,
-      isMuseum,
-      buzzScore: dynamicEvent.buzz_score,
-      galleryUrls: dynamicEvent.gallery_urls || [],
-      categoryLabel: dynamicEvent.category_sub_id ? CATEGORY_LABEL_MAP[dynamicEvent.category_sub_id] : undefined,
-      tags: dynamicEvent.tags || [],
-    };
-  } else {
-    event = {
-      image: weekendJazz,
-      title: loading ? "Lädt..." : "Event nicht gefunden",
-      venue: "",
-      location: "",
-      date: "",
-      time: "",
-      distance: "",
-      description: loading ? "" : "Dieses Event konnte nicht gefunden werden.",
-    };
-  }
-
-  const handleCalendarExport = () => {
-    const startDate = dynamicEvent?.start_date 
-      ? new Date(dynamicEvent.start_date) 
-      : new Date();
-    
-    const endDate = dynamicEvent?.end_date 
-      ? new Date(dynamicEvent.end_date) 
-      : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-    
-    const formatICSDate = (date: Date) => {
+  // Calendar export function
+  const exportToCalendar = () => {
+    const formatDateForICS = (dateStr: string) => {
+      const date = new Date(dateStr);
       return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
-    
-    const escapeICS = (text: string) => {
-      return text
-        .replace(/\\/g, '\\\\')
-        .replace(/;/g, '\\;')
-        .replace(/,/g, '\\,')
-        .replace(/\n/g, '\\n');
-    };
-    
-    const eventUrl = `${window.location.origin}/event/${eventId}`;
-    const shortDesc = event.description?.substring(0, 200) || '';
-    const fullDescription = `${shortDesc}${shortDesc.length >= 200 ? '...' : ''}\\n\\nMehr Infos auf EventBuzzer: ${eventUrl}`;
-    
-    const locationStr = [event.venue, event.address].filter(Boolean).join(', ');
-    const uid = `${eventId}-${Date.now()}@eventbuzzer.ch`;
-    
+
+    const startDate = event.start_date ? formatDateForICS(event.start_date) : '';
+    const endDate = event.end_date ? formatDateForICS(event.end_date) : '';
+    const location = event.venue_name || event.address_city || event.location || "Schweiz";
+    const description = (event.short_description || event.description || "").replace(/\n/g, '\\n');
+    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//EventBuzzer//Event Calendar//DE',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
+      'PRODID:-//EventBuzzer//NONSGML v1.0//EN',
       'BEGIN:VEVENT',
-      `UID:${uid}`,
-      `DTSTAMP:${formatICSDate(new Date())}`,
-      `DTSTART:${formatICSDate(startDate)}`,
-      `DTEND:${formatICSDate(endDate)}`,
-      `SUMMARY:${escapeICS(event.title)}`,
-      `DESCRIPTION:${escapeICS(fullDescription)}`,
-      `LOCATION:${escapeICS(locationStr)}`,
+      `UID:${event.id}@eventbuzzer.ch`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTSTART:${startDate}`,
+      `DTEND:${endDate}`,
+      `SUMMARY:${event.title}`,
+      `DESCRIPTION:${description}\\n\\nMehr Infos: ${eventUrl}`,
+      `LOCATION:${location}`,
       `URL:${eventUrl}`,
+      'STATUS:CONFIRMED',
       'END:VEVENT',
       'END:VCALENDAR'
-    ].join('\r\n');
-    
+    ].join('\n');
+
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${event.title.replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '').replace(/\s+/g, '_')}.ics`;
+    link.href = url;
+    link.download = `${event.title.replace(/[^a-z0-9]/gi, '_')}.ics`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-    
-    toast({
-      title: "Kalender-Export",
-      description: "Die .ics Datei wurde heruntergeladen.",
-    });
+    URL.revokeObjectURL(url);
+    toast.success("Event zum Kalender hinzugefügt!");
   };
 
-  const eventUrl = `${window.location.origin}/event/${eventId}`;
+  // WhatsApp share
+  const shareViaWhatsApp = () => {
+    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+    const text = `Check out this event: ${event.title} ${eventUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  // Email share
+  const shareViaEmail = () => {
+    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+    const subject = `Event: ${event.title}`;
+    const body = `Hallo,\n\nIch habe diesen Event gefunden:\n${event.title}\n\n${eventUrl}\n\nLiebe Grüsse`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleToggleFavorite = () => {
+    const wasFavorite = isFavorited;
+
+    toggleFavorite({
+      id: event.id,
+      slug: event.id,
+      title: event.title,
+      venue: event.venue_name || "",
+      image: event.image_url || "",
+      location: event.address_city || event.location || "",
+      date: event.start_date ? new Date(event.start_date).toLocaleDateString('de-CH') : ""
+    });
+
+    // ONLY show toast when ADDING to favorites (not when removing)
+    if (!wasFavorite) {
+      toast.success("Event geplant ✨", { duration: 2000 });
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl max-h-[95vh] overflow-y-auto overflow-x-hidden p-0 gap-0 [&>button]:hidden">
-        {/* Navigation Arrows - Left and Right of Modal */}
-        {eventIds.length > 1 && (
-          <>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{event.title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {event.image_url && (
+            <img
+              src={event.image_url}
+              alt={event.title}
+              className="w-full h-64 object-cover rounded-lg"
+            />
+          )}
+
+          {/* Action Buttons: Favoriten + Kalender + Share (WhatsApp & E-Mail) */}
+          <div className="flex items-center gap-3 pb-4 border-b">
+            {/* Favorite Button */}
             <button
-              onClick={onNavigatePrev}
-              disabled={!hasPrev}
-              className={cn(
-                "fixed left-2 sm:left-4 lg:left-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all",
-                hasPrev 
-                  ? "hover:bg-neutral-50 hover:scale-110 hover:shadow-xl cursor-pointer" 
-                  : "opacity-20 cursor-not-allowed"
-              )}
-              aria-label="Vorheriges Event"
+              onClick={handleToggleFavorite}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
             >
-              <ChevronLeft size={32} strokeWidth={2.5} className="text-neutral-800" />
+              <Heart
+                size={20}
+                className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"}
+              />
+              <span className="text-sm font-medium text-gray-700">
+                {isFavorited ? "Gespeichert" : "Speichern"}
+              </span>
             </button>
-            
+
+            {/* Calendar Button */}
             <button
-              onClick={onNavigateNext}
-              disabled={!hasNext}
-              className={cn(
-                "fixed right-2 sm:right-4 lg:right-[calc(50%-min(40rem,48vw)-5rem)] top-1/2 -translate-y-1/2 z-[60] w-14 h-14 rounded-full bg-white shadow-2xl border-2 border-neutral-200 flex items-center justify-center transition-all",
-                hasNext 
-                  ? "hover:bg-neutral-50 hover:scale-110 hover:shadow-xl cursor-pointer" 
-                  : "opacity-20 cursor-not-allowed"
-              )}
-              aria-label="Nächstes Event"
+              onClick={exportToCalendar}
+              className="group flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors relative"
             >
-              <ChevronRight size={32} strokeWidth={2.5} className="text-neutral-800" />
+              <CalendarPlus size={20} className="text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Kalender</span>
+
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
+                <div className="bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap">
+                  Im privaten Kalender speichern
+                </div>
+                <div className="w-2 h-2 bg-gray-900 rotate-45 -mt-1 mx-auto" />
+              </div>
             </button>
-          </>
-        )}
-        
-        {/* Sticky Close Button Container */}
-        <div className="sticky top-0 z-50 w-full h-0 pointer-events-none">
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 pointer-events-auto w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-white transition-all border border-neutral-200"
-            aria-label="Schließen"
-          >
-            <X size={20} className="text-neutral-700" />
-          </button>
-        </div>
-        
-        {loading ? (
-          <ModalSkeleton />
-        ) : (
-          <>
-            {/* Hero Image - smaller */}
-            <div className="relative h-48 sm:h-56 overflow-hidden">
-              <img
-                src={event.image}
-                alt={event.title}
-                className="w-full h-full object-cover object-center"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = weekendJazz;
-                }}
-              />
-              
-              {/* Tag Pills - oben links im Bild */}
-              <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 max-w-[80%]">
-                {/* Subkategorie Badge (grau) - immer zuerst */}
-                {event.categoryLabel && (
-                  <span className="bg-neutral-800/70 backdrop-blur-sm text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
-                    {event.categoryLabel}
-                  </span>
-                )}
-                
-                {/* Weitere Tags - gleiches Design wie Subkategorie, nur andere Farben */}
-                {event.tags?.map((tag) => {
-                  const tagInfo = TAG_DISPLAY_MAP[tag];
-                  if (!tagInfo) return null;
-                  return (
-                    <span
-                      key={tag}
-                      className="backdrop-blur-sm text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded"
-                      style={{
-                        backgroundColor: tagInfo.bgColor,
-                        color: tagInfo.textColor,
-                      }}
-                    >
-                      {tagInfo.label}
-                    </span>
-                  );
-                })}
-              </div>
-              
-              <ImageAttribution 
-                author={event.imageAuthor} 
-                license={event.imageLicense} 
-                alwaysVisible 
-              />
-            </div>
 
-            {/* Content */}
-            <div className="p-5 sm:p-6 w-full overflow-hidden">
-              {/* Title */}
-              <DialogHeader className="mb-3">
-                <DialogTitle className="font-serif text-neutral-900 text-xl sm:text-2xl font-bold leading-tight text-left">
-                  {event.title}
-                </DialogTitle>
-              </DialogHeader>
+            {/* WhatsApp Share */}
+            <button
+              onClick={shareViaWhatsApp}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              title="Via WhatsApp teilen"
+            >
+              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+              </svg>
+              <span className="text-sm font-medium text-gray-700">WhatsApp</span>
+            </button>
 
-              {/* Meta Info */}
-              <div className="flex flex-wrap items-center gap-3 mb-4 text-[11px] text-gray-500">
-                {event.isMuseum && (
-                  <span className="uppercase tracking-wide">Museum</span>
-                )}
-                
-                {!event.isMuseum && event.date && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar size={12} className="text-gray-400" />
-                    <span>{event.date}{event.time ? `, ${event.time}` : ''}</span>
-                  </div>
-                )}
-                
-                {event.location && (
-                  <div className="flex items-center gap-1.5">
-                    <MapPin size={12} className="text-gray-400" />
-                    <span>
-                      {event.location}
-                      {event.distance && <span className="text-gray-400 ml-1">• {event.distance}</span>}
-                    </span>
-                  </div>
-                )}
-                
-                {event.venue && event.venue !== event.location && (
-                  <div className="flex items-center gap-1.5">
-                    <Navigation size={12} className="text-gray-400" />
-                    <span>{event.venue}</span>
-                  </div>
-                )}
-                
-                {(event.priceLabel || event.priceFrom) && (
-                  <span className="text-gray-700 font-medium">
-                    {event.priceLabel 
-                      ? event.priceLabel 
-                      : event.priceTo && event.priceTo !== event.priceFrom
-                        ? `CHF ${event.priceFrom} – ${event.priceTo}`
-                        : `ab CHF ${event.priceFrom}`}
-                  </span>
-                )}
-                
-                <BuzzTracker buzzScore={event.buzzScore} />
-                
-                {/* Report Flag - inline */}
-                <EventRatingButtons eventId={eventId} eventTitle={event.title} />
-              </div>
+            {/* Email Share */}
+            <button
+              onClick={shareViaEmail}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              title="Via E-Mail teilen"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span className="text-sm font-medium text-gray-700">E-Mail</span>
+            </button>
+          </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 mb-4">
-                {event.ticketLink ? (
-                  <a 
-                    href={event.ticketLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
-                  >
-                    Tickets kaufen <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  <button className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-5 py-2.5 rounded-lg transition-colors text-sm">
-                    Get Tickets
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => toggleFavorite({ 
-                    id: eventId, 
-                    slug: eventId, 
-                    image: event.image, 
-                    title: event.title, 
-                    venue: event.venue, 
-                    location: event.location,
-                    date: event.date
-                  })}
-                  className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                  title="Zu Favoriten hinzufügen"
-                >
-                  <Heart size={18} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
-                </button>
-                
-                {/* Share */}
-                {isMobile ? (
-                  <button
-                    onClick={async () => {
-                      const shareData = {
-                        title: event.title,
-                        text: `Schau dir dieses Event an: ${event.title}`,
-                        url: eventUrl,
-                      };
-                      
-                      if (navigator.share) {
-                        try {
-                          await navigator.share(shareData);
-                        } catch {
-                          // User cancelled
-                        }
-                      } else {
-                        try {
-                          await navigator.clipboard.writeText(eventUrl);
-                          toast({
-                            title: "Link kopiert!",
-                            description: "Der Event-Link wurde in die Zwischenablage kopiert.",
-                          });
-                        } catch {
-                          toast({
-                            title: "Fehler",
-                            description: "Link konnte nicht kopiert werden.",
-                            variant: "destructive",
-                          });
-                        }
-                      }
-                    }}
-                    className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                    title="Teilen"
-                  >
-                    <Share2 size={18} className="text-neutral-400" />
-                  </button>
-                ) : (
-                  <Popover open={shareOpen} onOpenChange={setShareOpen}>
-                    <PopoverTrigger asChild>
-                      <button
-                        className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                        title="Teilen"
-                      >
-                        <Share2 size={18} className="text-neutral-400" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-56 p-2 bg-white shadow-lg border border-neutral-200" align="end">
-                      <div className="flex flex-col">
-                        <button
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(eventUrl);
-                              toast({
-                                title: "Link kopiert!",
-                                description: "Der Event-Link wurde in die Zwischenablage kopiert.",
-                              });
-                              setShareOpen(false);
-                            } catch {
-                              toast({
-                                title: "Fehler",
-                                description: "Link konnte nicht kopiert werden.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors text-left"
-                        >
-                          <Copy size={18} className="text-neutral-500" />
-                          <span className="text-sm text-neutral-700">Link kopieren</span>
-                        </button>
-                        
-                        <a
-                          href={`https://wa.me/?text=${encodeURIComponent(`Schau dir dieses Event an: ${event.title}\n${eventUrl}`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setShareOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
-                        >
-                          <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-green-600" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                          </svg>
-                          <span className="text-sm text-neutral-700">WhatsApp</span>
-                        </a>
-                        
-                        <a
-                          href={`mailto:?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(`Schau dir dieses Event an:\n\n${event.title}\n${eventUrl}`)}`}
-                          onClick={() => setShareOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
-                        >
-                          <Mail size={18} className="text-neutral-500" />
-                          <span className="text-sm text-neutral-700">E-Mail</span>
-                        </a>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-                
-                <button
-                  onClick={handleCalendarExport}
-                  className="p-2.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                  title="In Kalender eintragen"
-                >
-                  <CalendarPlus size={18} className="text-neutral-400" />
-                </button>
-              </div>
+          {event.description && (
+            <div
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: event.description }}
+            />
+          )}
 
-              {/* Description */}
-              <div className="border-t border-neutral-100 pt-4 max-w-full overflow-hidden">
-                <h2 className="font-serif text-neutral-900 text-base font-semibold mb-2">Über dieses Event</h2>
-                <div className={cn("text-neutral-600 text-sm leading-relaxed", !showFullDescription && "line-clamp-6")}>
-                  <p ref={descriptionRef} className="break-words whitespace-pre-wrap" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{event.description}</p>
-                </div>
-                {needsReadMore && !showFullDescription && (
-                  <button 
-                    onClick={() => setShowFullDescription(true)}
-                    className="text-neutral-900 text-xs underline mt-2 hover:text-neutral-600 transition-colors"
-                  >
-                    mehr lesen
-                  </button>
-                )}
-                
-
-                {/* Image Gallery */}
-                {event.galleryUrls && event.galleryUrls.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-neutral-100">
-                    <ImageGallery images={event.galleryUrls} alt={event.title} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Nearby Events Section */}
-            {nearbyEvents.length > 0 && (
-              <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 w-full overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={18} className="text-neutral-500" />
-                    <h2 className="font-serif text-neutral-900 text-lg font-bold">Highlights in der Nähe</h2>
-                  </div>
-                </div>
-                
-                <div className="overflow-hidden">
-                  <Carousel
-                    opts={{
-                      align: "start",
-                      loop: nearbyEvents.length > 4,
-                    }}
-                    className="w-full px-1"
-                  >
-                    <CarouselContent className="-ml-3">
-                      {nearbyEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                          <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="hidden sm:flex left-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
-                    <CarouselNext className="hidden sm:flex right-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
-                  </Carousel>
-                </div>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+            {event.start_date && (
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Datum</p>
+                <p>{new Date(event.start_date).toLocaleDateString('de-CH')}</p>
               </div>
             )}
 
-            {/* Similar Events Section */}
-            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 w-full overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif text-neutral-900 text-lg font-bold">Ähnliche Events</h2>
-                <Link 
-                  to="/" 
-                  onClick={() => onOpenChange(false)}
-                  className="text-neutral-600 hover:text-neutral-900 text-xs font-medium flex items-center gap-1"
-                >
-                  Alle ansehen <ArrowRight size={12} />
-                </Link>
+            {event.venue_name && (
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Ort</p>
+                <p>{event.venue_name}</p>
               </div>
+            )}
 
-              {similarEvents.length > 0 ? (
-                <div className="overflow-hidden">
-                  <Carousel
-                    opts={{
-                      align: "start",
-                      loop: similarEvents.length > 4,
-                    }}
-                    className="w-full px-1"
-                  >
-                    <CarouselContent className="-ml-3">
-                      {similarEvents.map((evt) => (
-                        <CarouselItem key={evt.id} className="pl-3 basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                          <SimilarEventCard {...evt} onSwap={onEventSwap || (() => {})} />
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="hidden sm:flex left-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
-                    <CarouselNext className="hidden sm:flex right-1 bg-white/90 backdrop-blur-sm border-neutral-200 text-neutral-900 hover:bg-white h-9 w-9 shadow-md" />
-                  </Carousel>
-                </div>
-              ) : (
-                <div className="text-center text-neutral-400 text-sm py-4">
-                  Ähnliche Events werden geladen...
-                </div>
-              )}
-            </div>
-
-            {/* Partner Products Section */}
-            <div className="bg-stone-50 px-5 sm:px-6 py-5 border-t border-stone-200 w-full overflow-hidden">
-              <div className="text-center mb-4">
-                <h2 className="font-serif text-neutral-900 text-lg font-bold mb-1">Unvergessliche Augenblicke</h2>
-                <p className="text-neutral-500 text-xs">Curated additions to enhance your experience</p>
+            {event.price_from !== null && event.price_from !== undefined && (
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Preis</p>
+                <p>
+                  {event.price_from === 0
+                    ? 'Gratis'
+                    : `CHF ${event.price_from}${event.price_to ? ` - ${event.price_to}` : '+'}`
+                  }
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {partnerProducts.slice(0, 4).map((product, index) => (
-                  <PartnerProductCard key={index} {...product} />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
 };
-
-export default EventDetailModal;
