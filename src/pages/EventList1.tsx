@@ -294,7 +294,7 @@ const EventCard = ({
           </div>
 
           {/* Bottom Row: Star + Icons - LEFT ALIGNED, NO BORDERS, 20px spacing */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-5 relative z-10">
             {/* Star Rating */}
             <div className="flex items-center gap-1.5">
               <span className="text-yellow-400 text-lg">⭐</span>
@@ -1239,7 +1239,7 @@ const EventList1 = () => {
               {/* Messages - Mini mit mehr Abstand nach unten */}
               <div className="px-3 pb-5">
                 <div className="flex justify-start">
-                  <div className="max-w-[90%] px-2.5 py-1.5 rounded-xl text-xs bg-white text-gray-900 rounded-bl-md shadow-sm border border-gray-100 leading-relaxed">
+                  <div className="max-w-[90%] px-2.5 py-1.5 rounded-xl text-sm bg-white text-gray-900 rounded-bl-md shadow-sm border border-gray-100 leading-relaxed">
                     Hi! 👋 Verrate mir deinen Wunsch oder lass uns das Richtige über mein Quiz finden! ✨
                   </div>
                 </div>
@@ -1252,7 +1252,7 @@ const EventList1 = () => {
                     e.stopPropagation();
                     setChatbotOpen(true);
                   }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
                 >
                   <span>🧘</span>
                   <span>Solo</span>
@@ -1262,7 +1262,7 @@ const EventList1 = () => {
                     e.stopPropagation();
                     setChatbotOpen(true);
                   }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
                 >
                   <span>👨‍👩‍👧</span>
                   <span>Familie</span>
@@ -1272,7 +1272,7 @@ const EventList1 = () => {
                     e.stopPropagation();
                     setChatbotOpen(true);
                   }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
                 >
                   <span>🎉</span>
                   <span>Freunde</span>
@@ -1282,7 +1282,7 @@ const EventList1 = () => {
                     e.stopPropagation();
                     setChatbotOpen(true);
                   }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
                 >
                   <span>💕</span>
                   <span>Zu zweit</span>
@@ -1295,7 +1295,7 @@ const EventList1 = () => {
                   <input
                     type="text"
                     placeholder="Ich möchte diesen Samstag..."
-                    className="flex-1 bg-white border-gray-200 rounded-lg text-[11px] px-2 py-1.5 text-gray-900"
+                    className="flex-1 bg-white border-gray-200 rounded-lg text-xs px-2 py-1.5 text-gray-900"
                     onFocus={(e) => {
                       e.stopPropagation();
                       setChatbotOpen(true);
@@ -1306,7 +1306,7 @@ const EventList1 = () => {
                       e.stopPropagation();
                       setChatbotOpen(true);
                     }}
-                    className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-lg px-2.5 py-1.5 text-[11px] transition-all"
+                    className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-lg px-2.5 py-1.5 text-xs transition-all"
                   >
                     ✨
                   </button>

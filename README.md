@@ -2259,3 +2259,134 @@ After recovery and implementation:
 - React 18 vs React 19 conflict with react-leaflet@5.0.0
 
 ---
+
+## 🎨 UI Improvements & Bug Fixes (January 17, 2026 - Session 2)
+
+### EventDetailModal - Share Button Consolidation
+
+**Problem:** WhatsApp and Email buttons took too much space in modal.
+
+**Solution:** Combined into single "Teilen" (Share) button with popover.
+
+**Changes Made:**
+
+**File:** `/src/components/EventDetailModal.tsx`
+
+```typescript
+// Added Share2 icon and Popover imports
+import { Heart, CalendarPlus, Share2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+// Replaced two separate buttons with one Share button + popover
+<Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
+  <PopoverTrigger asChild>
+    <button className="flex items-center gap-2 px-4 py-2...">
+      <Share2 size={20} />
+      <span>Teilen</span>
+    </button>
+  </PopoverTrigger>
+  <PopoverContent>
+    {/* WhatsApp & Email options */}
+  </PopoverContent>
+</Popover>
+```
+
+**Benefits:**
+- ✅ Cleaner UI - one button instead of two
+- ✅ Better mobile experience
+- ✅ Consistent with EventList1 card share pattern
+
+### EventsMap - Zoom Controls Visibility Fix
+
+**Problem:** Zoom controls (+/−) not visible on map, especially on smaller/collapsed view.
+
+**Root Cause:**
+- z-index too low (z-10)
+- Position too close to rounded borders (bottom-4 right-4)
+
+**Solution:**
+
+**File:** `/src/components/EventsMap.tsx` (line 1034)
+
+```typescript
+// BEFORE:
+<div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
+
+// AFTER:
+<div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
+```
+
+**Changes:**
+- Increased z-index: `z-10` → `z-50` (ensures visibility above map elements)
+- Increased spacing: `bottom-4 right-4` → `bottom-6 right-6` (prevents clipping by border-radius)
+
+**Benefits:**
+- ✅ Visible on both collapsed and expanded map
+- ✅ No longer hidden behind other UI elements
+- ✅ Better spacing from map edges
+
+### EventList1 - Star Rating Visibility Fix
+
+**Problem:** Star ratings not visible on event cards.
+
+**Root Cause:** z-index overlap issue with other elements.
+
+**Solution:**
+
+**File:** `/src/pages/EventList1.tsx` (line 297)
+
+```typescript
+// Added relative z-10 to bottom row
+<div className="flex items-center gap-5 relative z-10">
+  {/* Star Rating */}
+  <div className="flex items-center gap-1.5">
+    <span className="text-yellow-400 text-lg">⭐</span>
+    <span className="text-sm font-semibold text-gray-600">
+      {rating.toFixed(1)}
+    </span>
+  </div>
+```
+
+**Benefits:**
+- ✅ Stars visible on all event cards
+- ✅ Proper layering with other card elements
+
+### EventList1 - Chatbot Mini Interface Text Size
+
+**Problem:** Text in chatbot pills under map too small to read (text-[10px], text-[11px]).
+
+**Solution:**
+
+**File:** `/src/pages/EventList1.tsx` (lines 1242-1310)
+
+**Increased all text sizes:**
+- Chatbot message: `text-xs` → `text-sm`
+- Mission pills (Solo, Familie, Freunde, Zu zweit): `text-[10px]` → `text-xs`
+- Input placeholder: `text-[11px]` → `text-xs`
+- Submit button (✨): `text-[11px]` → `text-xs`
+
+**Benefits:**
+- ✅ Much better readability
+- ✅ Consistent with rest of UI
+- ✅ Better accessibility
+
+### Summary of Changes
+
+**Files Modified:**
+1. `EventDetailModal.tsx` - Share button consolidation + default export fix
+2. `EventsMap.tsx` - Zoom controls z-index & position fix
+3. `EventList1.tsx` - Star ratings z-index fix + chatbot text size increase
+
+**Key Improvements:**
+- Better UI organization (share button)
+- Fixed visibility issues (zoom controls, stars)
+- Improved readability (chatbot text)
+- Better mobile/responsive experience
+
+**Testing:**
+- [x] Share button opens popover with WhatsApp/Email
+- [x] Zoom controls visible on both small and large map
+- [ ] Star ratings visible on all event cards (requires browser refresh)
+- [x] Chatbot text readable under collapsed map
+
+---

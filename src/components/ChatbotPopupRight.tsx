@@ -555,7 +555,7 @@ const ChatbotPopupRight = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPo
                         <button
                           key={city.id}
                           onClick={() => handleCitySelect(city.label)}
-                          className={`py-2 px-4 rounded-full border text-xs font-medium transition-all ${
+                          className={`py-2 px-4 rounded-full border text-sm font-medium transition-all ${
                             locationInput === city.label
                               ? "bg-[hsl(var(--wizard-accent))] text-white border-[hsl(var(--wizard-accent))] shadow-md"
                               : "bg-white/60 hover:bg-white/90 border-gray-200/50 text-gray-700"

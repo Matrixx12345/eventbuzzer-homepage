@@ -1031,7 +1031,7 @@ export function EventsMap({
 
         {/* Custom Zoom Controls - Google Maps Style */}
         {customControls && (
-          <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-50">
+          <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
             {/* Zoom In */}
             <button
               onClick={() => {
