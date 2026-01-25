@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,11 +15,15 @@ const ExitIntentPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasShown, setHasShown] = useState(false);
   const { user } = useAuth();
+  const { favorites } = useFavorites();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Don't show if user is logged in or popup was already shown
     if (user || hasShown) return;
+
+    // ONLY show if user has added favorites (otherwise don't bother them)
+    if (favorites.length === 0) return;
 
     // Check localStorage to avoid showing too often
     const lastShown = localStorage.getItem("exitIntentLastShown");
@@ -27,11 +32,12 @@ const ExitIntentPopup = () => {
       if (daysSinceLastShown < 14) return; // Only show once every 2 weeks (was 7 days)
     }
 
-    // Wait for user to be engaged first (15 seconds on site)
+    // Wait for user to be engaged first (30 seconds on site - longer than before)
     const engagementTimer = setTimeout(() => {
       const handleMouseLeave = (e: MouseEvent) => {
-        // Only trigger if mouse leaves from top (y < 10) - stricter than before
-        if (e.clientY < 10 && !hasShown) {
+        // Only trigger if mouse REALLY leaves viewport (y <= 0)
+        // This prevents triggering when hovering over navbar which is ~64px high
+        if (e.clientY <= 0 && !hasShown) {
           setIsOpen(true);
           setHasShown(true);
           localStorage.setItem("exitIntentLastShown", Date.now().toString());
@@ -40,16 +46,16 @@ const ExitIntentPopup = () => {
 
       document.addEventListener("mouseleave", handleMouseLeave);
 
-      // Clean up after 2 minutes (if user hasn't left yet, don't bother them)
+      // Clean up after 3 minutes (if user hasn't left yet, don't bother them)
       const cleanupTimer = setTimeout(() => {
         document.removeEventListener("mouseleave", handleMouseLeave);
-      }, 120000);
+      }, 180000);
 
       return () => {
         document.removeEventListener("mouseleave", handleMouseLeave);
         clearTimeout(cleanupTimer);
       };
-    }, 15000);
+    }, 30000);
 
     return () => clearTimeout(engagementTimer);
   }, [user, hasShown]);
