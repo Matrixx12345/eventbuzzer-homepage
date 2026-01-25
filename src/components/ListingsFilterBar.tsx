@@ -42,17 +42,16 @@ const getCategoryIcon = (slug: string | null) => {
 };
 
 const moods = [
-  { id: null, slug: null, name: "Alle", icon: Smile, bgColor: "bg-stone-50", hoverBg: "hover:bg-stone-100", textColor: "text-gray-700", iconColor: "text-gray-600" },
-  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake, bgColor: "bg-rose-50", hoverBg: "hover:bg-rose-100", textColor: "text-gray-700", iconColor: "text-rose-600" },
-  { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain, bgColor: "bg-slate-50", hoverBg: "hover:bg-slate-100", textColor: "text-gray-700", iconColor: "text-slate-600" },
-  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star, bgColor: "bg-amber-50", hoverBg: "hover:bg-amber-100", textColor: "text-gray-700", iconColor: "text-amber-600" },
-  { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star, bgColor: "bg-purple-50", hoverBg: "hover:bg-purple-100", textColor: "text-gray-700", iconColor: "text-purple-600" },
-  { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera, bgColor: "bg-sky-50", hoverBg: "hover:bg-sky-100", textColor: "text-gray-700", iconColor: "text-sky-600" },
-  { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart, bgColor: "bg-pink-50", hoverBg: "hover:bg-pink-100", textColor: "text-gray-700", iconColor: "text-pink-600" },
-  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile, bgColor: "bg-emerald-50", hoverBg: "hover:bg-emerald-100", textColor: "text-gray-700", iconColor: "text-emerald-600" },
-  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper, bgColor: "bg-indigo-50", hoverBg: "hover:bg-indigo-100", textColor: "text-gray-700", iconColor: "text-indigo-600" },
-  { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves, bgColor: "bg-teal-50", hoverBg: "hover:bg-teal-100", textColor: "text-gray-700", iconColor: "text-teal-600" },
-  { id: "natur", slug: "natur", name: "Natur", icon: Mountain, bgColor: "bg-lime-50", hoverBg: "hover:bg-lime-100", textColor: "text-gray-700", iconColor: "text-lime-700" },
+  { id: null, slug: null, name: "×", icon: Smile, bgColor: "bg-stone-50", hoverBg: "hover:bg-stone-100", textColor: "text-gray-700" },
+  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake, bgColor: "bg-rose-50", hoverBg: "hover:bg-rose-100", textColor: "text-gray-700" },
+  { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain, bgColor: "bg-slate-50", hoverBg: "hover:bg-slate-100", textColor: "text-gray-700" },
+  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star, bgColor: "bg-amber-50", hoverBg: "hover:bg-amber-100", textColor: "text-gray-700" },
+  { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star, bgColor: "bg-purple-50", hoverBg: "hover:bg-purple-100", textColor: "text-gray-700" },
+  { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera, bgColor: "bg-sky-50", hoverBg: "hover:bg-sky-100", textColor: "text-gray-700" },
+  { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart, bgColor: "bg-pink-50", hoverBg: "hover:bg-pink-100", textColor: "text-gray-700" },
+  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile, bgColor: "bg-emerald-50", hoverBg: "hover:bg-emerald-100", textColor: "text-gray-700" },
+  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper, bgColor: "bg-indigo-50", hoverBg: "hover:bg-indigo-100", textColor: "text-gray-700" },
+  { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves, bgColor: "bg-teal-50", hoverBg: "hover:bg-teal-100", textColor: "text-gray-700" },
 ];
 
 const timePills = [
@@ -414,26 +413,26 @@ const ListingsFilterBar = ({
             <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "mood" && "rotate-180", selectedMood.slug ? "text-white" : "text-gray-400")} />
           </button>
           
-          {/* Mood Dropdown - Elegant Pastel Version */}
+          {/* Mood Dropdown - 3x3 Grid */}
           {openSection === "mood" && (
-            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[180px] animate-fade-in">
-              <div className="grid gap-1.5">
-                {moods.map((mood) => {
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 w-[280px] animate-fade-in">
+              <div className="grid grid-cols-3 gap-2">
+                {moods.slice(0, 9).map((mood) => {
                   const isSelected = selectedMood.slug === mood.slug;
                   return (
                     <button
                       key={mood.slug || "all"}
                       onClick={() => handleMoodSelect(mood)}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left w-full",
+                        "aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-colors",
                         mood.bgColor,
                         mood.hoverBg,
                         mood.textColor,
-                        isSelected && "ring-2 ring-gray-300"
+                        isSelected && "ring-2 ring-gray-400",
+                        mood.name === "×" && "text-2xl"
                       )}
                     >
-                      <mood.icon size={16} className={cn("flex-shrink-0", mood.iconColor)} />
-                      <span>{mood.name}</span>
+                      {mood.name}
                     </button>
                   );
                 })}
