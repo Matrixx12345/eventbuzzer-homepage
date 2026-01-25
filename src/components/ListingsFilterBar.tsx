@@ -42,17 +42,105 @@ const getCategoryIcon = (slug: string | null) => {
 };
 
 const moods = [
-  { id: null, slug: null, name: "Alle", icon: Smile },
-  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
-  { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
-  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
-  { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
-  { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
-  { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
-  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
-  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
-  { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
-  { id: "natur", slug: "natur", name: "Natur", icon: Mountain },
+  {
+    id: null,
+    slug: null,
+    name: "Alle",
+    icon: Smile,
+    gradient: "from-gray-100 to-gray-200",
+    textColor: "text-gray-900",
+    glowColor: ""
+  },
+  {
+    id: "geburtstag",
+    slug: "geburtstag",
+    name: "Geburtstag",
+    icon: Cake,
+    gradient: "from-pink-500 to-purple-500",
+    textColor: "text-white",
+    glowColor: "shadow-pink-500/50"
+  },
+  {
+    id: "mistwetter",
+    slug: "mistwetter",
+    name: "Mistwetter",
+    icon: CloudRain,
+    gradient: "from-gray-500 to-blue-500",
+    textColor: "text-white",
+    glowColor: "shadow-blue-500/50"
+  },
+  {
+    id: "must-see",
+    slug: "must-see",
+    name: "Must-See",
+    icon: Star,
+    gradient: "from-yellow-400 to-orange-500",
+    textColor: "text-white",
+    glowColor: "shadow-orange-500/50"
+  },
+  {
+    id: "top-stars",
+    slug: "top-stars",
+    name: "Top Stars",
+    icon: Star,
+    gradient: "from-purple-600 to-pink-600",
+    textColor: "text-white",
+    glowColor: "shadow-pink-600/50"
+  },
+  {
+    id: "foto-spots",
+    slug: "foto-spots",
+    name: "Foto-Spots",
+    icon: Camera,
+    gradient: "from-cyan-400 to-blue-500",
+    textColor: "text-white",
+    glowColor: "shadow-blue-500/50"
+  },
+  {
+    id: "romantik",
+    slug: "romantik",
+    name: "Romantik",
+    icon: Heart,
+    gradient: "from-red-400 to-pink-500",
+    textColor: "text-white",
+    glowColor: "shadow-pink-500/50"
+  },
+  {
+    id: "familie-freundlich",
+    slug: "familie-freundlich",
+    name: "Familie",
+    icon: Smile,
+    gradient: "from-green-400 to-emerald-500",
+    textColor: "text-white",
+    glowColor: "shadow-emerald-500/50"
+  },
+  {
+    id: "nightlife",
+    slug: "nightlife",
+    name: "Nightlife",
+    icon: PartyPopper,
+    gradient: "from-purple-700 to-indigo-600",
+    textColor: "text-white",
+    glowColor: "shadow-indigo-600/50"
+  },
+  {
+    id: "wellness",
+    slug: "wellness",
+    name: "Wellness",
+    icon: Waves,
+    gradient: "from-teal-400 to-cyan-400",
+    textColor: "text-white",
+    glowColor: "shadow-cyan-400/50"
+  },
+  {
+    id: "natur",
+    slug: "natur",
+    name: "Natur",
+    icon: Mountain,
+    gradient: "from-green-500 to-lime-500",
+    textColor: "text-white",
+    glowColor: "shadow-lime-500/50"
+  },
 ];
 
 const timePills = [
@@ -414,25 +502,55 @@ const ListingsFilterBar = ({
             <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "mood" && "rotate-180", selectedMood.slug ? "text-white" : "text-gray-400")} />
           </button>
           
-          {/* Mood Dropdown */}
+          {/* Mood Dropdown - PREMIUM VERSION */}
           {openSection === "mood" && (
-            <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[180px] animate-fade-in">
-              <div className="grid gap-1">
-                {moods.map((mood) => (
-                  <button
-                    key={mood.slug || "all"}
-                    onClick={() => handleMoodSelect(mood)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
-                      selectedMood.slug === mood.slug
-                        ? "bg-amber-600 text-white"
-                        : "hover:bg-gray-100 text-gray-900"
-                    )}
-                  >
-                    <mood.icon size={14} className="flex-shrink-0" />
-                    <span>{mood.name}</span>
-                  </button>
-                ))}
+            <div className="absolute top-full left-0 mt-2 p-4 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 z-50 min-w-[220px] animate-fade-in">
+              <div className="grid gap-2">
+                {moods.map((mood) => {
+                  const isSelected = selectedMood.slug === mood.slug;
+                  return (
+                    <button
+                      key={mood.slug || "all"}
+                      onClick={() => handleMoodSelect(mood)}
+                      className={cn(
+                        "group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-left w-full overflow-hidden",
+                        "bg-gradient-to-r",
+                        mood.gradient,
+                        mood.textColor,
+                        // Hover effects
+                        !isSelected && "opacity-80 hover:opacity-100 hover:scale-[1.02] hover:shadow-lg",
+                        isSelected && "scale-[1.02] shadow-xl",
+                        isSelected && mood.glowColor && mood.glowColor,
+                        // Animation
+                        "transform duration-200 ease-out"
+                      )}
+                    >
+                      {/* Background glow effect on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-20 transition-opacity duration-300 from-white to-transparent" />
+
+                      {/* Icon with bounce animation */}
+                      <mood.icon
+                        size={18}
+                        className={cn(
+                          "flex-shrink-0 relative z-10",
+                          "group-hover:scale-110 transition-transform duration-200"
+                        )}
+                      />
+
+                      {/* Text */}
+                      <span className="relative z-10">{mood.name}</span>
+
+                      {/* Selected indicator */}
+                      {isSelected && (
+                        <div className="ml-auto">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
