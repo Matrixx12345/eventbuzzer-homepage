@@ -42,16 +42,15 @@ const getCategoryIcon = (slug: string | null) => {
 };
 
 const moods = [
-  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake, bgColor: "bg-rose-50/80", hoverBg: "hover:bg-rose-100", iconColor: "text-rose-600" },
-  { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain, bgColor: "bg-slate-50/80", hoverBg: "hover:bg-slate-100", iconColor: "text-slate-600" },
-  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star, bgColor: "bg-amber-50/80", hoverBg: "hover:bg-amber-100", iconColor: "text-amber-700" },
-  { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star, bgColor: "bg-violet-50/80", hoverBg: "hover:bg-violet-100", iconColor: "text-violet-600" },
-  { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera, bgColor: "bg-sky-50/80", hoverBg: "hover:bg-sky-100", iconColor: "text-sky-600" },
-  { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart, bgColor: "bg-pink-50/80", hoverBg: "hover:bg-pink-100", iconColor: "text-pink-600" },
-  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile, bgColor: "bg-emerald-50/80", hoverBg: "hover:bg-emerald-100", iconColor: "text-emerald-600" },
-  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper, bgColor: "bg-indigo-50/80", hoverBg: "hover:bg-indigo-100", iconColor: "text-indigo-600" },
-  { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves, bgColor: "bg-teal-50/80", hoverBg: "hover:bg-teal-100", iconColor: "text-teal-600" },
-  { id: "natur", slug: "natur", name: "Natur", icon: Mountain, bgColor: "bg-green-50/80", hoverBg: "hover:bg-green-100", iconColor: "text-green-600" },
+  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
+  { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
+  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
+  { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
+  { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
+  { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
+  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
+  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
+  { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
 ];
 
 const timePills = [
@@ -413,22 +412,11 @@ const ListingsFilterBar = ({
             <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "mood" && "rotate-180", selectedMood.slug ? "text-white" : "text-gray-400")} />
           </button>
           
-          {/* Mood Dropdown - Milchglas 5x2 Grid */}
+          {/* Mood Dropdown - Premium 3x3 Grid */}
           {openSection === "mood" && (
-            <div className="absolute top-full left-0 mt-2 p-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/60 z-50 w-[420px] animate-fade-in">
-              {/* Clear Button */}
-              <div className="flex justify-end mb-3">
-                <button
-                  onClick={() => handleMoodSelect({ id: null, slug: null, name: "Alle", icon: Smile, bgColor: "", hoverBg: "", iconColor: "" })}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Auswahl löschen"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {/* 5x2 Grid */}
-              <div className="grid grid-cols-5 gap-2">
+            <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-100/50 z-50 w-[300px] animate-fade-in">
+              {/* 3x3 Grid */}
+              <div className="grid grid-cols-3 gap-2">
                 {moods.map((mood) => {
                   const isSelected = selectedMood.slug === mood.slug;
                   return (
@@ -436,14 +424,12 @@ const ListingsFilterBar = ({
                       key={mood.slug}
                       onClick={() => handleMoodSelect(mood)}
                       className={cn(
-                        "flex flex-col items-center justify-center gap-2 p-3 rounded-xl transition-all",
-                        mood.bgColor,
-                        mood.hoverBg,
-                        isSelected && "ring-2 ring-gray-400 shadow-sm"
+                        "flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all bg-white/80 hover:bg-white hover:shadow-md",
+                        isSelected && "ring-2 ring-gray-900/20 shadow-lg bg-white"
                       )}
                     >
-                      <mood.icon size={20} className={cn("flex-shrink-0", mood.iconColor)} />
-                      <span className="text-[10px] font-medium text-gray-700 text-center leading-tight">{mood.name}</span>
+                      <mood.icon size={22} className="flex-shrink-0 text-gray-800" />
+                      <span className="text-[11px] font-medium text-gray-800 text-center leading-tight">{mood.name}</span>
                     </button>
                   );
                 })}
