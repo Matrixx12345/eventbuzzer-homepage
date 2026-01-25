@@ -347,7 +347,7 @@ const ListingsFilterBar = ({
       {/* Main Filter Bar - White bar with dark text */}
       <div className="flex items-stretch bg-white rounded-md shadow-xl overflow-visible">
         {/* Kategorie */}
-        <div className="relative flex-1 min-w-0 h-12">
+        <div className="relative flex-[1.3] min-w-0 h-12">
           <button
             onClick={() => toggleSection("category")}
             className={cn(
@@ -393,7 +393,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedCategory.slug || selectedMood.slug) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Stimmung */}
-        <div className="relative flex-1 min-w-0 h-12">
+        <div className="relative flex-[1.3] min-w-0 h-12">
           <button
             onClick={() => toggleSection("mood")}
             className={cn(
@@ -454,7 +454,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedMood.slug || cityInput) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Ort */}
-        <div className="relative flex-1 min-w-0 h-12">
+        <div className="relative flex-[0.9] min-w-0 h-12">
           <button
             onClick={() => toggleSection("location")}
             className={cn(
@@ -528,7 +528,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (cityInput || selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Datum */}
-        <div className="relative flex-1 min-w-0 h-12">
+        <div className="relative flex-[0.9] min-w-0 h-12">
           <button
             onClick={() => toggleSection("date")}
             className={cn(
