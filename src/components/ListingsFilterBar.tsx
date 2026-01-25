@@ -342,10 +342,273 @@ const ListingsFilterBar = ({
     }
   }, [categories, initialCategory]);
 
+  // FEATURE FLAG: Toggle between designs
+  const USE_PILL_DESIGN = true;
+
   return (
     <div ref={containerRef} className="w-full relative">
-      {/* Main Filter Bar - White bar with dark text */}
-      <div className="flex items-stretch bg-white rounded-md shadow-xl overflow-visible">
+      {/* PILL DESIGN VERSION - Glassmorphism */}
+      {USE_PILL_DESIGN && (
+        <div className="backdrop-blur-xl bg-white/90 border border-white/60 rounded-full p-2 shadow-2xl flex items-center gap-2">
+          {/* Kategorie Pill */}
+          <div className="relative flex-[1.3] min-w-0">
+            <button
+              onClick={() => toggleSection("category")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 h-10 transition-all w-full rounded-full border",
+                selectedCategory.slug
+                  ? "bg-slate-200/90 border-slate-300 text-slate-900"
+                  : "bg-white/80 border-white/60 hover:bg-white"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4 flex-shrink-0 text-gray-600" />
+              <span className="text-xs font-medium truncate">
+                {selectedCategory.slug ? selectedCategory.name : "Kategorie"}
+              </span>
+              <ChevronDown className={cn("w-3 h-3 ml-auto transition-transform", openSection === "category" && "rotate-180")} />
+            </button>
+
+            {openSection === "category" && (
+              <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 min-w-[220px] animate-fade-in">
+                <div className="grid gap-1">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.slug || "all"}
+                      onClick={() => handleCategorySelect(cat)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
+                        selectedCategory.slug === cat.slug
+                          ? "bg-slate-200 text-slate-900"
+                          : "hover:bg-gray-100 text-gray-900"
+                      )}
+                    >
+                      <cat.icon size={16} className="flex-shrink-0" />
+                      <span>{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Stimmung Pill */}
+          <div className="relative flex-[1.3] min-w-0">
+            <button
+              onClick={() => toggleSection("mood")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 h-10 transition-all w-full rounded-full border",
+                selectedMood.slug
+                  ? "bg-slate-200/90 border-slate-300 text-slate-900"
+                  : "bg-white/80 border-white/60 hover:bg-white"
+              )}
+            >
+              <Smile className="w-4 h-4 flex-shrink-0 text-gray-600" />
+              <span className="text-xs font-medium truncate">
+                {selectedMood.slug ? selectedMood.name : "Stimmung"}
+              </span>
+              <ChevronDown className={cn("w-3 h-3 ml-auto transition-transform", openSection === "mood" && "rotate-180")} />
+            </button>
+
+            {openSection === "mood" && (
+              <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-100/50 z-50 w-[300px] animate-fade-in">
+                {selectedMood.slug && (
+                  <div className="flex justify-end mb-2">
+                    <button
+                      onClick={() => handleMoodSelect({ id: null, slug: null, name: "Jede Stimmung", icon: Smile })}
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                      title="Auswahl löschen"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+                <div className="grid grid-cols-3 gap-2">
+                  {moods.map((mood) => {
+                    const isSelected = selectedMood.slug === mood.slug;
+                    return (
+                      <button
+                        key={mood.slug}
+                        onClick={() => handleMoodSelect(mood)}
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all bg-white/80 hover:bg-white hover:shadow-md",
+                          isSelected && "ring-2 ring-slate-300 shadow-lg bg-slate-50"
+                        )}
+                      >
+                        <mood.icon size={22} className="flex-shrink-0 text-gray-800" />
+                        <span className="text-[11px] font-medium text-gray-800 text-center leading-tight">{mood.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Ort Pill */}
+          <div className="relative flex-[0.9] min-w-0">
+            <button
+              onClick={() => toggleSection("location")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 h-10 transition-all w-full rounded-full border",
+                cityInput
+                  ? "bg-slate-200/90 border-slate-300 text-slate-900"
+                  : "bg-white/80 border-white/60 hover:bg-white"
+              )}
+            >
+              <MapPin className="w-4 h-4 flex-shrink-0 text-gray-600" />
+              <span className="text-xs font-medium truncate">{cityInput || "Ort"}</span>
+              <ChevronDown className={cn("w-3 h-3 ml-auto transition-transform", openSection === "location" && "rotate-180")} />
+            </button>
+
+            {openSection === "location" && (
+              <div className="absolute top-full left-0 mt-2 p-3 bg-white rounded-xl shadow-xl z-50 w-[220px] animate-fade-in">
+                <div className="space-y-3">
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Stadt eingeben..."
+                      value={cityInput}
+                      onChange={(e) => handleCityInputChange(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    />
+                  </div>
+                  {filteredCities.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {filteredCities.map((city) => (
+                        <button
+                          key={city}
+                          onClick={() => handleCitySelect(city)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                            cityInput === city
+                              ? "bg-slate-200 text-slate-900"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                          )}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Datum Pill */}
+          <div className="relative flex-[0.9] min-w-0">
+            <button
+              onClick={() => toggleSection("date")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 h-10 transition-all w-full rounded-full border",
+                (selectedDate || selectedTimePill)
+                  ? "bg-slate-200/90 border-slate-300 text-slate-900"
+                  : "bg-white/80 border-white/60 hover:bg-white"
+              )}
+            >
+              <CalendarIcon className="w-4 h-4 flex-shrink-0 text-gray-600" />
+              <span className="text-xs font-medium truncate">{getDateDisplayText()}</span>
+              {(selectedDate || selectedTimePill) ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDate(undefined);
+                    setSelectedTimePill(null);
+                    onDateChange(undefined);
+                    onTimeChange(null);
+                  }}
+                  className="ml-auto"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              ) : (
+                <ChevronDown className={cn("w-3 h-3 ml-auto transition-transform", openSection === "date" && "rotate-180")} />
+              )}
+            </button>
+
+            {openSection === "date" && (
+              <div className="absolute top-full left-0 mt-2 p-4 bg-white rounded-xl shadow-xl z-50 animate-fade-in">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {timePills.map((pill) => (
+                      <button
+                        key={pill.id}
+                        onClick={() => handleTimePillClick(pill.id)}
+                        className={cn(
+                          "px-3 py-2 rounded-lg text-sm font-medium transition-all text-center flex items-center justify-center gap-1.5",
+                          selectedTimePill === pill.id
+                            ? "bg-slate-200 text-slate-900"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                      >
+                        {pill.id === "now" && <Zap className="w-3.5 h-3.5 text-amber-500" />}
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="bg-gray-50 rounded-lg overflow-hidden">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      locale={de}
+                      className="p-2 pointer-events-auto"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Suche Pill */}
+          <div ref={searchContainerRef} className="relative flex-1 min-w-0">
+            <div className="flex items-center gap-2 px-4 py-2 h-10 rounded-full border bg-white/80 border-white/60 hover:bg-white transition-all">
+              <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <input
+                type="text"
+                placeholder="Event suchen..."
+                value={searchInput}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                onBlur={handleSearchBlur}
+                onFocus={handleSearchFocus}
+                className="w-full bg-transparent text-xs font-medium text-gray-900 placeholder:text-gray-400 outline-none"
+              />
+            </div>
+
+            {showSuggestions && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                {loadingSuggestions ? (
+                  <div className="px-4 py-3 text-sm text-gray-500">Suche...</div>
+                ) : searchSuggestions.length > 0 ? (
+                  <div className="py-1">
+                    {searchInput.length === 0 && (
+                      <div className="px-4 py-2 text-xs text-gray-400 font-medium uppercase tracking-wide">Beliebte Events</div>
+                    )}
+                    {searchSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.id}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-3"
+                      >
+                        <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{suggestion.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500">Keine Ergebnisse</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* OLD DESIGN VERSION - Hidden but ready to restore */}
+      {!USE_PILL_DESIGN && (
+        <div className="flex items-stretch bg-white rounded-md shadow-xl overflow-visible">
         {/* Kategorie */}
         <div className="relative flex-[1.3] min-w-0 h-12">
           <button
@@ -644,6 +907,7 @@ const ListingsFilterBar = ({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };
