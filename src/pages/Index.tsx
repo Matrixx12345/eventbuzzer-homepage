@@ -1,25 +1,30 @@
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import CleanGridSection from "@/components/CleanGridSection";
 import SideBySideSection from "@/components/SideBySideSection";
 import EliteExperiencesSection from "@/components/EliteExperiencesSection";
-import ChatbotPopup from "@/components/ChatbotPopup";
-import { useChatbot } from "@/hooks/useChatbot";
 import { useEventModal } from "@/hooks/useEventModal";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Index = () => {
-  const { isOpen, closeChatbot, openChatbot } = useChatbot();
   const { selectedEventId, isOpen: modalOpen, openEvent, closeEvent, swapEvent } = useEventModal();
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>EventBuzzer - Entdecke Events in der Schweiz</title>
+        <meta name="description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Von Zürich bis Genf - entdecke unvergessliche Erlebnisse auf EventBuzzer." />
+        <meta property="og:title" content="EventBuzzer - Entdecke Events in der Schweiz" />
+        <meta property="og:description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://eventbuzzer.ch" />
+        <link rel="canonical" href="https://eventbuzzer.ch" />
+      </Helmet>
+
       <Navbar />
-      
-      {/* Chatbot Popup */}
-      <ChatbotPopup isOpen={isOpen} onClose={closeChatbot} onOpen={openChatbot} />
-      
+
       <main>
         <HeroSection />
         

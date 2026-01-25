@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Supercluster from "supercluster";
 import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { Loader2 } from "lucide-react";
 import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from "@/types/map";
 
@@ -30,6 +31,7 @@ interface EventsMapProps {
   showSearchButton?: boolean;
   onSearchThisArea?: () => void;
   totalEventsCount?: number;
+  categoryId?: number | null;  // NEW: Filter by category (important for Märkte!)
 }
 
 // Define GeoJSON feature type for Supercluster
@@ -153,6 +155,7 @@ export function EventsMap({
   showSearchButton = false,
   onSearchThisArea,
   totalEventsCount = 0,
+  categoryId = null,
 }: EventsMapProps) {
   // DEBUG: Log what selectedEventIds we're receiving
   console.log('🎯 EventsMap received selectedEventIds:', selectedEventIds);
@@ -161,15 +164,22 @@ export function EventsMap({
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const favoriteMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const eliteMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const superclusterRef = useRef<Supercluster | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activePopupRef = useRef<mapboxgl.Popup | null>(null);
+  const eliteEventsRef = useRef<MapEvent[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const [internalEvents, setInternalEvents] = useState<MapEvent[]>([]);
   const [activeFilters, setActiveFilters] = useState<string[]>(["all"]);
+
+  // 3D Mode State
+  const [is3DMode, setIs3DMode] = useState(false);
+  const [currentPitch, setCurrentPitch] = useState(0);
+  const [currentBearing, setCurrentBearing] = useState(0);
 
   // Toggle filter
   const toggleFilter = useCallback((filterKey: string) => {
@@ -208,6 +218,7 @@ export function EventsMap({
   const loadEventsInView = useCallback(async () => {
     if (!map.current || !onEventsChange) return;
 
+    const loadStartTime = performance.now();
     setLoading(true);
 
     try {
@@ -254,46 +265,29 @@ export function EventsMap({
         uniqueEvents = eliteData || [];
         console.log(`🚀 Performance mode: Loaded ${uniqueEvents.length} elite events only`);
       } else {
-        // VOLLE Logik: Viewport + Elite events
-        const [viewportResponse, eliteResponse] = await Promise.all([
-          // Regular events in viewport
-          supabase.functions.invoke("get-external-events", {
-            body: {
-              limit: 2000,
-              offset: 0,
-              filters: {
-                minLat: paddedBounds.minLat,
-                maxLat: paddedBounds.maxLat,
-                minLng: paddedBounds.minLng,
-                maxLng: paddedBounds.maxLng,
-              },
+        // VOLLE Logik: Viewport events (buzz_boost wird aus event_vibe_overrides geholt)
+        const viewportResponse = await supabase.functions.invoke("get-external-events", {
+          body: {
+            limit: 500, // Reduced from 2000 for faster loading (3-5s instead of 12s)
+            offset: 0,
+            filters: {
+              minLat: paddedBounds.minLat,
+              maxLat: paddedBounds.maxLat,
+              minLng: paddedBounds.minLng,
+              maxLng: paddedBounds.maxLng,
+              categoryId, // IMPORTANT: Pass category filter (e.g., Märkte = 6)
             },
-          }),
-          // Elite events (buzz_boost = 100) - ONLY in viewport (not whole Switzerland)
-          supabase
-            .from("events")
-            .select("*")
-            .eq("buzz_boost", 100)
-            .gte("latitude", paddedBounds.minLat)
-            .lte("latitude", paddedBounds.maxLat)
-            .gte("longitude", paddedBounds.minLng)
-            .lte("longitude", paddedBounds.maxLng)
-            .limit(20),
-        ]);
+          },
+        });
 
         const { data, error } = viewportResponse;
-        const { data: eliteData } = eliteResponse;
 
         if (error) {
           console.error("Edge Function Error:", error);
           return;
         }
 
-        // Merge viewport events + elite events (remove duplicates by id)
-        const allEvents = [...(data?.events || []), ...(eliteData || [])];
-        uniqueEvents = Array.from(
-          new Map(allEvents.map(e => [e.external_id || e.id, e])).values()
-        );
+        uniqueEvents = data?.events || [];
       }
 
       if (uniqueEvents && Array.isArray(uniqueEvents)) {
@@ -327,7 +321,11 @@ export function EventsMap({
           }))
           .filter((e: MapEvent) => e.latitude && e.longitude);
 
-        console.log(`Loaded ${mappedEvents.length} events with coordinates`);
+        // REMOVED: Batch buzz_boost query - no longer needed
+        // Elite Events are loaded separately via loadEliteEvents() function
+        // This avoids URL length issues (400 Bad Request with 1000+ event IDs)
+
+        console.log(`Loaded ${mappedEvents.length} viewport events with coordinates`);
 
         // Debug: Show first 5 events to verify correct region
         if (mappedEvents.length > 0) {
@@ -339,19 +337,89 @@ export function EventsMap({
           })));
         }
 
+        // NOTE: Elite Events are loaded once at map initialization (line 974)
+        // They are global (all of Switzerland), not viewport-dependent
+
         setInternalEvents(mappedEvents);
         setEventCount(mappedEvents.length);
 
         if (onEventsChange) {
+          console.log(`🔄 Calling onEventsChange with ${mappedEvents.length} events`);
           onEventsChange(mappedEvents);
+        } else {
+          console.warn('⚠️ onEventsChange is not defined!');
         }
+
+        const loadEndTime = performance.now();
+        console.log(`⏱️ loadEventsInView took ${(loadEndTime - loadStartTime).toFixed(2)}ms`);
       }
     } catch (err) {
       console.error("Failed to load events:", err);
     } finally {
       setLoading(false);
     }
-  }, [onEventsChange, showOnlyEliteAndFavorites]);
+  }, [onEventsChange, showOnlyEliteAndFavorites, categoryId]);
+
+  // Load Elite Events separately (globally, not filtered by viewport)
+  // This avoids URL length issues and ensures stars are visible everywhere
+  const loadEliteEvents = useCallback(async () => {
+    try {
+      console.log('⭐ Loading Elite Events globally...');
+
+      const { data: eliteData, error: eliteError } = await externalSupabase
+        .from("events")
+        .select("*")
+        .eq("buzz_boost", 100);
+
+      if (eliteError) {
+        console.error("❌ Error loading Elite Events:", eliteError);
+        return;
+      }
+
+      if (eliteData && eliteData.length > 0) {
+        // Map Elite Events to MapEvent format
+        const mappedEliteEvents: MapEvent[] = eliteData
+          .map((e: any) => ({
+            id: e.external_id || String(e.id),
+            external_id: e.external_id,
+            title: e.title,
+            description: e.description,
+            short_description: e.short_description,
+            venue_name: e.venue_name,
+            address_city: e.address_city,
+            location: e.location,
+            image_url: e.image_url,
+            start_date: e.start_date,
+            end_date: e.end_date,
+            latitude: e.latitude,
+            longitude: e.longitude,
+            mapbox_lng: e.longitude,
+            mapbox_lat: e.latitude,
+            buzz_score: e.buzz_score,
+            relevance_score: e.relevance_score,
+            price_from: e.price_from,
+            price_to: e.price_to,
+            category_main_id: e.category_main_id,
+            tags: Array.isArray(e.tags) ? e.tags : [],
+            buzz_boost: 100, // Always 100 for Elite Events
+            source: e.source,
+          }))
+          .filter((e: MapEvent) => e.latitude && e.longitude);
+
+        eliteEventsRef.current = mappedEliteEvents;
+        console.log(`✅ Loaded ${mappedEliteEvents.length} Elite Events globally (visible everywhere on map)`);
+
+        // Markers will be rendered by the next updateMarkers() call
+        // (triggered by map moveend event or viewport change)
+      } else {
+        console.log('⚠️ No Elite Events found (buzz_boost = 100)');
+        eliteEventsRef.current = [];
+      }
+    } catch (error) {
+      console.error("❌ Failed to load Elite Events:", error);
+      eliteEventsRef.current = [];
+    }
+  }, []);
 
   // REMOVED: debouncedLoad - replaced by handleMapMove with 800ms debounce
 
@@ -407,6 +475,8 @@ export function EventsMap({
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
+    eliteMarkersRef.current.forEach(marker => marker.remove());
+    eliteMarkersRef.current = [];
 
     if (showOnlyEliteAndFavorites) {
       // ========================================
@@ -431,10 +501,10 @@ export function EventsMap({
         const inner = document.createElement('div');
 
         if (isElite) {
-          // Goldener Stern - 35% kleiner (48px -> 31px)
+          // Goldener Stern - 30% kleiner (31px -> 22px)
           inner.style.cssText = `
-            font-size: 31px;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+            font-size: 22px;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9)) drop-shadow(0 3px 10px rgba(0,0,0,0.4));
             transition: transform 0.2s;
           `;
           inner.textContent = '⭐';
@@ -460,7 +530,21 @@ export function EventsMap({
 
         // Click-Handler
         wrapper.addEventListener('click', () => {
-          if (onEventClick) onEventClick(event.id);
+          if (onEventClick) {
+            onEventClick(event.id);
+
+            // Fly to event in 3D mode
+            if (is3DMode && map.current) {
+              map.current.flyTo({
+                center: [longitude, latitude],
+                zoom: Math.max(map.current.getZoom(), 14),
+                pitch: 60,
+                bearing: 0,
+                duration: 2000,
+                essential: true
+              });
+            }
+          }
         });
 
         // Create popup for performance mode event
@@ -615,7 +699,21 @@ export function EventsMap({
 
         wrapper.appendChild(inner);
         wrapper.addEventListener('click', () => {
-          if (onEventClick) onEventClick(event.id);
+          if (onEventClick) {
+            onEventClick(event.id);
+
+            // Fly to event in 3D mode
+            if (is3DMode && map.current) {
+              map.current.flyTo({
+                center: [longitude, latitude],
+                zoom: Math.max(map.current.getZoom(), 14),
+                pitch: 60,
+                bearing: 0,
+                duration: 2000,
+                essential: true
+              });
+            }
+          }
         });
 
         // Create popup for normal event
@@ -693,14 +791,14 @@ export function EventsMap({
         }
 
         if (isElite) {
-          // ⭐ ELITE EVENT - Gold Star (ALWAYS visible at any zoom)
+          // ⭐ ELITE EVENT - Gold Star (ALWAYS visible at any zoom, 30% smaller)
           const wrapper = document.createElement('div');
           wrapper.style.cssText = 'cursor: pointer; z-index: 10000;';
 
           const inner = document.createElement('div');
           inner.style.cssText = `
-            font-size: 31px;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+            font-size: 22px;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9)) drop-shadow(0 3px 10px rgba(0,0,0,0.4));
             transition: transform 0.2s;
           `;
           inner.textContent = '⭐';
@@ -714,7 +812,21 @@ export function EventsMap({
             inner.style.transform = 'scale(1)';
           });
           wrapper.addEventListener('click', () => {
-            if (onEventClick) onEventClick(event.id);
+            if (onEventClick) {
+              onEventClick(event.id);
+
+              // Fly to event in 3D mode
+              if (is3DMode && map.current) {
+                map.current.flyTo({
+                  center: [longitude, latitude],
+                  zoom: Math.max(map.current.getZoom(), 14),
+                  pitch: 60,
+                  bearing: 0,
+                  duration: 2000,
+                  essential: true
+                });
+              }
+            }
           });
 
           // Create popup for elite event
@@ -762,7 +874,21 @@ export function EventsMap({
             inner.style.transform = 'scale(1)';
           });
           wrapper.addEventListener('click', () => {
-            if (onEventClick) onEventClick(event.id);
+            if (onEventClick) {
+              onEventClick(event.id);
+
+              // Fly to event in 3D mode
+              if (is3DMode && map.current) {
+                map.current.flyTo({
+                  center: [longitude, latitude],
+                  zoom: Math.max(map.current.getZoom(), 14),
+                  pitch: 60,
+                  bearing: 0,
+                  duration: 2000,
+                  essential: true
+                });
+              }
+            }
           });
 
           // Create popup for favorite event
@@ -791,8 +917,79 @@ export function EventsMap({
       }
     });
 
-    console.log('✅ Markers rendered - Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray)');
-  }, [onEventClick, selectedIdsSet, showOnlyEliteAndFavorites, hoveredEventId]);
+    // ========================================
+    // PHASE 3: Render Elite Events (ALWAYS visible, never clustered)
+    // ========================================
+    eliteEventsRef.current.forEach((event) => {
+      const longitude = event.mapbox_lng ?? event.longitude;
+      const latitude = event.mapbox_lat ?? event.latitude;
+
+      if (!longitude || !latitude) return;
+
+      // ⭐ ELITE EVENT - Gold Star (30% smaller, always visible)
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'cursor: pointer; z-index: 10000;';
+
+      const inner = document.createElement('div');
+      inner.style.cssText = `
+        font-size: 22px;
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9)) drop-shadow(0 3px 10px rgba(0,0,0,0.4));
+        transition: transform 0.2s;
+      `;
+      inner.textContent = '⭐';
+
+      wrapper.appendChild(inner);
+
+      wrapper.addEventListener('mouseenter', () => {
+        inner.style.transform = 'scale(1.2)';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        inner.style.transform = 'scale(1)';
+      });
+      wrapper.addEventListener('click', () => {
+        if (onEventClick) {
+          onEventClick(event.id);
+
+          // Fly to event in 3D mode
+          if (is3DMode && map.current) {
+            map.current.flyTo({
+              center: [longitude, latitude],
+              zoom: Math.max(map.current.getZoom(), 14),
+              pitch: 60,
+              bearing: 0,
+              duration: 2000,
+              essential: true
+            });
+          }
+        }
+      });
+
+      // Create popup for elite event
+      const popup = new mapboxgl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '220px',
+        className: 'event-popup'
+      }).setHTML(createPopupHTML(event));
+
+      popup.on('open', () => {
+        if (activePopupRef.current && activePopupRef.current !== popup) {
+          activePopupRef.current.remove();
+        }
+        activePopupRef.current = popup;
+      });
+
+      const marker = new mapboxgl.Marker({ element: wrapper })
+        .setLngLat([longitude, latitude])
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      eliteMarkersRef.current.push(marker);
+    });
+
+    console.log(`✅ Markers rendered - ${eliteMarkersRef.current.length} Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray)`);
+  }, [onEventClick, selectedIdsSet, showOnlyEliteAndFavorites, hoveredEventId, createPopupHTML]);
 
   // Initialize map
   useEffect(() => {
@@ -801,14 +998,19 @@ export function EventsMap({
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/matrixx123/cmk9rkcqj009i01sc771e6gxw",
-      center: [8.3, 46.85],
-      zoom: 6.5,
+      center: [8.3, 46.85], // Switzerland center
+      zoom: 6.5, // Show whole Switzerland
       pitch: 0,
       minZoom: 6.5,
       maxBounds: [
         [5.5, 45.5],
         [11.0, 48.0],
       ],
+      // Enable 3D touch gestures
+      touchPitch: true,
+      touchZoomRotate: true,
+      dragRotate: true,
+      pitchWithRotate: true
     });
 
     // Nur Mapbox Controls hinzufügen wenn NICHT customControls
@@ -852,10 +1054,87 @@ export function EventsMap({
             "line-opacity": 0.8,
           },
         });
+
+        // 3D Terrain & Sky (Desktop only for performance)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const hasGoodPerformance = !isMobile && navigator.hardwareConcurrency >= 4;
+
+        if (hasGoodPerformance) {
+          map.current.addSource('mapbox-dem', {
+            type: 'raster-dem',
+            url: 'mapbox://mapbox.terrain-rgb',
+            tileSize: 512,
+            maxzoom: 14
+          });
+
+          map.current.setTerrain({
+            source: 'mapbox-dem',
+            exaggeration: 1.5  // Dramatic Alps visualization
+          });
+
+          // Sky layer for realistic atmosphere
+          map.current.addLayer({
+            id: 'sky',
+            type: 'sky',
+            paint: {
+              'sky-type': 'atmosphere',
+              'sky-atmosphere-sun': [0.0, 90.0],
+              'sky-atmosphere-sun-intensity': 15
+            }
+          });
+        }
+
+        // 3D Buildings (always, even on mobile - low GPU impact)
+        const layers = map.current.getStyle().layers;
+        const labelLayerId = layers.find(
+          (layer) => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
+        )?.id;
+
+        map.current.addLayer(
+          {
+            id: '3d-buildings',
+            source: 'composite',
+            'source-layer': 'building',
+            filter: ['==', 'extrude', 'true'],
+            type: 'fill-extrusion',
+            minzoom: 11,
+            paint: {
+              'fill-extrusion-color': '#B0A090',  // Match Switzerland border
+              'fill-extrusion-height': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                11, 0,
+                11.5, ['get', 'height']
+              ],
+              'fill-extrusion-base': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                11, 0,
+                11.5, ['get', 'min_height']
+              ],
+              'fill-extrusion-opacity': 0.6
+            }
+          },
+          labelLayerId
+        );
       }
 
       setMapReady(true);
-      loadEventsInView();  // Initial load
+      loadEventsInView();  // Initial viewport events load
+      loadEliteEvents();   // Load Elite Events globally (visible everywhere)
+    });
+
+    // Error handling for terrain/3D features
+    map.current.on('error', (e) => {
+      console.error('Mapbox error:', e.error);
+
+      if (e.error.message.includes('terrain') || e.error.message.includes('DEM')) {
+        console.warn('Terrain loading failed. Disabling 3D terrain.');
+        map.current?.setTerrain(null);
+        setIs3DMode(false);
+      }
     });
 
     // ENTFERNT: map.current.on("moveend", debouncedLoad) - wird durch handleMapMove ersetzt
@@ -868,7 +1147,7 @@ export function EventsMap({
       map.current?.remove();
       map.current = null;
     };
-  }, [loadEventsInView]);
+  }, [loadEventsInView, loadEliteEvents]);
 
   // Initialize Supercluster when filtered events change
   useEffect(() => {
@@ -900,9 +1179,11 @@ export function EventsMap({
       },
     });
 
-    // Convert events to GeoJSON features with category
-    // Use mapbox_lng/lat for accurate positioning (already normalized in mapping above)
-    // Round to 6 decimal places for consistent precision (~0.1m accuracy)
+    // NOTE: Elite Events are loaded separately via loadEliteEvents() and stored in eliteEventsRef
+    // filteredEvents contains only viewport events (normal events) and should all be clustered
+    // DO NOT try to separate Elite Events from filteredEvents here!
+
+    // Convert ALL viewport events to GeoJSON features for clustering
     const points: EventFeature[] = filteredEvents.map((event) => {
       const lng = Number((event.mapbox_lng ?? event.longitude).toFixed(6));
       const lat = Number((event.mapbox_lat ?? event.latitude).toFixed(6));
@@ -925,7 +1206,9 @@ export function EventsMap({
     cluster.load(points as any);
     superclusterRef.current = cluster;
 
-    console.log(`Supercluster initialized with ${points.length} points`);
+    // DO NOT overwrite eliteEventsRef here - it's set by loadEliteEvents()
+    const eliteCount = eliteEventsRef.current?.length || 0;
+    console.log(`Supercluster initialized with ${points.length} viewport events + ${eliteCount} Elite Events (never clustered)`);
 
     // ENTFERNT: if (mapReady) { updateMarkers(); }
     // Marker werden NUR durch handleMapMove (moveend Event) aktualisiert!
@@ -980,6 +1263,26 @@ export function EventsMap({
     };
   }, [mapReady, handleMapMove]);
 
+  // Track pitch and bearing for UI updates
+  useEffect(() => {
+    if (!map.current || !mapReady) return;
+
+    const updateCameraState = () => {
+      if (map.current) {
+        setCurrentPitch(map.current.getPitch());
+        setCurrentBearing(map.current.getBearing());
+      }
+    };
+
+    map.current.on('pitch', updateCameraState);
+    map.current.on('rotate', updateCameraState);
+
+    return () => {
+      map.current?.off('pitch', updateCameraState);
+      map.current?.off('rotate', updateCameraState);
+    };
+  }, [mapReady]);
+
   // Resize map when visibility changes
   useEffect(() => {
     if (!mapContainer.current || !map.current) return;
@@ -1004,7 +1307,7 @@ export function EventsMap({
   return (
     <div className="relative w-full h-full">
       {/* Map Container */}
-      <div className="relative min-h-[600px] h-[calc(100vh-340px)] rounded-xl overflow-hidden border border-border shadow-lg">
+      <div className="relative w-full h-full">
         <div ref={mapContainer} className="w-full h-full" />
 
         {loading && (
@@ -1031,33 +1334,116 @@ export function EventsMap({
 
         {/* Custom Zoom Controls - Google Maps Style */}
         {customControls && (
-          <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
-            {/* Zoom In */}
-            <button
-              onClick={() => {
-                if (map.current) {
-                  map.current.zoomIn({ duration: 300 });
-                }
-              }}
-              className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300 transition-colors"
-              aria-label="Zoom in"
-            >
-              <span className="text-gray-700 text-2xl font-light leading-none">+</span>
-            </button>
+          <>
+            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
+              {/* Zoom In */}
+              <button
+                onClick={() => {
+                  if (map.current) {
+                    map.current.zoomIn({ duration: 300 });
+                  }
+                }}
+                className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300 transition-colors"
+                aria-label="Zoom in"
+              >
+                <span className="text-gray-700 text-2xl font-light leading-none">+</span>
+              </button>
 
-            {/* Zoom Out */}
-            <button
-              onClick={() => {
-                if (map.current) {
-                  map.current.zoomOut({ duration: 300 });
-                }
-              }}
-              className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300 transition-colors"
-              aria-label="Zoom out"
-            >
-              <span className="text-gray-700 text-2xl font-light leading-none">−</span>
-            </button>
-          </div>
+              {/* Zoom Out */}
+              <button
+                onClick={() => {
+                  if (map.current) {
+                    map.current.zoomOut({ duration: 300 });
+                  }
+                }}
+                className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300 transition-colors"
+                aria-label="Zoom out"
+              >
+                <span className="text-gray-700 text-2xl font-light leading-none">−</span>
+              </button>
+            </div>
+
+            {/* 3D Controls - Left side */}
+            <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-50">
+              {/* 3D Toggle */}
+              <button
+                onClick={() => {
+                  if (!map.current) return;
+                  const newMode = !is3DMode;
+                  setIs3DMode(newMode);
+
+                  map.current.easeTo({
+                    pitch: newMode ? 60 : 0,
+                    bearing: 0,
+                    duration: 1000
+                  });
+                }}
+                className={`w-10 h-10 ${is3DMode ? 'bg-primary text-white' : 'bg-white text-gray-700'} hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300 transition-colors`}
+                title={is3DMode ? "2D Ansicht" : "3D Ansicht"}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </button>
+
+              {/* Pitch Controls - only in 3D mode */}
+              {is3DMode && (
+                <>
+                  {/* Increase Pitch */}
+                  <button
+                    onClick={() => {
+                      if (map.current) {
+                        const newPitch = Math.min((map.current.getPitch() || 0) + 15, 85);
+                        map.current.easeTo({ pitch: newPitch, duration: 300 });
+                      }
+                    }}
+                    className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300"
+                    title="Mehr Neigung"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Decrease Pitch */}
+                  <button
+                    onClick={() => {
+                      if (map.current) {
+                        const newPitch = Math.max((map.current.getPitch() || 0) - 15, 0);
+                        map.current.easeTo({ pitch: newPitch, duration: 300 });
+                      }
+                    }}
+                    className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300"
+                    title="Weniger Neigung"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Compass - Reset to North */}
+                  <button
+                    onClick={() => {
+                      if (map.current) {
+                        map.current.easeTo({ bearing: 0, duration: 500 });
+                      }
+                    }}
+                    className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300"
+                    title="Norden ausrichten"
+                  >
+                    <svg
+                      className="w-5 h-5 transition-transform"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      style={{ transform: `rotate(${currentBearing}deg)` }}
+                    >
+                      <path d="M12 2L8 10h8L12 2zM12 22l4-8H8l4 8z" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          </>
         )}
 
         {/* Event Count - Unten links KLEIN */}

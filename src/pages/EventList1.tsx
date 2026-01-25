@@ -1,22 +1,32 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Maximize2, Minimize2, CalendarPlus, Share2, Copy, Mail, Sparkles, X } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, CalendarPlus, Share2, Copy, Mail, Sparkles, X, ShoppingCart } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import EventsMap from "@/components/EventsMap";
-import EventDetailModal from "@/components/EventDetailModal";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { toggleFavoriteApi } from "@/services/favorites";
 import ChatbotPopupRight from "@/components/ChatbotPopupRight";
-import { getLocationWithMajorCity, getNearestPlace } from "@/utils/swissPlaces";
+import { getLocationWithMajorCity } from "@/utils/swissPlaces";
+import { useEventData } from "@/hooks/useEventData";
+import { useEventFilters } from "@/hooks/useEventFilters";
+import {
+  getEventLocation,
+  convertToUmlauts,
+  getCategoryLabel,
+  exportToCalendar,
+  calculateDistance,
+  CITY_COORDINATES,
+} from "@/utils/eventUtilities";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -26,109 +36,6 @@ import swissZurich from "@/assets/swiss-zurich.jpg";
 
 const placeholderImages = [eventAbbey, eventVenue, eventConcert, swissZurich];
 const getPlaceholderImage = (index: number) => placeholderImages[index % placeholderImages.length];
-
-// Convert German umlaut replacements (from MySwitzerland API) to proper umlauts
-const convertToUmlauts = (text: string | null | undefined): string => {
-  if (!text) return "";
-  const replacements: [string, string][] = [
-    ["fuer", "für"], ["Fuer", "Für"],
-    ["ueber", "über"], ["Ueber", "Über"],
-    ["Aelteste", "Älteste"], ["aelteste", "älteste"],
-    ["Aeltestes", "Ältestes"], ["aeltestes", "ältestes"],
-    ["Aeltere", "Ältere"], ["aeltere", "ältere"],
-    ["aelter", "älter"], ["Aelter", "Älter"],
-    ["oeffentliche", "öffentliche"], ["Oeffentliche", "Öffentliche"],
-    ["oeffentlichen", "öffentlichen"], ["Oeffentlichen", "Öffentlichen"],
-    ["oeffentlicher", "öffentlicher"], ["Oeffentlicher", "Öffentlicher"],
-    ["beruehmte", "berühmte"], ["Beruehmte", "Berühmte"],
-    ["beruehmten", "berühmten"], ["Beruehmten", "Berühmten"],
-    ["Weltberuehmte", "Weltberühmte"], ["weltberuehmte", "weltberühmte"],
-    ["Weltberuehmten", "Weltberühmten"], ["weltberuehmten", "weltberühmten"],
-    ["schoene", "schöne"], ["Schoene", "Schöne"],
-    ["schoenen", "schönen"], ["Schoenen", "Schönen"],
-    ["schoenste", "schönste"], ["Schoenste", "Schönste"],
-    ["grossartige", "großartige"], ["Grossartige", "Großartige"],
-    ["groesste", "größte"], ["Groesste", "Größte"],
-    ["groessere", "größere"], ["Groessere", "Größere"],
-    ["hoechste", "höchste"], ["Hoechste", "Höchste"],
-    ["fruehere", "frühere"], ["Fruehere", "Frühere"],
-    ["taeglich", "täglich"], ["Taeglich", "Täglich"],
-    ["jaehrlich", "jährlich"], ["Jaehrlich", "Jährlich"],
-    ["natuerlich", "natürlich"], ["Natuerlich", "Natürlich"],
-    ["kuenstlerische", "künstlerische"], ["Kuenstlerische", "Künstlerische"],
-    ["Kuenstler", "Künstler"], ["kuenstler", "künstler"],
-    ["Kuenstlern", "Künstlern"], ["kuenstlern", "künstlern"],
-    ["Gemaelde", "Gemälde"], ["gemaelde", "gemälde"],
-    ["Stueck", "Stück"], ["stueck", "stück"],
-    ["Stuecke", "Stücke"], ["stuecke", "stücke"],
-    ["Fuehrung", "Führung"], ["fuehrung", "führung"],
-    ["Fuehrungen", "Führungen"], ["fuehrungen", "führungen"],
-    ["Eroeffnung", "Eröffnung"], ["eroeffnung", "eröffnung"],
-    ["Ausfluege", "Ausflüge"], ["ausfluege", "ausflüge"],
-    ["Laerm", "Lärm"], ["laerm", "lärm"],
-    ["Geraeusch", "Geräusch"], ["geraeusch", "geräusch"],
-    ["Geraeusche", "Geräusche"], ["geraeusche", "geräusche"],
-    ["Gebaeude", "Gebäude"], ["gebaeude", "gebäude"],
-    ["Naehe", "Nähe"], ["naehe", "nähe"],
-    ["Gaeste", "Gäste"], ["gaeste", "gäste"],
-    ["Staedte", "Städte"], ["staedte", "städte"],
-    ["Plaetze", "Plätze"], ["plaetze", "plätze"],
-    ["Spaziergaenge", "Spaziergänge"], ["spaziergaenge", "spaziergänge"],
-    ["Anfaenger", "Anfänger"], ["anfaenger", "anfänger"],
-    ["Sehenswuerdigkeiten", "Sehenswürdigkeiten"], ["sehenswuerdigkeiten", "sehenswürdigkeiten"],
-    ["Zuerich", "Zürich"], ["zuerich", "zürich"],
-    ["Muenchen", "München"], ["muenchen", "münchen"],
-    ["koennen", "können"], ["Koennen", "Können"],
-    ["moechten", "möchten"], ["Moechten", "Möchten"],
-    ["wuerden", "würden"], ["Wuerden", "Würden"],
-    ["muessen", "müssen"], ["Muessen", "Müssen"],
-    ["hoeren", "hören"], ["Hoeren", "Hören"],
-    ["gehoert", "gehört"], ["Gehoert", "Gehört"],
-    ["fuehrt", "führt"], ["Fuehrt", "Führt"],
-    ["praesentiert", "präsentiert"], ["Praesentiert", "Präsentiert"],
-    ["beruehrt", "berührt"], ["Beruehrt", "Berührt"],
-    ["eroeffnet", "eröffnet"], ["Eroeffnet", "Eröffnet"],
-    ["waehrend", "während"], ["Waehrend", "Während"],
-  ];
-  let result = text;
-  for (const [from, to] of replacements) {
-    result = result.split(from).join(to);
-  }
-  return result;
-};
-
-// Location-Logik von "Alle Events" übernommen
-const getEventLocation = (event: Event): string => {
-  const countryNames = [
-    "schweiz", "switzerland", "suisse", "svizzera",
-    "germany", "deutschland", "france", "frankreich",
-    "austria", "österreich", "italy", "italien", "liechtenstein",
-  ];
-
-  const isCountry = (str?: string) => {
-    if (!str) return true;
-    return countryNames.includes(str.toLowerCase().trim());
-  };
-
-  const city = event.address_city?.trim();
-  if (city && city.length > 0 && !isCountry(city)) {
-    return city;
-  }
-
-  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) {
-    return event.venue_name.trim();
-  }
-
-  if (event.location && !isCountry(event.location)) {
-    return event.location.trim();
-  }
-
-  if (event.latitude && event.longitude) {
-    return getNearestPlace(event.latitude, event.longitude);
-  }
-
-  return "";
-};
 
 interface Event {
   id: string;
@@ -150,9 +57,13 @@ interface Event {
   source?: string;
   relevance_score?: number;
   buzz_score?: number;
+  buzz_boost?: number | string;
   favorite_count?: number;
   category_main_id?: number;
   category_sub_id?: number;
+  gallery_urls?: string[];
+  url?: string;
+  ticket_url?: string;
 }
 
 interface TaxonomyItem {
@@ -165,28 +76,14 @@ interface TaxonomyItem {
   is_active?: boolean;
 }
 
-// Buzz Score Helper Function - Wärmere Farben (weniger rot, mehr orange)
-const getBuzzColor = (score: number) => {
-  if (score <= 20) return "#9ca3af"; // gray
-  if (score <= 35) return "#a8a29e"; // stone
-  if (score <= 45) return "#facc15"; // yellow
-  if (score <= 55) return "#fbbf24"; // amber
-  if (score <= 65) return "#f59e0b"; // amber-500
-  if (score <= 75) return "#f97316"; // orange
-  if (score <= 85) return "#fb923c"; // orange-400 (heller, wärmer)
-  if (score <= 92) return "#f97316"; // orange (statt rot)
-  return "#ea580c"; // deep orange (statt rot)
-};
 
-
-// Event Card Component
+// Event Card Component - Inline Expandable Version
 const EventCard = ({
   event,
   index,
   isFavorited,
   onToggleFavorite,
   isMapExpanded,
-  onClick,
   similarEventsFilter,
   setSimilarEventsFilter,
   nearbyEventsFilter,
@@ -198,8 +95,6 @@ const EventCard = ({
   index: number;
   isFavorited: boolean;
   onToggleFavorite: (event: Event) => void;
-  isMapExpanded?: boolean;
-  onClick?: (event: Event) => void;
   similarEventsFilter: string | null;
   setSimilarEventsFilter: (id: string | null) => void;
   nearbyEventsFilter: string | null;
@@ -207,6 +102,7 @@ const EventCard = ({
   setCurrentPage: (page: number) => void;
   setDisplayedEventsCount: (count: number) => void;
 }) => {
+  const [expanded, setExpanded] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
@@ -231,20 +127,46 @@ const EventCard = ({
 
   return (
     <article
-      onClick={() => onClick?.(event)}
-      className="group bg-[#FDFBF7] rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer"
+      onClick={() => setExpanded(!expanded)}
+      className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer"
+      style={{ boxShadow: expanded ? '0 10px 40px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      <div className="flex gap-4 h-[165px]">
-        {/* Image Section - 308px normal, 246px wenn Map groß (20% kleiner) */}
+      <div className={cn("flex gap-4 transition-all duration-300", expanded ? "h-auto" : "h-[165px]")}>
+        {/* Image Section */}
         <div className={cn(
-          "relative h-[165px] flex-shrink-0 overflow-hidden transition-all duration-300",
-          isMapExpanded ? "w-[246px]" : "w-[308px]"
+          "relative w-[308px] flex-shrink-0 overflow-hidden transition-all duration-300",
+          expanded ? "h-[280px]" : "h-[165px]"
         )}>
           <img
             src={imageUrl}
             alt={event.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
+
+          {/* Category Badge - Milky Look wie auf Startseite */}
+          {(() => {
+            const categoryLabel = getCategoryLabel(event);
+            return categoryLabel ? (
+              <div className="absolute top-3 left-3 z-10">
+                <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
+                  {categoryLabel}
+                </span>
+              </div>
+            ) : null;
+          })()}
+
+          {/* Gallery Dots Indicator - only show if multiple images available */}
+          {event.gallery_urls && event.gallery_urls.length > 0 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {/* Primary image dot */}
+              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+              {/* Gallery images dots */}
+              {event.gallery_urls.slice(0, 4).map((_: any, i: number) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Content Section */}
@@ -282,21 +204,24 @@ const EventCard = ({
               )}
             </div>
 
-            {/* Short Description - AI Generated (fallback to description if needed) */}
+            {/* Description - short when collapsed, full when expanded */}
             {(() => {
-              const shortDesc = event.short_description || event.description;
-              return shortDesc ? (
-                <p className="text-[15px] text-gray-600 leading-relaxed line-clamp-2">
-                  {convertToUmlauts(shortDesc)}
+              const description = expanded ? event.description : event.short_description;
+              return description ? (
+                <p className={cn(
+                  "text-[15px] text-gray-600 leading-relaxed",
+                  !expanded && "line-clamp-2"
+                )}>
+                  {convertToUmlauts(description)}
                 </p>
               ) : null;
             })()}
           </div>
 
           {/* Bottom Row: Star + Icons - LEFT ALIGNED, NO BORDERS, 20px spacing */}
-          <div className="flex items-center gap-5 relative z-10">
+          <div className="flex items-center gap-5 relative z-20">
             {/* Star Rating */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 relative z-20">
               <span className="text-yellow-400 text-lg">⭐</span>
               <span className="text-sm font-semibold text-gray-600">
                 {rating.toFixed(1)}
@@ -421,6 +346,28 @@ const EventCard = ({
                 </PopoverContent>
               </Popover>
 
+              {/* Ticket kaufen */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (event.ticket_url || event.url) {
+                    window.open(event.ticket_url || event.url, '_blank');
+                  } else {
+                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                  }
+                }}
+                className="group/ticket relative p-1.5 hover:scale-110 transition-all duration-200"
+              >
+                <ShoppingCart size={18} className="text-gray-600" />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Ticket kaufen
+                  </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
+              </button>
+
               {/* Ähnliche Events (Similar) - Amazon-style */}
               <button
                 onClick={(e) => {
@@ -508,84 +455,24 @@ const EventCard = ({
   );
 };
 
-// Calendar Export Helper (based on EventDetailModal.tsx)
-const exportToCalendar = (event: Event) => {
-  const formatDateForICS = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  };
-
-  const startDate = event.start_date ? formatDateForICS(event.start_date) : '';
-  const endDate = event.end_date ? formatDateForICS(event.end_date) : '';
-
-  const location = event.venue_name || event.address_city || event.location || "Schweiz";
-  const description = (event.short_description || event.description || "")
-    .replace(/\n/g, '\\n');
-
-  const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
-
-  const icsContent = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//EventBuzzer//NONSGML v1.0//EN',
-    'BEGIN:VEVENT',
-    `UID:${event.id}@eventbuzzer.ch`,
-    `DTSTAMP:${formatDateForICS(new Date().toISOString())}`,
-    `DTSTART:${startDate}`,
-    `DTEND:${endDate}`,
-    `SUMMARY:${event.title}`,
-    `DESCRIPTION:${description}\\n\\nMehr Infos: ${eventUrl}`,
-    `LOCATION:${location}`,
-    `URL:${eventUrl}`,
-    'STATUS:CONFIRMED',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
-
-  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `${event.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  toast.success("Event zu Kalender hinzugefügt!");
-};
-
-// City coordinates for radius filtering (from Listings.tsx)
-// WICHTIG: Deutsche Namen mit Umlauten, weil swissPlaces.ts auch deutsche Namen nutzt
-const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
-  "zürich": { lat: 47.3769, lng: 8.5417 },
-  "genf": { lat: 46.2044, lng: 6.1432 },
-  "basel": { lat: 47.5596, lng: 7.5886 },
-  "bern": { lat: 46.948, lng: 7.4474 },
-  "lausanne": { lat: 46.5197, lng: 6.6323 },
-  "luzern": { lat: 47.0502, lng: 8.3093 },
-  "winterthur": { lat: 47.4984, lng: 8.7246 },
-  "st. gallen": { lat: 47.4245, lng: 9.3767 },
-  "lugano": { lat: 46.0037, lng: 8.9511 },
-  "thun": { lat: 46.758, lng: 7.6280 },
-};
-
-// Calculate distance between two coordinates (Haversine formula)
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371; // Earth radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
 
 const EventList1 = () => {
-  const [rawEvents, setRawEvents] = useState<Event[]>([]); // Events from map (unfiltered)
-  const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
   const [mapExpanded, setMapExpanded] = useState(false);
   const [chatbotOpen, setChatbotOpen] = useState(false);
-  const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
+
+  // Use shared hooks
+  const { rawEvents, loading, hoveredEventId, setHoveredEventId, handleMapEventsChange } = useEventData();
+  const {
+    filters,
+    handleCategoryChange,
+    handleMoodChange,
+    handleCityChange,
+    handleRadiusChange,
+    handleTimeChange,
+    handleDateChange,
+    handleSearchChange,
+  } = useEventFilters();
 
   // Taxonomy state for subcategories
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
@@ -601,31 +488,9 @@ const EventList1 = () => {
   const favoriteIds = favorites.map(f => f.id);
   const navigate = useNavigate();
 
-  // Filter state
-  const [filters, setFilters] = useState({
-    category: null as string | null,
-    categoryId: null as number | null,
-    mood: null as string | null,
-    city: "",
-    radius: 25,
-    time: null as string | null,
-    date: undefined as Date | undefined,
-    search: "",
-  });
-
   // Similar & Nearby Events Filter (Amazon-style)
   const [similarEventsFilter, setSimilarEventsFilter] = useState<string | null>(null);
   const [nearbyEventsFilter, setNearbyEventsFilter] = useState<string | null>(null);
-
-  // Event Detail Modal State
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // SIMPLE: Map Events Handler - stores raw events without filtering
-  const handleMapEventsChange = useCallback((newEvents: Event[]) => {
-    setRawEvents(newEvents);
-    setLoading(false);
-  }, []);
 
   const isFavorited = (eventId: string) => favorites.some(f => f.id === eventId);
 
@@ -675,34 +540,10 @@ const EventList1 = () => {
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
   }, [taxonomy, filters.categoryId]);
 
-  // Filter handlers
-  const handleCategoryChange = (categoryId: number | null, categorySlug: string | null) => {
-    setFilters(prev => ({ ...prev, categoryId, category: categorySlug }));
-    setSelectedSubcategoryId(null); // Reset subcategory when category changes
-  };
-
-  const handleMoodChange = (mood: string | null) => {
-    setFilters(prev => ({ ...prev, mood }));
-  };
-
-  const handleCityChange = (city: string) => {
-    setFilters(prev => ({ ...prev, city }));
-  };
-
-  const handleRadiusChange = (radius: number) => {
-    setFilters(prev => ({ ...prev, radius }));
-  };
-
-  const handleTimeChange = (time: string | null) => {
-    setFilters(prev => ({ ...prev, time }));
-  };
-
-  const handleDateChange = (date: Date | undefined) => {
-    setFilters(prev => ({ ...prev, date }));
-  };
-
-  const handleSearchChange = (search: string) => {
-    setFilters(prev => ({ ...prev, search }));
+  // Override handleCategoryChange to reset subcategory
+  const handleCategoryChangeWithReset = (categoryId: number | null, categorySlug: string | null) => {
+    handleCategoryChange(categoryId, categorySlug);
+    setSelectedSubcategoryId(null);
   };
 
   // Load taxonomy from Supabase - with sessionStorage cache
@@ -761,6 +602,7 @@ const EventList1 = () => {
 
   // Filter events based on selected filters (client-side filtering)
   const filteredEvents = useMemo(() => {
+    const startTime = performance.now();
     let result = [...rawEvents];
 
     // 0A. Similar Events Filter (Amazon-style) - OVERRIDE all other filters
@@ -885,8 +727,34 @@ const EventList1 = () => {
       });
     }
 
-    // 5. Search Query Filter (minimum 3 characters)
-    if (filters.search && filters.search.length >= 3) {
+    // 5. Tags Filter (mood/tags from URL like "elite", "familie-freundlich", "mistwetter")
+    if (filters.mood) {
+      result = result.filter(event => {
+        if (!event.tags || !Array.isArray(event.tags)) return false;
+
+        // For familie-freundlich, also accept "familie", "family", "kinder", "familie-kinder"
+        if (filters.mood === 'familie-freundlich') {
+          return event.tags.some(tag =>
+            tag === 'familie-freundlich' ||
+            tag === 'familie' ||
+            tag === 'family' ||
+            tag === 'kinder' ||
+            tag === 'familie-kinder'
+          );
+        }
+
+        // For other tags, exact match
+        return event.tags.includes(filters.mood);
+      });
+    }
+
+    // 6. Source Filter (from URL like "myswitzerland")
+    if (filters.search && filters.search === "myswitzerland") {
+      result = result.filter(event => event.source === "myswitzerland");
+    }
+
+    // 7. Search Query Filter (minimum 3 characters, but skip if it's a source filter)
+    if (filters.search && filters.search.length >= 3 && filters.search !== "myswitzerland") {
       const searchLower = filters.search.toLowerCase();
       result = result.filter(event => {
         return (
@@ -899,6 +767,29 @@ const EventList1 = () => {
         );
       });
     }
+
+    // 8. SORTING: Elite Events first, then by score/favorites
+    // This ensures best events are always at the top of the list
+    result.sort((a, b) => {
+      // 1. Elite Events (buzz_boost = 100) ALWAYS first
+      const aIsElite = a.buzz_boost === 100 || a.buzz_boost === "100";
+      const bIsElite = b.buzz_boost === 100 || b.buzz_boost === "100";
+      if (aIsElite && !bIsElite) return -1;
+      if (!aIsElite && bIsElite) return 1;
+
+      // 2. Sort by buzz_score (higher is better)
+      const aScore = a.buzz_score || a.relevance_score || 0;
+      const bScore = b.buzz_score || b.relevance_score || 0;
+      if (aScore !== bScore) return bScore - aScore;
+
+      // 3. Sort by favorite_count (higher is better)
+      const aFavs = a.favorite_count || 0;
+      const bFavs = b.favorite_count || 0;
+      return bFavs - aFavs;
+    });
+
+    const endTime = performance.now();
+    console.log(`⏱️ Filter + Sort took ${(endTime - startTime).toFixed(2)}ms for ${result.length} events`);
 
     return result;
   }, [rawEvents, filters, similarEventsFilter, nearbyEventsFilter, selectedSubcategoryId]);
@@ -951,6 +842,16 @@ const EventList1 = () => {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
+      <Helmet>
+        <title>Alle Events in der Schweiz | EventBuzzer</title>
+        <meta name="description" content="Entdecke über 900 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt, Datum und mehr auf EventBuzzer." />
+        <meta property="og:title" content="Alle Events in der Schweiz | EventBuzzer" />
+        <meta property="og:description" content="Entdecke über 900 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://eventbuzzer.ch/eventlist1" />
+        <link rel="canonical" href="https://eventbuzzer.ch/eventlist1" />
+      </Helmet>
+
       <Navbar />
 
       {/* Full-width Filter Bar - beiger Hintergrund */}
@@ -964,7 +865,7 @@ const EventList1 = () => {
             initialTime={filters.time}
             initialDate={filters.date}
             initialSearch={filters.search}
-            onCategoryChange={handleCategoryChange}
+            onCategoryChange={handleCategoryChangeWithReset}
             onMoodChange={handleMoodChange}
             onCityChange={handleCityChange}
             onRadiusChange={handleRadiusChange}
@@ -976,13 +877,6 @@ const EventList1 = () => {
       </div>
 
       <main className="container mx-auto px-3 py-6 max-w-7xl">
-        {/* Header */}
-        <div className="mb-5">
-          <h1 className="text-2xl font-semibold text-stone-900 font-sans">
-            Eventliste 1
-          </h1>
-        </div>
-
         {/* Split Layout - Event-Karten 10% schmaler für mehr Platz rechts */}
         <div className="flex gap-8 items-start">
           {/* Left: Event List - 63% Breite (vorher 70%), 500px wenn Map groß (vorher 550px) */}
@@ -1089,10 +983,6 @@ const EventList1 = () => {
                         isFavorited={isFavorited(event.id)}
                         onToggleFavorite={handleToggleFavorite}
                         isMapExpanded={mapExpanded}
-                        onClick={(event) => {
-                          setSelectedEvent(event);
-                          setIsModalOpen(true);
-                        }}
                         similarEventsFilter={similarEventsFilter}
                         setSimilarEventsFilter={setSimilarEventsFilter}
                         nearbyEventsFilter={nearbyEventsFilter}
@@ -1218,6 +1108,7 @@ const EventList1 = () => {
               <button
                 onClick={() => setMapExpanded(!mapExpanded)}
                 className="absolute top-3 right-3 w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+                aria-label={mapExpanded ? "Karte verkleinern" : "Karte vergrößern"}
               >
                 {mapExpanded ? (
                   <Minimize2 size={18} className="text-gray-700" />
@@ -1323,18 +1214,6 @@ const EventList1 = () => {
           </div>
         </div>
       </main>
-
-      {/* Event Detail Modal */}
-      {selectedEvent && (
-        <EventDetailModal
-          event={selectedEvent}
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedEvent(null);
-          }}
-        />
-      )}
     </div>
   );
 };

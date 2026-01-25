@@ -50,6 +50,7 @@ export const ImageGallery = ({ images, alt = "Gallery image", className }: Image
               <img
                 src={url}
                 alt={`${alt} ${i + 1}`}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />

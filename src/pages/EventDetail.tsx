@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
-import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info } from "lucide-react";
+import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info, ShoppingCart } from "lucide-react";
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { BuzzTracker } from "@/components/BuzzTracker";
@@ -307,6 +308,7 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }:
           <img
             src={image}
             alt={title}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         </div>
@@ -345,6 +347,7 @@ const MasonryProductCard = ({ image, name, price, partner, size }: {
       <img
         src={image}
         alt={name}
+        loading="lazy"
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 min-h-[200px]"
       />
       
@@ -547,6 +550,79 @@ const EventDetail = () => {
     }
   }, [dynamicEvent]);
 
+  // Add Schema.org structured data (JSON-LD) for SEO
+  useEffect(() => {
+    if (!event || loading) return;
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": event.title,
+      "description": event.description || "Event in der Schweiz",
+      "image": event.image,
+      "startDate": dynamicEvent?.start_date || new Date().toISOString(),
+      "endDate": dynamicEvent?.end_date || dynamicEvent?.start_date || new Date().toISOString(),
+      "eventStatus": "https://schema.org/EventScheduled",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "location": {
+        "@type": "Place",
+        "name": event.venue || event.location,
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": dynamicEvent?.address_street || "",
+          "addressLocality": event.location,
+          "postalCode": dynamicEvent?.address_zip || "",
+          "addressCountry": "CH"
+        }
+      },
+      "organizer": {
+        "@type": "Organization",
+        "name": "EventBuzzer",
+        "url": "https://eventbuzzer.ch"
+      }
+    };
+
+    // Add price if available
+    if (event.priceFrom) {
+      schema["offers"] = {
+        "@type": "Offer",
+        "price": event.priceFrom,
+        "priceCurrency": "CHF",
+        "url": event.ticketLink || window.location.href,
+        "availability": "https://schema.org/InStock"
+      };
+    }
+
+    // Add performer for certain categories
+    if (dynamicEvent?.category_sub_id?.includes('music') || dynamicEvent?.category_sub_id?.includes('concert')) {
+      schema["performer"] = {
+        "@type": "PerformingGroup",
+        "name": event.title
+      };
+    }
+
+    // Create and inject script tag
+    const scriptId = 'event-schema-ld';
+    let scriptTag = document.getElementById(scriptId) as HTMLScriptElement;
+
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = scriptId;
+      scriptTag.type = 'application/ld+json';
+      document.head.appendChild(scriptTag);
+    }
+
+    scriptTag.textContent = JSON.stringify(schema);
+
+    // Cleanup on unmount
+    return () => {
+      const existingScript = document.getElementById(scriptId);
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, [event, dynamicEvent, loading]);
+
   // Format date nicely
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null;
@@ -687,8 +763,39 @@ const EventDetail = () => {
     );
   }
 
+  // Generate dynamic meta tags for SEO
+  const pageTitle = `${event.title} | EventBuzzer`;
+  const pageDescription = event.description
+    ? event.description.substring(0, 155) + (event.description.length > 155 ? '...' : '')
+    : `${event.title} in ${event.location} - Entdecke Events in der Schweiz auf EventBuzzer`;
+  const pageUrl = `https://eventbuzzer.ch/event/${slug}`;
+
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>{pageTitle}</title>
+        <meta name="title" content={pageTitle} />
+        <meta name="description" content={pageDescription} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:image" content={event.image} />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={pageUrl} />
+        <meta property="twitter:title" content={pageTitle} />
+        <meta property="twitter:description" content={pageDescription} />
+        <meta property="twitter:image" content={event.image} />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href={pageUrl} />
+      </Helmet>
+
       <Navbar />
 
       {/* HERO SECTION - 50/50 Split Layout */}
@@ -802,16 +909,16 @@ const EventDetail = () => {
               </button>
             )}
             <button
-              onClick={() => toggleFavorite({ 
-                id: eventId, 
-                slug: slug || "", 
-                image: event.image, 
-                title: event.title, 
-                venue: event.venue, 
+              onClick={() => toggleFavorite({
+                id: eventId,
+                slug: slug || "",
+                image: event.image,
+                title: event.title,
+                venue: event.venue,
                 location: event.location,
                 date: event.date
               })}
-              className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+              className="p-3.5 rounded-lg hover:bg-neutral-50 transition-colors"
               title="Zu Favoriten hinzufügen"
             >
               <Heart size={20} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
@@ -917,7 +1024,25 @@ const EventDetail = () => {
                 </PopoverContent>
               </Popover>
             )}
-            
+
+            {/* Ticket kaufen - with border to highlight */}
+            <button
+              onClick={() => {
+                if (dynamicEvent?.ticket_url || dynamicEvent?.url) {
+                  window.open(dynamicEvent.ticket_url || dynamicEvent.url, '_blank');
+                } else {
+                  toast({
+                    title: "Demnächst verfügbar",
+                    description: "Ticket-Verkauf wird bald verfügbar sein.",
+                  });
+                }
+              }}
+              className="p-3.5 rounded-lg border border-neutral-300 hover:bg-neutral-50 transition-colors"
+              title="Ticket kaufen"
+            >
+              <ShoppingCart size={20} className="text-neutral-600" />
+            </button>
+
             {/* Calendar Export */}
             <button
               onClick={() => {

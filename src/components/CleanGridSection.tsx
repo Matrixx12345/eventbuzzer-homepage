@@ -427,10 +427,12 @@ const CleanGridSection = ({
   return (
     <section className="py-8 md:py-10 bg-transparent">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Title with reduced size and increased letter-spacing */}
-        <h2 className="text-2xl md:text-2xl font-serif text-foreground/80 mb-6 tracking-wide">
-          {title}
-        </h2>
+        {/* Title with reduced size and increased letter-spacing - clickable */}
+        <Link to={filterParam ? `/eventlist1?${filterParam}` : '/eventlist1'}>
+          <h2 className="text-2xl md:text-2xl font-serif text-foreground/80 mb-6 tracking-wide hover:text-foreground transition-colors cursor-pointer">
+            {title}
+          </h2>
+        </Link>
 
         {/* Carousel Container */}
         <div className="relative">
@@ -477,8 +479,8 @@ const CleanGridSection = ({
               {/* End Card - "Alle anzeigen" */}
               {filterParam && (
                 <div className="flex-shrink-0 w-[calc(33.333%-14px)] min-w-[280px]">
-                  <Link 
-                    to={`/listings?${filterParam}`}
+                  <Link
+                    to={`/eventlist1?${filterParam}`}
                     className="flex items-center justify-center h-[320px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
                   >
                     <div className="text-center px-6">

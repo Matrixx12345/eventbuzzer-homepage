@@ -17,8 +17,11 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { offset = 0, limit = 30, filters = {}, eventId } = body;
-    
-    const supabase = createClient(Deno.env.get("Supabase_URL")!, Deno.env.get("Supabase_ANON_KEY")!);
+
+    // External Supabase client for event data (hardcoded - same as externalClient.ts)
+    const EXTERNAL_SUPABASE_URL = 'https://tfkiyvhfhvkejpljsnrk.supabase.co';
+    const EXTERNAL_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDA4MDQsImV4cCI6MjA4MDY3NjgwNH0.bth3dTvG3fXSu4qILB514x1TRy0scRLo_KM9lDMMKDs';
+    const supabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY);
     
     // Cloud Supabase für buzz_boost (optional)
     let buzzBoostMap: Record<string, number> = {};
@@ -282,7 +285,8 @@ serve(async (req) => {
     }
 
     const { data: events, error, count } = await query
-      .order("start_date", { ascending: true })
+      .order("buzz_score", { ascending: false, nullsLast: true }) // Best events first
+      .order("start_date", { ascending: true }) // Then by date
       .range(offset, offset + limit - 1);
 
     if (error) {

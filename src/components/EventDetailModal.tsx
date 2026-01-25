@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Heart, CalendarPlus, Share2 } from 'lucide-react';
+import { Heart, CalendarPlus, Share2, ExternalLink, ShoppingCart } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { ImageGallery } from '@/components/ImageGallery';
 
 interface EventDetailModalProps {
   event: any;
@@ -112,7 +114,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             />
           )}
 
-          {/* Action Buttons: Favoriten + Kalender + Share (WhatsApp & E-Mail) */}
+          {/* Action Buttons: Favoriten + Kalender + Share + Ticket */}
           <div className="flex items-center gap-3 pb-4 border-b">
             {/* Favorite Button */}
             <button
@@ -191,6 +193,22 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </div>
               </PopoverContent>
             </Popover>
+
+            {/* Ticket purchase button - always visible with border */}
+            <button
+              onClick={() => {
+                if (event.ticket_url || event.url) {
+                  window.open(event.ticket_url || event.url, '_blank');
+                } else {
+                  toast.info("Ticket-Verkauf demnächst verfügbar");
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              title="Ticket kaufen"
+            >
+              <ShoppingCart size={20} className="text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
+            </button>
           </div>
 
           {event.description && (
@@ -198,6 +216,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               className="prose max-w-none"
               dangerouslySetInnerHTML={{ __html: event.description }}
             />
+          )}
+
+          {/* Image Gallery - only show if there are gallery images */}
+          {event.gallery_urls && event.gallery_urls.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <ImageGallery images={event.gallery_urls} alt={event.title} />
+            </div>
           )}
 
           <div className="grid grid-cols-2 gap-4 pt-4 border-t">
@@ -226,6 +251,17 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Small link to detail page at the bottom (for SEO) */}
+          <div className="pt-4 border-t">
+            <Link
+              to={`/event/${event.external_id || event.id}`}
+              onClick={onClose}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              In Detailseite öffnen
+            </Link>
           </div>
         </div>
       </DialogContent>

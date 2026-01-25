@@ -17,15 +17,17 @@ const Navbar = () => {
 
   const navLinks = [
     { label: "Startseite", href: "/" },
-    { label: "Alle Events", href: "/listings" },
-    { label: "Eventliste 1", href: "/eventlist1" },
-    { label: "Trip Planer", href: "/trip-planner" },
+    { label: "Events", href: "/eventlist1" },
     { label: "Favoriten", href: "/favorites" },
   ];
 
   const adminLinks = [
     { label: "Dashboard", href: "/admin/ratings" },
     { label: "Tagging", href: "/admin/speed-tagging" },
+    { label: "Alle Events", href: "/listings" },
+    { label: "Events Neu", href: "/events-neu" },
+    { label: "Trip-Planer", href: "/trip-planner" },
+    { label: "Trip-Planer Neu", href: "/trip-planer-neu" },
     { label: "Supabase Test", href: "/supabase-test" },
   ];
 
@@ -54,25 +56,27 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            
-            {/* Ghost Admin Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors flex items-center gap-1">
-                  <Settings size={14} />
-                  <span>Admin</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="bg-popover">
-                {adminLinks.map((link) => (
-                  <DropdownMenuItem key={link.label} asChild>
-                    <Link to={link.href} className="cursor-pointer">
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            {/* Admin Dropdown - Only visible when logged in */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors flex items-center gap-1">
+                    <Settings size={14} />
+                    <span>Admin</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="bg-popover">
+                  {adminLinks.map((link) => (
+                    <DropdownMenuItem key={link.label} asChild>
+                      <Link to={link.href} className="cursor-pointer">
+                        {link.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Desktop Actions */}
@@ -86,16 +90,22 @@ const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="gap-2 cursor-pointer">
+                      <User size={16} />
+                      Profil
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
                     <LogOut size={16} />
-                    Abmelden
+                    Ausloggen
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <>
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/auth">Anmelden</Link>
+                  <Link to="/auth">Einloggen</Link>
                 </Button>
                 <Button variant="secondary" size="sm" asChild>
                   <Link to="/auth">Registrieren</Link>
@@ -127,32 +137,42 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              
-              {/* Mobile Admin Links - Ghost Style */}
-              <div className="pt-2 border-t border-border/30">
-                <span className="text-xs text-navbar-foreground/20 mb-2 block">Admin</span>
-                {adminLinks.map((link) => (
-                  <Link
-                    key={link.label}
-                    to={link.href}
-                    className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors block py-1"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+
+              {/* Mobile Admin Links - Only visible when logged in */}
+              {user && (
+                <div className="pt-2 border-t border-border/30">
+                  <span className="text-xs text-navbar-foreground/20 mb-2 block">Admin</span>
+                  {adminLinks.map((link) => (
+                    <Link
+                      key={link.label}
+                      to={link.href}
+                      className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors block py-1"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
               
               <div className="flex gap-3 pt-4">
                 {user ? (
-                  <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleSignOut}>
-                    <LogOut size={16} />
-                    Abmelden
-                  </Button>
+                  <>
+                    <Button variant="outline" size="sm" className="flex-1 gap-2" asChild>
+                      <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+                        <User size={16} />
+                        Profil
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleSignOut}>
+                      <LogOut size={16} />
+                      Ausloggen
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Anmelden</Link>
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Einloggen</Link>
                     </Button>
                     <Button variant="secondary" size="sm" className="flex-1" asChild>
                       <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Registrieren</Link>

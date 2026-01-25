@@ -106,19 +106,15 @@ serve(async (req) => {
   try {
     console.log("Starte MySwitzerland OpenData Import...");
 
-    const SUPABASE_URL = Deno.env.get("Supabase_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("Supabase_SERVICE_ROLE_KEY");
+    // External Supabase for events storage (hardcoded - same as externalClient.ts)
+    const EXTERNAL_SUPABASE_URL = 'https://tfkiyvhfhvkejpljsnrk.supabase.co';
+    const EXTERNAL_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRma2l5dmhmaHZrZWpwbGpzbnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDA4MDQsImV4cCI6MjA4MDY3NjgwNH0.bth3dTvG3fXSu4qILB514x1TRy0scRLo_KM9lDMMKDs';
+
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    const MY_SWITZERLAND_KEY = Deno.env.get("MYSWITZERLAND_KEY");
+    // MySwitzerland API Key (hardcoded from README)
+    const MY_SWITZERLAND_KEY = Deno.env.get("MYSWITZERLAND_KEY") || '2vx0GBd6GS9WqN1pez8za3q1owsicC5l5wcqOlCj';
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Supabase credentials not configured");
-    }
-    if (!MY_SWITZERLAND_KEY) {
-      throw new Error("MYSWITZERLAND_KEY not configured");
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY);
 
     // 1. Taxonomy & Tags laden (wie bei tm-import)
     const { data: taxonomy } = await supabase.from("taxonomy").select("id, name, type");
@@ -248,42 +244,61 @@ serve(async (req) => {
                             item.shortDescription || item.longDescription || "";
       const cleanDescription = stripHtml(rawDescription);
       
-      // Bild URL extrahieren - sehr erweiterte Suche für alle API-Formate
-      let imageUrl: string | null = null;
-      
-      // Prüfe alle möglichen Bild-Felder
-      const imageFields = [
-        item.image?.url,
-        item.image?.contentUrl,
-        typeof item.image === 'string' ? item.image : null,
-        item.images?.[0]?.url,
-        item.images?.[0]?.contentUrl,
-        typeof item.images?.[0] === 'string' ? item.images[0] : null,
-        item.photo?.url,
-        item.photo?.contentUrl,
-        typeof item.photo === 'string' ? item.photo : null,
-        item.media?.[0]?.url,
-        item.media?.[0]?.contentUrl,
-        item.thumbnail?.url,
-        item.thumbnail?.contentUrl,
-        typeof item.thumbnail === 'string' ? item.thumbnail : null,
-        item.primaryImage?.url,
-        item.primaryImage?.contentUrl,
-        item.logo?.url,
-        // Nested structures
-        item.gallery?.[0]?.url,
-        item.gallery?.[0]?.contentUrl,
-        item.gallery?.[0]?.image?.url,
-      ];
-      
-      for (const imgField of imageFields) {
-        if (imgField && typeof imgField === 'string' && imgField.startsWith('http')) {
-          imageUrl = imgField;
-          break;
-        }
+      // Bild URLs extrahieren - ALLE Bilder für Gallery sammeln
+      const allImageUrls: string[] = [];
+
+      // Helper function to extract URL from various formats
+      const extractUrl = (field: any): string | null => {
+        if (!field) return null;
+        if (typeof field === 'string' && field.startsWith('http')) return field;
+        if (field.url && typeof field.url === 'string') return field.url;
+        if (field.contentUrl && typeof field.contentUrl === 'string') return field.contentUrl;
+        return null;
+      };
+
+      // Collect from images array
+      if (Array.isArray(item.images)) {
+        item.images.forEach((img: any) => {
+          const url = extractUrl(img);
+          if (url && !allImageUrls.includes(url)) allImageUrls.push(url);
+        });
       }
-      
-      console.log(`Image URL for "${title}":`, imageUrl || "NONE FOUND");
+
+      // Collect from gallery array
+      if (Array.isArray(item.gallery)) {
+        item.gallery.forEach((g: any) => {
+          const url = extractUrl(g) || extractUrl(g?.image);
+          if (url && !allImageUrls.includes(url)) allImageUrls.push(url);
+        });
+      }
+
+      // Collect from media array
+      if (Array.isArray(item.media)) {
+        item.media.forEach((m: any) => {
+          const url = extractUrl(m);
+          if (url && !allImageUrls.includes(url)) allImageUrls.push(url);
+        });
+      }
+
+      // Single image fields (fallback if no arrays)
+      const singleImageFields = [
+        item.image,
+        item.photo,
+        item.thumbnail,
+        item.primaryImage,
+        item.logo,
+      ];
+
+      for (const field of singleImageFields) {
+        const url = extractUrl(field);
+        if (url && !allImageUrls.includes(url)) allImageUrls.push(url);
+      }
+
+      // Primary image is the first one, rest go to gallery
+      const imageUrl = allImageUrls.length > 0 ? allImageUrls[0] : null;
+      const galleryUrls = allImageUrls.length > 1 ? allImageUrls.slice(1) : [];
+
+      console.log(`Images for "${title}": Primary=${imageUrl ? 'YES' : 'NO'}, Gallery=${galleryUrls.length} additional`);
 
       // Adressdaten extrahieren - erweiterte Suche für verschiedene API-Formate
       const geo = item.geo || item.location?.geo || {};
@@ -589,6 +604,7 @@ Stil: Einladend, Quiet Luxury. Keine Emojis. Nur das JSON, keine Erklärungen.`;
           latitude: lat,
           longitude: lng,
           image_url: imageUrl,
+          gallery_urls: galleryUrls.length > 0 ? galleryUrls : null,
           start_date: item.startDate || null,
           end_date: item.endDate || null,
           ticket_link: ticketLink,

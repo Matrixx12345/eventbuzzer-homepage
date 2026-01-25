@@ -364,10 +364,12 @@ const SideBySideSection = ({
   return (
     <section className="bg-transparent py-8 md:py-10">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Title with reduced size and increased letter-spacing */}
-        <h2 className="font-serif text-2xl mb-6 not-italic text-left tracking-wide text-foreground/80">
-          {title}
-        </h2>
+        {/* Title with reduced size and increased letter-spacing - clickable */}
+        <Link to={`/eventlist1?${filterParam}`}>
+          <h2 className="font-serif text-2xl mb-6 not-italic text-left tracking-wide text-foreground/80 hover:text-foreground transition-colors cursor-pointer">
+            {title}
+          </h2>
+        </Link>
 
         {/* 2x2 Grid Container with Chevrons */}
         <div className="relative">
@@ -412,8 +414,8 @@ const SideBySideSection = ({
             
             {/* End Card - "Alle anzeigen" - nur auf letzter Seite wenn Platz */}
             {showEndCard && (
-              <Link 
-                to={`/listings?${filterParam}`}
+              <Link
+                to={`/eventlist1?${filterParam}`}
                 className="flex items-center justify-center h-[280px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
               >
                 <div className="text-center px-6">
@@ -431,8 +433,8 @@ const SideBySideSection = ({
           {/* "Alle anzeigen" Link unter dem Grid wenn nicht als Karte angezeigt */}
           {!showEndCard && (
             <div className="flex justify-center mt-6">
-              <Link 
-                to={`/listings?${filterParam}`}
+              <Link
+                to={`/eventlist1?${filterParam}`}
                 className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-900 font-medium transition-colors group"
               >
                 <span>Alle {title.split(' ').slice(-1)[0]} anzeigen</span>

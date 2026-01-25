@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Spotify Images</title>
+    <style>
+        body { font-family: system-ui; padding: 20px; }
+        img { max-width: 200px; margin: 10px; border: 2px solid #ccc; }
+        .success { border-color: green; }
+        .error { border-color: red; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Spotify CDN Image Test</h1>
+
+    <div class="info">
+        <strong>Testing:</strong> Load Spotify CDN images directly in browser<br>
+        <strong>Expected:</strong> Images should load if Spotify allows it<br>
+        <strong>Error:</strong> Will show if CORS or other issue
+    </div>
+
+    <h2>Test Images:</h2>
+
+    <div id="results"></div>
+
+    <script>
+        const testUrls = [
+            'https://i.scdn.co/image/ab6761610000e5ebd85a07b92a5662a42d0454dd',
+            'https://i.scdn.co/image/ab6761610000e5eb3e49cffa981f6a6519f5d6fb',
+            'https://i.scdn.co/image/ab6761610000e5ebc919eee4e4d7fbc9ac10cbb1',
+            'https://i.scdn.co/image/ab6761610000e5eb8aac9c378ba1a5aa2c715442',
+            'https://i.scdn.co/image/ab6761610000e5ebed1f9c94b631c8ce7f00fad1'
+        ];
+
+        const results = document.getElementById('results');
+        let loadedCount = 0;
+        let errorCount = 0;
+
+        testUrls.forEach((url, index) => {
+            const container = document.createElement('div');
+            container.style.display = 'inline-block';
+            container.style.margin = '10px';
+
+            const img = document.createElement('img');
+            const label = document.createElement('div');
+            label.textContent = `Image ${index + 1}: Loading...`;
+
+            img.src = url;
+
+            img.onload = () => {
+                img.className = 'success';
+                label.textContent = `Image ${index + 1}: ✅ LOADED`;
+                label.style.color = 'green';
+                loadedCount++;
+                updateSummary();
+            };
+
+            img.onerror = (e) => {
+                img.className = 'error';
+                img.alt = '❌ Failed to load';
+                label.textContent = `Image ${index + 1}: ❌ FAILED`;
+                label.style.color = 'red';
+                errorCount++;
+                updateSummary();
+                console.error('Image load error:', url, e);
+            };
+
+            container.appendChild(img);
+            container.appendChild(label);
+            results.appendChild(container);
+        });
+
+        function updateSummary() {
+            const total = testUrls.length;
+            if (loadedCount + errorCount === total) {
+                const summary = document.createElement('div');
+                summary.className = 'info';
+                summary.innerHTML = `
+                    <h3>Summary:</h3>
+                    <p>✅ Loaded: ${loadedCount}/${total}</p>
+                    <p>❌ Failed: ${errorCount}/${total}</p>
+                    ${errorCount > 0 ? '<p><strong>Check browser console (F12) for error details</strong></p>' : ''}
+                `;
+                results.insertBefore(summary, results.firstChild);
+            }
+        }
+    </script>
+</body>
+</html>
