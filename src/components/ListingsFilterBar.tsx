@@ -106,9 +106,9 @@ const ListingsFilterBar = ({
 
   const [selectedMood, setSelectedMood] = useState(() => {
     if (initialMood) {
-      return moods.find((m) => m.slug === initialMood) || moods[0];
+      return moods.find((m) => m.slug === initialMood) || { id: null, slug: null, name: "Jede Stimmung", icon: Smile };
     }
-    return moods[0];
+    return { id: null, slug: null, name: "Jede Stimmung", icon: Smile };
   });
   const [cityInput, setCityInput] = useState(initialCity || "");
   const [radius, setRadius] = useState([initialRadius]);
@@ -399,22 +399,35 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 h-full transition-colors w-full",
               selectedMood.slug
-                ? "bg-amber-700 text-white"
+                ? "bg-slate-100 text-slate-900"
                 : "bg-white",
               openSection === "mood" && !selectedMood.slug && "bg-gray-50",
               !selectedMood.slug && openSection !== "mood" && "hover:bg-gray-50"
             )}
           >
-            <Smile className={cn("w-5 h-5 flex-shrink-0", selectedMood.slug ? "text-white" : "text-gray-400")} />
-            <span className={cn("font-medium text-sm truncate", selectedMood.slug ? "text-white" : "text-gray-900")}>
+            <Smile className={cn("w-5 h-5 flex-shrink-0", selectedMood.slug ? "text-slate-700" : "text-gray-400")} />
+            <span className={cn("font-medium text-sm truncate", selectedMood.slug ? "text-slate-900" : "text-gray-900")}>
               {selectedMood.slug ? selectedMood.name : "Jede Stimmung"}
             </span>
-            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "mood" && "rotate-180", selectedMood.slug ? "text-white" : "text-gray-400")} />
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "mood" && "rotate-180", selectedMood.slug ? "text-slate-700" : "text-gray-400")} />
           </button>
           
           {/* Mood Dropdown - Premium 3x3 Grid */}
           {openSection === "mood" && (
             <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-100/50 z-50 w-[300px] animate-fade-in">
+              {/* Clear Button */}
+              {selectedMood.slug && (
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={() => handleMoodSelect({ id: null, slug: null, name: "Jede Stimmung", icon: Smile })}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                    title="Auswahl löschen"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+
               {/* 3x3 Grid */}
               <div className="grid grid-cols-3 gap-2">
                 {moods.map((mood) => {
@@ -425,7 +438,7 @@ const ListingsFilterBar = ({
                       onClick={() => handleMoodSelect(mood)}
                       className={cn(
                         "flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all bg-white/80 hover:bg-white hover:shadow-md",
-                        isSelected && "ring-2 ring-gray-900/20 shadow-lg bg-white"
+                        isSelected && "ring-2 ring-slate-300 shadow-lg bg-slate-50"
                       )}
                     >
                       <mood.icon size={22} className="flex-shrink-0 text-gray-800" />
@@ -631,11 +644,11 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        {/* SUCHEN Button - Charcoal statt Orange */}
+        {/* SUCHEN Button - Dunkelblau */}
         <div className="p-2 flex-shrink-0">
           <button
             onClick={() => onSearchChange(searchInput)}
-            className="h-full px-6 rounded-xl bg-[#333333] hover:bg-[#222222] text-white font-semibold flex items-center gap-2 transition-colors"
+            className="h-full px-6 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold flex items-center gap-2 transition-colors"
           >
             <Search className="w-4 h-4" />
             <span>SUCHEN</span>
