@@ -44,10 +44,11 @@ const moods = [
   { id: null, slug: null, name: "Jede Stimmung", icon: Smile },
   { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
   { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
+  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
   { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
   { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
   { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
-  { id: "mit-kind", slug: "mit-kind", name: "Mit Kind", icon: Smile },
+  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
   { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
   { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
   { id: "natur", slug: "natur", name: "Natur", icon: Mountain },
@@ -233,12 +234,16 @@ const HeroFilterBar = () => {
                     key={mood.slug || "all"}
                     onClick={() => {
                       setSelectedMood(mood);
+                      // When a mood is selected (not "Alle"), reset category to "Alle"
+                      if (mood.slug !== null) {
+                        setSelectedCategory(categories[0]);
+                      }
                       setMoodOpen(false);
                     }}
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                      selectedMood.slug === mood.slug 
-                        ? "bg-primary/10 text-primary font-medium" 
+                      selectedMood.slug === mood.slug
+                        ? "bg-primary/10 text-primary font-medium"
                         : "hover:bg-muted text-foreground/80"
                     )}
                   >

@@ -45,11 +45,10 @@ const moods = [
   { id: null, slug: null, name: "Alle", icon: Smile },
   { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
   { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
-  { id: "elite", slug: "elite", name: "Elite", icon: Star },
+  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
   { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
   { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
   { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
-  { id: "mit-kind", slug: "mit-kind", name: "Mit Kind", icon: Smile },
   { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
   { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
   { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
@@ -275,6 +274,16 @@ const ListingsFilterBar = ({
   const handleMoodSelect = (mood: (typeof moods)[0]) => {
     setSelectedMood(mood);
     onMoodChange(mood.slug);
+
+    // When a mood is selected (not "Alle"), reset category to "Alle"
+    if (mood.slug !== null) {
+      const allCategory = categories.find(c => c.slug === null);
+      if (allCategory) {
+        setSelectedCategory(allCategory);
+        onCategoryChange(null, null);
+      }
+    }
+
     setOpenSection(null);
   };
 
