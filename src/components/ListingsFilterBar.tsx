@@ -345,13 +345,13 @@ const ListingsFilterBar = ({
   return (
     <div ref={containerRef} className="w-full relative">
       {/* Main Filter Bar - White bar with dark text */}
-      <div className="flex items-stretch bg-white rounded-xl shadow-xl overflow-visible">
+      <div className="flex items-stretch bg-white rounded-lg shadow-xl overflow-visible">
         {/* Kategorie */}
-        <div className="relative flex-1 min-w-0 h-16">
+        <div className="relative flex-1 min-w-0 h-18">
           <button
             onClick={() => toggleSection("category")}
             className={cn(
-              "flex items-center gap-3 px-5 h-full transition-colors w-full rounded-l-2xl",
+              "flex items-center gap-3 px-5 h-full transition-colors w-full rounded-l-lg",
               selectedCategory.slug
                 ? "bg-slate-100 text-slate-900"
                 : "bg-white",
@@ -393,7 +393,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedCategory.slug || selectedMood.slug) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Stimmung */}
-        <div className="relative flex-1 min-w-0 h-16">
+        <div className="relative flex-1 min-w-0 h-18">
           <button
             onClick={() => toggleSection("mood")}
             className={cn(
@@ -454,7 +454,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedMood.slug || cityInput) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Ort */}
-        <div className="relative flex-1 min-w-0 h-16">
+        <div className="relative flex-1 min-w-0 h-18">
           <button
             onClick={() => toggleSection("location")}
             className={cn(
@@ -528,7 +528,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (cityInput || selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Datum */}
-        <div className="relative flex-1 min-w-0 h-16">
+        <div className="relative flex-1 min-w-0 h-18">
           <button
             onClick={() => toggleSection("date")}
             className={cn(
@@ -603,7 +603,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Suche Input mit Vorschlägen */}
-        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 h-16 flex-1 min-w-0 bg-white rounded-r-2xl">
+        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 h-18 flex-1 min-w-0 bg-white rounded-r-lg">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
           <input
             type="text"
@@ -644,11 +644,11 @@ const ListingsFilterBar = ({
           )}
         </div>
 
-        {/* SUCHEN Button - Eisblau */}
+        {/* SUCHEN Button - Dunkel Slate */}
         <div className="p-2 flex-shrink-0">
           <button
             onClick={() => onSearchChange(searchInput)}
-            className="h-full px-6 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold flex items-center gap-2 transition-colors"
+            className="h-full px-6 rounded-lg bg-slate-700 hover:bg-slate-800 text-white font-semibold flex items-center gap-2 transition-colors"
           >
             <Search className="w-4 h-4" />
             <span>SUCHEN</span>
