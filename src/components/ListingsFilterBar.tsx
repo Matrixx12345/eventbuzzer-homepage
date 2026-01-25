@@ -603,7 +603,7 @@ const ListingsFilterBar = ({
         <div className={cn("w-px self-stretch my-3 transition-colors", (selectedDate || selectedTimePill) ? "bg-transparent" : "bg-gray-200")} />
 
         {/* Suche Input mit Vorschlägen */}
-        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-5 h-12 flex-1 min-w-0 bg-white rounded-r-md">
+        <div ref={searchContainerRef} className="relative flex items-center gap-3 px-6 h-12 flex-1 min-w-0 bg-white rounded-r-md">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
           <input
             type="text"
@@ -642,17 +642,6 @@ const ListingsFilterBar = ({
               )}
             </div>
           )}
-        </div>
-
-        {/* SUCHEN Button - Dunkel Slate */}
-        <div className="p-2 flex-shrink-0">
-          <button
-            onClick={() => onSearchChange(searchInput)}
-            className="h-full px-8 rounded-md bg-slate-700 hover:bg-slate-800 text-white font-semibold flex items-center gap-2 transition-colors"
-          >
-            <Search className="w-4 h-4" />
-            <span>SUCHEN</span>
-          </button>
         </div>
       </div>
     </div>
