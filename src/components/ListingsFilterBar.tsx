@@ -343,7 +343,7 @@ const ListingsFilterBar = ({
   }, [categories, initialCategory]);
 
   // FEATURE FLAG: Toggle between designs
-  const USE_PILL_DESIGN = true;
+  const USE_PILL_DESIGN = false;
 
   return (
     <div ref={containerRef} className="w-full relative">
