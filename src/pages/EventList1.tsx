@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Maximize2, Minimize2, CalendarPlus, Share2, Copy, Mail, Sparkles, X, ShoppingCart } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, CalendarPlus, Share2, Copy, Mail, X, ShoppingCart } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -84,8 +84,6 @@ const EventCard = ({
   isFavorited,
   onToggleFavorite,
   isMapExpanded,
-  similarEventsFilter,
-  setSimilarEventsFilter,
   nearbyEventsFilter,
   setNearbyEventsFilter,
   setCurrentPage,
@@ -95,8 +93,6 @@ const EventCard = ({
   index: number;
   isFavorited: boolean;
   onToggleFavorite: (event: Event) => void;
-  similarEventsFilter: string | null;
-  setSimilarEventsFilter: (id: string | null) => void;
   nearbyEventsFilter: string | null;
   setNearbyEventsFilter: (id: string | null) => void;
   setCurrentPage: (page: number) => void;
@@ -104,7 +100,6 @@ const EventCard = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
-  const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
   const imageUrl = event.image_url || getPlaceholderImage(index);
 
@@ -368,46 +363,6 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Ähnliche Events (Similar) - Amazon-style */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (similarEventsFilter === event.id) {
-                    setSimilarEventsFilter(null); // Toggle off
-                  } else {
-                    // Show loading state
-                    setIsLoadingSimilar(true);
-
-                    // Apply filter after 1.5 seconds
-                    setTimeout(() => {
-                      setSimilarEventsFilter(event.id);
-                      setNearbyEventsFilter(null); // Clear other filter
-                      setCurrentPage(1);
-                      setDisplayedEventsCount(30);
-                      setIsLoadingSimilar(false);
-                    }, 1500);
-                  }
-                }}
-                disabled={isLoadingSimilar}
-                className={cn(
-                  "group/similar relative p-1.5 hover:scale-110 transition-all duration-200",
-                  similarEventsFilter === event.id && "text-orange-500",
-                  isLoadingSimilar && "opacity-50 cursor-wait"
-                )}
-              >
-                <Sparkles size={18} className={cn(
-                  similarEventsFilter === event.id ? "text-orange-500" : "text-gray-600",
-                  isLoadingSimilar && "animate-spin"
-                )} />
-                {/* Tooltip - Heller Stil */}
-                <div className="absolute bottom-full right-0 mb-2 hidden group-hover/similar:block z-50 pointer-events-none">
-                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-                    Ähnliche Events anzeigen
-                  </div>
-                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mr-2" />
-                </div>
-              </button>
-
               {/* Events in der Nähe (Nearby) - Amazon-style */}
               <button
                 onClick={(e) => {
@@ -421,7 +376,6 @@ const EventCard = ({
                     // Apply filter after 1.5 seconds
                     setTimeout(() => {
                       setNearbyEventsFilter(event.id);
-                      setSimilarEventsFilter(null); // Clear other filter
                       setCurrentPage(1);
                       setDisplayedEventsCount(30);
                       setIsLoadingNearby(false);
@@ -458,7 +412,7 @@ const EventCard = ({
 
 const EventList1 = () => {
   const [searchParams] = useSearchParams();
-  const [mapExpanded, setMapExpanded] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(true);
   const [chatbotOpen, setChatbotOpen] = useState(false);
 
   // Use shared hooks
@@ -488,8 +442,7 @@ const EventList1 = () => {
   const favoriteIds = favorites.map(f => f.id);
   const navigate = useNavigate();
 
-  // Similar & Nearby Events Filter (Amazon-style)
-  const [similarEventsFilter, setSimilarEventsFilter] = useState<string | null>(null);
+  // Nearby Events Filter
   const [nearbyEventsFilter, setNearbyEventsFilter] = useState<string | null>(null);
 
   const isFavorited = (eventId: string) => favorites.some(f => f.id === eventId);
@@ -605,19 +558,7 @@ const EventList1 = () => {
     const startTime = performance.now();
     let result = [...rawEvents];
 
-    // 0A. Similar Events Filter (Amazon-style) - OVERRIDE all other filters
-    if (similarEventsFilter) {
-      const sourceEvent = rawEvents.find(e => e.id === similarEventsFilter);
-      if (sourceEvent && sourceEvent.category_main_id) {
-        result = result.filter(event =>
-          event.id !== similarEventsFilter && // Exclude source event
-          event.category_main_id === sourceEvent.category_main_id
-        );
-        return result; // Return early, ignore other filters
-      }
-    }
-
-    // 0B. Nearby Events Filter (Amazon-style) - OVERRIDE all other filters
+    // Nearby Events Filter - OVERRIDE all other filters
     if (nearbyEventsFilter) {
       const sourceEvent = rawEvents.find(e => e.id === nearbyEventsFilter);
       if (sourceEvent && sourceEvent.latitude && sourceEvent.longitude) {
@@ -792,7 +733,7 @@ const EventList1 = () => {
     console.log(`⏱️ Filter + Sort took ${(endTime - startTime).toFixed(2)}ms for ${result.length} events`);
 
     return result;
-  }, [rawEvents, filters, similarEventsFilter, nearbyEventsFilter, selectedSubcategoryId]);
+  }, [rawEvents, filters, nearbyEventsFilter, selectedSubcategoryId]);
 
   // Pagination: Calculate displayed events based on current page
   const displayedEvents = useMemo(() => {
@@ -923,29 +864,16 @@ const EventList1 = () => {
               )}
 
               {/* Active Filter Badge */}
-              {(similarEventsFilter || nearbyEventsFilter) && (
+              {nearbyEventsFilter && (
                 <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {similarEventsFilter && (
-                      <>
-                        <Sparkles size={18} className="text-orange-600" />
-                        <span className="text-sm font-medium text-orange-900">
-                          Ähnliche Events werden angezeigt
-                        </span>
-                      </>
-                    )}
-                    {nearbyEventsFilter && (
-                      <>
-                        <MapPin size={18} className="text-orange-600" />
-                        <span className="text-sm font-medium text-orange-900">
-                          Events in der Nähe (innerhalb 10 km)
-                        </span>
-                      </>
-                    )}
+                    <MapPin size={18} className="text-orange-600" />
+                    <span className="text-sm font-medium text-orange-900">
+                      Events in der Nähe (innerhalb 10 km)
+                    </span>
                   </div>
                   <button
                     onClick={() => {
-                      setSimilarEventsFilter(null);
                       setNearbyEventsFilter(null);
                     }}
                     className="text-orange-600 hover:text-orange-800 transition-colors"
@@ -983,8 +911,6 @@ const EventList1 = () => {
                         isFavorited={isFavorited(event.id)}
                         onToggleFavorite={handleToggleFavorite}
                         isMapExpanded={mapExpanded}
-                        similarEventsFilter={similarEventsFilter}
-                        setSimilarEventsFilter={setSimilarEventsFilter}
                         nearbyEventsFilter={nearbyEventsFilter}
                         setNearbyEventsFilter={setNearbyEventsFilter}
                         setCurrentPage={setCurrentPage}
