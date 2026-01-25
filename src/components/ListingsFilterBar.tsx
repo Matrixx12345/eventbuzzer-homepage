@@ -353,17 +353,17 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 h-full transition-colors w-full rounded-l-2xl",
               selectedCategory.slug
-                ? "bg-amber-700 text-white"
+                ? "bg-slate-100 text-slate-900"
                 : "bg-white",
               openSection === "category" && !selectedCategory.slug && "bg-gray-50",
               !selectedCategory.slug && openSection !== "category" && "hover:bg-gray-50"
             )}
           >
-            <LayoutGrid className={cn("w-5 h-5 flex-shrink-0", selectedCategory.slug ? "text-white" : "text-gray-400")} />
-            <span className={cn("font-medium text-sm truncate", selectedCategory.slug ? "text-white" : "text-gray-900")}>
+            <LayoutGrid className={cn("w-5 h-5 flex-shrink-0", selectedCategory.slug ? "text-slate-700" : "text-gray-400")} />
+            <span className={cn("font-medium text-sm truncate", selectedCategory.slug ? "text-slate-900" : "text-gray-900")}>
               {selectedCategory.slug ? selectedCategory.name : "Alle Kategorien"}
             </span>
-            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "category" && "rotate-180", selectedCategory.slug ? "text-white" : "text-gray-400")} />
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "category" && "rotate-180", selectedCategory.slug ? "text-slate-700" : "text-gray-400")} />
           </button>
           
           {/* Category Dropdown */}
@@ -377,7 +377,7 @@ const ListingsFilterBar = ({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left w-full",
                       selectedCategory.slug === cat.slug
-                        ? "bg-amber-600 text-white"
+                        ? "bg-slate-200 text-slate-900"
                         : "hover:bg-gray-100 text-gray-900"
                     )}
                   >
@@ -460,19 +460,19 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 h-full transition-colors w-full",
               cityInput
-                ? "bg-amber-700 text-white"
+                ? "bg-slate-100 text-slate-900"
                 : "bg-white",
               openSection === "location" && !cityInput && "bg-gray-50",
               !cityInput && openSection !== "location" && "hover:bg-gray-50"
             )}
           >
-            <MapPin className={cn("w-5 h-5 flex-shrink-0", cityInput ? "text-white" : "text-gray-400")} />
+            <MapPin className={cn("w-5 h-5 flex-shrink-0", cityInput ? "text-slate-700" : "text-gray-400")} />
             <div className="text-left min-w-0 flex-1">
-              <div className={cn("font-medium text-sm truncate", cityInput ? "text-white" : "text-gray-900")}>
+              <div className={cn("font-medium text-sm truncate", cityInput ? "text-slate-900" : "text-gray-900")}>
                 {cityInput || "Ort"}
               </div>
             </div>
-            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "location" && "rotate-180", cityInput ? "text-white" : "text-gray-400")} />
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "location" && "rotate-180", cityInput ? "text-slate-700" : "text-gray-400")} />
           </button>
           
           {/* Location Dropdown */}
@@ -501,7 +501,7 @@ const ListingsFilterBar = ({
                       className={cn(
                           "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
                           cityInput === city
-                            ? "bg-amber-600 text-white"
+                            ? "bg-slate-200 text-slate-900"
                             : "bg-gray-100 hover:bg-gray-200 text-gray-900"
                         )}
                       >
@@ -534,14 +534,14 @@ const ListingsFilterBar = ({
             className={cn(
               "flex items-center gap-3 px-5 h-full transition-colors w-full",
               (selectedDate || selectedTimePill)
-                ? "bg-amber-700 text-white"
+                ? "bg-slate-100 text-slate-900"
                 : "bg-white",
               openSection === "date" && !(selectedDate || selectedTimePill) && "bg-gray-50",
               !(selectedDate || selectedTimePill) && openSection !== "date" && "hover:bg-gray-50"
             )}
           >
-            <CalendarIcon className={cn("w-5 h-5 flex-shrink-0", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-400")} />
-            <span className={cn("font-medium text-sm truncate", (selectedDate || selectedTimePill) ? "text-white" : "text-gray-900")}>
+            <CalendarIcon className={cn("w-5 h-5 flex-shrink-0", (selectedDate || selectedTimePill) ? "text-slate-700" : "text-gray-400")} />
+            <span className={cn("font-medium text-sm truncate", (selectedDate || selectedTimePill) ? "text-slate-900" : "text-gray-900")}>
               {getDateDisplayText()}
             </span>
             {(selectedDate || selectedTimePill) ? (
@@ -553,9 +553,9 @@ const ListingsFilterBar = ({
                   onDateChange(undefined);
                   onTimeChange(null);
                 }}
-                className="ml-auto p-1 hover:bg-white/20 rounded-full transition-colors"
+                className="ml-auto p-1 hover:bg-slate-200 rounded-full transition-colors"
               >
-                <X className="w-4 h-4 text-white" />
+                <X className="w-4 h-4 text-slate-700" />
               </button>
             ) : (
               <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", openSection === "date" && "rotate-180", "text-gray-400")} />
@@ -575,7 +575,7 @@ const ListingsFilterBar = ({
                       className={cn(
                         "px-3 py-2 rounded-lg text-sm font-medium transition-all text-center flex items-center justify-center gap-1.5",
                         selectedTimePill === pill.id
-                          ? "bg-amber-600 text-white"
+                          ? "bg-slate-200 text-slate-900"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       )}
                     >
