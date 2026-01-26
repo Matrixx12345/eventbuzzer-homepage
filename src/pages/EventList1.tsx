@@ -782,7 +782,7 @@ const EventList1 = () => {
   }, [filteredEvents, currentPage, EVENTS_PER_PAGE]);
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8]">
+    <div className="min-h-screen bg-[#F4F7FA]">
       <Helmet>
         <title>Alle Events in der Schweiz | EventBuzzer</title>
         <meta name="description" content="Entdecke über 900 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt, Datum und mehr auf EventBuzzer." />
@@ -795,8 +795,8 @@ const EventList1 = () => {
 
       <Navbar />
 
-      {/* Full-width Filter Bar - beiger Hintergrund */}
-      <div className="sticky top-16 z-40 bg-[#F5F0E8] border-b border-stone-200">
+      {/* Full-width Filter Bar - hellblauer Hintergrund */}
+      <div className="sticky top-16 z-40 bg-[#F4F7FA] border-b border-stone-200">
         <div className="container mx-auto px-6 py-4 max-w-7xl">
           <ListingsFilterBar
             initialCategory={filters.category}
@@ -832,7 +832,7 @@ const EventList1 = () => {
             <div className="space-y-3">
               {/* Subcategory Pills - Sticky Bar */}
               {filters.categoryId && subCategories.length > 0 && (
-                <div className="sticky top-32 z-10 bg-[#F5F0E8] py-3 -mx-2 px-2 overflow-x-auto">
+                <div className="sticky top-32 z-10 bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
                   <div className="flex gap-2 min-w-max">
                     <button
                       onClick={() => setSelectedSubcategoryId(null)}
