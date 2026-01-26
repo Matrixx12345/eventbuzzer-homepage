@@ -18,6 +18,7 @@ const Index = () => {
         <title>EventBuzzer - Entdecke Events in der Schweiz</title>
         <meta name="description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Von Zürich bis Genf - entdecke unvergessliche Erlebnisse auf EventBuzzer." />
         <meta name="google-site-verification" content="Gy-ddUrDm4Bp3Hqs6ayDcsh-1U_PXP7ZPTBewWdSSBE" />
+        <meta name="p:domain_verify" content="408e9123d6ecb536115fd720ac898a2d"/>
         <meta property="og:title" content="EventBuzzer - Entdecke Events in der Schweiz" />
         <meta property="og:description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
         <meta property="og:type" content="website" />
