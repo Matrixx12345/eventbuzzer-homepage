@@ -193,4 +193,56 @@ Enthält: iCloud-Issues, CPU-Probleme, komplette Git-Historie, alte Troubleshoot
 
 ---
 
-**Letzte Aktualisierung:** Januar 18, 2026
+## 🔍 SEO Session Notes (Januar 26, 2026)
+
+### ✅ Komplett gelöst (CRITICAL):
+1. **Sitemap-Diskrepanz**: 454 fehlende Events behoben
+   - Problem: Supabase default 1000 row limit
+   - Lösung: Pagination in `scripts/generate-sitemap.mjs` implementiert
+   - Resultat: Alle 1454 Events jetzt in sitemap.xml
+
+2. **Meta Tags fehlen**: 7 Seiten komplett ohne SEO Tags
+   - Helmet zu Favorites, Listings, Profile, TripPlanner, TripPlanerNew hinzugefügt
+   - H1 Tags zu Listings & EventList1 hinzugefügt
+   - Event counts aktualisiert (900 → 1400)
+
+3. **Admin-Seiten sichtbar**: Google hätte interne Tools indexiert
+   - `noindex, nofollow` zu allen Admin-Seiten hinzugefügt:
+     - SupabaseTest, AdminUpload, AdminRatings, AdminSpeedTagging
+     - AdminBuzzBoost, AdminChatbot, Auth.tsx
+   - robots.txt: `/admin-upload` blockiert
+
+4. **Duplicate Content**: EventList1 vs EventsNew identisch
+   - EventsNew auf `noindex` gesetzt (ist Prototyp-Seite)
+   - EventList1 ist Haupt-Events-Seite
+
+5. **Share Buttons**: Modal hatte keine "Link kopieren" Funktion
+   - EventDetailModal updated mit Copy/WhatsApp/Email
+   - Identisch zu EventDetail.tsx styling
+
+### ⚠️ Noch offen (HIGH Priority):
+- Canonical URLs zu allen Event Detail Pages fehlen
+- SITE_URL Konstante erstellen (9 hardcoded URLs)
+- Schema.org Organization/Website structured data
+- OG Images für 7 Seiten fehlen
+
+### 📋 Dokumentation:
+- Alle 50+ SEO-Probleme dokumentiert in [SEO-ISSUES.md](SEO-ISSUES.md)
+- Organisiert nach Priorität (CRITICAL → LOW)
+- Mit Datei-Referenzen und Fix-Beispielen
+
+### 🎯 Nächste Schritte:
+1. Restliche HIGH Priority Fixes (siehe SEO-ISSUES.md)
+2. Google Search Console Verifizierung
+3. Sitemap zu Google einreichen
+4. 24-48h warten für Indexierung
+
+### 💡 Prototyping Best Practices:
+- Admin-Routen immer mit `noindex, nofollow` versehen
+- Oder Query Parameter nutzen (`?prototype=true`)
+- Nie in öffentlicher Navbar verlinken
+- EventsNew bleibt als geschützter Prototyp verfügbar
+
+---
+
+**Letzte Aktualisierung:** Januar 26, 2026
