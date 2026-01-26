@@ -663,6 +663,7 @@ const EventsNew = () => {
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://eventbuzzer.ch/events-neu" />
         <link rel="canonical" href="https://eventbuzzer.ch/events-neu" />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       <Navbar />

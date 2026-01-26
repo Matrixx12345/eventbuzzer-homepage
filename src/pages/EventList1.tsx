@@ -798,9 +798,9 @@ const EventList1 = () => {
     <div className="min-h-screen bg-[#F4F7FA]">
       <Helmet>
         <title>Alle Events in der Schweiz | EventBuzzer</title>
-        <meta name="description" content="Entdecke über 900 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt, Datum und mehr auf EventBuzzer." />
+        <meta name="description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt, Datum und mehr auf EventBuzzer." />
         <meta property="og:title" content="Alle Events in der Schweiz | EventBuzzer" />
-        <meta property="og:description" content="Entdecke über 900 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
+        <meta property="og:description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://eventbuzzer.ch/eventlist1" />
         <link rel="canonical" href="https://eventbuzzer.ch/eventlist1" />
@@ -841,6 +841,14 @@ const EventList1 = () => {
               maxWidth: mapExpanded ? "none" : "100%",
             }}
           >
+            {/* Header */}
+            <div className="mb-4">
+              <h1 className="text-2xl font-bold text-stone-900">Alle Events in der Schweiz</h1>
+              <p className="text-sm text-stone-500 mt-1">
+                {loading ? "Lädt..." : `${paginatedEvents.length} von ${filteredEvents.length} Events`}
+              </p>
+            </div>
+
             {/* Event List Container */}
             <div className="space-y-3">
               {/* Subcategory Pills - Sticky Bar */}
