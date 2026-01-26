@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import FavoritesFilterBar, { FilterOption } from "@/components/FavoritesFilterBar";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -35,6 +36,16 @@ const Favorites = () => {
 
   return (
     <div className="min-h-screen bg-stone-50">
+      <Helmet>
+        <title>Meine Favoriten - EventBuzzer</title>
+        <meta name="description" content="Deine gespeicherten Lieblings-Events in der Schweiz. Behalte alle Events im Blick, die du nicht verpassen möchtest." />
+        <meta property="og:title" content="Meine Favoriten - EventBuzzer" />
+        <meta property="og:description" content="Deine gespeicherten Lieblings-Events in der Schweiz." />
+        <meta property="og:url" content="https://eventbuzzer.ch/favorites" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <link rel="canonical" href="https://eventbuzzer.ch/favorites" />
+      </Helmet>
       <Navbar />
       
       {/* Hero Header with Image */}

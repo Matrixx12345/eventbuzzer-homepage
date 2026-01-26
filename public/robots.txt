@@ -18,5 +18,6 @@ Sitemap: https://eventbuzzer.ch/sitemap.xml
 
 # Disallow admin pages
 Disallow: /admin/
+Disallow: /admin-upload
 Disallow: /auth/
 Disallow: /supabase-test

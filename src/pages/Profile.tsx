@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -169,6 +170,17 @@ const Profile = () => {
 
   return (
     <>
+      <Helmet>
+        <title>Mein Profil - EventBuzzer</title>
+        <meta name="description" content="Verwalte dein EventBuzzer Profil, deine Favoriten und gespeicherten Trips. Synchronisiere deine Events geräteübergreifend." />
+        <meta property="og:title" content="Mein Profil - EventBuzzer" />
+        <meta property="og:description" content="Verwalte dein EventBuzzer Profil und deine gespeicherten Events." />
+        <meta property="og:url" content="https://eventbuzzer.ch/profile" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <link rel="canonical" href="https://eventbuzzer.ch/profile" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Navbar />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">

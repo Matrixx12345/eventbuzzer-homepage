@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
+import { Helmet } from "react-helmet-async";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
@@ -580,6 +581,16 @@ const Listings = () => {
 
   return (
     <div className="min-h-screen bg-listings">
+      <Helmet>
+        <title>Event Listings - Alle Events in der Schweiz | EventBuzzer</title>
+        <meta name="description" content="Durchsuche über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt und Datum gefiltert." />
+        <meta property="og:title" content="Event Listings - Alle Events in der Schweiz | EventBuzzer" />
+        <meta property="og:description" content="Durchsuche über 1400 Events in der Schweiz. Filtere nach Kategorie, Stadt und Datum." />
+        <meta property="og:url" content="https://eventbuzzer.ch/listings" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <link rel="canonical" href="https://eventbuzzer.ch/listings" />
+      </Helmet>
       <Navbar />
 
       {/* Chatbot Popup with 1 second delay */}
@@ -609,14 +620,17 @@ const Listings = () => {
 
       {/* Main Content - 2 Column Layout */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-[#FDFBF7]">
-        
+
         {/* Header with View Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="text-sm text-stone-500">
-            {viewMode === "list" 
-              ? (loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`)
-              : `${mapEvents.length} Events im sichtbaren Bereich`
-            }
+          <div>
+            <h1 className="text-2xl font-bold text-stone-900 mb-1">Events in der Schweiz</h1>
+            <div className="text-sm text-stone-500">
+              {viewMode === "list"
+                ? (loading ? "Lädt..." : `${events.length} von ${totalEvents} Events`)
+                : `${mapEvents.length} Events im sichtbaren Bereich`
+              }
+            </div>
           </div>
           <ViewToggle mode={viewMode} onModeChange={setViewMode} />
         </div>

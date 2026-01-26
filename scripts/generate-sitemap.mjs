@@ -38,18 +38,40 @@ const staticPages = [
 async function fetchAllEvents() {
   console.log('📡 Fetching all events from Supabase...');
 
-  const { data, error } = await supabase
-    .from('events')
-    .select('id, created_at, start_date')
-    .order('id', { ascending: true });
+  // Fetch all events with pagination (Supabase has a 1000 row limit per query)
+  let allEvents = [];
+  let from = 0;
+  const batchSize = 1000;
+  let hasMore = true;
 
-  if (error) {
-    console.error('❌ Error fetching events:', error);
-    throw error;
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('events')
+      .select('id, created_at, start_date')
+      .range(from, from + batchSize - 1)
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error('❌ Error fetching events:', error);
+      throw error;
+    }
+
+    if (data && data.length > 0) {
+      allEvents = allEvents.concat(data);
+      console.log(`   Fetched batch: ${data.length} events (total: ${allEvents.length})`);
+      from += batchSize;
+
+      // If we got less than batchSize, we've reached the end
+      if (data.length < batchSize) {
+        hasMore = false;
+      }
+    } else {
+      hasMore = false;
+    }
   }
 
-  console.log(`✅ Found ${data.length} events`);
-  return data;
+  console.log(`✅ Found ${allEvents.length} events total`);
+  return allEvents;
 }
 
 function generateSitemapXML(events) {

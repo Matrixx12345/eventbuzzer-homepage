@@ -1,5 +1,6 @@
 import { useState, useCallback, lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { MapEvent } from "@/types/map";
@@ -413,6 +414,16 @@ const TripPlanner = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FDFBF7] to-[#F8F6F2]">
+      <Helmet>
+        <title>Trip Planer - Plane deine perfekte Schweiz-Reise | EventBuzzer</title>
+        <meta name="description" content="Erstelle deine individuelle Reiseroute durch die Schweiz. Mit unserem intelligenten Trip Planer kombinierst du Events, Sehenswürdigkeiten und kulinarische Highlights." />
+        <meta property="og:title" content="Trip Planer - Plane deine Schweiz-Reise | EventBuzzer" />
+        <meta property="og:description" content="Erstelle deine individuelle Reiseroute durch die Schweiz mit Events und Sehenswürdigkeiten." />
+        <meta property="og:url" content="https://eventbuzzer.ch/trip-planner" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <link rel="canonical" href="https://eventbuzzer.ch/trip-planner" />
+      </Helmet>
       <Navbar />
       
       {/* Chatbot Backdrop */}
