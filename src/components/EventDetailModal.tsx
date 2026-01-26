@@ -260,7 +260,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               onClick={onClose}
               className="text-sm text-gray-500 hover:text-gray-700 underline"
             >
-              In Detailseite öffnen
+              Zur Eventseite
             </Link>
           </div>
         </div>

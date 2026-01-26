@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
@@ -403,6 +403,19 @@ const EventCard = ({
               </button>
             </div>
           </div>
+
+          {/* Link to detail page - only visible when expanded (for SEO) */}
+          {expanded && (
+            <div className="pt-3 mt-3 border-t border-stone-200">
+              <Link
+                to={`/event/${event.external_id || event.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Zur Eventseite
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </article>
