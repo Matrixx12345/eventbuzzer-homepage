@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 
 // Typen definieren
@@ -190,6 +191,9 @@ export default function SpeedTagging() {
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* HEADER */}
         <div className="lg:col-span-12 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">

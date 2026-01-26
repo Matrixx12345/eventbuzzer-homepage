@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Heart, Loader2, Sparkles, CheckCircle, RefreshCw } from "lucide-react";
@@ -233,8 +234,11 @@ const SupabaseTest = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
           <h1 className="text-4xl font-serif text-foreground">

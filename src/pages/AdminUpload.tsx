@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { uploadAllAssetsToStorage } from "@/utils/uploadAssetsToStorage";
 import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, BarChart3, Trash2, Tag } from "lucide-react";
@@ -192,6 +193,9 @@ const AdminUpload = () => {
 
   return (
     <div className="min-h-screen bg-background p-8">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-serif font-bold text-foreground mb-2">
           Admin Tools

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { ArrowLeft, ThumbsUp, ThumbsDown, AlertTriangle, Loader2, Trash2, Tag } from "lucide-react";
 import {
@@ -171,8 +172,11 @@ export default function AdminRatings() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">

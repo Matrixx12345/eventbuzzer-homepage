@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { ArrowLeft, Search, Loader2, Flame, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -173,6 +174,9 @@ export default function AdminBuzzBoost() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Navbar />
 
       <main className="container mx-auto px-4 py-8 pt-24">

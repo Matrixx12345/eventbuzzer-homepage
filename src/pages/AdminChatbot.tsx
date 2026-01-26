@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft } from "lucide-react";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
@@ -8,6 +9,9 @@ const AdminChatbot = () => {
 
   return (
     <div className="min-h-screen bg-background p-8">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="max-w-7xl mx-auto">
         {/* Back Navigation */}
         <Link
