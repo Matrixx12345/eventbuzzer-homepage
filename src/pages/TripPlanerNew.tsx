@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
+import { SITE_URL } from "@/config/constants";
 import Navbar from "@/components/Navbar";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { Heart, RefreshCw, Car, Train, Maximize2, Minimize2, CalendarPlus, Share2, Copy, Mail, Sparkles, MapPin, ShoppingCart, Clock, ChevronRight, Star, Plus, SlidersHorizontal } from "lucide-react";
@@ -415,14 +416,8 @@ const TripPlanerNew = () => {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <Helmet>
-        <title>Trip Planer - Plane deine perfekte Schweiz-Reise | EventBuzzer</title>
-        <meta name="description" content="Erstelle deine individuelle Reiseroute durch die Schweiz. Mit unserem intelligenten Trip Planer kombinierst du Events, Sehenswürdigkeiten und kulinarische Highlights." />
-        <meta property="og:title" content="Trip Planer - Plane deine Schweiz-Reise | EventBuzzer" />
-        <meta property="og:description" content="Erstelle deine individuelle Reiseroute durch die Schweiz mit Events und Sehenswürdigkeiten." />
-        <meta property="og:url" content="https://eventbuzzer.ch/trip-planer-new" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
-        <link rel="canonical" href="https://eventbuzzer.ch/trip-planer-new" />
+        <title>Admin: Trip Planer Neu | EventBuzzer</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       <Navbar />

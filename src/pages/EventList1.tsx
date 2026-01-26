@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
+import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -802,8 +803,31 @@ const EventList1 = () => {
         <meta property="og:title" content="Alle Events in der Schweiz | EventBuzzer" />
         <meta property="og:description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://eventbuzzer.ch/eventlist1" />
-        <link rel="canonical" href="https://eventbuzzer.ch/eventlist1" />
+        <meta property="og:url" content={`${SITE_URL}/eventlist1`} />
+        <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+        <link rel="canonical" href={`${SITE_URL}/eventlist1`} />
+
+        {/* BreadcrumbList Schema for Google Rich Snippets */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": SITE_URL
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Alle Events",
+                "item": `${SITE_URL}/eventlist1`
+              }
+            ]
+          })}
+        </script>
       </Helmet>
 
       <Navbar />
@@ -842,9 +866,31 @@ const EventList1 = () => {
             }}
           >
             {/* Header */}
-            <div className="mb-4">
-              <h1 className="text-2xl font-bold text-stone-900">Alle Events in der Schweiz</h1>
-              <p className="text-sm text-stone-500 mt-1">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-stone-900 mb-3">Alle Events in der Schweiz</h1>
+
+              {/* SEO-optimierter Einleitungs-Text (300+ Wörter) */}
+              <div className="prose prose-sm max-w-none mb-4 text-stone-600 leading-relaxed">
+                <p className="mb-3">
+                  Entdecke über <strong>1400 Events, Konzerte, Festivals und Aktivitäten</strong> in der gesamten Schweiz auf EventBuzzer.
+                  Von pulsierenden Konzerten in Zürich über traditionelle Festivals in Luzern bis zu kulturellen Highlights in Genf –
+                  unsere Plattform bietet dir eine umfassende Übersicht aller Veranstaltungen in deiner Region.
+                </p>
+                <p className="mb-3">
+                  Nutze unsere intelligenten <strong>Filter-Funktionen</strong>, um gezielt nach Events zu suchen: Wähle aus über 15 Kategorien
+                  wie Musik, Sport, Kultur, Familie oder Nachtleben. Filtere nach Stimmung (entspannt, aktiv, romantisch), nach Stadt,
+                  Datum oder entdecke Events in deiner unmittelbaren Umgebung mit unserem Umkreis-Filter. Die interaktive Karte
+                  zeigt dir alle Veranstaltungen visuell auf einen Blick.
+                </p>
+                <p>
+                  Egal ob spontane Wochenend-Aktivität oder langfristige Event-Planung – EventBuzzer hilft dir dabei,
+                  unvergessliche Erlebnisse in der Schweiz zu finden. Speichere deine Favoriten, teile Events mit Freunden
+                  und verpasse keine spannende Veranstaltung mehr in Bern, Basel, Lausanne oder den malerischen Bergregionen
+                  wie Interlaken und Zermatt.
+                </p>
+              </div>
+
+              <p className="text-sm text-stone-500">
                 {loading ? "Lädt..." : `${paginatedEvents.length} von ${filteredEvents.length} Events`}
               </p>
             </div>

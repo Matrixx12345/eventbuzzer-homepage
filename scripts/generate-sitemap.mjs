@@ -25,14 +25,14 @@ const supabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY)
 
 const SITE_URL = 'https://eventbuzzer.ch';
 
-// Static pages
+// Static pages (ONLY public pages, NO admin tools!)
 const staticPages = [
   { url: '', changefreq: 'daily', priority: '1.0' },
   { url: '/eventlist1', changefreq: 'daily', priority: '0.9' },
   { url: '/listings', changefreq: 'daily', priority: '0.8' },
   { url: '/favorites', changefreq: 'weekly', priority: '0.6' },
-  { url: '/trip-planner', changefreq: 'weekly', priority: '0.7' },
   { url: '/impressum', changefreq: 'monthly', priority: '0.3' },
+  // NOTE: /trip-planner and /trip-planer-new are ADMIN tools - NOT in sitemap!
 ];
 
 async function fetchAllEvents() {

@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
+import { SITE_URL } from "@/config/constants";
 import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info, ShoppingCart } from "lucide-react";
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
@@ -578,7 +579,7 @@ const EventDetail = () => {
       "organizer": {
         "@type": "Organization",
         "name": "EventBuzzer",
-        "url": "https://eventbuzzer.ch"
+        "url": SITE_URL
       }
     };
 
@@ -768,7 +769,7 @@ const EventDetail = () => {
   const pageDescription = event.description
     ? event.description.substring(0, 155) + (event.description.length > 155 ? '...' : '')
     : `${event.title} in ${event.location} - Entdecke Events in der Schweiz auf EventBuzzer`;
-  const pageUrl = `https://eventbuzzer.ch/event/${slug}`;
+  const pageUrl = `${SITE_URL}/event/${slug}`;
 
   return (
     <div className="min-h-screen bg-white">

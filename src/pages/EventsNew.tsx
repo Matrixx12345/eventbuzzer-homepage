@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
+import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -661,8 +662,8 @@ const EventsNew = () => {
         <meta property="og:title" content="Events neu entdecken | EventBuzzer" />
         <meta property="og:description" content="Entdecke über 900 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://eventbuzzer.ch/events-neu" />
-        <link rel="canonical" href="https://eventbuzzer.ch/events-neu" />
+        <meta property="og:url" content={`${SITE_URL}/events-neu`} />
+        <link rel="canonical" href={`${SITE_URL}/events-neu`} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 

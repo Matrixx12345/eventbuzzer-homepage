@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import { Helmet } from "react-helmet-async";
+import { SITE_URL } from "@/config/constants";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
@@ -586,10 +587,32 @@ const Listings = () => {
         <meta name="description" content="Durchsuche über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt und Datum gefiltert." />
         <meta property="og:title" content="Event Listings - Alle Events in der Schweiz | EventBuzzer" />
         <meta property="og:description" content="Durchsuche über 1400 Events in der Schweiz. Filtere nach Kategorie, Stadt und Datum." />
-        <meta property="og:url" content="https://eventbuzzer.ch/listings" />
+        <meta property="og:url" content={`${SITE_URL}/listings`} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
-        <link rel="canonical" href="https://eventbuzzer.ch/listings" />
+        <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+        <link rel="canonical" href={`${SITE_URL}/listings`} />
+
+        {/* BreadcrumbList Schema for Google Rich Snippets */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": SITE_URL
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Event Listings",
+                "item": `${SITE_URL}/listings`
+              }
+            ]
+          })}
+        </script>
       </Helmet>
       <Navbar />
 

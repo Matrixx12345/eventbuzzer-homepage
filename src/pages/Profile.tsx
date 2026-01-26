@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { SITE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -175,10 +176,10 @@ const Profile = () => {
         <meta name="description" content="Verwalte dein EventBuzzer Profil, deine Favoriten und gespeicherten Trips. Synchronisiere deine Events geräteübergreifend." />
         <meta property="og:title" content="Mein Profil - EventBuzzer" />
         <meta property="og:description" content="Verwalte dein EventBuzzer Profil und deine gespeicherten Events." />
-        <meta property="og:url" content="https://eventbuzzer.ch/profile" />
+        <meta property="og:url" content={`${SITE_URL}/profile`} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
-        <link rel="canonical" href="https://eventbuzzer.ch/profile" />
+        <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+        <link rel="canonical" href={`${SITE_URL}/profile`} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <Navbar />

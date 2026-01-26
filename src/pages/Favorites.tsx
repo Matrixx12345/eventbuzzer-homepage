@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
+import { SITE_URL } from "@/config/constants";
 import FavoritesFilterBar, { FilterOption } from "@/components/FavoritesFilterBar";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import heroImage from "@/assets/hero-mountains.jpg";
@@ -41,10 +42,32 @@ const Favorites = () => {
         <meta name="description" content="Deine gespeicherten Lieblings-Events in der Schweiz. Behalte alle Events im Blick, die du nicht verpassen möchtest." />
         <meta property="og:title" content="Meine Favoriten - EventBuzzer" />
         <meta property="og:description" content="Deine gespeicherten Lieblings-Events in der Schweiz." />
-        <meta property="og:url" content="https://eventbuzzer.ch/favorites" />
+        <meta property="og:url" content={`${SITE_URL}/favorites`} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
-        <link rel="canonical" href="https://eventbuzzer.ch/favorites" />
+        <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+        <link rel="canonical" href={`${SITE_URL}/favorites`} />
+
+        {/* BreadcrumbList Schema for Google Rich Snippets */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": SITE_URL
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Favoriten",
+                "item": `${SITE_URL}/favorites`
+              }
+            ]
+          })}
+        </script>
       </Helmet>
       <Navbar />
       

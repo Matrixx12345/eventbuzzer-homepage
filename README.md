@@ -243,6 +243,15 @@ Enthält: iCloud-Issues, CPU-Probleme, komplette Git-Historie, alte Troubleshoot
 - Nie in öffentlicher Navbar verlinken
 - EventsNew bleibt als geschützter Prototyp verfügbar
 
+### ⚠️ WICHTIG: Admin-Tools (NICHT SEO-optimieren!):
+**Trip Planner Pages sind ADMIN-TOOLS, KEINE öffentlichen User-Features:**
+- `/trip-planner` → Admin: Trip Planer (`noindex, nofollow`)
+- `/trip-planer-new` → Admin: Trip Planer Neu (`noindex, nofollow`)
+- **NICHT in Sitemap aufnehmen!**
+- **KEINE SEO-Optimierung (H1, Meta Tags, Schema.org)!**
+- Sind nur über Admin-Menü im Navbar erreichbar
+- Für interne Planung und Tests gedacht
+
 ---
 
 **Letzte Aktualisierung:** Januar 26, 2026
