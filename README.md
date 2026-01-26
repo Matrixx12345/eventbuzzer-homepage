@@ -93,17 +93,69 @@ Erstellt `public/sitemap.xml` mit allen Event-URLs.
    ```
 3. Rebuild: `npm run build`
 
-## 🚢 Deployment Checklist
+## 🚀 Deployment (Vercel)
 
-Vor GetYourGuide-Bewerbung:
+**Live-URL:** https://eventbuzzer.ch
+**Vercel-Projekt:** eventbuzzer-homepage
+**Branch:** `main` (auto-deploy bei Git Push)
 
-- [ ] Sitemap generiert (`public/sitemap.xml`)
-- [ ] Google Analytics ID in `.env`
-- [ ] Build erfolgreich: `npm run build`
-- [ ] Deploy auf eventbuzzer.ch
-- [ ] Sitemap bei Google Search Console einreichen
-- [ ] 24h warten für Google-Indexierung
-- [ ] Bei GetYourGuide bewerben
+### Deployment-Workflow
+
+1. Änderungen committen und pushen:
+   ```bash
+   git add .
+   git commit -m "Your changes"
+   git push origin main
+   ```
+
+2. Vercel baut automatisch und deployed (1-2 Minuten)
+3. Änderungen sind live auf eventbuzzer.ch
+
+### Vercel Environment Variables
+
+In Vercel Dashboard konfiguriert:
+- `VITE_GA_MEASUREMENT_ID` - Google Analytics ID
+- `VITE_SUPABASE_URL` - Supabase URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase Public Key
+
+## 🎯 Vor Ticket-Affiliate-Bewerbung TODO
+
+**Status:** Fast fertig - nur noch Google-Setup fehlt
+
+### ✅ Bereits erledigt:
+- ✅ SEO-Optimierungen (Schema.org, Meta Tags, Lazy Loading)
+- ✅ Google Analytics implementiert
+- ✅ Sitemap-Generator vorhanden
+- ✅ Production-Build funktioniert
+- ✅ Vercel-Deployment aktiv
+
+### ⚠️ Noch zu erledigen:
+
+1. **Google Search Console einrichten** (15 Minuten)
+   - Website bei https://search.google.com/search-console hinzufügen
+   - Ownership verifizieren (DNS oder HTML-Tag)
+   - Sitemap einreichen: `https://eventbuzzer.ch/sitemap.xml`
+   - 24-48h warten für Indexierung
+
+2. **Google Analytics verifizieren** (5 Minuten)
+   - GA4 Measurement ID in Vercel Environment Variables prüfen
+   - Live-Daten checken in GA4 Dashboard
+   - Custom Events testen (Event-Klicks, Favoriten)
+
+3. **Finale Sitemap-Generation** (2 Minuten)
+   ```bash
+   node scripts/generate-sitemap.mjs
+   git add public/sitemap.xml
+   git commit -m "Update sitemap"
+   git push
+   ```
+
+4. **Bei Ticket-Service bewerben** (GetYourGuide, Ticketcorner, etc.)
+   - URL: eventbuzzer.ch
+   - Traffic: ~X Besucher/Monat (nach 1 Monat)
+   - Google Analytics Screenshot als Beweis
+
+**Geschätzte Zeit:** ~30 Minuten + 24h Wartezeit für Google
 
 **Erwartete Approval-Chance:** 95%+ (alle SEO-Anforderungen erfüllt)
 
