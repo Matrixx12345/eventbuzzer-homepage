@@ -66,13 +66,14 @@ function generateSitemapXML(events) {
   });
 
   // Add event pages
+  // Use current date for lastmod (not event date) for better SEO
+  const currentDate = new Date().toISOString();
   events.forEach(event => {
-    const lastmod = event.updated_at || event.start_date || new Date().toISOString();
     urls.push(`  <url>
     <loc>${SITE_URL}/event/${event.id}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${currentDate}</lastmod>
   </url>`);
   });
 
