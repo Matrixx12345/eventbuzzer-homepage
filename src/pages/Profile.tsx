@@ -177,7 +177,7 @@ const Profile = () => {
         <meta property="og:description" content="Verwalte dein EventBuzzer Profil und deine gespeicherten Events." />
         <meta property="og:url" content="https://eventbuzzer.ch/profile" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
         <link rel="canonical" href="https://eventbuzzer.ch/profile" />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

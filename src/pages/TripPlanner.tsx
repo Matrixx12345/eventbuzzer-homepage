@@ -421,7 +421,7 @@ const TripPlanner = () => {
         <meta property="og:description" content="Erstelle deine individuelle Reiseroute durch die Schweiz mit Events und Sehenswürdigkeiten." />
         <meta property="og:url" content="https://eventbuzzer.ch/trip-planner" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
         <link rel="canonical" href="https://eventbuzzer.ch/trip-planner" />
       </Helmet>
       <Navbar />

@@ -43,7 +43,7 @@ const Favorites = () => {
         <meta property="og:description" content="Deine gespeicherten Lieblings-Events in der Schweiz." />
         <meta property="og:url" content="https://eventbuzzer.ch/favorites" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://eventbuzzer.ch/og-image.png" />
+        <meta property="og:image" content="https://eventbuzzer.ch/og-image.jpg" />
         <link rel="canonical" href="https://eventbuzzer.ch/favorites" />
       </Helmet>
       <Navbar />
