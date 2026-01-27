@@ -13,6 +13,23 @@ interface EventDetailModalProps {
   onClose: () => void;
 }
 
+// Format tag names for display
+const formatTagName = (tag: string): string => {
+  const tagMap: Record<string, string> = {
+    'familie-freundlich': 'Familie',
+    'must-see': 'Must-See',
+    'mistwetter': 'Mistwetter',
+    'ganzjährig': 'Ganzjährig',
+    'wellness': 'Wellness',
+    'natur': 'Natur',
+    'kunst': 'Kunst',
+    'kultur': 'Kultur',
+    // Add more mappings as needed
+  };
+
+  return tagMap[tag] || tag;
+};
+
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onClose }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showSharePopup, setShowSharePopup] = useState(false);
@@ -135,7 +152,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                     key={index}
                     className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded"
                   >
-                    {tag}
+                    {formatTagName(tag)}
                   </span>
                 ))}
               </div>

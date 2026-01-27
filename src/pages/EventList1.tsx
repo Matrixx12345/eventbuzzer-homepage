@@ -28,6 +28,7 @@ import {
   calculateDistance,
   CITY_COORDINATES,
 } from "@/utils/eventUtilities";
+import { EventDetailModal } from "@/components/EventDetailModal";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -78,12 +79,13 @@ interface TaxonomyItem {
 }
 
 
-// Event Card Component - Inline Expandable Version
+// Event Card Component - Opens Modal on Click
 const EventCard = ({
   event,
   index,
   isFavorited,
   onToggleFavorite,
+  onEventClick,
   isMapExpanded,
   nearbyEventsFilter,
   setNearbyEventsFilter,
@@ -94,6 +96,7 @@ const EventCard = ({
   index: number;
   isFavorited: boolean;
   onToggleFavorite: (event: Event) => void;
+  onEventClick: (event: Event) => void;
   nearbyEventsFilter: string | null;
   setNearbyEventsFilter: (id: string | null) => void;
   setCurrentPage: (page: number) => void;
@@ -123,9 +126,9 @@ const EventCard = ({
 
   return (
     <article
-      onClick={() => setExpanded(!expanded)}
-      className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer"
-      style={{ boxShadow: expanded ? '0 10px 40px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.06)' }}
+      onClick={() => onEventClick(event)}
+      className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
+      style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
       <div className={cn("flex gap-4 transition-all duration-300", expanded ? "h-auto" : "h-[165px]")}>
         {/* Image Section */}
@@ -429,6 +432,10 @@ const EventList1 = () => {
   const [mapExpanded, setMapExpanded] = useState(true);
   const [chatbotOpen, setChatbotOpen] = useState(false);
 
+  // Modal state
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   // Use shared hooks
   const { rawEvents, loading, hoveredEventId, setHoveredEventId, handleMapEventsChange } = useEventData();
   const {
@@ -498,6 +505,17 @@ const EventList1 = () => {
       console.error('Failed to toggle favorite:', error);
     }
   }, [toggleFavorite, isFavorited]);
+
+  // Modal handlers
+  const openEventModal = useCallback((event: Event) => {
+    setSelectedEvent(event);
+    setModalOpen(true);
+  }, []);
+
+  const closeEventModal = useCallback(() => {
+    setModalOpen(false);
+    setSelectedEvent(null);
+  }, []);
 
   // Calculate subcategories for selected category
   const subCategories = useMemo(() => {
@@ -977,6 +995,7 @@ const EventList1 = () => {
                         index={index}
                         isFavorited={isFavorited(event.id)}
                         onToggleFavorite={handleToggleFavorite}
+                        onEventClick={openEventModal}
                         isMapExpanded={mapExpanded}
                         nearbyEventsFilter={nearbyEventsFilter}
                         setNearbyEventsFilter={setNearbyEventsFilter}
@@ -1207,6 +1226,15 @@ const EventList1 = () => {
           </div>
         </div>
       </main>
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          isOpen={modalOpen}
+          onClose={closeEventModal}
+        />
+      )}
     </div>
   );
 };
