@@ -22,7 +22,7 @@ const Index = () => {
         const { data: event } = await supabase
           .from("events")
           .select("*")
-          .eq("external_id", selectedEventId)
+          .eq("id", selectedEventId)
           .single();
 
         if (event) {
