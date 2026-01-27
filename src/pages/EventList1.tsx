@@ -869,14 +869,14 @@ const EventList1 = () => {
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-stone-900 mb-3">Alle Events in der Schweiz</h1>
 
-              {/* SEO-optimierter Einleitungs-Text (300+ Wörter) */}
-              <div className="prose prose-sm max-w-none mb-4 text-stone-600 leading-relaxed">
-                <p className="mb-3">
+              {/* SEO-optimierter Einleitungs-Text (300+ Wörter) - Hidden from UI, visible to Google */}
+              <div className="sr-only">
+                <p>
                   Entdecke über <strong>1400 Events, Konzerte, Festivals und Aktivitäten</strong> in der gesamten Schweiz auf EventBuzzer.
                   Von pulsierenden Konzerten in Zürich über traditionelle Festivals in Luzern bis zu kulturellen Highlights in Genf –
                   unsere Plattform bietet dir eine umfassende Übersicht aller Veranstaltungen in deiner Region.
                 </p>
-                <p className="mb-3">
+                <p>
                   Nutze unsere intelligenten <strong>Filter-Funktionen</strong>, um gezielt nach Events zu suchen: Wähle aus über 15 Kategorien
                   wie Musik, Sport, Kultur, Familie oder Nachtleben. Filtere nach Stimmung (entspannt, aktiv, romantisch), nach Stadt,
                   Datum oder entdecke Events in deiner unmittelbaren Umgebung mit unserem Umkreis-Filter. Die interaktive Karte

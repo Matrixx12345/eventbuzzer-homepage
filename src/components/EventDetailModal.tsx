@@ -116,22 +116,26 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{event.title}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {event.image_url && (
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
+        {/* Hero Image - Full Width without padding */}
+        {event.image_url && (
+          <div className="relative w-full h-[400px] overflow-hidden">
             <img
               src={event.image_url}
               alt={event.title}
-              className="w-full h-64 object-cover rounded-lg"
+              className="w-full h-full object-cover"
             />
-          )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          </div>
+        )}
 
-          {/* Action Buttons: Favoriten + Kalender + Share + Ticket + Detail anzeigen */}
-          <div className="flex items-center gap-2 pb-4 border-b flex-wrap">
+        <div className="px-8 pb-8 pt-6 space-y-6">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-serif">{event.title}</DialogTitle>
+          </DialogHeader>
+
+          {/* Action Buttons: Favoriten + Kalender + Share + Ticket */}
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Favorite Button */}
             <button
               onClick={handleToggleFavorite}
@@ -235,23 +239,38 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               <ShoppingCart size={20} className="text-gray-600" />
               <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
             </button>
-
-            {/* Detail anzeigen button - prominent link to full event page */}
-            <Link
-              to={`/event/${event.external_id || event.id}`}
-              onClick={onClose}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <ExternalLink size={18} />
-              <span className="text-sm">Detail anzeigen</span>
-            </Link>
           </div>
 
+          {/* Tags Pills - below action buttons */}
+          {event.tags && event.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {event.tags.map((tag: string, index: number) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           {event.description && (
-            <div
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: event.description }}
-            />
+            <div className="space-y-4">
+              <div
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: event.description }}
+              />
+              {/* Detail anzeigen link - blue underlined link below description */}
+              <Link
+                to={`/event/${event.external_id || event.id}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium underline transition-colors"
+              >
+                <span>Detail anzeigen</span>
+                <ExternalLink size={16} />
+              </Link>
+            </div>
           )}
 
           {/* Image Gallery - only show if there are gallery images */}
@@ -289,16 +308,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             )}
           </div>
 
-          {/* Small link to detail page at the bottom (for SEO) */}
-          <div className="pt-4 border-t">
-            <Link
-              to={`/event/${event.external_id || event.id}`}
-              onClick={onClose}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-              Zur Eventseite
-            </Link>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
