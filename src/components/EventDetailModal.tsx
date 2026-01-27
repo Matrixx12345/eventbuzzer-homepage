@@ -256,7 +256,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Ticket purchase button */}
+            {/* Ticket purchase button - with border (most important element) */}
             <button
               onClick={() => {
                 if (event.ticket_url || event.url) {
@@ -265,11 +265,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="group flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-800 hover:bg-gray-800 transition-colors"
               title="Ticket kaufen"
             >
-              <ShoppingCart size={20} className="text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
+              <ShoppingCart size={20} className="text-gray-600 group-hover:text-white transition-colors" />
+              <span className="text-sm font-medium text-gray-700 group-hover:text-white transition-colors">Ticket kaufen</span>
             </button>
 
             {/* Rating - Interactive stars in action buttons row */}
