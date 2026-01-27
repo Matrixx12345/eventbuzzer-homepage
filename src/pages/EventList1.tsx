@@ -102,7 +102,6 @@ const EventCard = ({
   setCurrentPage: (page: number) => void;
   setDisplayedEventsCount: (count: number) => void;
 }) => {
-  const [expanded, setExpanded] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
   const imageUrl = event.image_url || getPlaceholderImage(index);
@@ -130,12 +129,9 @@ const EventCard = ({
       className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      <div className={cn("flex gap-4 transition-all duration-300", expanded ? "h-auto" : "h-[165px]")}>
+      <div className="flex gap-4 h-[165px]">
         {/* Image Section */}
-        <div className={cn(
-          "relative w-[308px] flex-shrink-0 overflow-hidden transition-all duration-300",
-          expanded ? "h-[280px]" : "h-[165px]"
-        )}>
+        <div className="relative w-[308px] flex-shrink-0 overflow-hidden h-[165px]">
           <img
             src={imageUrl}
             alt={event.title}
@@ -203,18 +199,12 @@ const EventCard = ({
               )}
             </div>
 
-            {/* Description - short when collapsed, full when expanded */}
-            {(() => {
-              const description = expanded ? event.description : event.short_description;
-              return description ? (
-                <p className={cn(
-                  "text-[15px] text-gray-600 leading-relaxed",
-                  !expanded && "line-clamp-2"
-                )}>
-                  {convertToUmlauts(description)}
-                </p>
-              ) : null;
-            })()}
+            {/* Description - always show short description with 2 line clamp */}
+            {event.short_description && (
+              <p className="text-[15px] text-gray-600 leading-relaxed line-clamp-2">
+                {convertToUmlauts(event.short_description)}
+              </p>
+            )}
           </div>
 
           {/* Bottom Row: Star + Icons - LEFT ALIGNED, NO BORDERS, 20px spacing */}
@@ -407,19 +397,6 @@ const EventCard = ({
               </button>
             </div>
           </div>
-
-          {/* Link to detail page - only visible when expanded (for SEO) */}
-          {expanded && (
-            <div className="pt-3 mt-3 border-t border-stone-200">
-              <Link
-                to={`/event/${event.external_id || event.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-sm text-gray-500 hover:text-gray-700 underline"
-              >
-                Zur Eventseite
-              </Link>
-            </div>
-          )}
         </div>
       </div>
     </article>
