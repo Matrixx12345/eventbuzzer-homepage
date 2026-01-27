@@ -6,7 +6,6 @@ import HeroSection from "@/components/HeroSection";
 import CleanGridSection from "@/components/CleanGridSection";
 import SideBySideSection from "@/components/SideBySideSection";
 import EliteExperiencesSection from "@/components/EliteExperiencesSection";
-import SwitzerlandSection from "@/components/SwitzerlandSection";
 import { useEventModal } from "@/hooks/useEventModal";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -156,11 +155,6 @@ const Index = () => {
             <EliteExperiencesSection onEventClick={openEvent} />
           </ErrorBoundary>
         </div>
-
-        {/* Sektion 5: Switzerland Premium Highlights */}
-        <ErrorBoundary>
-          <SwitzerlandSection onEventClick={openEvent} />
-        </ErrorBoundary>
       </main>
       
       {/* Global Event Detail Modal with URL sync */}

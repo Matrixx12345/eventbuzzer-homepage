@@ -891,7 +891,7 @@ const EventList1 = () => {
               </div>
 
               <p className="text-sm text-stone-500">
-                {loading ? "Lädt..." : `${paginatedEvents.length} von ${filteredEvents.length} Events`}
+                {loading ? "Lädt..." : `${displayedEvents.length} von ${filteredEvents.length} Events`}
               </p>
             </div>
 
