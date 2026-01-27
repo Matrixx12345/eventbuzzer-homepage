@@ -126,6 +126,20 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+            {/* Tags Pills - Milky Look oben links im Bild, nebeneinander */}
+            {event.tags && event.tags.length > 0 && (
+              <div className="absolute top-4 left-4 z-10 flex gap-2 flex-wrap">
+                {event.tags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -240,20 +254,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
             </button>
           </div>
-
-          {/* Tags Pills - below action buttons */}
-          {event.tags && event.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {event.tags.map((tag: string, index: number) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
 
           {event.description && (
             <div className="space-y-4">
