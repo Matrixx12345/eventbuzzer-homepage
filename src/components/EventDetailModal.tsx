@@ -256,7 +256,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Ticket purchase button - always visible with border */}
+            {/* Ticket purchase button */}
             <button
               onClick={() => {
                 if (event.ticket_url || event.url) {
@@ -265,7 +265,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
               title="Ticket kaufen"
             >
               <ShoppingCart size={20} className="text-gray-600" />
@@ -273,7 +273,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             </button>
 
             {/* Rating - Interactive stars in action buttons row */}
-            <div className="flex items-center gap-2 px-3 py-2">
+            <div className="flex items-center gap-2 px-3 py-2 ml-2">
               <EventRating
                 eventId={event.id}
                 externalId={event.external_id}
@@ -311,10 +311,15 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           )}
 
           <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-            {event.start_date && (
+            {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
               <div>
                 <p className="text-sm font-semibold text-gray-500">Datum</p>
-                <p>{new Date(event.start_date).toLocaleDateString('de-CH')}</p>
+                <p>
+                  {event.tags && event.tags.includes('ganzjährig')
+                    ? 'Ganzjährig'
+                    : new Date(event.start_date).toLocaleDateString('de-CH')
+                  }
+                </p>
               </div>
             )}
 
