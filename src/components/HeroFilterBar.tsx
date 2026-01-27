@@ -156,7 +156,8 @@ const HeroFilterBar = () => {
       params.set("time", selectedTimePill);
     }
     if (selectedDate) {
-      params.set("date", selectedDate.toISOString());
+      // Format as YYYY-MM-DD for URL (ISO date only, not full timestamp)
+      params.set("date", format(selectedDate, "yyyy-MM-dd"));
     }
     
     navigate(`/listings?${params.toString()}`);

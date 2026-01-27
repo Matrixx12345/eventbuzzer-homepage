@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { SITE_URL } from "@/config/constants";
@@ -5,12 +6,47 @@ import HeroSection from "@/components/HeroSection";
 import CleanGridSection from "@/components/CleanGridSection";
 import SideBySideSection from "@/components/SideBySideSection";
 import EliteExperiencesSection from "@/components/EliteExperiencesSection";
+import SwitzerlandSection from "@/components/SwitzerlandSection";
 import { useEventModal } from "@/hooks/useEventModal";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
 const Index = () => {
-  const { selectedEventId, isOpen: modalOpen, openEvent, closeEvent, swapEvent } = useEventModal();
+  const { selectedEventId, isOpen: modalOpen, openEvent: openEventModal, closeEvent: closeEventModal, swapEvent } = useEventModal();
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+  // Fetch event data when selectedEventId changes
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (selectedEventId && modalOpen) {
+        const { data: event } = await supabase
+          .from("events")
+          .select("*")
+          .eq("external_id", selectedEventId)
+          .single();
+
+        if (event) {
+          setSelectedEvent(event);
+        }
+      } else {
+        setSelectedEvent(null);
+      }
+    };
+
+    fetchEvent();
+  }, [selectedEventId, modalOpen]);
+
+  // Wrapper to open modal and fetch event
+  const openEvent = (eventId: string) => {
+    openEventModal(eventId);
+  };
+
+  // Wrapper to close modal and clear event
+  const closeEvent = () => {
+    closeEventModal();
+    setSelectedEvent(null);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,16 +156,21 @@ const Index = () => {
             <EliteExperiencesSection onEventClick={openEvent} />
           </ErrorBoundary>
         </div>
+
+        {/* Sektion 5: Switzerland Premium Highlights */}
+        <ErrorBoundary>
+          <SwitzerlandSection onEventClick={openEvent} />
+        </ErrorBoundary>
       </main>
       
       {/* Global Event Detail Modal with URL sync */}
-      <EventDetailModal 
-        key={selectedEventId || "closed"}
-        eventId={selectedEventId}
-        open={modalOpen}
-        onOpenChange={(open) => !open && closeEvent()}
-        onEventSwap={swapEvent}
-      />
+      {selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          isOpen={modalOpen}
+          onClose={closeEvent}
+        />
+      )}
     </div>
   );
 };

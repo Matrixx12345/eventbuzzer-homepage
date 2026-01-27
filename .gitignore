@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Pinterest generated files
+pinterest-*.csv
+pinterest-uploaded-ids.json
+supabase-events.csv

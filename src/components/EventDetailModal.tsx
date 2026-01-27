@@ -130,8 +130,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             />
           )}
 
-          {/* Action Buttons: Favoriten + Kalender + Share + Ticket */}
-          <div className="flex items-center gap-3 pb-4 border-b">
+          {/* Action Buttons: Favoriten + Kalender + Share + Ticket + Detail anzeigen */}
+          <div className="flex items-center gap-2 pb-4 border-b flex-wrap">
             {/* Favorite Button */}
             <button
               onClick={handleToggleFavorite}
@@ -235,6 +235,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               <ShoppingCart size={20} className="text-gray-600" />
               <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
             </button>
+
+            {/* Detail anzeigen button - prominent link to full event page */}
+            <Link
+              to={`/event/${event.external_id || event.id}`}
+              onClick={onClose}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            >
+              <ExternalLink size={18} />
+              <span className="text-sm">Detail anzeigen</span>
+            </Link>
           </div>
 
           {event.description && (
