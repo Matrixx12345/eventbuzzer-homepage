@@ -272,16 +272,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
             </button>
 
-            {/* Rating - 5 stars */}
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200">
-              <EventRating
-                eventId={event.id}
-                externalId={event.external_id}
-                onRatingChange={(buzzIncrease) => {
-                  console.log(`Buzz increased by ${buzzIncrease}`);
-                }}
-              />
-            </div>
+          </div>
+
+          {/* Rating Display - below action buttons with more space */}
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+            <span className="text-sm text-gray-500 font-medium">Bewertung:</span>
+            <EventRating buzzScore={event.buzz_score || event.relevance_score} />
           </div>
 
           {event.description && (
