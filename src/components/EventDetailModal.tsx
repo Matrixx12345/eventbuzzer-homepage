@@ -6,6 +6,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { ImageGallery } from '@/components/ImageGallery';
+import { EventRating } from '@/components/EventRating';
 
 interface EventDetailModalProps {
   event: any;
@@ -270,6 +271,17 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               <ShoppingCart size={20} className="text-gray-600" />
               <span className="text-sm font-medium text-gray-700">Ticket kaufen</span>
             </button>
+
+            {/* Rating - 5 stars */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200">
+              <EventRating
+                eventId={event.id}
+                externalId={event.external_id}
+                onRatingChange={(buzzIncrease) => {
+                  console.log(`Buzz increased by ${buzzIncrease}`);
+                }}
+              />
+            </div>
           </div>
 
           {event.description && (
