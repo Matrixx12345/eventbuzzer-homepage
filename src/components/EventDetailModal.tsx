@@ -167,7 +167,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </DialogHeader>
 
           {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-6 flex-wrap">
             {/* Favorite Button - just red heart when saved, no border */}
             <button
               onClick={handleToggleFavorite}
@@ -282,11 +282,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
               title="Ticket kaufen"
             >
               <ShoppingCart size={20} className="text-white" />
-              <span className="text-sm font-medium">Ticket kaufen</span>
+              <span className="text-sm font-medium text-white">Ticket kaufen</span>
             </button>
           </div>
 
