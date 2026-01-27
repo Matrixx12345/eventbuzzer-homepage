@@ -198,7 +198,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           .from("events")
           .select("*")
           .eq("hide_from_homepage", false)
-          .contains("tags", ["elite"])
+          .contains("tags", ["must-see"])
           .not("image_url", "is", null)
           .gte("relevance_score", 50)
           .or(`start_date.is.null,start_date.lte.${nextMonth}`)
@@ -318,7 +318,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     <section className="bg-transparent py-8 md:py-10">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         {/* Title with reduced size and increased letter-spacing - clickable */}
-        <Link to="/eventlist1?tags=elite">
+        <Link to="/eventlist1?tags=must-see">
           <h2 className="font-serif text-2xl mb-6 not-italic text-left tracking-wide text-foreground/80 hover:text-foreground transition-colors cursor-pointer">
             Die Schweizer Top Erlebnisse:
           </h2>
@@ -368,7 +368,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
             {/* End Card - "Alle anzeigen" - nur auf letzter Seite wenn Platz */}
             {showEndCard && (
               <Link
-                to="/eventlist1?tags=elite"
+                to="/eventlist1?tags=must-see"
                 className="flex items-center justify-center h-[280px] bg-white/50 backdrop-blur-sm rounded-2xl border border-stone-200/50 hover:bg-white/70 hover:border-stone-300 transition-all duration-300 group"
               >
                 <div className="text-center px-6">
@@ -387,7 +387,7 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           {!showEndCard && (
             <div className="flex justify-center mt-6">
               <Link
-                to="/eventlist1?tags=elite"
+                to="/eventlist1?tags=must-see"
                 className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-900 font-medium transition-colors group"
               >
                 <span>Alle Top Erlebnisse anzeigen</span>
