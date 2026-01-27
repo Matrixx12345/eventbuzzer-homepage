@@ -166,21 +166,26 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-3xl font-serif">{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Action Buttons: Favoriten + Kalender + Share + Ticket */}
+          {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket (ganz rechts) */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Favorite Button */}
+            {/* Favorite Button - just red heart when saved, no border */}
             <button
               onClick={handleToggleFavorite}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className={isFavorited
+                ? "flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                : "flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              }
               title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
             >
               <Heart
                 size={20}
                 className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"}
               />
-              <span className="text-sm font-medium text-gray-700">
-                {isFavorited ? "Gespeichert" : "Speichern"}
-              </span>
+              {!isFavorited && (
+                <span className="text-sm font-medium text-gray-700">
+                  Speichern
+                </span>
+              )}
             </button>
 
             {/* Calendar Button */}
@@ -256,22 +261,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Ticket purchase button - with border (most important element) */}
-            <button
-              onClick={() => {
-                if (event.ticket_url || event.url) {
-                  window.open(event.ticket_url || event.url, '_blank');
-                } else {
-                  toast.info("Ticket-Verkauf demnächst verfügbar");
-                }
-              }}
-              className="group flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-800 hover:bg-gray-800 transition-colors"
-              title="Ticket kaufen"
-            >
-              <ShoppingCart size={20} className="text-gray-600 group-hover:text-white transition-colors" />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-white transition-colors">Ticket kaufen</span>
-            </button>
-
             {/* Rating - Interactive stars in action buttons row */}
             <div className="flex items-center gap-2 px-3 py-2 ml-2">
               <EventRating
@@ -283,6 +272,22 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 }}
               />
             </div>
+
+            {/* Ticket purchase button - ganz rechts, dunkle Farbe als Standard */}
+            <button
+              onClick={() => {
+                if (event.ticket_url || event.url) {
+                  window.open(event.ticket_url || event.url, '_blank');
+                } else {
+                  toast.info("Ticket-Verkauf demnächst verfügbar");
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors ml-auto"
+              title="Ticket kaufen"
+            >
+              <ShoppingCart size={20} className="text-white" />
+              <span className="text-sm font-medium">Ticket kaufen</span>
+            </button>
           </div>
 
           {event.description && (
