@@ -168,12 +168,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
           {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
           <div className="flex items-center gap-4 flex-wrap">
-            {/* Favorite Button - EXACT copy from event page */}
+            {/* Favorite Button */}
             <button
               onClick={handleToggleFavorite}
               className={
                 isFavorited
-                  ? "flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 transition-all"
+                  ? "flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-gray-200 transition-all"
                   : "flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-all"
               }
             >
