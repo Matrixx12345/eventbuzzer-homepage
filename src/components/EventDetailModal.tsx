@@ -166,8 +166,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-3xl font-serif">{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket (ganz rechts) */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
+          <div className="flex items-center gap-4 flex-wrap">
             {/* Favorite Button - just red heart when saved, no border */}
             <button
               onClick={handleToggleFavorite}
@@ -262,7 +262,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             </Popover>
 
             {/* Rating - Interactive stars in action buttons row */}
-            <div className="flex items-center gap-2 px-3 py-2 ml-2">
+            <div className="flex items-center gap-2 px-2 py-2">
               <EventRating
                 eventId={event.id}
                 externalId={event.external_id}
@@ -273,7 +273,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               />
             </div>
 
-            {/* Ticket purchase button - ganz rechts, dunkle Farbe als Standard */}
+            {/* Ticket purchase button - dunkle Farbe als Standard */}
             <button
               onClick={() => {
                 if (event.ticket_url || event.url) {
@@ -282,7 +282,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors ml-auto"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
               title="Ticket kaufen"
             >
               <ShoppingCart size={20} className="text-white" />
