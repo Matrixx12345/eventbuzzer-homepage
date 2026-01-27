@@ -167,40 +167,39 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </DialogHeader>
 
           {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
-          <div className="flex items-center gap-6 flex-wrap">
-            {/* Favorite Button - icon only */}
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Favorite Button - EXACT copy from event page */}
             <button
               onClick={handleToggleFavorite}
               className={
                 isFavorited
-                  ? "flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 text-red-600 border border-red-200 transition-all"
-                  : "flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-all"
+                  ? "flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 transition-all"
+                  : "flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-all"
               }
-              title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
             >
-              <Heart
-                size={20}
-                className={isFavorited ? "fill-current" : ""}
-              />
+              <Heart size={20} className={isFavorited ? "fill-current" : ""} />
+              <span className="text-sm font-medium">
+                {isFavorited ? "Gespeichert" : "Speichern"}
+              </span>
             </button>
 
-            {/* Calendar Button - icon only */}
+            {/* Calendar Button - EXACT copy from event page */}
             <button
               onClick={exportToCalendar}
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-all"
-              title="Im privaten Kalender speichern"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-all"
             >
               <CalendarPlus size={20} />
+              <span className="text-sm font-medium">Kalender</span>
             </button>
 
-            {/* Share Button - icon only with Popover */}
+            {/* Share Button - EXACT copy from event page */}
             <Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
               <PopoverTrigger asChild>
                 <button
-                  className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-all"
-                  title="Event teilen"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-all"
                 >
                   <Share2 size={20} />
+                  <span className="text-sm font-medium">Teilen</span>
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-64 p-2" align="start">
