@@ -223,7 +223,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="space-y-3 mt-4">
+        <div className="space-y-3 mt-4 pr-4">
           {/* Title UNDER the image */}
           <DialogHeader>
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
@@ -232,12 +232,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {/* Description UNDER the title - "mehr lesen" inline at end */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 150;
-            const displayText = isTruncated ? fullText.substring(0, 150).trim() : fullText;
+            const isTruncated = fullText.length > 130;
+            const displayText = isTruncated ? fullText.substring(0, 130).trim() : fullText;
 
             return (
               <p
-                className="text-sm text-gray-700 leading-relaxed text-justify pr-1"
+                className="text-sm text-gray-700 leading-relaxed text-justify"
                 lang="de"
                 style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
               >
@@ -258,7 +258,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             );
           })()}
           {/* Action Buttons */}
-          <div className="flex items-center pt-6">
+          <div className="flex items-center justify-between pt-6">
             <div className="flex items-center gap-5">
               {/* Favorite Button */}
               <button
@@ -377,22 +377,22 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   )}
                 </PopoverContent>
               </Popover>
-
-              {/* Ticket Button - dunkleres Blau, breiter */}
-              <button
-                onClick={() => {
-                  if (event.ticket_url || event.url) {
-                    window.open(event.ticket_url || event.url, '_blank');
-                  } else {
-                    toast.info("Ticket-Verkauf demnächst verfügbar");
-                  }
-                }}
-                className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg ml-auto"
-                title="Ticket kaufen"
-              >
-                <span className="text-sm font-semibold text-white">Ticket kaufen</span>
-              </button>
             </div>
+
+            {/* Ticket Button - dunkleres Blau, breiter, rechtsbündig */}
+            <button
+              onClick={() => {
+                if (event.ticket_url || event.url) {
+                  window.open(event.ticket_url || event.url, '_blank');
+                } else {
+                  toast.info("Ticket-Verkauf demnächst verfügbar");
+                }
+              }}
+              className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg"
+              title="Ticket kaufen"
+            >
+              <span className="text-sm font-semibold text-white">Ticket kaufen</span>
+            </button>
           </div>
 
           {/* Compact Details - nur die wichtigsten Infos */}
