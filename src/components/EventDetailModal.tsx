@@ -244,13 +244,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 {displayText}
                 {isTruncated && (
                   <>
-                    {' '}
+                    {'... '}
                     <Link
                       to={`/event/${event.external_id || event.id}`}
                       className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      ... mehr lesen
+                      mehr lesen
                     </Link>
                   </>
                 )}
@@ -259,7 +259,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           })()}
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-6">
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-7">
               {/* Favorite Button */}
               <button
                 onClick={handleToggleFavorite}
