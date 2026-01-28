@@ -6,6 +6,7 @@ import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, Externa
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { BuzzTracker } from "@/components/BuzzTracker";
+import { StarRating } from "@/components/StarRating";
 import { ImageGallery } from "@/components/ImageGallery";
 import { useState, useEffect, useRef } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -888,6 +889,9 @@ const EventDetail = () => {
               </span>
             )}
             
+            {/* Star Rating */}
+            <StarRating eventId={eventId} buzzScore={event.buzzScore} size="md" />
+
             {/* Buzz Tracker - inline */}
             <BuzzTracker buzzScore={event.buzzScore} />
           </div>

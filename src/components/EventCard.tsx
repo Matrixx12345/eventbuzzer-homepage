@@ -1,6 +1,7 @@
 import { Heart } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { EventRatingButtons } from "./EventRatingButtons";
+import { StarRating } from "./StarRating";
 import { useLikeOnFavorite } from "@/hooks/useLikeOnFavorite";
 import ImageAttribution from "./ImageAttribution";
 import { BuzzTracker } from "./BuzzTracker";
@@ -134,15 +135,15 @@ const EventCard = ({
           </div>
         </div>
 
-        {/* Footer: Price indicator + Buzz + Rating */}
-        <div className="mt-auto pt-3 flex items-center gap-8 text-xs text-stone-600">
-          {/* Price indicator */}
-          <span className="text-sm font-medium text-stone-600">$</span>
-          
+        {/* Footer: Star Rating + Buzz + Flag */}
+        <div className="mt-auto pt-3 flex items-center gap-4 text-xs text-stone-600">
+          {/* Star Rating */}
+          <StarRating eventId={id} buzzScore={buzz_score} size="sm" />
+
           {/* Buzz Tracker - inline in footer */}
           <BuzzTracker buzzScore={buzz_score} />
-          
-          {/* Rating flag icon */}
+
+          {/* Report flag icon */}
           <div className="ml-auto">
             <EventRatingButtons eventId={id} eventTitle={title} />
           </div>
