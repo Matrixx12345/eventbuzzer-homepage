@@ -175,7 +175,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             position: 'fixed',
-            top: '55px',
+            top: '135px',
             right: '16px',
             left: 'auto',
             transform: 'none'
