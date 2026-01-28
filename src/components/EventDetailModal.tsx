@@ -169,7 +169,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[24px] border border-white/30 shadow-2xl rounded-2xl"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[18px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
             background: 'rgba(255, 255, 255, 0.5)',
             backdropFilter: 'blur(20px)',
@@ -223,7 +223,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="space-y-3 mt-4 pr-1">
+        <div className="space-y-3 mt-4 pr-0">
           {/* Title UNDER the image */}
           <DialogHeader>
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
@@ -254,10 +254,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   <div className="mt-1">
                     <Link
                       to={`/event/${event.external_id || event.id}`}
-                      className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
+                      className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap opacity-80"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      ... mehr lesen
+                      mehr lesen
                     </Link>
                   </div>
                 )}
@@ -270,7 +270,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               {/* Favorite Button */}
               <button
                 onClick={handleToggleFavorite}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md focus:outline-none"
                 title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
               >
                 <Heart
