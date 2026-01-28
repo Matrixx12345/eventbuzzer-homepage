@@ -176,8 +176,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             WebkitBackdropFilter: 'blur(20px)',
             position: 'fixed',
             top: '185px',
-            left: '50%',
-            transform: 'translateX(-50%)'
+            left: '16px',
+            transform: 'none'
           }}
         >
         {/* Hero Image - NO text on it */}
