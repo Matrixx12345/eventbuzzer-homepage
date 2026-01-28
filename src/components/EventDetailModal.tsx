@@ -236,12 +236,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             const displayText = isTruncated ? fullText.substring(0, 140).trim() : fullText;
 
             return (
-              <p className="text-sm text-gray-700 leading-relaxed pr-0">
+              <p
+                className="text-sm text-gray-700 leading-relaxed text-justify"
+                lang="de"
+                style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
+              >
                 {displayText}
                 {isTruncated && (
                   <Link
                     to={`/event/${event.external_id || event.id}`}
-                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold"
+                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
                     onClick={(e) => e.stopPropagation()}
                   >
                     ... mehr lesen
