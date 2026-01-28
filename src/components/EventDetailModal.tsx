@@ -133,7 +133,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-[30px] bg-white/60 backdrop-blur-[40px] border border-white/20 shadow-2xl rounded-2xl">
+      <DialogContent
+          className="max-w-xl max-h-[90vh] overflow-y-auto p-[30px] border border-white/30 shadow-2xl rounded-2xl"
+          style={{
+            background: 'rgba(255, 255, 255, 0.65)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)'
+          }}
+        >
         {/* Hero Image - NO text on it */}
         {event.image_url && (
           <div className="relative w-full h-[280px] overflow-hidden rounded-xl">
@@ -249,12 +256,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Rating - nur Stern + Zahl, kein Kreis */}
-            <div className="flex items-center gap-1 text-gray-700">
-              <span className="text-yellow-500">⭐</span>
-              <span className="text-sm font-semibold">
-                {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
-              </span>
+            {/* Rating - Kreis mit Border wie die anderen Icons */}
+            <div className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300">
+              <div className="flex items-center gap-0.5">
+                <span className="text-yellow-500 text-sm">⭐</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
+                </span>
+              </div>
             </div>
 
             {/* Ticket purchase button */}
