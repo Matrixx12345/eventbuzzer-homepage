@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Heart, CalendarPlus, Share2, Copy, Mail, Star } from 'lucide-react';
+import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
@@ -229,21 +229,27 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Description UNDER the title - 2 lines with "mehr lesen" link */}
-          {(event.short_description || event.description) && (
-            <div className="text-sm text-gray-700 leading-relaxed">
-              <p className="line-clamp-2">
-                {event.short_description || event.description}
+          {/* Description UNDER the title - 2 lines, "mehr lesen" only if truncated */}
+          {(event.short_description || event.description) && (() => {
+            const fullText = event.short_description || event.description || '';
+            const isTruncated = fullText.length > 150;
+            const displayText = isTruncated ? fullText.substring(0, 150) : fullText;
+
+            return (
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {displayText}
+                {isTruncated && (
+                  <Link
+                    to={`/event/${event.external_id || event.id}`}
+                    className="text-indigo-800 hover:text-indigo-900 underline underline-offset-2 font-medium ml-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    ... mehr lesen
+                  </Link>
+                )}
               </p>
-              <Link
-                to={`/event/${event.external_id || event.id}`}
-                className="text-indigo-800 hover:text-indigo-900 underline underline-offset-2 text-sm font-medium mt-1 inline-block"
-                onClick={(e) => e.stopPropagation()}
-              >
-                ... mehr lesen
-              </Link>
-            </div>
-          )}
+            );
+          })()}
           {/* Action Buttons */}
           <div className="flex items-center pt-6">
             <div className="flex items-center gap-3">
@@ -379,6 +385,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               >
                 <span className="text-sm font-semibold text-white">Ticket kaufen</span>
               </button>
+
+              {/* Detail Page Link - Chevron */}
+              <Link
+                to={`/event/${event.external_id || event.id}`}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md ml-2"
+                title="Zur Detailseite"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ChevronRight size={20} />
+              </Link>
             </div>
           </div>
 
