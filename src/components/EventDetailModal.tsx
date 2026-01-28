@@ -159,7 +159,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="space-y-3 mt-5">
+        <div className="space-y-3 mt-4">
           {/* Title UNDER the image */}
           <DialogHeader>
             <DialogTitle className="text-3xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
@@ -249,6 +249,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
+            {/* Rating - Single star with number */}
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 shadow-sm">
+              <div className="flex items-center gap-1">
+                <span className="text-yellow-500">⭐</span>
+                <span className="text-sm font-bold">
+                  {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
+                </span>
+              </div>
+            </div>
+
             {/* Ticket purchase button - Dunkelblau wie im Referenzbild */}
             <button
               onClick={() => {
@@ -297,14 +307,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </span>
               </div>
             )}
-
-            {/* Rating - klein und fein */}
-            <div className="flex items-center gap-1">
-              <span className="text-yellow-500 text-xs">⭐</span>
-              <span className="text-xs font-semibold">
-                {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
-              </span>
-            </div>
           </div>
 
         </div>
