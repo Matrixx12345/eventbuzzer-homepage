@@ -136,9 +136,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
       <DialogContent
           className="max-w-xl max-h-[90vh] overflow-y-auto p-[30px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
-            background: 'rgba(255, 255, 255, 0.65)',
-            backdropFilter: 'blur(40px)',
-            WebkitBackdropFilter: 'blur(40px)'
+            background: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)'
           }}
         >
         {/* Hero Image - NO text on it */}
@@ -178,14 +178,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               {event.short_description || event.description?.substring(0, 200)}
             </p>
           )}
-          {/* Action Buttons - Icons links, Ticket rechts */}
-          <div className="flex items-center justify-between pt-6">
-            {/* Linke Seite: Icons + Rating */}
+          {/* Action Buttons */}
+          <div className="flex items-center pt-6">
             <div className="flex items-center gap-3">
               {/* Favorite Button */}
               <button
                 onClick={handleToggleFavorite}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all"
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
                 title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
               >
                 <Heart
@@ -197,7 +196,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               {/* Calendar Button */}
               <button
                 onClick={exportToCalendar}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all"
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
                 title="Im Kalender speichern"
               >
                 <CalendarPlus size={20} />
@@ -207,7 +206,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               <Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
                 <PopoverTrigger asChild>
                   <button
-                    className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all"
+                    className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
                     title="Event teilen"
                   >
                     <Share2 size={20} />
@@ -254,7 +253,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </Popover>
 
               {/* Rating */}
-              <div className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300">
+              <div className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 shadow-md">
                 <div className="flex items-center gap-0.5">
                   <span className="text-yellow-500 text-sm">⭐</span>
                   <span className="text-sm font-semibold text-gray-700">
@@ -262,22 +261,22 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Rechte Seite: Ticket Button - dunkleres Blau */}
-            <button
-              onClick={() => {
-                if (event.ticket_url || event.url) {
-                  window.open(event.ticket_url || event.url, '_blank');
-                } else {
-                  toast.info("Ticket-Verkauf demnächst verfügbar");
-                }
-              }}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-800 hover:bg-indigo-900 transition-colors shadow-md"
-              title="Ticket kaufen"
-            >
-              <span className="text-sm font-semibold text-white">Ticket kaufen</span>
-            </button>
+              {/* Ticket Button - dunkleres Blau, breiter */}
+              <button
+                onClick={() => {
+                  if (event.ticket_url || event.url) {
+                    window.open(event.ticket_url || event.url, '_blank');
+                  } else {
+                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                  }
+                }}
+                className="flex items-center justify-center px-8 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg ml-2"
+                title="Ticket kaufen"
+              >
+                <span className="text-sm font-semibold text-white">Ticket kaufen</span>
+              </button>
+            </div>
           </div>
 
           {/* Compact Details - nur die wichtigsten Infos */}
