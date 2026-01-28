@@ -133,16 +133,15 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl">
-        {/* Hero Image with Title and Description Overlay */}
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 bg-white/80 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-2xl">
+        {/* Hero Image - NO text on it */}
         {event.image_url && (
-          <div className="relative w-full h-[300px] overflow-hidden rounded-t-lg">
+          <div className="relative w-full h-[280px] overflow-hidden rounded-t-2xl">
             <img
               src={event.image_url}
               alt={event.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
             {/* Tags Pills - oben links */}
             {event.tags && event.tags.length > 0 && (
@@ -150,31 +149,30 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 {event.tags.map((tag: string, index: number) => (
                   <span
                     key={index}
-                    className="bg-white/80 backdrop-blur-sm text-gray-800 text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded"
+                    className="bg-white/90 backdrop-blur-sm text-gray-800 text-[10px] font-bold tracking-wider uppercase px-3 py-1.5 rounded"
                   >
                     {formatTagName(tag)}
                   </span>
                 ))}
               </div>
             )}
-
-            {/* Title and Description on Image */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-3xl font-bold mb-2">{event.title}</DialogTitle>
-              </DialogHeader>
-              {event.short_description && (
-                <p className="text-sm text-white/90 line-clamp-2 leading-relaxed">
-                  {event.short_description}
-                </p>
-              )}
-            </div>
           </div>
         )}
 
-        <div className="px-6 pb-6 pt-4 space-y-4">
-          {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
-          <div className="flex items-center gap-4 flex-wrap">
+        <div className="px-6 pb-6 pt-5 space-y-3">
+          {/* Title UNDER the image */}
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">{event.title}</DialogTitle>
+          </DialogHeader>
+
+          {/* Description UNDER the title */}
+          {(event.short_description || event.description) && (
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {event.short_description || event.description?.substring(0, 200)}
+            </p>
+          )}
+          {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket - mit Gap oben */}
+          <div className="flex items-center gap-3 flex-wrap pt-3">
             {/* Favorite Button - Circular glassmorphism, icon only */}
             <button
               onClick={handleToggleFavorite}
@@ -270,7 +268,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors shadow-md"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors shadow-lg"
               title="Ticket kaufen"
             >
               <span className="text-sm font-semibold text-white">Ticket kaufen</span>
