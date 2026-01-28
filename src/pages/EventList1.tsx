@@ -305,7 +305,6 @@ const EventList1 = () => {
 
   const { favorites, toggleFavorite } = useFavorites();
   const favoriteIds = favorites.map(f => f.id);
-  const navigate = useNavigate();
 
   // Nearby Events Filter
   const [nearbyEventsFilter, setNearbyEventsFilter] = useState<string | null>(null);
