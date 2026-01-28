@@ -133,10 +133,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 bg-white/30 backdrop-blur-3xl border border-white/20 shadow-2xl rounded-2xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-[30px] bg-white/60 backdrop-blur-[40px] border border-white/20 shadow-2xl rounded-2xl">
         {/* Hero Image - NO text on it */}
         {event.image_url && (
-          <div className="relative w-full h-[280px] overflow-hidden rounded-t-2xl">
+          <div className="relative w-full h-[280px] overflow-hidden rounded-xl">
             <img
               src={event.image_url}
               alt={event.title}
@@ -149,7 +149,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 {event.tags.map((tag: string, index: number) => (
                   <span
                     key={index}
-                    className="bg-white/90 backdrop-blur-sm text-gray-800 text-[10px] font-bold tracking-wider uppercase px-3 py-1.5 rounded"
+                    className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold tracking-wider uppercase px-3 py-1.5 rounded"
                   >
                     {formatTagName(tag)}
                   </span>
@@ -159,10 +159,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="px-6 pb-6 pt-5 space-y-3">
+        <div className="space-y-3 mt-5">
           {/* Title UNDER the image */}
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900">{event.title}</DialogTitle>
+            <DialogTitle className="text-3xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
           {/* Description UNDER the title */}
@@ -249,16 +249,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Rating - Single star with number */}
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 shadow-sm">
-              <div className="flex items-center gap-1">
-                <span className="text-yellow-500">⭐</span>
-                <span className="text-sm font-bold">
-                  {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
-                </span>
-              </div>
-            </div>
-
             {/* Ticket purchase button - Dunkelblau wie im Referenzbild */}
             <button
               onClick={() => {
@@ -307,6 +297,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </span>
               </div>
             )}
+
+            {/* Rating - klein und fein */}
+            <div className="flex items-center gap-1">
+              <span className="text-yellow-500 text-xs">⭐</span>
+              <span className="text-xs font-semibold">
+                {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
+              </span>
+            </div>
           </div>
 
         </div>
