@@ -171,37 +171,37 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               {event.short_description || event.description?.substring(0, 200)}
             </p>
           )}
-          {/* Action Buttons - wie im Referenzbild: Icons ohne Hintergrund */}
-          <div className="flex items-center gap-4 flex-wrap pt-6">
-            {/* Favorite Button - nur Icon, kein Hintergrund */}
+          {/* Action Buttons - Kreise mit transparentem Hintergrund */}
+          <div className="flex items-center gap-3 flex-wrap pt-6">
+            {/* Favorite Button - Kreis mit Border, transparent */}
             <button
               onClick={handleToggleFavorite}
-              className="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all"
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all"
               title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
             >
               <Heart
-                size={22}
+                size={20}
                 className={isFavorited ? "fill-current text-red-500" : ""}
               />
             </button>
 
-            {/* Calendar Button - nur Icon, kein Hintergrund */}
+            {/* Calendar Button - Kreis mit Border, transparent */}
             <button
               onClick={exportToCalendar}
-              className="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all"
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all"
               title="Im Kalender speichern"
             >
-              <CalendarPlus size={22} />
+              <CalendarPlus size={20} />
             </button>
 
-            {/* Share Button - nur Icon, kein Hintergrund */}
+            {/* Share Button - Kreis mit Border, transparent */}
             <Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
               <PopoverTrigger asChild>
                 <button
-                  className="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all"
+                  className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all"
                   title="Event teilen"
                 >
-                  <Share2 size={22} />
+                  <Share2 size={20} />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-64 p-2" align="start">
