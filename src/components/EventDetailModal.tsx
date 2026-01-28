@@ -223,7 +223,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="space-y-3 mt-4 pr-4">
+        <div className="space-y-3 mt-4 pr-1">
           {/* Title UNDER the image */}
           <DialogHeader>
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
@@ -232,8 +232,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {/* Description UNDER the title - "mehr lesen" inline at end */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 130;
-            const displayText = isTruncated ? fullText.substring(0, 130).trim() : fullText;
+            const isTruncated = fullText.length > 160;
+            const displayText = isTruncated ? fullText.substring(0, 160).trim() : fullText;
 
             return (
               <p
