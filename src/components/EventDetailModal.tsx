@@ -133,7 +133,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 bg-white/80 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-2xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 bg-white/30 backdrop-blur-3xl border border-white/20 shadow-2xl rounded-2xl">
         {/* Hero Image - NO text on it */}
         {event.image_url && (
           <div className="relative w-full h-[280px] overflow-hidden rounded-t-2xl">
@@ -176,7 +176,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             {/* Favorite Button - Circular glassmorphism, icon only */}
             <button
               onClick={handleToggleFavorite}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/60 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:bg-white/80 hover:scale-105 transition-all shadow-sm"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 hover:bg-white/60 hover:scale-105 transition-all shadow-sm"
               title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
             >
               <Heart
@@ -188,7 +188,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             {/* Calendar Button - Circular glassmorphism, icon only */}
             <button
               onClick={exportToCalendar}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/60 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:bg-white/80 hover:scale-105 transition-all shadow-sm"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 hover:bg-white/60 hover:scale-105 transition-all shadow-sm"
               title="Im Kalender speichern"
             >
               <CalendarPlus size={20} />
@@ -198,7 +198,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
               <PopoverTrigger asChild>
                 <button
-                  className="flex items-center justify-center w-12 h-12 rounded-full bg-white/60 backdrop-blur-md border border-gray-200/50 text-gray-700 hover:bg-white/80 hover:scale-105 transition-all shadow-sm"
+                  className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 hover:bg-white/60 hover:scale-105 transition-all shadow-sm"
                   title="Event teilen"
                 >
                   <Share2 size={20} />
@@ -250,7 +250,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             </Popover>
 
             {/* Rating - Single star with number */}
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/60 backdrop-blur-md border border-gray-200/50 text-gray-700 shadow-sm">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 shadow-sm">
               <div className="flex items-center gap-1">
                 <span className="text-yellow-500">⭐</span>
                 <span className="text-sm font-bold">
