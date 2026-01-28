@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight } from 'lucide-react';
+import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight, Calendar, MapPin, DollarSign } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
@@ -169,7 +169,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[30px] border border-white/30 shadow-2xl rounded-2xl"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[24px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
             background: 'rgba(255, 255, 255, 0.5)',
             backdropFilter: 'blur(20px)',
@@ -229,9 +229,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Description UNDER the title - max 2 lines, "mehr lesen" ALWAYS right-aligned */}
+          {/* Description UNDER the title - max 2 lines, "mehr lesen" if truncated */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
+            const showMehrLesen = fullText.length > 140;
 
             return (
               <div className="text-sm text-gray-700 leading-relaxed">
@@ -249,15 +250,17 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 >
                   {fullText}
                 </p>
-                <div className="flex justify-end -mt-0.5">
-                  <Link
-                    to={`/event/${event.external_id || event.id}`}
-                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    ... mehr lesen
-                  </Link>
-                </div>
+                {showMehrLesen && (
+                  <div className="mt-1">
+                    <Link
+                      to={`/event/${event.external_id || event.id}`}
+                      className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      ... mehr lesen
+                    </Link>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -403,7 +406,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           <div className="flex items-center gap-4 text-sm text-gray-600 pt-2">
             {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold">📅</span>
+                <Calendar size={16} className="text-gray-600" />
                 <span>
                   {event.tags && event.tags.includes('ganzjährig')
                     ? 'Ganzjährig'
@@ -415,14 +418,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
             {event.venue_name && (
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold">📍</span>
+                <MapPin size={16} className="text-gray-600" />
                 <span>{event.venue_name}</span>
               </div>
             )}
 
             {event.price_from !== null && event.price_from !== undefined && (
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold">💰</span>
+                <DollarSign size={16} className="text-gray-600" />
                 <span>
                   {event.price_from === 0
                     ? 'Gratis'
