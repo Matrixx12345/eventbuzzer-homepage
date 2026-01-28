@@ -150,10 +150,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               className="w-full h-full object-cover"
             />
 
-            {/* Tags Pills - oben links, transparent mit dunklem Text */}
+            {/* Tags Pills - oben links, max 3 + Rest als "+X" */}
             {event.tags && event.tags.length > 0 && (
-              <div className="absolute top-4 left-4 z-10 flex gap-2 flex-wrap">
-                {event.tags.map((tag: string, index: number) => (
+              <div className="absolute top-4 left-4 z-10 flex gap-2">
+                {event.tags.slice(0, 3).map((tag: string, index: number) => (
                   <span
                     key={index}
                     className="bg-white/70 backdrop-blur-md text-gray-800 text-[10px] font-bold tracking-wider uppercase px-3 py-1.5 rounded"
@@ -161,6 +161,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                     {formatTagName(tag)}
                   </span>
                 ))}
+                {event.tags.length > 3 && (
+                  <span className="bg-white/70 backdrop-blur-md text-gray-800 text-[10px] font-bold px-3 py-1.5 rounded">
+                    +{event.tags.length - 3}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -252,14 +257,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </PopoverContent>
               </Popover>
 
-              {/* Rating */}
-              <div className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 shadow-md">
-                <div className="flex items-center gap-0.5">
-                  <span className="text-yellow-500 text-sm">⭐</span>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
-                  </span>
+              {/* Rating - Stern im Kreis, Zahl daneben */}
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 shadow-md">
+                  <span className="text-yellow-500 text-lg">⭐</span>
                 </div>
+                <span className="text-sm font-semibold text-gray-700">
+                  {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
+                </span>
               </div>
 
               {/* Ticket Button - dunkleres Blau, breiter */}
@@ -271,7 +276,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                     toast.info("Ticket-Verkauf demnächst verfügbar");
                   }
                 }}
-                className="flex items-center justify-center px-8 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg ml-2"
+                className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg ml-3"
                 title="Ticket kaufen"
               >
                 <span className="text-sm font-semibold text-white">Ticket kaufen</span>
