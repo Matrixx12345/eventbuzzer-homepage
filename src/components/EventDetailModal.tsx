@@ -169,11 +169,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[12px] border border-white/30 shadow-2xl rounded-2xl mt-[55px] ml-auto mr-4"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[12px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
             background: 'rgba(255, 255, 255, 0.5)',
             backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)'
+            WebkitBackdropFilter: 'blur(20px)',
+            position: 'fixed',
+            top: '55px',
+            right: '16px',
+            left: 'auto',
+            transform: 'none'
           }}
         >
         {/* Hero Image - NO text on it */}
