@@ -229,10 +229,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Description UNDER the title - max 2 lines, "mehr lesen" right-aligned */}
+          {/* Description UNDER the title - max 2 lines, "mehr lesen" ALWAYS right-aligned */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const needsTruncation = fullText.length > 200;
 
             return (
               <div className="text-sm text-gray-700 leading-relaxed">
@@ -250,17 +249,15 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 >
                   {fullText}
                 </p>
-                {needsTruncation && (
-                  <div className="flex justify-end -mt-0.5">
-                    <Link
-                      to={`/event/${event.external_id || event.id}`}
-                      className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      ... mehr lesen
-                    </Link>
-                  </div>
-                )}
+                <div className="flex justify-end -mt-0.5">
+                  <Link
+                    to={`/event/${event.external_id || event.id}`}
+                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    ... mehr lesen
+                  </Link>
+                </div>
               </div>
             );
           })()}
