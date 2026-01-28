@@ -260,11 +260,37 @@ Location: `backups/modal-designs/`
 
 Backup-Versionen des EventDetailModal werden hier gespeichert, falls ein Design-Rollback nötig ist:
 
+- **EventDetailModal-glassmorphism-v3-final-2026-01-28.tsx** - ⭐ FINALES DESIGN: Transparente Kreise, Tags max 3 mit "+X", Stern größer mit Zahl daneben, Ticket dunkelblau (indigo-900), Shadow auf Icons. User-Rating-System integriert.
+
 - **EventDetailModal-glassmorphism-v2-2026-01-28.tsx** - Glassmorphism-Design v2: Transparente Kreise (nur Border), Icons links gruppiert, Ticket-Button rechts (dunkelblau), inline-styles für backdrop-filter.
 
 - **EventDetailModal-glassmorphism-icons-2026-01-28.tsx** - Erstes Glassmorphism-Design mit weißen Kreis-Buttons.
 
 - **EventDetailModal-rectangular-2026-01-28.tsx** - Vorheriges Design mit rechteckigen Buttons + Text-Labels ("Speichern", "Kalender", "Teilen"). Heller Hover mit `bg-gray-50`, `border-gray-200`.
+
+## ⭐ User Rating System
+
+**Konzept:** User können Events mit 1-5 Sternen bewerten. Die Bewertung beeinflusst den angezeigten Score.
+
+**Funktionsweise:**
+- Beim Hover auf Stern-Icon: "Event bewerten" Tooltip
+- Beim Klick: 5 graue Sterne erscheinen
+- User klickt auf 1-5 Sterne → werden gold
+- Bewertung wird in localStorage gespeichert (pro Event-ID)
+- Score-Anzeige wird um 0.1-0.5 Punkte erhöht (je nach Bewertung)
+- Session-basiert: Jeder User kann jedes Event nur 1x bewerten
+
+**Score-Berechnung:**
+```
+userRating = 1-5 Sterne
+scoreBoost = (userRating - 3) * 0.1  // -0.2 bis +0.2
+displayedScore = baseScore + scoreBoost
+```
+
+**Wo verfügbar:**
+- EventDetailModal (Popup)
+- EventList Cards
+- EventDetail Seite
 
 ---
 
