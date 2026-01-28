@@ -223,7 +223,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="space-y-3 mt-4 pr-0">
+        <div className="space-y-3 mt-4 pr-3">
           {/* Title UNDER the image */}
           <DialogHeader>
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
@@ -395,7 +395,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg"
+              className="flex items-center justify-center px-14 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg"
               title="Ticket kaufen"
             >
               <span className="text-sm font-semibold text-white">Ticket kaufen</span>
