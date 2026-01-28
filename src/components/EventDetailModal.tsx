@@ -232,11 +232,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {/* Description UNDER the title - 2 lines, "mehr lesen" only if truncated */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 120;
-            const displayText = isTruncated ? fullText.substring(0, 120).trim() : fullText;
+            const isTruncated = fullText.length > 180;
+            const displayText = isTruncated ? fullText.substring(0, 180).trim() : fullText;
 
             return (
-              <p className="text-sm text-gray-700 leading-relaxed">
+              <p className="text-sm text-gray-700 leading-relaxed pr-0">
                 {displayText}
                 {isTruncated && (
                   <Link
@@ -424,7 +424,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             {/* Detail Page Link - Chevron im Footer */}
             <Link
               to={`/event/${event.external_id || event.id}`}
-              className="ml-auto flex items-center gap-1 text-indigo-900 hover:text-indigo-950 font-medium transition-colors"
+              className="ml-auto -mr-2 flex items-center gap-0.5 text-indigo-900 hover:text-indigo-950 font-medium transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <span>Details</span>
