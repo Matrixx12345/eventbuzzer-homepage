@@ -169,7 +169,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[12px] border border-white/30 shadow-2xl rounded-2xl mt-[35px]"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[12px] border border-white/30 shadow-2xl rounded-2xl mt-[55px]"
           style={{
             background: 'rgba(255, 255, 255, 0.5)',
             backdropFilter: 'blur(20px)',
