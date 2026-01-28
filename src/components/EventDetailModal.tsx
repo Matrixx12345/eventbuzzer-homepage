@@ -232,8 +232,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {/* Description UNDER the title - "mehr lesen" inline at end */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 160;
-            const displayText = isTruncated ? fullText.substring(0, 160).trim() : fullText;
+            const isTruncated = fullText.length > 115;
+            const displayText = isTruncated ? fullText.substring(0, 115).trim() : fullText;
 
             return (
               <p
