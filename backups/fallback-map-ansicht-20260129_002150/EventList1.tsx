@@ -1,12 +1,17 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Maximize2, Minimize2, X } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, X, ShoppingCart } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import EventsMap from "@/components/EventsMap";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -19,6 +24,7 @@ import {
   getEventLocation,
   convertToUmlauts,
   getCategoryLabel,
+  exportToCalendar,
   calculateDistance,
   CITY_COORDINATES,
 } from "@/utils/eventUtilities";
@@ -118,49 +124,20 @@ const EventCard = ({
   return (
     <article
       onClick={() => onEventClick(event)}
-      className="group rounded-2xl transition-all duration-300 overflow-hidden cursor-pointer hover:shadow-2xl"
-      style={{
-        background: 'rgba(255, 255, 255, 0.75)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
-      }}
+      className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
+      style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      <div className="flex gap-5 h-[200px]">
-        {/* Image Section - BREITER & HÖHER */}
-        <div className="relative w-[400px] flex-shrink-0 overflow-hidden h-[200px] rounded-l-2xl">
+      <div className="flex gap-4 h-[165px]">
+        {/* Image Section */}
+        <div className="relative w-[308px] flex-shrink-0 overflow-hidden h-[165px]">
           <img
             src={imageUrl}
             alt={event.title}
             loading="lazy"
-            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08] group-hover:blur-0 group-hover:saturate-[1.18] group-hover:sepia-0"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
 
-          {/* Subtle Vignette for premium look */}
-          <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
-
-          {/* Herz-Icon - NUR dieses Icon, oben rechts, filигran */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite(event);
-            }}
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/40 transition-all duration-200 z-20 group/heart"
-          >
-            <Heart
-              size={18}
-              className={isFavorited ? "fill-red-500 text-red-500" : "text-white stroke-[2px]"}
-            />
-            {/* Tooltip */}
-            <div className="absolute bottom-full right-0 mb-2 hidden group-hover/heart:block z-50 pointer-events-none whitespace-nowrap">
-              <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg shadow-lg border border-gray-200">
-                {isFavorited ? "Entfernen" : "Planen"}
-              </div>
-            </div>
-          </button>
-
-          {/* Category Badge - oben links */}
+          {/* Category Badge - Milky Look wie auf Startseite */}
           {(() => {
             const categoryLabel = getCategoryLabel(event);
             return categoryLabel ? (
@@ -172,14 +149,9 @@ const EventCard = ({
             ) : null;
           })()}
 
-          {/* Trending-Balken - unten, wenn isHot */}
-          {isHot && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500" />
-          )}
-
           {/* Gallery Dots Indicator - only show if multiple images available */}
           {event.gallery_urls && event.gallery_urls.length > 0 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
               {/* Primary image dot */}
               <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
               {/* Gallery images dots */}
@@ -191,48 +163,114 @@ const EventCard = ({
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 px-5 pt-5 pb-4 flex flex-col justify-between min-w-0">
+        <div className="flex-1 px-4 pt-4 pb-3 flex flex-col justify-between min-w-0">
           <div>
-            {/* Location - DEZENT oben, klein */}
-            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
-              {locationText}
-            </p>
-
-            {/* Title - SERIF, 2 Zeilen möglich */}
-            <h3
-              className="text-2xl font-serif text-stone-900 group-hover:text-amber-800 transition-colors mb-3 line-clamp-2 leading-tight"
-              style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
-            >
+            {/* Title - ALWAYS 1 line only */}
+            <h3 className="text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-2 truncate leading-none font-sans">
               {event.title}
             </h3>
 
+            {/* Location - NO PIN */}
+            <div className="text-sm text-gray-500 mb-2">
+              {locationText}
+
+              {/* Mini-Map Tooltip */}
+              {event.latitude && event.longitude && (
+                <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+                  <div className="bg-white p-2 rounded-xl shadow-2xl border border-stone-200 w-44 h-32 overflow-hidden">
+                    <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
+                      <img
+                        src="/swiss-outline.svg"
+                        className="w-full h-full object-contain opacity-30 p-2"
+                        alt="Switzerland Map"
+                      />
+                      <div
+                        className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
+                        style={{
+                          left: `${((event.longitude - 5.95) / (10.5 - 5.95)) * 100}%`,
+                          top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Description - always show short description with 2 line clamp */}
             {event.short_description && (
-              <p className="text-[15px] text-gray-700 leading-relaxed line-clamp-2">
+              <p className="text-[15px] text-gray-600 leading-relaxed line-clamp-2">
                 {convertToUmlauts(event.short_description)}
               </p>
             )}
           </div>
 
-          {/* Bottom Row: NUR Star Rating - CLEAN & MINIMAL */}
-          <div className="flex items-center justify-between pt-3 relative z-20">
+          {/* Bottom Row: Star + Icons - LEFT ALIGNED, NO BORDERS, 20px spacing */}
+          <div className="flex items-center gap-5 relative z-20">
             {/* Star Rating */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 relative z-20">
               <span className="text-yellow-400 text-lg">⭐</span>
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm font-semibold text-gray-600">
                 {rating.toFixed(1)}
               </span>
             </div>
 
-            {/* Nearby Events Button - dezent rechts */}
-            {event.latitude && event.longitude && (
+            {/* Action Icons - NO BORDERS, simple hover, with padding */}
+            <div className="flex items-center gap-5">
+              {/* Favorit */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(event);
+                }}
+                className="group/heart relative p-1.5 hover:scale-110 transition-all duration-200"
+              >
+                <Heart
+                  size={19}
+                  className={isFavorited ? "fill-red-600 text-red-600" : "text-gray-600"}
+                />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    {isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                  </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
+              </button>
+
+              {/* Ticket kaufen */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (event.ticket_url || event.url) {
+                    window.open(event.ticket_url || event.url, '_blank');
+                  } else {
+                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                  }
+                }}
+                className="group/ticket relative p-1.5 hover:scale-110 transition-all duration-200"
+              >
+                <ShoppingCart size={18} className="text-gray-600" />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Ticket kaufen
+                  </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
+              </button>
+
+              {/* Events in der Nähe (Nearby) - Amazon-style */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (nearbyEventsFilter === event.id) {
-                    setNearbyEventsFilter(null);
+                    setNearbyEventsFilter(null); // Toggle off
                   } else {
+                    // Show loading state
                     setIsLoadingNearby(true);
+
+                    // Apply filter after 1.5 seconds
                     setTimeout(() => {
                       setNearbyEventsFilter(event.id);
                       setCurrentPage(1);
@@ -243,26 +281,24 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1.5 hover:scale-110 transition-all duration-200 rounded-full",
-                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-gray-100",
+                  "group/nearby relative p-1.5 hover:scale-110 transition-all duration-200",
+                  nearbyEventsFilter === event.id && "text-orange-500",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
               >
-                <MapPin
-                  size={16}
-                  className={cn(
-                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-500",
-                    isLoadingNearby && "animate-spin"
-                  )}
-                />
-                {/* Tooltip */}
-                <div className="absolute bottom-full right-0 mb-2 hidden group-hover/nearby:block z-50 pointer-events-none whitespace-nowrap">
-                  <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg shadow-lg border border-gray-200">
-                    Events in der Nähe
+                <MapPin size={18} className={cn(
+                  nearbyEventsFilter === event.id ? "text-orange-500" : "text-gray-600",
+                  isLoadingNearby && "animate-spin"
+                )} />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full right-0 mb-2 hidden group-hover/nearby:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Events in der Nähe anzeigen
                   </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mr-2" />
                 </div>
               </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -338,7 +374,12 @@ const EventList1 = () => {
     try {
       const numericId = parseInt(event.id, 10);
       if (!isNaN(numericId)) {
-        await toggleFavoriteApi(numericId);
+        const result = await toggleFavoriteApi(numericId);
+        setRawEvents(prev => prev.map(e =>
+          e.id === event.id
+            ? { ...e, favorite_count: result.favoriteCount }
+            : e
+        ));
       }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
