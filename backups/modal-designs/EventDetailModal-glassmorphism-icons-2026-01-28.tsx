@@ -6,6 +6,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { ImageGallery } from '@/components/ImageGallery';
+import { EventRating } from '@/components/EventRating';
 
 interface EventDetailModalProps {
   event: any;
@@ -133,46 +134,37 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl">
-        {/* Hero Image with Title and Description Overlay */}
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
+        {/* Hero Image - Full Width without padding */}
         {event.image_url && (
-          <div className="relative w-full h-[300px] overflow-hidden rounded-t-lg">
+          <div className="relative w-full h-[400px] overflow-hidden">
             <img
               src={event.image_url}
               alt={event.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-            {/* Tags Pills - oben links */}
+            {/* Tags Pills - Milky Look oben links im Bild, nebeneinander */}
             {event.tags && event.tags.length > 0 && (
               <div className="absolute top-4 left-4 z-10 flex gap-2 flex-wrap">
                 {event.tags.map((tag: string, index: number) => (
                   <span
                     key={index}
-                    className="bg-white/80 backdrop-blur-sm text-gray-800 text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded"
+                    className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded"
                   >
                     {formatTagName(tag)}
                   </span>
                 ))}
               </div>
             )}
-
-            {/* Title and Description on Image */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-3xl font-bold mb-2">{event.title}</DialogTitle>
-              </DialogHeader>
-              {event.short_description && (
-                <p className="text-sm text-white/90 line-clamp-2 leading-relaxed">
-                  {event.short_description}
-                </p>
-              )}
-            </div>
           </div>
         )}
 
-        <div className="px-6 pb-6 pt-4 space-y-4"
+        <div className="px-8 pb-8 pt-6 space-y-6">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-serif">{event.title}</DialogTitle>
+          </DialogHeader>
 
           {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
           <div className="flex items-center gap-4 flex-wrap">
@@ -252,17 +244,19 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Rating - Single star with number */}
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/60 backdrop-blur-md border border-gray-200/50 text-gray-700 shadow-sm">
-              <div className="flex items-center gap-1">
-                <span className="text-yellow-500">⭐</span>
-                <span className="text-sm font-bold">
-                  {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
-                </span>
-              </div>
+            {/* Rating - Interactive stars in action buttons row */}
+            <div className="flex items-center gap-2 px-2 py-2">
+              <EventRating
+                eventId={event.id}
+                externalId={event.external_id}
+                buzzScore={event.buzz_score || event.relevance_score}
+                onRatingChange={(newBuzzScore) => {
+                  console.log(`New buzz score: ${newBuzzScore}`);
+                }}
+              />
             </div>
 
-            {/* Ticket purchase button - Dunkelblau wie im Referenzbild */}
+            {/* Ticket purchase button - dunkle Farbe als Standard */}
             <button
               onClick={() => {
                 if (event.ticket_url || event.url) {
@@ -271,43 +265,68 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors shadow-md"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
               title="Ticket kaufen"
             >
-              <span className="text-sm font-semibold text-white">Ticket kaufen</span>
+              <ShoppingCart size={20} className="text-white" />
+              <span className="text-sm font-medium text-white">Ticket kaufen</span>
             </button>
           </div>
 
-          {/* Compact Details - nur die wichtigsten Infos */}
-          <div className="flex items-center gap-4 text-sm text-gray-600 pt-2">
+          {event.description && (
+            <div className="space-y-4">
+              <div
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: event.description }}
+              />
+              {/* Detail anzeigen link - blue underlined link below description */}
+              <Link
+                to={`/event/${event.external_id || event.id}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium underline transition-colors"
+              >
+                <span>Detail anzeigen</span>
+                <ExternalLink size={16} />
+              </Link>
+            </div>
+          )}
+
+          {/* Image Gallery - only show if there are gallery images */}
+          {event.gallery_urls && event.gallery_urls.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <ImageGallery images={event.gallery_urls} alt={event.title} />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
             {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold">📅</span>
-                <span>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Datum</p>
+                <p>
                   {event.tags && event.tags.includes('ganzjährig')
                     ? 'Ganzjährig'
-                    : new Date(event.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' })
+                    : new Date(event.start_date).toLocaleDateString('de-CH')
                   }
-                </span>
+                </p>
               </div>
             )}
 
             {event.venue_name && (
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold">📍</span>
-                <span>{event.venue_name}</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Ort</p>
+                <p>{event.venue_name}</p>
               </div>
             )}
 
             {event.price_from !== null && event.price_from !== undefined && (
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold">💰</span>
-                <span>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Preis</p>
+                <p>
                   {event.price_from === 0
                     ? 'Gratis'
-                    : `CHF ${event.price_from}+`
+                    : `CHF ${event.price_from}${event.price_to ? ` - ${event.price_to}` : '+'}`
                   }
-                </span>
+                </p>
               </div>
             )}
           </div>
