@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Heart, CalendarPlus, Share2, Copy, Mail, Star } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -168,7 +169,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-          className="max-w-xl max-h-[90vh] overflow-y-auto p-[30px] border border-white/30 shadow-2xl rounded-2xl"
+          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[30px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
             background: 'rgba(255, 255, 255, 0.5)',
             backdropFilter: 'blur(20px)',
@@ -225,14 +226,23 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
         <div className="space-y-3 mt-4">
           {/* Title UNDER the image */}
           <DialogHeader>
-            <DialogTitle className="text-3xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
+            <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Description UNDER the title */}
+          {/* Description UNDER the title - 2 lines with "mehr lesen" link */}
           {(event.short_description || event.description) && (
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {event.short_description || event.description?.substring(0, 200)}
-            </p>
+            <div className="text-sm text-gray-700 leading-relaxed">
+              <p className="line-clamp-2">
+                {event.short_description || event.description}
+              </p>
+              <Link
+                to={`/event/${event.external_id || event.id}`}
+                className="text-indigo-800 hover:text-indigo-900 underline underline-offset-2 text-sm font-medium mt-1 inline-block"
+                onClick={(e) => e.stopPropagation()}
+              >
+                ... mehr lesen
+              </Link>
+            </div>
           )}
           {/* Action Buttons */}
           <div className="flex items-center pt-6">
