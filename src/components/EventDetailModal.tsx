@@ -143,13 +143,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               className="w-full h-full object-cover"
             />
 
-            {/* Tags Pills - oben links */}
+            {/* Tags Pills - oben links, transparent mit dunklem Text */}
             {event.tags && event.tags.length > 0 && (
               <div className="absolute top-4 left-4 z-10 flex gap-2 flex-wrap">
                 {event.tags.map((tag: string, index: number) => (
                   <span
                     key={index}
-                    className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold tracking-wider uppercase px-3 py-1.5 rounded"
+                    className="bg-white/70 backdrop-blur-md text-gray-800 text-[10px] font-bold tracking-wider uppercase px-3 py-1.5 rounded"
                   >
                     {formatTagName(tag)}
                   </span>
@@ -171,37 +171,37 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               {event.short_description || event.description?.substring(0, 200)}
             </p>
           )}
-          {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket - mit Gap oben */}
-          <div className="flex items-center gap-3 flex-wrap pt-3">
-            {/* Favorite Button - Circular glassmorphism, icon only */}
+          {/* Action Buttons - wie im Referenzbild: Icons ohne Hintergrund */}
+          <div className="flex items-center gap-4 flex-wrap pt-6">
+            {/* Favorite Button - nur Icon, kein Hintergrund */}
             <button
               onClick={handleToggleFavorite}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 hover:bg-white/60 hover:scale-105 transition-all shadow-sm"
+              className="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all"
               title={isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
             >
               <Heart
-                size={20}
+                size={22}
                 className={isFavorited ? "fill-current text-red-500" : ""}
               />
             </button>
 
-            {/* Calendar Button - Circular glassmorphism, icon only */}
+            {/* Calendar Button - nur Icon, kein Hintergrund */}
             <button
               onClick={exportToCalendar}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 hover:bg-white/60 hover:scale-105 transition-all shadow-sm"
+              className="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all"
               title="Im Kalender speichern"
             >
-              <CalendarPlus size={20} />
+              <CalendarPlus size={22} />
             </button>
 
-            {/* Share Button - Circular glassmorphism, icon only */}
+            {/* Share Button - nur Icon, kein Hintergrund */}
             <Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
               <PopoverTrigger asChild>
                 <button
-                  className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 hover:bg-white/60 hover:scale-105 transition-all shadow-sm"
+                  className="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all"
                   title="Event teilen"
                 >
-                  <Share2 size={20} />
+                  <Share2 size={22} />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-64 p-2" align="start">
@@ -249,17 +249,15 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               </PopoverContent>
             </Popover>
 
-            {/* Rating - Single star with number */}
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/30 text-gray-800 shadow-sm">
-              <div className="flex items-center gap-1">
-                <span className="text-yellow-500">⭐</span>
-                <span className="text-sm font-bold">
-                  {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
-                </span>
-              </div>
+            {/* Rating - nur Stern + Zahl, kein Kreis */}
+            <div className="flex items-center gap-1 text-gray-700">
+              <span className="text-yellow-500">⭐</span>
+              <span className="text-sm font-semibold">
+                {((event.buzz_score || event.relevance_score || 75) / 20).toFixed(1)}
+              </span>
             </div>
 
-            {/* Ticket purchase button - Dunkelblau wie im Referenzbild */}
+            {/* Ticket purchase button */}
             <button
               onClick={() => {
                 if (event.ticket_url || event.url) {
@@ -268,7 +266,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   toast.info("Ticket-Verkauf demnächst verfügbar");
                 }
               }}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-700 hover:bg-indigo-800 transition-colors shadow-lg"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-md"
               title="Ticket kaufen"
             >
               <span className="text-sm font-semibold text-white">Ticket kaufen</span>
