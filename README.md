@@ -254,4 +254,14 @@ Enthält: iCloud-Issues, CPU-Probleme, komplette Git-Historie, alte Troubleshoot
 
 ---
 
-**Letzte Aktualisierung:** Januar 26, 2026
+## 🎨 Modal Design Backups
+
+Location: `backups/modal-designs/`
+
+Backup-Versionen des EventDetailModal werden hier gespeichert, falls ein Design-Rollback nötig ist:
+
+- **EventDetailModal-rectangular-2026-01-28.tsx** - Vorheriges Design mit rechteckigen Buttons + Text-Labels ("Speichern", "Kalender", "Teilen"). Heller Hover mit `bg-gray-50`, `border-gray-200`.
+
+---
+
+**Letzte Aktualisierung:** Januar 28, 2026
