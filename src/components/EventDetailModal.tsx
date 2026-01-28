@@ -232,8 +232,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {/* Description UNDER the title - 2 lines, "mehr lesen" only if truncated */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 180;
-            const displayText = isTruncated ? fullText.substring(0, 180).trim() : fullText;
+            const isTruncated = fullText.length > 140;
+            const displayText = isTruncated ? fullText.substring(0, 140).trim() : fullText;
 
             return (
               <p className="text-sm text-gray-700 leading-relaxed pr-0">
