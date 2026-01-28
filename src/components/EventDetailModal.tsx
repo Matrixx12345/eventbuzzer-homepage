@@ -232,8 +232,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {/* Description UNDER the title - 2 lines, "mehr lesen" only if truncated */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 150;
-            const displayText = isTruncated ? fullText.substring(0, 150) : fullText;
+            const isTruncated = fullText.length > 120;
+            const displayText = isTruncated ? fullText.substring(0, 120).trim() : fullText;
 
             return (
               <p className="text-sm text-gray-700 leading-relaxed">
@@ -241,7 +241,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 {isTruncated && (
                   <Link
                     to={`/event/${event.external_id || event.id}`}
-                    className="text-indigo-800 hover:text-indigo-900 underline underline-offset-2 font-medium ml-1"
+                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold"
                     onClick={(e) => e.stopPropagation()}
                   >
                     ... mehr lesen
@@ -385,16 +385,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
               >
                 <span className="text-sm font-semibold text-white">Ticket kaufen</span>
               </button>
-
-              {/* Detail Page Link - Chevron */}
-              <Link
-                to={`/event/${event.external_id || event.id}`}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md ml-2"
-                title="Zur Detailseite"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ChevronRight size={20} />
-              </Link>
             </div>
           </div>
 
@@ -430,6 +420,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </span>
               </div>
             )}
+
+            {/* Detail Page Link - Chevron im Footer */}
+            <Link
+              to={`/event/${event.external_id || event.id}`}
+              className="ml-auto flex items-center gap-1 text-indigo-900 hover:text-indigo-950 font-medium transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span>Details</span>
+              <ChevronRight size={16} />
+            </Link>
           </div>
 
         </div>
