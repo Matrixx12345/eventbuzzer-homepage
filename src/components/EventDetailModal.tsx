@@ -229,47 +229,37 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Description UNDER the title - 2 lines, "mehr lesen" only if truncated */}
+          {/* Description UNDER the title - "mehr lesen" inline at end */}
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
-            const isTruncated = fullText.length > 140;
-
-            if (!isTruncated) {
-              return (
-                <p
-                  className="text-sm text-gray-700 leading-relaxed text-justify"
-                  lang="de"
-                  style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
-                >
-                  {fullText}
-                </p>
-              );
-            }
+            const isTruncated = fullText.length > 150;
+            const displayText = isTruncated ? fullText.substring(0, 150).trim() : fullText;
 
             return (
-              <div className="text-sm text-gray-700 leading-relaxed">
-                <p
-                  className="text-justify"
-                  lang="de"
-                  style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
-                >
-                  {fullText.substring(0, 140).trim()}
-                </p>
-                <div className="flex justify-end mt-0.5">
-                  <Link
-                    to={`/event/${event.external_id || event.id}`}
-                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    ... mehr lesen
-                  </Link>
-                </div>
-              </div>
+              <p
+                className="text-sm text-gray-700 leading-relaxed text-justify pr-1"
+                lang="de"
+                style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
+              >
+                {displayText}
+                {isTruncated && (
+                  <>
+                    {' '}
+                    <Link
+                      to={`/event/${event.external_id || event.id}`}
+                      className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      ... mehr lesen
+                    </Link>
+                  </>
+                )}
+              </p>
             );
           })()}
           {/* Action Buttons */}
           <div className="flex items-center pt-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-5">
               {/* Favorite Button */}
               <button
                 onClick={handleToggleFavorite}
@@ -397,7 +387,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                     toast.info("Ticket-Verkauf demnächst verfügbar");
                   }
                 }}
-                className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg ml-3"
+                className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg ml-auto"
                 title="Ticket kaufen"
               >
                 <span className="text-sm font-semibold text-white">Ticket kaufen</span>
