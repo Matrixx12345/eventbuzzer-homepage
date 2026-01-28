@@ -172,8 +172,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           </div>
         )}
 
-        <div className="px-6 pb-6 pt-4 space-y-4"
-
+        <div className="px-6 pb-6 pt-4 space-y-4">
           {/* Action Buttons: Favoriten + Kalender + Share + Stars + Ticket */}
           <div className="flex items-center gap-4 flex-wrap">
             {/* Favorite Button - Circular glassmorphism, icon only */}
