@@ -233,16 +233,29 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           {(event.short_description || event.description) && (() => {
             const fullText = event.short_description || event.description || '';
             const isTruncated = fullText.length > 140;
-            const displayText = isTruncated ? fullText.substring(0, 140).trim() : fullText;
+
+            if (!isTruncated) {
+              return (
+                <p
+                  className="text-sm text-gray-700 leading-relaxed text-justify"
+                  lang="de"
+                  style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
+                >
+                  {fullText}
+                </p>
+              );
+            }
 
             return (
-              <p
-                className="text-sm text-gray-700 leading-relaxed text-justify"
-                lang="de"
-                style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
-              >
-                {displayText}
-                {isTruncated && (
+              <div className="text-sm text-gray-700 leading-relaxed">
+                <p
+                  className="text-justify"
+                  lang="de"
+                  style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
+                >
+                  {fullText.substring(0, 140).trim()}
+                </p>
+                <div className="flex justify-end mt-0.5">
                   <Link
                     to={`/event/${event.external_id || event.id}`}
                     className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap"
@@ -250,8 +263,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   >
                     ... mehr lesen
                   </Link>
-                )}
-              </p>
+                </div>
+              </div>
             );
           })()}
           {/* Action Buttons */}
