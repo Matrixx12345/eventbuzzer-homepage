@@ -171,7 +171,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
       <DialogContent
           className="max-w-2xl max-h-[90vh] overflow-y-auto p-[12px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
-            background: 'rgba(255, 255, 255, 0.5)',
+            background: 'rgba(255, 255, 255, 0.75)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             position: 'fixed',
