@@ -260,6 +260,10 @@ Location: `backups/modal-designs/`
 
 Backup-Versionen des EventDetailModal werden hier gespeichert, falls ein Design-Rollback nötig ist:
 
+- **EventDetailModal-glassmorphism-v2-2026-01-28.tsx** - Glassmorphism-Design v2: Transparente Kreise (nur Border), Icons links gruppiert, Ticket-Button rechts (dunkelblau), inline-styles für backdrop-filter.
+
+- **EventDetailModal-glassmorphism-icons-2026-01-28.tsx** - Erstes Glassmorphism-Design mit weißen Kreis-Buttons.
+
 - **EventDetailModal-rectangular-2026-01-28.tsx** - Vorheriges Design mit rechteckigen Buttons + Text-Labels ("Speichern", "Kalender", "Teilen"). Heller Hover mit `bg-gray-50`, `border-gray-200`.
 
 ---
