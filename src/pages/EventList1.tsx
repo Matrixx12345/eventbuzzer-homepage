@@ -237,12 +237,18 @@ const EventCard = ({
                   onToggleFavorite(event);
                 }}
                 className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
-                title={isFavorited ? "Entfernen" : "Planen"}
               >
                 <Heart
                   size={16}
                   className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
                 />
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
+                  <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    {isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                  </div>
+                  <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
               </button>
 
               {/* Divider */}
@@ -270,7 +276,6 @@ const EventCard = ({
                   nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
-                title="Events in der Nähe"
               >
                 <MapPin
                   size={16}
@@ -279,6 +284,13 @@ const EventCard = ({
                     isLoadingNearby && "animate-spin"
                   )}
                 />
+                {/* Tooltip */}
+                <div className="absolute bottom-full right-0 mb-2 hidden group-hover/nearby:block z-50 pointer-events-none">
+                  <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Events in der Nähe anzeigen
+                  </div>
+                  <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mr-2" />
+                </div>
               </button>
 
               {/* Divider */}
@@ -295,9 +307,15 @@ const EventCard = ({
                   }
                 }}
                 className="group/ticket relative p-1 pr-2 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
-                title="Ticket kaufen"
               >
                 <ShoppingCart size={16} className="text-[#1e3a8a]" />
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
+                  <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Ticket kaufen
+                  </div>
+                  <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
               </button>
             </div>
           </div>
