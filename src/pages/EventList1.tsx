@@ -207,10 +207,10 @@ const EventCard = ({
             )}
           </div>
 
-          {/* MacBook Pro Style Glassmorphism Action Pill - Full Width */}
+          {/* MacBook Pro Style Glassmorphism Action Pill */}
           <div className="flex items-center justify-start pt-4">
             <div
-              className="flex items-center justify-between w-full px-6 py-1.5 rounded-full"
+              className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
                 backdropFilter: 'blur(30px) saturate(180%)',
@@ -219,80 +219,86 @@ const EventCard = ({
                 boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
-              {/* Star Rating - Schönes Gelb */}
-              <div className="flex items-center gap-1.5">
+              {/* Star Rating */}
+              <div className="flex items-center gap-1.5 pl-2">
                 <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
                 <span className="text-sm font-semibold text-gray-800">
                   {rating.toFixed(1)}
                 </span>
               </div>
 
-              {/* Icon Group - rechts mit Spacing */}
-              <div className="flex items-center gap-6">
-                {/* Favorit */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite(event);
-                  }}
-                  className="group/heart relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
-                  title={isFavorited ? "Entfernen" : "Planen"}
-                >
-                  <Heart
-                    size={16}
-                    className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
-                  />
-                </button>
+              {/* Divider */}
+              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
-                {/* Events in der Nähe */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (nearbyEventsFilter === event.id) {
-                      setNearbyEventsFilter(null);
-                    } else {
-                      setIsLoadingNearby(true);
-                      setTimeout(() => {
-                        setNearbyEventsFilter(event.id);
-                        setCurrentPage(1);
-                        setDisplayedEventsCount(30);
-                        setIsLoadingNearby(false);
-                      }, 1500);
-                    }
-                  }}
-                  disabled={isLoadingNearby}
+              {/* Favorit */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(event);
+                }}
+                className="group/heart relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
+                title={isFavorited ? "Entfernen" : "Planen"}
+              >
+                <Heart
+                  size={16}
+                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
+                />
+              </button>
+
+              {/* Divider */}
+              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
+
+              {/* Events in der Nähe */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (nearbyEventsFilter === event.id) {
+                    setNearbyEventsFilter(null);
+                  } else {
+                    setIsLoadingNearby(true);
+                    setTimeout(() => {
+                      setNearbyEventsFilter(event.id);
+                      setCurrentPage(1);
+                      setDisplayedEventsCount(30);
+                      setIsLoadingNearby(false);
+                    }, 1500);
+                  }
+                }}
+                disabled={isLoadingNearby}
+                className={cn(
+                  "group/nearby relative p-1 rounded-md transition-all duration-200",
+                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
+                  isLoadingNearby && "opacity-50 cursor-wait"
+                )}
+                title="Events in der Nähe"
+              >
+                <MapPin
+                  size={16}
                   className={cn(
-                    "group/nearby relative p-1 rounded-md transition-all duration-200",
-                    nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
-                    isLoadingNearby && "opacity-50 cursor-wait"
+                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
+                    isLoadingNearby && "animate-spin"
                   )}
-                  title="Events in der Nähe"
-                >
-                  <MapPin
-                    size={16}
-                    className={cn(
-                      nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
-                      isLoadingNearby && "animate-spin"
-                    )}
-                  />
-                </button>
+                />
+              </button>
 
-                {/* Ticket kaufen - DUNKELBLAU */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (event.ticket_url || event.url) {
-                      window.open(event.ticket_url || event.url, '_blank');
-                    } else {
-                      toast.info("Ticket-Verkauf demnächst verfügbar");
-                    }
-                  }}
-                  className="group/ticket relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
-                  title="Ticket kaufen"
-                >
-                  <ShoppingCart size={16} className="text-[#1e3a8a]" />
-                </button>
-              </div>
+              {/* Divider */}
+              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
+
+              {/* Ticket kaufen - DUNKELBLAU */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (event.ticket_url || event.url) {
+                    window.open(event.ticket_url || event.url, '_blank');
+                  } else {
+                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                  }
+                }}
+                className="group/ticket relative p-1 pr-2 hover:bg-white/30 rounded-md transition-all duration-200"
+                title="Ticket kaufen"
+              >
+                <ShoppingCart size={16} className="text-[#1e3a8a]" />
+              </button>
             </div>
           </div>
         </div>
