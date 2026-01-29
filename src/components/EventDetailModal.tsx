@@ -495,7 +495,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <Link
               to={`/event/${event.external_id || event.id}`}
               className="ml-auto -mr-2 flex items-center gap-0.5 text-indigo-900 hover:text-indigo-950 font-medium transition-colors"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("Navigating to:", `/event/${event.external_id || event.id}`, "external_id:", event.external_id, "id:", event.id);
+                onClose(); // Close modal before navigating
+              }}
             >
               <span>Details</span>
               <ChevronRight size={16} />
