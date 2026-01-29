@@ -210,37 +210,35 @@ const EventCard = ({
           {/* MacBook Pro Style Glassmorphism Action Pill */}
           <div className="flex items-center justify-start pt-4">
             <div
-              className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
+              className="inline-flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-full"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
-                backdropFilter: 'blur(30px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
               }}
             >
               {/* Star Rating */}
-              <div className="flex items-center gap-1.5 pl-2">
+              <div className="flex items-center gap-1.5 pr-1">
                 <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-medium text-gray-700">
                   {rating.toFixed(1)}
                 </span>
               </div>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Favorit */}
+              {/* Favorit - Quadratischer Wrapper */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/heart relative w-8 h-8 flex items-center justify-center rounded-lg hover:scale-105 transition-all duration-200"
+                style={{ background: 'rgba(255, 255, 255, 0.15)' }}
               >
                 <Heart
                   size={16}
-                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
+                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"}
                 />
                 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
@@ -251,10 +249,7 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Events in der Nähe */}
+              {/* Events in der Nähe - Quadratischer Wrapper */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -272,15 +267,15 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110",
-                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
+                  "group/nearby relative w-8 h-8 flex items-center justify-center rounded-lg hover:scale-105 transition-all duration-200",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
+                style={{ background: nearbyEventsFilter === event.id ? 'rgba(251, 146, 60, 0.2)' : 'rgba(255, 255, 255, 0.15)' }}
               >
                 <MapPin
                   size={16}
                   className={cn(
-                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
+                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-600",
                     isLoadingNearby && "animate-spin"
                   )}
                 />
@@ -293,10 +288,7 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Ticket kaufen - DUNKELBLAU */}
+              {/* Ticket kaufen - Quadratischer Wrapper DUNKELBLAU */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -306,7 +298,8 @@ const EventCard = ({
                     toast.info("Ticket-Verkauf demnächst verfügbar");
                   }
                 }}
-                className="group/ticket relative p-1 pr-2 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/ticket relative w-8 h-8 flex items-center justify-center rounded-lg hover:scale-105 transition-all duration-200"
+                style={{ background: 'rgba(255, 255, 255, 0.15)' }}
               >
                 <ShoppingCart size={16} className="text-[#1e3a8a]" />
                 {/* Tooltip */}
