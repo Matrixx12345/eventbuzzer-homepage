@@ -796,9 +796,9 @@ const EventDetail = () => {
       <Navbar />
 
       {/* HERO SECTION - 50/50 Split Layout */}
-      <section className="min-h-[80vh] grid grid-cols-1 lg:grid-cols-2">
+      <section className="min-h-[60vh] grid grid-cols-1 lg:grid-cols-2">
         {/* Left - Event Image */}
-        <div className="relative h-[50vh] lg:h-[80vh] overflow-hidden group">
+        <div className="relative h-[40vh] lg:h-[60vh] overflow-hidden group">
           <img
             src={event.image}
             alt={event.title}
@@ -817,7 +817,7 @@ const EventDetail = () => {
         </div>
 
         {/* Right - Content Panel - Modal Style */}
-        <div className="bg-white flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[80vh] overflow-y-auto">
+        <div className="bg-white flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[60vh] overflow-y-auto">
           {/* Title - Modal Style */}
           <h1
             className="text-4xl lg:text-5xl font-serif text-gray-900 mb-8"
