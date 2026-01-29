@@ -6,7 +6,7 @@ import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Maximize2, Minimize2, X, ShoppingCart, Star } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, X, ShoppingCart } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -127,41 +127,39 @@ const EventCard = ({
       className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      <div className="flex gap-4 h-[200px]">
-        {/* Image Section - Frame with even padding (like modal) */}
-        <div className="relative w-[308px] flex-shrink-0 h-[200px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
-          <div className="relative w-full h-full overflow-hidden rounded">
-            <img
-              src={imageUrl}
-              alt={event.title}
-              loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+      <div className="flex gap-4 h-[165px]">
+        {/* Image Section */}
+        <div className="relative w-[308px] flex-shrink-0 overflow-hidden h-[165px]">
+          <img
+            src={imageUrl}
+            alt={event.title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
 
-            {/* Category Badge - Milky Look wie auf Startseite */}
-            {(() => {
-              const categoryLabel = getCategoryLabel(event);
-              return categoryLabel ? (
-                <div className="absolute top-2 left-2 z-10">
-                  <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
-                    {categoryLabel}
-                  </span>
-                </div>
-              ) : null;
-            })()}
-
-            {/* Gallery Dots Indicator - only show if multiple images available */}
-            {event.gallery_urls && event.gallery_urls.length > 0 && (
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-                {/* Primary image dot */}
-                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-                {/* Gallery images dots */}
-                {event.gallery_urls.slice(0, 4).map((_: any, i: number) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
-                ))}
+          {/* Category Badge - Milky Look wie auf Startseite */}
+          {(() => {
+            const categoryLabel = getCategoryLabel(event);
+            return categoryLabel ? (
+              <div className="absolute top-3 left-3 z-10">
+                <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
+                  {categoryLabel}
+                </span>
               </div>
-            )}
-          </div>
+            ) : null;
+          })()}
+
+          {/* Gallery Dots Indicator - only show if multiple images available */}
+          {event.gallery_urls && event.gallery_urls.length > 0 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {/* Primary image dot */}
+              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+              {/* Gallery images dots */}
+              {event.gallery_urls.slice(0, 4).map((_: any, i: number) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Content Section */}
@@ -207,55 +205,72 @@ const EventCard = ({
             )}
           </div>
 
-          {/* MacBook Pro Style Glassmorphism Action Pill */}
-          <div className="flex items-center justify-start pt-4">
-            <div
-              className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
-              style={{
-                background: 'rgba(255, 255, 255, 0.25)',
-                backdropFilter: 'blur(30px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-              }}
-            >
-              {/* Star Rating */}
-              <div className="flex items-center gap-1.5 pl-2">
-                <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                <span className="text-sm font-normal text-gray-600">
-                  {rating.toFixed(1)}
-                </span>
-              </div>
+          {/* Bottom Row: Star + Icons - LEFT ALIGNED, NO BORDERS, 20px spacing */}
+          <div className="flex items-center gap-5 relative z-20">
+            {/* Star Rating */}
+            <div className="flex items-center gap-1.5 relative z-20">
+              <span className="text-yellow-400 text-lg">⭐</span>
+              <span className="text-sm font-semibold text-gray-600">
+                {rating.toFixed(1)}
+              </span>
+            </div>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
+            {/* Action Icons - NO BORDERS, simple hover, with padding */}
+            <div className="flex items-center gap-5">
               {/* Favorit */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
-                title={isFavorited ? "Entfernen" : "Planen"}
+                className="group/heart relative p-1.5 hover:scale-110 transition-all duration-200"
               >
                 <Heart
-                  size={16}
-                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
+                  size={19}
+                  className={isFavorited ? "fill-red-600 text-red-600" : "text-gray-600"}
                 />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    {isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                  </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
+              {/* Ticket kaufen */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (event.ticket_url || event.url) {
+                    window.open(event.ticket_url || event.url, '_blank');
+                  } else {
+                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                  }
+                }}
+                className="group/ticket relative p-1.5 hover:scale-110 transition-all duration-200"
+              >
+                <ShoppingCart size={18} className="text-gray-600" />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Ticket kaufen
+                  </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
+              </button>
 
-              {/* Events in der Nähe */}
+              {/* Events in der Nähe (Nearby) - Amazon-style */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (nearbyEventsFilter === event.id) {
-                    setNearbyEventsFilter(null);
+                    setNearbyEventsFilter(null); // Toggle off
                   } else {
+                    // Show loading state
                     setIsLoadingNearby(true);
+
+                    // Apply filter after 1.5 seconds
                     setTimeout(() => {
                       setNearbyEventsFilter(event.id);
                       setCurrentPage(1);
@@ -266,38 +281,22 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 rounded-md transition-all duration-200",
-                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
+                  "group/nearby relative p-1.5 hover:scale-110 transition-all duration-200",
+                  nearbyEventsFilter === event.id && "text-orange-500",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
-                title="Events in der Nähe"
               >
-                <MapPin
-                  size={16}
-                  className={cn(
-                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
-                    isLoadingNearby && "animate-spin"
-                  )}
-                />
-              </button>
-
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Ticket kaufen - DUNKELBLAU */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (event.ticket_url || event.url) {
-                    window.open(event.ticket_url || event.url, '_blank');
-                  } else {
-                    toast.info("Ticket-Verkauf demnächst verfügbar");
-                  }
-                }}
-                className="group/ticket relative p-1 pr-2 hover:bg-white/30 rounded-md transition-all duration-200"
-                title="Ticket kaufen"
-              >
-                <ShoppingCart size={16} className="text-blue-600" />
+                <MapPin size={18} className={cn(
+                  nearbyEventsFilter === event.id ? "text-orange-500" : "text-gray-600",
+                  isLoadingNearby && "animate-spin"
+                )} />
+                {/* Tooltip - Heller Stil */}
+                <div className="absolute bottom-full right-0 mb-2 hidden group-hover/nearby:block z-50 pointer-events-none">
+                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Events in der Nähe anzeigen
+                  </div>
+                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mr-2" />
+                </div>
               </button>
             </div>
           </div>
