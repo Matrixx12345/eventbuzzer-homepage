@@ -128,38 +128,40 @@ const EventCard = ({
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
       <div className="flex gap-4 h-[165px]">
-        {/* Image Section */}
-        <div className="relative w-[308px] flex-shrink-0 overflow-hidden h-[165px]">
-          <img
-            src={imageUrl}
-            alt={event.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+        {/* Image Section - Polaroid Frame */}
+        <div className="relative w-[308px] flex-shrink-0 h-[165px] p-2 pb-3 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+          <div className="relative w-full h-full overflow-hidden rounded">
+            <img
+              src={imageUrl}
+              alt={event.title}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
 
-          {/* Category Badge - Milky Look wie auf Startseite */}
-          {(() => {
-            const categoryLabel = getCategoryLabel(event);
-            return categoryLabel ? (
-              <div className="absolute top-3 left-3 z-10">
-                <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
-                  {categoryLabel}
-                </span>
+            {/* Category Badge - Milky Look wie auf Startseite */}
+            {(() => {
+              const categoryLabel = getCategoryLabel(event);
+              return categoryLabel ? (
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
+                    {categoryLabel}
+                  </span>
+                </div>
+              ) : null;
+            })()}
+
+            {/* Gallery Dots Indicator - only show if multiple images available */}
+            {event.gallery_urls && event.gallery_urls.length > 0 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                {/* Primary image dot */}
+                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+                {/* Gallery images dots */}
+                {event.gallery_urls.slice(0, 4).map((_: any, i: number) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
+                ))}
               </div>
-            ) : null;
-          })()}
-
-          {/* Gallery Dots Indicator - only show if multiple images available */}
-          {event.gallery_urls && event.gallery_urls.length > 0 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-              {/* Primary image dot */}
-              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-              {/* Gallery images dots */}
-              {event.gallery_urls.slice(0, 4).map((_: any, i: number) => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Content Section */}
