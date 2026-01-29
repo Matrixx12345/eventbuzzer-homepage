@@ -165,15 +165,15 @@ const EventCard = ({
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 px-4 pt-6 pb-3 flex flex-col justify-between min-w-0">
-          <div>
+        <div className="flex-1 px-4 pt-4 pb-3 flex flex-col justify-between min-w-0">
+          <div className="mt-2">
             {/* Title - ALWAYS 1 line only */}
-            <h3 className="text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-1 truncate leading-none font-sans">
+            <h3 className="text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-2 truncate leading-none font-sans">
               {event.title}
             </h3>
 
             {/* Location - NO PIN */}
-            <div className="text-sm text-gray-500 mb-2.5">
+            <div className="text-sm text-gray-500 mb-2">
               {locationText}
 
               {/* Mini-Map Tooltip */}
@@ -208,7 +208,7 @@ const EventCard = ({
           </div>
 
           {/* MacBook Pro Style Glassmorphism Action Pill */}
-          <div className="flex items-center justify-start pt-5">
+          <div className="flex items-center justify-start pt-4">
             <div
               className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
               style={{
