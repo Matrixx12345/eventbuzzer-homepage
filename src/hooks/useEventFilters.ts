@@ -12,18 +12,36 @@ export interface FilterState {
   search: string;
 }
 
+// Category slug to ID mapping
+const categorySlugToId: Record<string, number> = {
+  "musik-party": 1,
+  "kunst-kultur": 2,
+  "kulinarik-genuss": 3,
+  "natur-ausfluege": 4,
+  "maerkte-stadtfeste": 5,
+};
+
 export const useEventFilters = () => {
   const [searchParams] = useSearchParams();
 
+  // Read URL parameters
+  const urlCategory = searchParams.get('category');
+  const urlMood = searchParams.get('quickFilter') || searchParams.get('tags');
+  const urlCity = searchParams.get('city') || "";
+  const urlRadius = searchParams.get('radius');
+  const urlTime = searchParams.get('time');
+  const urlDate = searchParams.get('date');
+  const urlSearch = searchParams.get('source') || searchParams.get('search') || "";
+
   const [filters, setFilters] = useState<FilterState>({
-    category: null,
-    categoryId: null,
-    mood: searchParams.get('tags') || null,
-    city: "",
-    radius: 25,
-    time: null,
-    date: undefined,
-    search: searchParams.get('source') || "",
+    category: urlCategory || null,
+    categoryId: urlCategory ? categorySlugToId[urlCategory] || null : null,
+    mood: urlMood || null,
+    city: urlCity,
+    radius: urlRadius ? parseInt(urlRadius, 10) : 25,
+    time: urlTime || null,
+    date: urlDate ? new Date(urlDate) : undefined,
+    search: urlSearch,
   });
 
   const handleCategoryChange = useCallback((categoryId: number | null, categorySlug: string | null) => {

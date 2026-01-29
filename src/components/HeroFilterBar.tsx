@@ -160,7 +160,7 @@ const HeroFilterBar = () => {
       params.set("date", format(selectedDate, "yyyy-MM-dd"));
     }
     
-    navigate(`/listings?${params.toString()}`);
+    navigate(`/eventlist1?${params.toString()}`);
   };
 
   // Get date display text
