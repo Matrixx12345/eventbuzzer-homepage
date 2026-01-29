@@ -28,7 +28,9 @@ src/
 │   ├── SideBySideSection.tsx  # 2x2 Grid
 │   ├── EliteExperiencesSection.tsx  # Elite Events
 │   ├── EventsMap.tsx          # Leaflet-Karte
-│   └── GoogleAnalytics.tsx    # GA4 Tracking
+│   ├── GoogleAnalytics.tsx    # GA4 Tracking
+│   └── backups/               # Design-Backups
+│       └── SimilarEventCard-v1.tsx  # Nearby Events Card (Jan 2026)
 └── integrations/supabase/
     ├── externalClient.ts      # External DB (Events)
     └── client.ts              # Lovable Cloud (User data)

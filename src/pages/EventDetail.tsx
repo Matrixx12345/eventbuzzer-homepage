@@ -861,7 +861,7 @@ const EventDetail = () => {
       <Navbar />
 
       {/* HERO SECTION - 50/50 Split Layout */}
-      <section className="min-h-[60vh] grid grid-cols-1 lg:grid-cols-2 bg-[#FAFBFC]">
+      <section className="min-h-[60vh] grid grid-cols-1 lg:grid-cols-2 bg-[#F4F7FA]">
         {/* Left - Event Image with Frame (like EventList1) */}
         <div className="p-4 lg:p-6">
           <div className="relative h-[36vh] lg:h-[calc(60vh-48px)] overflow-hidden rounded-2xl bg-white p-2 group" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>

@@ -163,6 +163,7 @@ const Index = () => {
           event={selectedEvent}
           isOpen={modalOpen}
           onClose={closeEvent}
+          variant="solid"
         />
       )}
     </div>

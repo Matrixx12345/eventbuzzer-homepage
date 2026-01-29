@@ -10,6 +10,7 @@ interface EventDetailModalProps {
   event: any;
   isOpen: boolean;
   onClose: () => void;
+  variant?: 'default' | 'solid'; // default = 75% transparent, solid = 85% less transparent
 }
 
 // Format tag names for display
@@ -41,7 +42,7 @@ const setUserRating = (eventId: string, rating: number) => {
   localStorage.setItem('eventRatings', JSON.stringify(ratings));
 };
 
-export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onClose }) => {
+export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onClose, variant = 'default' }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showTagsPopup, setShowTagsPopup] = useState(false);
@@ -210,7 +211,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
       <DialogContent
           className="max-w-xl max-h-[85vh] overflow-y-auto p-[10px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
-            background: 'rgba(255, 255, 255, 0.75)',
+            background: variant === 'solid' ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.75)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             position: 'fixed',

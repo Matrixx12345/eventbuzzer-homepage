@@ -49,7 +49,7 @@ const App = () => (
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/listings" element={<ErrorBoundary><Listings /></ErrorBoundary>} />
               <Route path="/eventlist1" element={<ErrorBoundary><EventList1 /></ErrorBoundary>} />
-              <Route path="/events-neu" element={<ErrorBoundary><EventsNew /></ErrorBoundary>} />
+              {/* <Route path="/events-neu" element={<ErrorBoundary><EventsNew /></ErrorBoundary>} /> */}
               <Route path="/eventplanner2" element={<ErrorBoundary><EventPlanner2 /></ErrorBoundary>} />
               <Route path="/trip-planner" element={<ErrorBoundary><TripPlanner /></ErrorBoundary>} />
               <Route path="/trip-planer-neu" element={<ErrorBoundary><TripPlanerNew /></ErrorBoundary>} />
