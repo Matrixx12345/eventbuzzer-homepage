@@ -2,17 +2,15 @@ import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { SITE_URL } from "@/config/constants";
-import { Heart, MapPin, Calendar, Plus, ArrowRight, Navigation, Loader2, ExternalLink, Share2, CalendarPlus, Copy, Mail, Flag, Info, ShoppingCart } from "lucide-react";
+import { Heart, MapPin, Calendar, Plus, ArrowRight, Loader2, Share2, CalendarPlus, Copy, Mail } from "lucide-react";
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
-import { BuzzTracker } from "@/components/BuzzTracker";
 import { StarRating } from "@/components/StarRating";
 import { ImageGallery } from "@/components/ImageGallery";
 import { useState, useEffect, useRef } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import {
@@ -264,29 +262,24 @@ const eventsData: Record<string, {
   }
 };
 
-// Similar events for carousel
-const similarEvents = [
-  { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20" },
-  { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22" },
-  { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25" },
-  { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28" },
-];
+/*
+  STATIC DATA - Currently not used (replaced by dynamic nearby events)
 
-// Partner products with masonry layout info
-const partnerProducts = [
-  { image: partnerRoses, name: "12 Red Roses Bouquet", price: "CHF 39", partner: "Fleurop", size: "tall" as const },
-  { image: partnerChampagne, name: "Moët & Chandon Impérial", price: "CHF 49", partner: "Galaxus", size: "standard" as const },
-  { image: partnerChocolate, name: "Lindt Pralinés Selection", price: "CHF 29", partner: "Lindt", size: "standard" as const },
-  { image: eventVenue, name: "VIP Chauffeur Service", price: "CHF 189", partner: "Blacklane", size: "wide" as const },
-  { image: partnerTeddy, name: "Premium Teddy Bear", price: "CHF 35", partner: "Manor", size: "standard" as const },
-  { image: rainySpa, name: "Late Night Spa Access", price: "CHF 79", partner: "Hürlimann", size: "tall" as const },
-  { image: weekendWine, name: "Scented Candle Set", price: "CHF 45", partner: "Westwing", size: "standard" as const },
-  { image: swissGeneva, name: "Premium Earphones", price: "CHF 129", partner: "Digitec", size: "standard" as const },
-  { image: weekendArt, name: "Cashmere Red Gloves", price: "CHF 89", partner: "Globus", size: "tall" as const },
-  { image: swissLucerne, name: "Luxury Silk Scarf", price: "CHF 159", partner: "Jelmoli", size: "wide" as const },
-  { image: rainyChocolate, name: "Artisan Coffee Set", price: "CHF 55", partner: "Sprüngli", size: "standard" as const },
-  { image: weekendOpera, name: "Crystal Wine Glasses", price: "CHF 75", partner: "Manor", size: "standard" as const },
-];
+  // Similar events for carousel (static fallback)
+  const similarEvents = [
+    { slug: "kulturbetrieb-royal", image: eventAbbey, title: "Photo Spot Einsiedeln Abbey", venue: "Leonard House", location: "Einsiedeln • CH", date: "Dec 20" },
+    { slug: "art-exhibit", image: eventConcert, title: "Kulturbetrieb Royal", venue: "Leonard House", location: "Baden • CH", date: "Dec 22" },
+    { slug: "wine-dining", image: eventSymphony, title: "Zurich Tonhalle", venue: "Tonhalle Orchestra", location: "Zürich • CH", date: "Dec 25" },
+    { slug: "opera-festival", image: eventVenue, title: "Volver", venue: "Bern Venue", location: "Bern • CH", date: "Dec 28" },
+  ];
+
+  // Partner products / Affiliate section (see README for how to re-enable)
+  const partnerProducts = [
+    { image: partnerRoses, name: "12 Red Roses Bouquet", price: "CHF 39", partner: "Fleurop", size: "tall" },
+    { image: partnerChampagne, name: "Moët & Chandon Impérial", price: "CHF 49", partner: "Galaxus", size: "standard" },
+    ... (see git history for full list)
+  ];
+*/
 
 // Similar Event Card - Clean White Design with Swap Support
 const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }: {
@@ -329,47 +322,30 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }:
   );
 };
 
-// Masonry Product Card - Pinterest Style
-const MasonryProductCard = ({ image, name, price, partner, size }: {
-  image: string;
-  name: string;
-  price: string;
-  partner: string;
-  size: "standard" | "tall" | "wide";
-}) => {
-  const sizeClasses = {
-    standard: "",
-    tall: "row-span-2",
-    wide: "col-span-2",
-  };
+/*
+  MasonryProductCard - Pinterest Style (for affiliate section)
+  Currently disabled - see README for how to re-enable
 
-  return (
-    <article className={`relative rounded-2xl overflow-hidden group cursor-pointer ${sizeClasses[size]}`}>
-      {/* Full-bleed Image */}
-      <img
-        src={image}
-        alt={name}
-        loading="lazy"
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 min-h-[200px]"
-      />
-      
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-      
-      {/* Content Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <p className="text-white/70 text-[10px] uppercase tracking-wider mb-1">via {partner}</p>
-        <h3 className="text-white font-serif text-lg font-semibold leading-tight mb-1">{name}</h3>
-        <div className="flex items-center justify-between">
-          <span className="text-white font-semibold">{price}</span>
-          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1">
-            <Plus size={12} /> Add
-          </button>
+  const MasonryProductCard = ({ image, name, price, partner, size }) => {
+    const sizeClasses = { standard: "", tall: "row-span-2", wide: "col-span-2" };
+    return (
+      <article className={`relative rounded-2xl overflow-hidden group cursor-pointer ${sizeClasses[size]}`}>
+        <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 min-h-[200px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <p className="text-white/70 text-[10px] uppercase tracking-wider mb-1">via {partner}</p>
+          <h3 className="text-white font-serif text-lg font-semibold leading-tight mb-1">{name}</h3>
+          <div className="flex items-center justify-between">
+            <span className="text-white font-semibold">{price}</span>
+            <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1">
+              <Plus size={12} /> Add
+            </button>
+          </div>
         </div>
-      </div>
-    </article>
-  );
-};
+      </article>
+    );
+  };
+*/
 
 // Dynamic event interface for Supabase data
 interface DynamicEvent {
@@ -493,8 +469,8 @@ const EventDetail = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
+  const [nearbyEvents, setNearbyEvents] = useState<DynamicEvent[]>([]);
   const referralTrackedRef = useRef(false);
 
   // Sync with URL changes (e.g., browser back/forward)
@@ -551,6 +527,39 @@ const EventDetail = () => {
       trackEventReferral(dynamicEvent.id);
     }
   }, [dynamicEvent]);
+
+  // Fetch nearby events based on coordinates
+  useEffect(() => {
+    const fetchNearbyEvents = async () => {
+      const lat = dynamicEvent?.latitude;
+      const lng = dynamicEvent?.longitude;
+      if (!lat || !lng) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke("get-external-events", {
+          body: {
+            latitude: lat,
+            longitude: lng,
+            radius: 30, // 30km radius
+            limit: 8
+          }
+        });
+        if (error) throw error;
+
+        // Filter out the current event
+        const filtered = (data?.events || []).filter(
+          (e: DynamicEvent) => e.id !== dynamicEvent?.id && e.external_id !== slug
+        );
+        setNearbyEvents(filtered.slice(0, 4));
+      } catch (err) {
+        console.error("Error fetching nearby events:", err);
+      }
+    };
+
+    if (dynamicEvent) {
+      fetchNearbyEvents();
+    }
+  }, [dynamicEvent, slug]);
 
   // Format date nicely
   const formatDate = (dateStr?: string) => {
@@ -609,7 +618,7 @@ const EventDetail = () => {
   let event = defaultEvent;
 
   if (isStaticEvent) {
-    event = eventsData[slug!];
+    event = { ...defaultEvent, ...eventsData[slug!] };
   } else if (dynamicEvent) {
     // Build full address: street, PLZ + city, country
     const addressParts = [
@@ -623,9 +632,6 @@ const EventDetail = () => {
     // Check if it's a museum (permanent attraction without date display)
     // Either by category_sub_id OR by external_id pattern (manual_ entries are museums)
     const isMuseum = dynamicEvent.category_sub_id === 'museum-kunst' || dynamicEvent.external_id?.startsWith('manual_');
-    
-    // Check if it's a MySwitzerland event (permanent attraction without date)
-    const isMySwitzerland = dynamicEvent.external_id?.startsWith('mys_');
     const isPermanentAttraction = !dynamicEvent.start_date;
     
     // Determine date and time display - hide for museums
@@ -1008,11 +1014,6 @@ const EventDetail = () => {
 
           {/* Additional Content */}
           <div className="pt-6 flex-1 flex flex-col min-h-0">
-            {/* Report Error - Subtle maintenance function */}
-            <div className="mb-6">
-              <EventRatingButtons eventId={eventId} eventTitle={event.title} />
-            </div>
-
             {/* Image Gallery - only show if there are gallery images */}
             {event.galleryUrls && event.galleryUrls.length > 0 && (
               <div className="mb-6">
@@ -1020,15 +1021,15 @@ const EventDetail = () => {
               </div>
             )}
 
-            {/* Contact Link for Venues */}
-            <div className="mt-auto pt-4 border-t border-neutral-100">
+            {/* Report & Contact - same line */}
+            <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between">
+              <EventRatingButtons eventId={eventId} eventTitle={event.title} />
               <p className="text-xs text-neutral-400 italic">
-                Event verwalten oder Bilder ergänzen?{" "}
                 <a
                   href={`mailto:hello@eventbuzzer.ch?subject=Event: ${encodeURIComponent(event.title)}`}
                   className="text-neutral-500 hover:text-neutral-700 underline transition-colors"
                 >
-                  Kontakt aufnehmen
+                  Event verwalten
                 </a>
               </p>
             </div>
@@ -1036,52 +1037,66 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* SIMILAR EVENTS - Soft Stone Background */}
-      <section className="bg-stone-50 py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold">Ähnliche Events</h2>
-            <Link to="/" className="text-neutral-600 hover:text-neutral-900 text-sm font-medium flex items-center gap-1">
-              View All <ArrowRight size={14} />
-            </Link>
-          </div>
+      {/* NEARBY EVENTS - based on coordinates */}
+      {nearbyEvents.length > 0 && (
+        <section className="bg-stone-50 py-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold">In der Nähe</h2>
+              <Link to="/eventlist1" className="text-neutral-600 hover:text-neutral-900 text-sm font-medium flex items-center gap-1">
+                Alle anzeigen <ArrowRight size={14} />
+              </Link>
+            </div>
 
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {similarEvents.map((evt, index) => (
-                <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
-                  <SimilarEventCard {...evt} onSwap={swapToEvent} />
-                </CarouselItem>
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {nearbyEvents.map((evt) => (
+                  <CarouselItem key={evt.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
+                    <SimilarEventCard
+                      slug={evt.external_id || evt.id}
+                      image={evt.image_url || weekendJazz}
+                      title={evt.title}
+                      venue={evt.venue_name || ""}
+                      location={evt.address_city || getEventLocation(evt)}
+                      date={evt.start_date ? new Date(evt.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' }) : ''}
+                      onSwap={swapToEvent}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden sm:flex -left-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50" />
+              <CarouselNext className="hidden sm:flex -right-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50" />
+            </Carousel>
+          </div>
+        </section>
+      )}
+
+      {/*
+        PARTNER PRODUCTS / AFFILIATE SECTION - Currently hidden
+        Component: MasonryProductCard
+        Data: partnerProducts array (defined at top of file around line 276)
+        To re-enable: Uncomment this section
+
+        <section className="bg-stone-50 py-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold mb-2">Unvergessliche Augenblicke</h2>
+              <p className="text-neutral-500">Curated additions to enhance your experience</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[180px] md:auto-rows-[200px]">
+              {partnerProducts.map((product, index) => (
+                <MasonryProductCard key={index} {...product} />
               ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden sm:flex -left-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50" />
-            <CarouselNext className="hidden sm:flex -right-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50" />
-          </Carousel>
-        </div>
-      </section>
-
-      {/* PARTNER PRODUCTS - Pinterest Masonry Grid */}
-      <section className="bg-stone-50 py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold mb-2">Unvergessliche Augenblicke</h2>
-            <p className="text-neutral-500">Curated additions to enhance your experience</p>
+            </div>
           </div>
-
-          {/* Masonry Grid - 3 columns with varied spans */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[180px] md:auto-rows-[200px]">
-            {partnerProducts.map((product, index) => (
-              <MasonryProductCard key={index} {...product} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      */}
 
       {/* Footer Spacer */}
       <div className="h-8 bg-white" />
