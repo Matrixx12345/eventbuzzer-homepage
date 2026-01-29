@@ -201,7 +201,7 @@ const EventCard = ({
 
             {/* Description - always show short description with 2 line clamp */}
             {event.short_description && (
-              <p className="text-[15px] text-gray-600 leading-relaxed line-clamp-2">
+              <p className="text-sm text-gray-700 leading-relaxed line-clamp-2">
                 {convertToUmlauts(event.short_description)}
               </p>
             )}

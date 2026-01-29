@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight, Calendar, MapPin, DollarSign } from 'lucide-react';
@@ -48,6 +48,43 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   const [showRatingPopup, setShowRatingPopup] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [userRating, setUserRatingState] = useState<number | null>(null);
+
+  // Draggable state
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+
+  // Reset position when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setPosition({ x: 0, y: 0 });
+    }
+  }, [isOpen]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position.x,
+      initialY: position.y
+    };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPosition({
+      x: dragRef.current.initialX + dx,
+      y: dragRef.current.initialY + dy
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    dragRef.current = null;
+  };
 
   // Load user's existing rating for this event
   useEffect(() => {
@@ -169,17 +206,29 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto p-[12px] border border-white/30 shadow-2xl rounded-2xl"
+          className="max-w-xl max-h-[85vh] overflow-y-auto p-[10px] border border-white/30 shadow-2xl rounded-2xl"
           style={{
             background: 'rgba(255, 255, 255, 0.75)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             position: 'fixed',
-            top: '185px',
-            left: '50%',
-            transform: 'translateX(-50%)'
+            top: `calc(160px + ${position.y}px)`,
+            left: `calc(50% + ${position.x}px)`,
+            transform: 'translateX(-50%)',
+            fontSize: '0.95em'
           }}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
+        {/* Drag Handle - Top Bar */}
+        <div
+          className="absolute top-0 left-0 right-0 h-6 cursor-grab active:cursor-grabbing flex items-center justify-center"
+          onMouseDown={handleMouseDown}
+        >
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        </div>
+
         {/* Hero Image - NO text on it */}
         {event.image_url && (
           <div className="relative w-full h-[280px] overflow-hidden rounded-xl">
