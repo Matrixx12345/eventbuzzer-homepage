@@ -820,7 +820,7 @@ const EventDetail = () => {
         <div className="bg-white flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[80vh] overflow-y-auto">
           {/* Title - Modal Style */}
           <h1
-            className="text-3xl lg:text-4xl font-serif text-gray-900 mb-4"
+            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-8"
             style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
           >
             {event.title}
@@ -828,7 +828,7 @@ const EventDetail = () => {
 
           {/* Description - Modal Style with expandable text */}
           {event.description && (
-            <div className="text-sm text-gray-700 leading-relaxed mb-6">
+            <div className="text-base text-gray-700 leading-relaxed mb-6">
               <p
                 className="text-justify"
                 lang="de"
@@ -837,7 +837,7 @@ const EventDetail = () => {
                   WebkitHyphens: 'auto',
                   ...(showFullDescription ? {} : {
                     display: '-webkit-box',
-                    WebkitLineClamp: 3,
+                    WebkitLineClamp: 12,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden'
                   })
@@ -845,7 +845,7 @@ const EventDetail = () => {
               >
                 {event.description}
               </p>
-              {event.description.length > 200 && (
+              {event.description.length > 600 && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
                   className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold mt-2 opacity-80"
