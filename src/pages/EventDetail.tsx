@@ -552,79 +552,6 @@ const EventDetail = () => {
     }
   }, [dynamicEvent]);
 
-  // Add Schema.org structured data (JSON-LD) for SEO
-  useEffect(() => {
-    if (!event || loading) return;
-
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "Event",
-      "name": event.title,
-      "description": event.description || "Event in der Schweiz",
-      "image": event.image,
-      "startDate": dynamicEvent?.start_date || new Date().toISOString(),
-      "endDate": dynamicEvent?.end_date || dynamicEvent?.start_date || new Date().toISOString(),
-      "eventStatus": "https://schema.org/EventScheduled",
-      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-      "location": {
-        "@type": "Place",
-        "name": event.venue || event.location,
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": dynamicEvent?.address_street || "",
-          "addressLocality": event.location,
-          "postalCode": dynamicEvent?.address_zip || "",
-          "addressCountry": "CH"
-        }
-      },
-      "organizer": {
-        "@type": "Organization",
-        "name": "EventBuzzer",
-        "url": SITE_URL
-      }
-    };
-
-    // Add price if available
-    if (event.priceFrom) {
-      schema["offers"] = {
-        "@type": "Offer",
-        "price": event.priceFrom,
-        "priceCurrency": "CHF",
-        "url": event.ticketLink || window.location.href,
-        "availability": "https://schema.org/InStock"
-      };
-    }
-
-    // Add performer for certain categories
-    if (dynamicEvent?.category_sub_id?.includes('music') || dynamicEvent?.category_sub_id?.includes('concert')) {
-      schema["performer"] = {
-        "@type": "PerformingGroup",
-        "name": event.title
-      };
-    }
-
-    // Create and inject script tag
-    const scriptId = 'event-schema-ld';
-    let scriptTag = document.getElementById(scriptId) as HTMLScriptElement;
-
-    if (!scriptTag) {
-      scriptTag = document.createElement('script');
-      scriptTag.id = scriptId;
-      scriptTag.type = 'application/ld+json';
-      document.head.appendChild(scriptTag);
-    }
-
-    scriptTag.textContent = JSON.stringify(schema);
-
-    // Cleanup on unmount
-    return () => {
-      const existingScript = document.getElementById(scriptId);
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
-  }, [event, dynamicEvent, loading]);
-
   // Format date nicely
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null;
@@ -747,6 +674,79 @@ const EventDetail = () => {
     };
   }
   // else: use defaultEvent which is already assigned
+
+  // Add Schema.org structured data (JSON-LD) for SEO
+  useEffect(() => {
+    if (!event || loading) return;
+
+    const schema: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": event.title,
+      "description": event.description || "Event in der Schweiz",
+      "image": event.image,
+      "startDate": dynamicEvent?.start_date || new Date().toISOString(),
+      "endDate": dynamicEvent?.end_date || dynamicEvent?.start_date || new Date().toISOString(),
+      "eventStatus": "https://schema.org/EventScheduled",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "location": {
+        "@type": "Place",
+        "name": event.venue || event.location,
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": dynamicEvent?.address_street || "",
+          "addressLocality": event.location,
+          "postalCode": dynamicEvent?.address_zip || "",
+          "addressCountry": "CH"
+        }
+      },
+      "organizer": {
+        "@type": "Organization",
+        "name": "EventBuzzer",
+        "url": SITE_URL
+      }
+    };
+
+    // Add price if available
+    if (event.priceFrom) {
+      schema["offers"] = {
+        "@type": "Offer",
+        "price": event.priceFrom,
+        "priceCurrency": "CHF",
+        "url": event.ticketLink || window.location.href,
+        "availability": "https://schema.org/InStock"
+      };
+    }
+
+    // Add performer for certain categories
+    if (dynamicEvent?.category_sub_id?.includes('music') || dynamicEvent?.category_sub_id?.includes('concert')) {
+      schema["performer"] = {
+        "@type": "PerformingGroup",
+        "name": event.title
+      };
+    }
+
+    // Create and inject script tag
+    const scriptId = 'event-schema-ld';
+    let scriptTag = document.getElementById(scriptId) as HTMLScriptElement;
+
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = scriptId;
+      scriptTag.type = 'application/ld+json';
+      document.head.appendChild(scriptTag);
+    }
+
+    scriptTag.textContent = JSON.stringify(schema);
+
+    // Cleanup on unmount
+    return () => {
+      const existingScript = document.getElementById(scriptId);
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, [event.title, event.description, event.image, event.venue, event.location, event.priceFrom, event.ticketLink, dynamicEvent, loading]);
 
   if (loading) {
     return (
@@ -1027,8 +1027,8 @@ const EventDetail = () => {
             {/* Ticket kaufen - with border to highlight */}
             <button
               onClick={() => {
-                if (dynamicEvent?.ticket_url || dynamicEvent?.url) {
-                  window.open(dynamicEvent.ticket_url || dynamicEvent.url, '_blank');
+                if (event.ticketLink) {
+                  window.open(event.ticketLink, '_blank');
                 } else {
                   toast({
                     title: "Demnächst verfügbar",
