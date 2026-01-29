@@ -816,335 +816,215 @@ const EventDetail = () => {
           />
         </div>
 
-        {/* Right - Content Panel */}
-        <div className="bg-white flex flex-col justify-between px-6 py-10 lg:px-12 xl:px-16 lg:h-[80vh]">
-          {/* Title */}
-          <h1 className="font-serif text-neutral-900 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-4">
+        {/* Right - Content Panel - Modal Style */}
+        <div className="bg-white flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[80vh] overflow-y-auto">
+          {/* Title - Modal Style */}
+          <h1
+            className="text-3xl lg:text-4xl font-serif text-gray-900 mb-4"
+            style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
+          >
             {event.title}
           </h1>
 
-          {/* Meta Info - flat row with plain text labels */}
-          <div className="flex flex-wrap items-center gap-4 mb-6 text-[12px] text-gray-500">
-            {/* Museum label - plain text, no badge */}
-            {event.isMuseum && (
-              <span className="uppercase tracking-wide">Museum</span>
-            )}
-            
-            {/* Date & Time - only for non-museums */}
-            {!event.isMuseum && event.date && (
-              <div className="flex items-center gap-1.5">
-                <Calendar size={14} className="text-gray-400" />
-                <span>{event.date}{event.time ? `, ${event.time}` : ''}</span>
-              </div>
-            )}
-            
-            {/* Location */}
-            {event.location && (
-              <div className="group/map relative cursor-pointer flex items-center gap-1.5">
-                <MapPin size={14} className="text-gray-400" />
-                <span>
-                  {event.location}
-                  {event.distance && <span className="text-gray-400 ml-1">• {event.distance}</span>}
-                </span>
-                {event.latitude && event.longitude && (
-                  <div className="absolute bottom-full left-0 mb-2 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                    <div className="bg-white p-2 rounded-lg shadow-xl border w-36 h-28">
-                      <div className="relative w-full h-full bg-slate-50 rounded overflow-hidden">
-                        <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-60" alt="Map" />
-                        <div
-                          className="absolute w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow"
-                          style={{
-                            left: `${6 + ((event.longitude - 5.85) / 4.7) * 88}%`,
-                            top: `${3 + (1 - (event.latitude - 45.75) / 2.1) * 94}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Venue */}
-            {event.venue && event.venue !== event.location && (
-              <div className="flex items-center gap-1.5">
-                <Navigation size={14} className="text-gray-400" />
-                <span>{event.venue}</span>
-              </div>
-            )}
-            
-            {/* Price */}
-            {(event.priceLabel || event.priceFrom) && (
-              <span className="text-gray-700 font-medium">
-                {event.priceLabel 
-                  ? event.priceLabel 
-                  : event.priceTo && event.priceTo !== event.priceFrom
-                    ? `CHF ${event.priceFrom} – ${event.priceTo}`
-                    : `ab CHF ${event.priceFrom}`}
-              </span>
-            )}
-            
-            {/* Star Rating */}
-            <StarRating eventId={eventId} buzzScore={event.buzzScore} size="md" />
-
-            {/* Buzz Tracker - inline */}
-            <BuzzTracker buzzScore={event.buzzScore} />
-          </div>
-
-
-          {/* Actions */}
-          <div className="flex items-center gap-3 mb-8">
-            {event.ticketLink ? (
-              <a 
-                href={event.ticketLink} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors flex-1 lg:flex-none flex items-center justify-center gap-2"
-              >
-                Tickets kaufen <ExternalLink size={16} />
-              </a>
-            ) : (
-              <button className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors flex-1 lg:flex-none">
-                Get Tickets
-              </button>
-            )}
-            <button
-              onClick={() => toggleFavorite({
-                id: eventId,
-                slug: slug || "",
-                image: event.image,
-                title: event.title,
-                venue: event.venue,
-                location: event.location,
-                date: event.date
-              })}
-              className="p-3.5 rounded-lg hover:bg-neutral-50 transition-colors"
-              title="Zu Favoriten hinzufügen"
-            >
-              <Heart size={20} className={isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-neutral-400"} />
-            </button>
-            
-            {/* Smart Share Button - Mobile: native share, Desktop: popover */}
-            {isMobile ? (
-              <button
-                onClick={async () => {
-                  const shareData = {
-                    title: event.title,
-                    text: `Schau dir dieses Event an: ${event.title}`,
-                    url: window.location.href,
-                  };
-                  
-                  if (navigator.share) {
-                    try {
-                      await navigator.share(shareData);
-                    } catch {
-                      // User cancelled - ignore
-                    }
-                  } else {
-                    try {
-                      await navigator.clipboard.writeText(window.location.href);
-                      toast({
-                        title: "Link kopiert!",
-                        description: "Der Event-Link wurde in die Zwischenablage kopiert.",
-                      });
-                    } catch {
-                      toast({
-                        title: "Fehler",
-                        description: "Link konnte nicht kopiert werden.",
-                        variant: "destructive",
-                      });
-                    }
-                  }
+          {/* Description - Modal Style with expandable text */}
+          {event.description && (
+            <div className="text-sm text-gray-700 leading-relaxed mb-6">
+              <p
+                className="text-justify"
+                lang="de"
+                style={{
+                  hyphens: 'auto',
+                  WebkitHyphens: 'auto',
+                  ...(showFullDescription ? {} : {
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  })
                 }}
-                className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                title="Teilen"
               >
-                <Share2 size={20} className="text-neutral-400" />
+                {event.description}
+              </p>
+              {event.description.length > 200 && (
+                <button
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold mt-2 opacity-80"
+                >
+                  {showFullDescription ? 'weniger' : 'mehr lesen'}
+                </button>
+              )}
+            </div>
+          )}
+
+
+          {/* Action Buttons - Modal Style Round Icons */}
+          <div className="flex items-center justify-between pt-4 mb-6">
+            <div className="flex items-center gap-5">
+              {/* Favorite Button */}
+              <button
+                onClick={() => toggleFavorite({
+                  id: eventId,
+                  slug: slug || "",
+                  image: event.image,
+                  title: event.title,
+                  venue: event.venue,
+                  location: event.location,
+                  date: event.date
+                })}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
+                title={isFavorite(eventId) ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+              >
+                <Heart size={20} className={isFavorite(eventId) ? "fill-current text-red-500" : ""} />
               </button>
-            ) : (
+
+              {/* Calendar Button */}
+              <button
+                onClick={() => {
+                  const startDate = dynamicEvent?.start_date ? new Date(dynamicEvent.start_date) : new Date();
+                  const endDate = dynamicEvent?.end_date ? new Date(dynamicEvent.end_date) : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+                  const formatICSDate = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                  const escapeICS = (text: string) => text.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+                  const eventUrl = window.location.href;
+                  const shortDesc = event.description?.substring(0, 200) || '';
+                  const fullDescription = `${shortDesc}${shortDesc.length >= 200 ? '...' : ''}\\n\\nMehr Infos auf EventBuzzer: ${eventUrl}`;
+                  const locationStr = [event.venue, event.address].filter(Boolean).join(', ');
+                  const uid = `${eventId}-${Date.now()}@eventbuzzer.ch`;
+                  const icsContent = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//EventBuzzer//Event Calendar//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${formatICSDate(new Date())}`,`DTSTART:${formatICSDate(startDate)}`,`DTEND:${formatICSDate(endDate)}`,`SUMMARY:${escapeICS(event.title)}`,`DESCRIPTION:${escapeICS(fullDescription)}`,`LOCATION:${escapeICS(locationStr)}`,`URL:${eventUrl}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+                  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `${event.title.replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '').replace(/\s+/g, '_')}.ics`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(link.href);
+                  toast({ title: "Kalender-Export", description: "Die .ics Datei wurde heruntergeladen." });
+                }}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
+                title="Im Kalender speichern"
+              >
+                <CalendarPlus size={20} />
+              </button>
+
+              {/* Share Button */}
               <Popover open={shareOpen} onOpenChange={setShareOpen}>
                 <PopoverTrigger asChild>
                   <button
-                    className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                    title="Teilen"
+                    className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
+                    title="Event teilen"
                   >
-                    <Share2 size={20} className="text-neutral-400" />
+                    <Share2 size={20} />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56 p-2 bg-white shadow-lg border border-neutral-200" align="end">
-                  <div className="flex flex-col">
-                    {/* Copy Link */}
+                <PopoverContent className="w-64 p-2" align="start">
+                  <div className="space-y-1">
                     <button
                       onClick={async () => {
                         try {
                           await navigator.clipboard.writeText(window.location.href);
-                          toast({
-                            title: "Link kopiert!",
-                            description: "Der Event-Link wurde in die Zwischenablage kopiert.",
-                          });
+                          toast({ title: "Link kopiert!", description: "Der Event-Link wurde in die Zwischenablage kopiert." });
                           setShareOpen(false);
                         } catch {
-                          toast({
-                            title: "Fehler",
-                            description: "Link konnte nicht kopiert werden.",
-                            variant: "destructive",
-                          });
+                          toast({ title: "Fehler", description: "Link konnte nicht kopiert werden.", variant: "destructive" });
                         }
                       }}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors text-left"
                     >
-                      <Copy size={18} className="text-neutral-500" />
-                      <span className="text-sm text-neutral-700">Link kopieren</span>
+                      <Copy size={18} className="text-gray-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700">Link kopieren</span>
                     </button>
-                    
-                    {/* WhatsApp */}
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(`Schau dir dieses Event an: ${event.title}\n${window.location.href}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setShareOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-green-600" fill="currentColor">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      <svg className="w-[18px] h-[18px] text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                       </svg>
-                      <span className="text-sm text-neutral-700">WhatsApp</span>
+                      <span className="text-sm font-medium text-gray-700">WhatsApp</span>
                     </a>
-                    
-                    {/* Email */}
                     <a
                       href={`mailto:?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(`Schau dir dieses Event an:\n\n${event.title}\n${window.location.href}`)}`}
                       onClick={() => setShareOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <Mail size={18} className="text-neutral-500" />
-                      <span className="text-sm text-neutral-700">E-Mail</span>
+                      <Mail size={18} className="text-gray-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700">E-Mail</span>
                     </a>
                   </div>
                 </PopoverContent>
               </Popover>
-            )}
 
-            {/* Ticket kaufen - with border to highlight */}
+              {/* Star Rating */}
+              <div className="flex items-center gap-1.5">
+                <StarRating eventId={eventId} buzzScore={event.buzzScore} size="md" />
+              </div>
+            </div>
+
+            {/* Ticket Button - Modal Style */}
             <button
               onClick={() => {
                 if (event.ticketLink) {
                   window.open(event.ticketLink, '_blank');
                 } else {
-                  toast({
-                    title: "Demnächst verfügbar",
-                    description: "Ticket-Verkauf wird bald verfügbar sein.",
-                  });
+                  toast({ title: "Demnächst verfügbar", description: "Ticket-Verkauf wird bald verfügbar sein." });
                 }
               }}
-              className="p-3.5 rounded-lg border border-neutral-300 hover:bg-neutral-50 transition-colors"
-              title="Ticket kaufen"
+              className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg"
             >
-              <ShoppingCart size={20} className="text-neutral-600" />
-            </button>
-
-            {/* Calendar Export */}
-            <button
-              onClick={() => {
-                const startDate = dynamicEvent?.start_date 
-                  ? new Date(dynamicEvent.start_date) 
-                  : new Date();
-                
-                const endDate = dynamicEvent?.end_date 
-                  ? new Date(dynamicEvent.end_date) 
-                  : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-                
-                const formatICSDate = (date: Date) => {
-                  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                };
-                
-                const escapeICS = (text: string) => {
-                  return text
-                    .replace(/\\/g, '\\\\')
-                    .replace(/;/g, '\\;')
-                    .replace(/,/g, '\\,')
-                    .replace(/\n/g, '\\n');
-                };
-                
-                const eventUrl = window.location.href;
-                const shortDesc = event.description?.substring(0, 200) || '';
-                const fullDescription = `${shortDesc}${shortDesc.length >= 200 ? '...' : ''}\\n\\nMehr Infos auf EventBuzzer: ${eventUrl}`;
-                
-                const locationStr = [event.venue, event.address].filter(Boolean).join(', ');
-                const uid = `${eventId}-${Date.now()}@eventbuzzer.ch`;
-                
-                const icsContent = [
-                  'BEGIN:VCALENDAR',
-                  'VERSION:2.0',
-                  'PRODID:-//EventBuzzer//Event Calendar//DE',
-                  'CALSCALE:GREGORIAN',
-                  'METHOD:PUBLISH',
-                  'BEGIN:VEVENT',
-                  `UID:${uid}`,
-                  `DTSTAMP:${formatICSDate(new Date())}`,
-                  `DTSTART:${formatICSDate(startDate)}`,
-                  `DTEND:${formatICSDate(endDate)}`,
-                  `SUMMARY:${escapeICS(event.title)}`,
-                  `DESCRIPTION:${escapeICS(fullDescription)}`,
-                  `LOCATION:${escapeICS(locationStr)}`,
-                  `URL:${eventUrl}`,
-                  'END:VEVENT',
-                  'END:VCALENDAR'
-                ].join('\r\n');
-                
-                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `${event.title.replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '').replace(/\s+/g, '_')}.ics`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-                
-                toast({
-                  title: "Kalender-Export",
-                  description: "Die .ics Datei wurde heruntergeladen.",
-                });
-              }}
-              className="p-3.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-              title="In Kalender eintragen"
-            >
-              <CalendarPlus size={20} className="text-neutral-400" />
+              <span className="text-sm font-semibold text-white">Ticket kaufen</span>
             </button>
           </div>
 
-          {/* Description - Fills remaining space with "mehr lesen" at bottom */}
-          <div className="border-t border-neutral-100 pt-6 flex-1 flex flex-col min-h-0">
-            <h2 className="font-serif text-neutral-900 text-lg font-semibold mb-3">Über dieses Event</h2>
-            <div className={`text-neutral-600 leading-relaxed flex-1 overflow-hidden ${!showFullDescription ? 'line-clamp-6' : 'overflow-y-auto'}`}>
-              <p>{event.description}</p>
-            </div>
-            {event.description && event.description.length > 300 && !showFullDescription && (
-              <button 
-                onClick={() => setShowFullDescription(true)}
-                className="text-neutral-900 text-sm underline mt-4 hover:text-neutral-600 transition-colors self-start"
-              >
-                mehr lesen
-              </button>
+          {/* Compact Details - Modal Style */}
+          <div className="flex items-center gap-4 text-sm text-gray-600 pb-6 border-b border-gray-100">
+            {event.date && (
+              <div className="flex items-center gap-1.5">
+                <Calendar size={16} className="text-gray-600" />
+                <span>{event.date}</span>
+              </div>
             )}
-            
+            {event.location && (
+              <div className="flex items-center gap-1.5">
+                <MapPin size={16} className="text-gray-600" />
+                <span>{event.location}</span>
+              </div>
+            )}
+            {(event.priceLabel || event.priceFrom !== undefined) && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-600">CHF</span>
+                <span>
+                  {event.priceLabel
+                    ? event.priceLabel
+                    : event.priceFrom === 0
+                      ? 'Gratis'
+                      : `${event.priceFrom}+`}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Additional Content */}
+          <div className="pt-6 flex-1 flex flex-col min-h-0">
             {/* Report Error - Subtle maintenance function */}
-            <div className="mt-6 pt-4 border-t border-neutral-100">
+            <div className="mb-6">
               <EventRatingButtons eventId={eventId} eventTitle={event.title} />
             </div>
 
             {/* Image Gallery - only show if there are gallery images */}
             {event.galleryUrls && event.galleryUrls.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-neutral-100">
+              <div className="mb-6">
                 <ImageGallery images={event.galleryUrls} alt={event.title} />
               </div>
             )}
 
             {/* Contact Link for Venues */}
-            <div className="mt-8 pt-4 border-t border-neutral-100">
+            <div className="mt-auto pt-4 border-t border-neutral-100">
               <p className="text-xs text-neutral-400 italic">
                 Event verwalten oder Bilder ergänzen?{" "}
-                <a 
+                <a
                   href={`mailto:hello@eventbuzzer.ch?subject=Event: ${encodeURIComponent(event.title)}`}
                   className="text-neutral-500 hover:text-neutral-700 underline transition-colors"
                 >
