@@ -48,16 +48,18 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   const [showRatingPopup, setShowRatingPopup] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [userRating, setUserRatingState] = useState<number | null>(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   // Draggable state
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
-  // Reset position when modal opens
+  // Reset position and description when modal opens
   useEffect(() => {
     if (isOpen) {
       setPosition({ x: 0, y: 0 });
+      setShowFullDescription(false);
     }
   }, [isOpen]);
 
@@ -282,7 +284,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
             <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
-          {/* Description UNDER the title - max 2 lines, "mehr lesen" if truncated */}
+          {/* Description UNDER the title - expandable */}
           {(event.description || event.short_description) && (() => {
             const fullText = event.description || event.short_description || '';
             const showMehrLesen = fullText.length > 140;
@@ -295,23 +297,24 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   style={{
                     hyphens: 'auto',
                     WebkitHyphens: 'auto',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
+                    ...(showFullDescription ? {} : {
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    })
                   }}
                 >
                   {fullText}
                 </p>
                 {showMehrLesen && (
                   <div className="mt-1">
-                    <Link
-                      to={`/event/${event.external_id || event.id}`}
+                    <button
+                      onClick={() => setShowFullDescription(!showFullDescription)}
                       className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold whitespace-nowrap opacity-80"
-                      onClick={(e) => e.stopPropagation()}
                     >
-                      mehr lesen
-                    </Link>
+                      {showFullDescription ? 'weniger' : 'mehr lesen'}
+                    </button>
                   </div>
                 )}
               </div>
