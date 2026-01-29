@@ -281,14 +281,26 @@ const eventsData: Record<string, {
   ];
 */
 
-// Similar Event Card - Clean White Design with Swap Support
-const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }: {
+// Calculate distance between two coordinates in km
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Similar Event Card - Compact Design with Distance Pill
+const SimilarEventCard = ({ slug, image, title, description, location, distance, onSwap }: {
   slug: string;
   image: string;
   title: string;
-  venue: string;
+  description?: string;
   location: string;
-  date: string;
+  distance?: string;
   onSwap: (slug: string) => void;
 }) => {
   const handleClick = () => {
@@ -310,12 +322,18 @@ const SimilarEventCard = ({ slug, image, title, venue, location, date, onSwap }:
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-neutral-500 text-xs mb-1">{date}</p>
-          <h3 className="font-serif text-neutral-900 text-base font-semibold leading-tight mb-1">{title}</h3>
-          <p className="text-neutral-500 text-sm">{venue} • {location}</p>
-          <span className="mt-3 text-neutral-900 text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-            View Details <ArrowRight size={14} />
-          </span>
+          <h3 className="font-sans text-neutral-900 text-sm font-semibold leading-tight line-clamp-1 mb-1">{title}</h3>
+          {description && (
+            <p className="text-neutral-500 text-xs line-clamp-2 mb-2">{description}</p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-neutral-400 text-xs">{location}</p>
+            {distance && (
+              <span className="px-2 py-0.5 text-[10px] font-medium text-neutral-600 bg-neutral-100 rounded-full">
+                {distance} entfernt
+              </span>
+            )}
+          </div>
         </div>
       </article>
     </button>
@@ -470,7 +488,7 @@ const EventDetail = () => {
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [nearbyEvents, setNearbyEvents] = useState<DynamicEvent[]>([]);
+  const [nearbyEvents, setNearbyEvents] = useState<(DynamicEvent & { calculatedDistance?: number })[]>([]);
   const referralTrackedRef = useRef(false);
 
   // Sync with URL changes (e.g., browser back/forward)
@@ -496,19 +514,33 @@ const EventDetail = () => {
   const isStaticEvent = slug && eventsData[slug];
   const isDynamicEvent = slug && !isStaticEvent;
 
-  // Fetch dynamic event from Supabase - optimized single event lookup
+  // Fetch dynamic event from Supabase - direct DB query to get all fields including coordinates
   useEffect(() => {
     if (isDynamicEvent) {
       const fetchEvent = async () => {
         setLoading(true);
         try {
-          const { data, error } = await supabase.functions.invoke("get-external-events", {
-            body: { eventId: slug }
-          });
+          // Try by external_id first, then by id
+          let { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('external_id', slug)
+            .single();
+
+          if (error || !data) {
+            // Try by id
+            const result = await supabase
+              .from('events')
+              .select('*')
+              .eq('id', slug)
+              .single();
+            data = result.data;
+            error = result.error;
+          }
+
           if (error) throw error;
-          
-          if (data?.events?.[0]) {
-            setDynamicEvent(data.events[0]);
+          if (data) {
+            setDynamicEvent(data);
           }
         } catch (err) {
           console.error("Error fetching event:", err);
@@ -528,7 +560,7 @@ const EventDetail = () => {
     }
   }, [dynamicEvent]);
 
-  // Fetch nearby events based on coordinates
+  // Fetch nearby events based on coordinates (direct DB query to get all fields including lat/lng)
   useEffect(() => {
     const fetchNearbyEvents = async () => {
       const lat = dynamicEvent?.latitude;
@@ -536,21 +568,48 @@ const EventDetail = () => {
       if (!lat || !lng) return;
 
       try {
-        const { data, error } = await supabase.functions.invoke("get-external-events", {
-          body: {
-            latitude: lat,
-            longitude: lng,
-            radius: 30, // 30km radius
-            limit: 8
-          }
-        });
+        // Calculate bounding box for ~30km radius
+        const latDelta = 30 / 111; // ~0.27 degrees
+        const lngDelta = 30 / (111 * Math.cos(lat * Math.PI / 180)); // adjust for latitude
+
+        const { data, error } = await supabase
+          .from('events')
+          .select('id, external_id, title, venue_name, address_city, start_date, image_url, latitude, longitude, short_description, buzz_score')
+          .gte('latitude', lat - latDelta)
+          .lte('latitude', lat + latDelta)
+          .gte('longitude', lng - lngDelta)
+          .lte('longitude', lng + lngDelta)
+          .neq('id', dynamicEvent.id)
+          .order('buzz_score', { ascending: false, nullsFirst: false })
+          .limit(40);
+
         if (error) throw error;
 
-        // Filter out the current event
-        const filtered = (data?.events || []).filter(
-          (e: DynamicEvent) => e.id !== dynamicEvent?.id && e.external_id !== slug
+        // Filter by distance, deduplicate by title similarity, prioritize variety
+        const eventsWithDistance = (data || [])
+          .map((e: DynamicEvent) => ({
+            ...e,
+            calculatedDistance: e.latitude && e.longitude
+              ? calculateDistance(lat, lng, e.latitude, e.longitude)
+              : 999
+          }))
+          .filter((e: DynamicEvent & { calculatedDistance: number }) => e.calculatedDistance <= 30);
+
+        // Deduplicate: avoid showing multiple events with very similar titles
+        const seen = new Set<string>();
+        const uniqueEvents = eventsWithDistance.filter((e: DynamicEvent) => {
+          const baseTitle = e.title.toLowerCase().split(' ').slice(0, 2).join(' ');
+          if (seen.has(baseTitle)) return false;
+          seen.add(baseTitle);
+          return true;
+        });
+
+        // Sort by distance
+        uniqueEvents.sort((a: { calculatedDistance: number }, b: { calculatedDistance: number }) =>
+          a.calculatedDistance - b.calculatedDistance
         );
-        setNearbyEvents(filtered.slice(0, 4));
+
+        setNearbyEvents(uniqueEvents.slice(0, 15));
       } catch (err) {
         console.error("Error fetching nearby events:", err);
       }
@@ -802,70 +861,81 @@ const EventDetail = () => {
       <Navbar />
 
       {/* HERO SECTION - 50/50 Split Layout */}
-      <section className="min-h-[60vh] grid grid-cols-1 lg:grid-cols-2">
-        {/* Left - Event Image */}
-        <div className="relative h-[40vh] lg:h-[60vh] overflow-hidden group">
-          <img
-            src={event.image}
-            alt={event.title}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = weekendJazz;
-            }}
-          />
-          {/* Image Attribution - always visible on detail page */}
-          <ImageAttribution 
-            author={event.imageAuthor} 
-            license={event.imageLicense} 
-            alwaysVisible 
-          />
+      <section className="min-h-[60vh] grid grid-cols-1 lg:grid-cols-2 bg-[#FAFBFC]">
+        {/* Left - Event Image with Frame (like EventList1) */}
+        <div className="p-4 lg:p-6">
+          <div className="relative h-[36vh] lg:h-[calc(60vh-48px)] overflow-hidden rounded-2xl bg-white p-2 group" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+            <img
+              src={event.image}
+              alt={event.title}
+              className="w-full h-full object-cover rounded-xl"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = weekendJazz;
+              }}
+            />
+            {/* Image Attribution - always visible on detail page */}
+            <ImageAttribution
+              author={event.imageAuthor}
+              license={event.imageLicense}
+              alwaysVisible
+            />
+          </div>
         </div>
 
-        {/* Right - Content Panel - Modal Style */}
-        <div className="bg-white flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[60vh] overflow-y-auto">
+        {/* Right - Content Panel - Same color as "In der Nähe" section */}
+        <div className="bg-stone-50 flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[60vh] lg:rounded-r-2xl">
           {/* Title - Modal Style */}
           <h1
-            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-8"
+            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-6"
             style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
           >
             {event.title}
           </h1>
 
-          {/* Description - Modal Style with expandable text */}
-          {event.description && (
-            <div className="text-base text-gray-700 leading-relaxed mb-6">
-              <p
-                className="text-justify"
-                lang="de"
-                style={{
-                  hyphens: 'auto',
-                  WebkitHyphens: 'auto',
-                  ...(showFullDescription ? {} : {
-                    display: '-webkit-box',
-                    WebkitLineClamp: 12,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  })
-                }}
-              >
-                {event.description}
-              </p>
-              {event.description.length > 600 && (
-                <button
-                  onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold mt-2 opacity-80"
+          {/* Description - Scrollable area */}
+          <div className="flex-1 overflow-y-auto min-h-0 mb-4">
+            {event.description && (
+              <div className="text-base text-gray-700 leading-relaxed">
+                <p
+                  className="text-justify"
+                  lang="de"
+                  style={{
+                    hyphens: 'auto',
+                    WebkitHyphens: 'auto',
+                    ...(showFullDescription ? {} : {
+                      display: '-webkit-box',
+                      WebkitLineClamp: 8,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    })
+                  }}
                 >
-                  {showFullDescription ? 'weniger' : 'mehr lesen'}
-                </button>
-              )}
-            </div>
-          )}
+                  {event.description}
+                </p>
+                {event.description.length > 400 && (
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold mt-2 opacity-80"
+                  >
+                    {showFullDescription ? 'weniger' : 'mehr lesen'}
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Image Gallery - only show if there are gallery images */}
+            {event.galleryUrls && event.galleryUrls.length > 0 && (
+              <div className="mt-4">
+                <ImageGallery images={event.galleryUrls} alt={event.title} />
+              </div>
+            )}
+          </div>
 
-
-          {/* Action Buttons - Modal Style Round Icons */}
-          <div className="flex items-center justify-between pt-4 mb-6">
-            <div className="flex items-center gap-5">
+          {/* Fixed Bottom Section */}
+          <div className="mt-auto">
+            {/* Action Buttons - Modal Style Round Icons */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-5">
               {/* Favorite Button */}
               <button
                 onClick={() => toggleFavorite({
@@ -969,69 +1039,56 @@ const EventDetail = () => {
               </div>
             </div>
 
-            {/* Ticket Button - Modal Style */}
-            <button
-              onClick={() => {
-                if (event.ticketLink) {
-                  window.open(event.ticketLink, '_blank');
-                } else {
-                  toast({ title: "Demnächst verfügbar", description: "Ticket-Verkauf wird bald verfügbar sein." });
-                }
-              }}
-              className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg"
-            >
-              <span className="text-sm font-semibold text-white">Ticket kaufen</span>
-            </button>
-          </div>
+              {/* Ticket Button - Modal Style */}
+              <button
+                onClick={() => {
+                  if (event.ticketLink) {
+                    window.open(event.ticketLink, '_blank');
+                  } else {
+                    toast({ title: "Demnächst verfügbar", description: "Ticket-Verkauf wird bald verfügbar sein." });
+                  }
+                }}
+                className="flex items-center justify-center px-10 py-2.5 rounded-full bg-indigo-900 hover:bg-indigo-950 transition-colors shadow-lg"
+              >
+                <span className="text-sm font-semibold text-white">Ticket kaufen</span>
+              </button>
+            </div>
 
-          {/* Compact Details - Modal Style */}
-          <div className="flex items-center gap-4 text-sm text-gray-600 pb-6 border-b border-gray-100">
-            {event.date && (
-              <div className="flex items-center gap-1.5">
-                <Calendar size={16} className="text-gray-600" />
-                <span>{event.date}</span>
+            {/* Compact Details - Location, Date, Price + Report in one row */}
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center gap-4 flex-wrap">
+                {(event.address || event.venue || event.location) && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin size={16} className="text-gray-500" />
+                    <span>{event.address || [event.venue, event.location].filter(Boolean).join(', ')}</span>
+                  </div>
+                )}
+                {event.date && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar size={16} className="text-gray-500" />
+                    <span>{event.date}</span>
+                  </div>
+                )}
+                {(event.priceLabel || event.priceFrom !== undefined) && (
+                  <div className="flex items-center gap-1.5">
+                    <span>CHF {event.priceLabel
+                      ? event.priceLabel
+                      : event.priceFrom === 0
+                        ? 'Gratis'
+                        : `${event.priceFrom}+`}</span>
+                  </div>
+                )}
               </div>
-            )}
-            {event.location && (
-              <div className="flex items-center gap-1.5">
-                <MapPin size={16} className="text-gray-600" />
-                <span>{event.location}</span>
-              </div>
-            )}
-            {(event.priceLabel || event.priceFrom !== undefined) && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-gray-600">CHF</span>
-                <span>
-                  {event.priceLabel
-                    ? event.priceLabel
-                    : event.priceFrom === 0
-                      ? 'Gratis'
-                      : `${event.priceFrom}+`}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Additional Content */}
-          <div className="pt-6 flex-1 flex flex-col min-h-0">
-            {/* Image Gallery - only show if there are gallery images */}
-            {event.galleryUrls && event.galleryUrls.length > 0 && (
-              <div className="mb-6">
-                <ImageGallery images={event.galleryUrls} alt={event.title} />
-              </div>
-            )}
-
-            {/* Report & Contact - same line */}
-            <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between">
-              <EventRatingButtons eventId={eventId} eventTitle={event.title} />
-              <p className="text-xs text-neutral-400 italic">
+              {/* Report & Manage - compact */}
+              <div className="flex items-center gap-3 text-xs text-neutral-400">
+                <EventRatingButtons eventId={eventId} eventTitle={event.title} />
                 <a
                   href={`mailto:hello@eventbuzzer.ch?subject=Event: ${encodeURIComponent(event.title)}`}
-                  className="text-neutral-500 hover:text-neutral-700 underline transition-colors"
+                  className="hover:text-neutral-600 underline transition-colors"
                 >
                   Event verwalten
                 </a>
-              </p>
+              </div>
             </div>
           </div>
         </div>
@@ -1048,6 +1105,7 @@ const EventDetail = () => {
               </Link>
             </div>
 
+            <div className="px-12 -mx-12">
             <Carousel
               opts={{
                 align: "start",
@@ -1055,24 +1113,51 @@ const EventDetail = () => {
               }}
               className="w-full"
             >
-              <CarouselContent className="-ml-4">
-                {nearbyEvents.map((evt) => (
-                  <CarouselItem key={evt.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
-                    <SimilarEventCard
-                      slug={evt.external_id || evt.id}
-                      image={evt.image_url || weekendJazz}
-                      title={evt.title}
-                      venue={evt.venue_name || ""}
-                      location={evt.address_city || getEventLocation(evt)}
-                      date={evt.start_date ? new Date(evt.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' }) : ''}
-                      onSwap={swapToEvent}
-                    />
-                  </CarouselItem>
-                ))}
+              <CarouselContent className="-ml-6">
+                {nearbyEvents.map((evt: DynamicEvent & { calculatedDistance?: number }) => {
+                  // Calculate distance - use pre-calculated or compute from coordinates
+                  let distanceText = '';
+                  if (typeof evt.calculatedDistance === 'number') {
+                    distanceText = evt.calculatedDistance < 1 ? '< 1 km' : `${Math.round(evt.calculatedDistance)} km`;
+                  } else if (evt.latitude && evt.longitude && dynamicEvent?.latitude && dynamicEvent?.longitude) {
+                    const dist = calculateDistance(dynamicEvent.latitude, dynamicEvent.longitude, evt.latitude, evt.longitude);
+                    distanceText = dist < 1 ? '< 1 km' : `${Math.round(dist)} km`;
+                  }
+
+                  return (
+                    <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
+                      <SimilarEventCard
+                        slug={evt.external_id || evt.id}
+                        image={evt.image_url || weekendJazz}
+                        title={evt.title}
+                        description={evt.short_description}
+                        location={evt.address_city || getEventLocation(evt)}
+                        distance={distanceText}
+                        onSwap={swapToEvent}
+                      />
+                    </CarouselItem>
+                  );
+                })}
+                {/* "Mehr anzeigen" Card */}
+                <CarouselItem className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
+                  <Link
+                    to={`/eventlist1?lat=${dynamicEvent?.latitude || ''}&lng=${dynamicEvent?.longitude || ''}&city=${encodeURIComponent(event.location || '')}`}
+                    className="block h-full"
+                  >
+                    <article className="bg-gradient-to-br from-neutral-100 to-neutral-50 rounded-xl overflow-hidden h-full border border-neutral-200 hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center aspect-[4/3] group">
+                      <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <Plus size={24} className="text-neutral-600" />
+                      </div>
+                      <p className="font-sans text-neutral-700 text-sm font-semibold">Mehr entdecken</p>
+                      <p className="text-neutral-400 text-xs mt-1">in {event.location || 'der Nähe'}</p>
+                    </article>
+                  </Link>
+                </CarouselItem>
               </CarouselContent>
-              <CarouselPrevious className="hidden sm:flex -left-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50" />
-              <CarouselNext className="hidden sm:flex -right-4 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50" />
+              <CarouselPrevious className="hidden sm:flex -left-12 h-10 w-10 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 shadow-md z-10" />
+              <CarouselNext className="hidden sm:flex -right-12 h-10 w-10 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 shadow-md z-10" />
             </Carousel>
+            </div>
           </div>
         </section>
       )}

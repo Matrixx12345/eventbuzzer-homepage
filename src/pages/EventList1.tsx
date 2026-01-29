@@ -124,7 +124,7 @@ const EventCard = ({
   return (
     <article
       onClick={() => onEventClick(event)}
-      className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
+      className="group bg-white rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
       <div className="flex gap-4 h-[200px]">
@@ -717,7 +717,7 @@ const EventList1 = () => {
   }, [filteredEvents, currentPage, EVENTS_PER_PAGE]);
 
   return (
-    <div className="min-h-screen bg-[#F4F7FA]">
+    <div className="min-h-screen bg-[#FAFBFC]">
       <Helmet>
         <title>Alle Events in der Schweiz | EventBuzzer</title>
         <meta name="description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt, Datum und mehr auf EventBuzzer." />
@@ -754,7 +754,7 @@ const EventList1 = () => {
       <Navbar />
 
       {/* Full-width Filter Bar - hellblauer Hintergrund */}
-      <div className="sticky top-16 z-40 bg-[#F4F7FA] border-b border-stone-200">
+      <div className="sticky top-16 z-40 bg-[#FAFBFC] border-b border-stone-200">
         <div className="container mx-auto px-6 py-4 max-w-7xl">
           <ListingsFilterBar
             initialCategory={filters.category}
@@ -812,7 +812,7 @@ const EventList1 = () => {
             <div className="space-y-3">
               {/* Subcategory Pills - Sticky Bar */}
               {filters.categoryId && subCategories.length > 0 && (
-                <div className="sticky top-32 z-10 bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
+                <div className="sticky top-32 z-10 bg-[#FAFBFC] py-3 -mx-2 px-2 overflow-x-auto">
                   <div className="flex gap-2 min-w-max">
                     <button
                       onClick={() => setSelectedSubcategoryId(null)}
