@@ -222,7 +222,7 @@ const EventCard = ({
               {/* Star Rating */}
               <div className="flex items-center gap-1.5 pl-2">
                 <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                <span className="text-sm font-normal text-gray-600">
+                <span className="text-sm font-semibold text-gray-800">
                   {rating.toFixed(1)}
                 </span>
               </div>
@@ -297,7 +297,7 @@ const EventCard = ({
                 className="group/ticket relative p-1 pr-2 hover:bg-white/30 rounded-md transition-all duration-200"
                 title="Ticket kaufen"
               >
-                <ShoppingCart size={16} className="text-blue-600" />
+                <ShoppingCart size={16} className="text-[#1e3a8a]" />
               </button>
             </div>
           </div>
