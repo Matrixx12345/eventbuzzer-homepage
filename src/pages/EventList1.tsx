@@ -166,7 +166,7 @@ const EventCard = ({
 
         {/* Content Section */}
         <div className="flex-1 px-4 pt-4 pb-3 flex flex-col justify-between min-w-0">
-          <div className="mt-2">
+          <div className="mt-4">
             {/* Title - ALWAYS 1 line only */}
             <h3 className="text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-2 truncate leading-none font-sans">
               {event.title}
