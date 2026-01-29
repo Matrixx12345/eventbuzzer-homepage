@@ -210,13 +210,13 @@ const EventCard = ({
           {/* MacBook Pro Style Glassmorphism Action Pill */}
           <div className="flex items-center justify-start pt-4">
             <div
-              className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full"
+              className="inline-flex items-center gap-4 px-5 py-1.5 rounded-full"
               style={{
-                background: 'rgba(255, 255, 255, 0.75)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8)'
+                background: 'rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(30px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
               {/* Star Rating */}
@@ -228,7 +228,7 @@ const EventCard = ({
               </div>
 
               {/* Divider */}
-              <div className="w-px h-5 bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-50" />
+              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
 
               {/* Favorit */}
               <button
@@ -236,36 +236,17 @@ const EventCard = ({
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1.5 hover:bg-white/60 rounded-lg transition-all duration-200"
+                className="group/heart relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
                 title={isFavorited ? "Entfernen" : "Planen"}
               >
                 <Heart
-                  size={17}
+                  size={16}
                   className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
                 />
               </button>
 
               {/* Divider */}
-              <div className="w-px h-5 bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-50" />
-
-              {/* Ticket kaufen */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (event.ticket_url || event.url) {
-                    window.open(event.ticket_url || event.url, '_blank');
-                  } else {
-                    toast.info("Ticket-Verkauf demnächst verfügbar");
-                  }
-                }}
-                className="group/ticket relative p-1.5 hover:bg-white/60 rounded-lg transition-all duration-200"
-                title="Ticket kaufen"
-              >
-                <ShoppingCart size={17} className="text-indigo-900" />
-              </button>
-
-              {/* Divider */}
-              <div className="w-px h-5 bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-50" />
+              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
 
               {/* Events in der Nähe */}
               <button
@@ -285,19 +266,38 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1.5 rounded-lg transition-all duration-200",
-                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/60",
+                  "group/nearby relative p-1 rounded-md transition-all duration-200",
+                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
                 title="Events in der Nähe"
               >
                 <MapPin
-                  size={17}
+                  size={16}
                   className={cn(
                     nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
                     isLoadingNearby && "animate-spin"
                   )}
                 />
+              </button>
+
+              {/* Divider */}
+              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
+
+              {/* Ticket kaufen - GANZ RECHTS, DUNKELBLAU */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (event.ticket_url || event.url) {
+                    window.open(event.ticket_url || event.url, '_blank');
+                  } else {
+                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                  }
+                }}
+                className="group/ticket relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
+                title="Ticket kaufen"
+              >
+                <ShoppingCart size={16} className="text-[#1e3a8a]" />
               </button>
             </div>
           </div>
