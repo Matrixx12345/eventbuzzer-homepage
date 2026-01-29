@@ -654,28 +654,32 @@ const EventDetail = () => {
 
   // Build event data from either static or dynamic source
   const eventId = slug || "unknown";
-  let event: {
-    image: string;
-    title: string;
-    venue: string;
-    location: string;
-    address?: string;
-    date: string;
-    time: string;
-    distance: string;
-    description: string;
-    ticketLink?: string;
-    priceFrom?: number;
-    priceTo?: number;
-    priceLabel?: string;
-    latitude?: number;
-    longitude?: number;
-    imageAuthor?: string | null;
-    imageLicense?: string | null;
-    isMuseum?: boolean;
-    buzzScore?: number | null;
-    galleryUrls?: string[];
+
+  // Default event object
+  const defaultEvent = {
+    image: weekendJazz,
+    title: loading ? "Lädt..." : "Event nicht gefunden",
+    venue: "",
+    location: "",
+    address: "",
+    date: "",
+    time: "",
+    distance: "",
+    description: loading ? "" : "Dieses Event konnte nicht gefunden werden.",
+    ticketLink: undefined as string | undefined,
+    priceFrom: undefined as number | undefined,
+    priceTo: undefined as number | undefined,
+    priceLabel: undefined as string | undefined,
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
+    imageAuthor: null as string | null,
+    imageLicense: null as string | null,
+    isMuseum: false,
+    buzzScore: null as number | null,
+    galleryUrls: [] as string[],
   };
+
+  let event = defaultEvent;
 
   if (isStaticEvent) {
     event = eventsData[slug!];
@@ -741,18 +745,8 @@ const EventDetail = () => {
       buzzScore: dynamicEvent.buzz_score,
       galleryUrls: dynamicEvent.gallery_urls || [],
     };
-  } else {
-    event = {
-      image: weekendJazz,
-      title: loading ? "Lädt..." : "Event nicht gefunden",
-      venue: "",
-      location: "",
-      date: "",
-      time: "",
-      distance: "",
-      description: loading ? "" : "Dieses Event konnte nicht gefunden werden.",
-    };
   }
+  // else: use defaultEvent which is already assigned
 
   if (loading) {
     return (
