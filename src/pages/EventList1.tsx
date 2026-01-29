@@ -6,7 +6,7 @@ import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Maximize2, Minimize2, X, ShoppingCart } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, X, ShoppingCart, Star } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -210,18 +210,18 @@ const EventCard = ({
           {/* MacBook Pro Style Glassmorphism Action Pill */}
           <div className="flex items-center justify-start pt-4">
             <div
-              className="inline-flex items-center gap-4 px-5 py-1.5 rounded-full"
+              className="inline-flex items-center gap-4 px-7 py-1.5 rounded-full"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
                 backdropFilter: 'blur(30px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(30px) saturate(180%)',
                 border: '1px solid rgba(255, 255, 255, 0.18)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
-              {/* Star Rating */}
+              {/* Star Rating - Outline like in Modal */}
               <div className="flex items-center gap-1.5">
-                <span className="text-yellow-400 text-base">⭐</span>
+                <Star size={16} className="text-yellow-500 fill-none stroke-2" />
                 <span className="text-sm font-semibold text-gray-800">
                   {rating.toFixed(1)}
                 </span>
