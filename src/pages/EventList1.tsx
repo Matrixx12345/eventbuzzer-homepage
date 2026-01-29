@@ -207,10 +207,10 @@ const EventCard = ({
             )}
           </div>
 
-          {/* MacBook Pro Style Glassmorphism Action Pill */}
+          {/* MacBook Pro Style Glassmorphism Action Pill - Bento Style */}
           <div className="flex items-center justify-start pt-4">
             <div
-              className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
+              className="inline-flex items-center gap-1.5 px-1.5 py-1.5 rounded-full"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
                 backdropFilter: 'blur(30px) saturate(180%)',
@@ -219,28 +219,29 @@ const EventCard = ({
                 boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
-              {/* Star Rating */}
-              <div className="flex items-center gap-1.5 pl-2">
-                <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                <span className="text-sm font-semibold text-gray-800">
+              {/* Star Rating - Bento Box */}
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                style={{ background: 'rgba(0, 0, 0, 0.04)' }}
+              >
+                <Star size={14} className="text-[#d4a000] fill-[#fbbf24] stroke-[1]" />
+                <span className="text-sm font-medium text-gray-700">
                   {rating.toFixed(1)}
                 </span>
               </div>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Favorit */}
+              {/* Favorit - Bento Box */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/heart relative w-8 h-8 flex items-center justify-center rounded-xl hover:scale-105 transition-all duration-200"
+                style={{ background: 'rgba(0, 0, 0, 0.04)' }}
               >
                 <Heart
                   size={16}
-                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
+                  className={isFavorited ? "fill-red-400 text-red-400" : "text-red-400/70"}
                 />
                 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
@@ -251,10 +252,7 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Events in der Nähe */}
+              {/* Events in der Nähe - Bento Box */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -272,15 +270,15 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110",
-                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
+                  "group/nearby relative w-8 h-8 flex items-center justify-center rounded-xl hover:scale-105 transition-all duration-200",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
+                style={{ background: nearbyEventsFilter === event.id ? 'rgba(34, 197, 94, 0.15)' : 'rgba(0, 0, 0, 0.04)' }}
               >
                 <MapPin
                   size={16}
                   className={cn(
-                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
+                    nearbyEventsFilter === event.id ? "text-green-600" : "text-green-600/70",
                     isLoadingNearby && "animate-spin"
                   )}
                 />
@@ -293,10 +291,7 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Ticket kaufen - DUNKELBLAU */}
+              {/* Ticket kaufen - Bento Box DUNKELBLAU */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -306,7 +301,8 @@ const EventCard = ({
                     toast.info("Ticket-Verkauf demnächst verfügbar");
                   }
                 }}
-                className="group/ticket relative p-1 pr-2 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/ticket relative w-8 h-8 flex items-center justify-center rounded-xl hover:scale-105 transition-all duration-200"
+                style={{ background: 'rgba(0, 0, 0, 0.04)' }}
               >
                 <ShoppingCart size={16} className="text-[#1e3a8a]" />
                 {/* Tooltip */}
