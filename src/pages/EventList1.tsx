@@ -173,7 +173,7 @@ const EventCard = ({
             </h3>
 
             {/* Location - NO PIN */}
-            <div className="text-sm text-gray-500 mb-2">
+            <div className="text-sm text-stone-900 mb-2">
               {locationText}
 
               {/* Mini-Map Tooltip */}
@@ -201,7 +201,11 @@ const EventCard = ({
 
             {/* Description - always show short description with 2 line clamp */}
             {event.short_description && (
-              <p className="text-sm text-gray-700 leading-relaxed line-clamp-2">
+              <p
+                className="text-sm text-gray-500 leading-relaxed line-clamp-2"
+                lang="de"
+                style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
+              >
                 {convertToUmlauts(event.short_description)}
               </p>
             )}
