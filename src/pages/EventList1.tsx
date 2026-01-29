@@ -210,18 +210,18 @@ const EventCard = ({
           {/* MacBook Pro Style Glassmorphism Action Pill */}
           <div className="flex items-center justify-start pt-4">
             <div
-              className="inline-flex items-center gap-4 px-7 py-1.5 rounded-full"
+              className="inline-flex items-center gap-2.5 px-8 py-1.5 rounded-full"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
                 backdropFilter: 'blur(30px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(30px) saturate(180%)',
                 border: '1px solid rgba(255, 255, 255, 0.18)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
-              {/* Star Rating - Outline like in Modal */}
+              {/* Star Rating - Outline dezent */}
               <div className="flex items-center gap-1.5">
-                <Star size={16} className="text-yellow-500 fill-none stroke-2" />
+                <Star size={15} className="text-yellow-600 fill-none stroke-[1.5]" />
                 <span className="text-sm font-semibold text-gray-800">
                   {rating.toFixed(1)}
                 </span>
