@@ -719,7 +719,8 @@ const EventDetail = () => {
     }
 
     // Add performer for certain categories
-    if (dynamicEvent?.category_sub_id?.includes('music') || dynamicEvent?.category_sub_id?.includes('concert')) {
+    const categoryId = String(dynamicEvent?.category_sub_id || '');
+    if (categoryId.includes('music') || categoryId.includes('concert')) {
       schema["performer"] = {
         "@type": "PerformingGroup",
         "name": event.title
