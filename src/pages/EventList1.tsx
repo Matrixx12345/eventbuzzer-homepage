@@ -127,9 +127,9 @@ const EventCard = ({
       className="group bg-[#FDFBF7] rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      <div className="flex gap-4 h-[165px]">
+      <div className="flex gap-4 h-[200px]">
         {/* Image Section - Frame with even padding (like modal) */}
-        <div className="relative w-[308px] flex-shrink-0 h-[165px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+        <div className="relative w-[308px] flex-shrink-0 h-[200px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
           <div className="relative w-full h-full overflow-hidden rounded">
             <img
               src={imageUrl}
@@ -207,38 +207,46 @@ const EventCard = ({
             )}
           </div>
 
-          {/* Bottom Row: Star + Icons - LEFT ALIGNED, NO BORDERS, 20px spacing */}
-          <div className="flex items-center gap-5 relative z-20">
-            {/* Star Rating */}
-            <div className="flex items-center gap-1.5 relative z-20">
-              <span className="text-yellow-400 text-lg">⭐</span>
-              <span className="text-sm font-semibold text-gray-600">
-                {rating.toFixed(1)}
-              </span>
-            </div>
+          {/* MacBook Pro Style Glassmorphism Action Pill */}
+          <div className="flex items-center justify-start pt-4">
+            <div
+              className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full"
+              style={{
+                background: 'rgba(255, 255, 255, 0.75)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8)'
+              }}
+            >
+              {/* Star Rating */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-yellow-400 text-base">⭐</span>
+                <span className="text-sm font-semibold text-gray-800">
+                  {rating.toFixed(1)}
+                </span>
+              </div>
 
-            {/* Action Icons - NO BORDERS, simple hover, with padding */}
-            <div className="flex items-center gap-5">
+              {/* Divider */}
+              <div className="w-px h-5 bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-50" />
+
               {/* Favorit */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1.5 hover:scale-110 transition-all duration-200"
+                className="group/heart relative p-1.5 hover:bg-white/60 rounded-lg transition-all duration-200"
+                title={isFavorited ? "Entfernen" : "Planen"}
               >
                 <Heart
-                  size={19}
-                  className={isFavorited ? "fill-red-600 text-red-600" : "text-gray-600"}
+                  size={17}
+                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
                 />
-                {/* Tooltip - Heller Stil */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
-                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-                    {isFavorited ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
-                  </div>
-                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
-                </div>
               </button>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-50" />
 
               {/* Ticket kaufen */}
               <button
@@ -250,29 +258,23 @@ const EventCard = ({
                     toast.info("Ticket-Verkauf demnächst verfügbar");
                   }
                 }}
-                className="group/ticket relative p-1.5 hover:scale-110 transition-all duration-200"
+                className="group/ticket relative p-1.5 hover:bg-white/60 rounded-lg transition-all duration-200"
+                title="Ticket kaufen"
               >
-                <ShoppingCart size={18} className="text-gray-600" />
-                {/* Tooltip - Heller Stil */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
-                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-                    Ticket kaufen
-                  </div>
-                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
-                </div>
+                <ShoppingCart size={17} className="text-indigo-900" />
               </button>
 
-              {/* Events in der Nähe (Nearby) - Amazon-style */}
+              {/* Divider */}
+              <div className="w-px h-5 bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-50" />
+
+              {/* Events in der Nähe */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (nearbyEventsFilter === event.id) {
-                    setNearbyEventsFilter(null); // Toggle off
+                    setNearbyEventsFilter(null);
                   } else {
-                    // Show loading state
                     setIsLoadingNearby(true);
-
-                    // Apply filter after 1.5 seconds
                     setTimeout(() => {
                       setNearbyEventsFilter(event.id);
                       setCurrentPage(1);
@@ -283,22 +285,19 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1.5 hover:scale-110 transition-all duration-200",
-                  nearbyEventsFilter === event.id && "text-orange-500",
+                  "group/nearby relative p-1.5 rounded-lg transition-all duration-200",
+                  nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/60",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
+                title="Events in der Nähe"
               >
-                <MapPin size={18} className={cn(
-                  nearbyEventsFilter === event.id ? "text-orange-500" : "text-gray-600",
-                  isLoadingNearby && "animate-spin"
-                )} />
-                {/* Tooltip - Heller Stil */}
-                <div className="absolute bottom-full right-0 mb-2 hidden group-hover/nearby:block z-50 pointer-events-none">
-                  <div className="bg-[#ffffff] text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-                    Events in der Nähe anzeigen
-                  </div>
-                  <div className="w-2 h-2 bg-[#ffffff] border-r border-b border-gray-200 rotate-45 -mt-1 mr-2" />
-                </div>
+                <MapPin
+                  size={17}
+                  className={cn(
+                    nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
+                    isLoadingNearby && "animate-spin"
+                  )}
+                />
               </button>
             </div>
           </div>
