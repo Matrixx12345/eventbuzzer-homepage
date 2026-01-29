@@ -782,33 +782,25 @@ const EventList1 = () => {
               maxWidth: mapExpanded ? "none" : "100%",
             }}
           >
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-stone-900 mb-3">Alle Events in der Schweiz</h1>
-
-              {/* SEO-optimierter Einleitungs-Text (300+ Wörter) - Hidden from UI, visible to Google */}
-              <div className="sr-only">
-                <p>
-                  Entdecke über <strong>1400 Events, Konzerte, Festivals und Aktivitäten</strong> in der gesamten Schweiz auf EventBuzzer.
-                  Von pulsierenden Konzerten in Zürich über traditionelle Festivals in Luzern bis zu kulturellen Highlights in Genf –
-                  unsere Plattform bietet dir eine umfassende Übersicht aller Veranstaltungen in deiner Region.
-                </p>
-                <p>
-                  Nutze unsere intelligenten <strong>Filter-Funktionen</strong>, um gezielt nach Events zu suchen: Wähle aus über 15 Kategorien
-                  wie Musik, Sport, Kultur, Familie oder Nachtleben. Filtere nach Stimmung (entspannt, aktiv, romantisch), nach Stadt,
-                  Datum oder entdecke Events in deiner unmittelbaren Umgebung mit unserem Umkreis-Filter. Die interaktive Karte
-                  zeigt dir alle Veranstaltungen visuell auf einen Blick.
-                </p>
-                <p>
-                  Egal ob spontane Wochenend-Aktivität oder langfristige Event-Planung – EventBuzzer hilft dir dabei,
-                  unvergessliche Erlebnisse in der Schweiz zu finden. Speichere deine Favoriten, teile Events mit Freunden
-                  und verpasse keine spannende Veranstaltung mehr in Bern, Basel, Lausanne oder den malerischen Bergregionen
-                  wie Interlaken und Zermatt.
-                </p>
-              </div>
-
-              <p className="text-sm text-stone-500">
-                {loading ? "Lädt..." : `${displayedEvents.length} von ${filteredEvents.length} Events`}
+            {/* SEO-optimierter Einleitungs-Text (300+ Wörter) - Hidden from UI, visible to Google */}
+            <div className="sr-only">
+              <h1>Alle Events in der Schweiz</h1>
+              <p>
+                Entdecke über <strong>1400 Events, Konzerte, Festivals und Aktivitäten</strong> in der gesamten Schweiz auf EventBuzzer.
+                Von pulsierenden Konzerten in Zürich über traditionelle Festivals in Luzern bis zu kulturellen Highlights in Genf –
+                unsere Plattform bietet dir eine umfassende Übersicht aller Veranstaltungen in deiner Region.
+              </p>
+              <p>
+                Nutze unsere intelligenten <strong>Filter-Funktionen</strong>, um gezielt nach Events zu suchen: Wähle aus über 15 Kategorien
+                wie Musik, Sport, Kultur, Familie oder Nachtleben. Filtere nach Stimmung (entspannt, aktiv, romantisch), nach Stadt,
+                Datum oder entdecke Events in deiner unmittelbaren Umgebung mit unserem Umkreis-Filter. Die interaktive Karte
+                zeigt dir alle Veranstaltungen visuell auf einen Blick.
+              </p>
+              <p>
+                Egal ob spontane Wochenend-Aktivität oder langfristige Event-Planung – EventBuzzer hilft dir dabei,
+                unvergessliche Erlebnisse in der Schweiz zu finden. Speichere deine Favoriten, teile Events mit Freunden
+                und verpasse keine spannende Veranstaltung mehr in Bern, Basel, Lausanne oder den malerischen Bergregionen
+                wie Interlaken und Zermatt.
               </p>
             </div>
 
@@ -982,6 +974,12 @@ const EventList1 = () => {
                       </button>
                     </div>
                   )}
+                  {/* Event Count - Bottom */}
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-stone-400">
+                      {`${displayedEvents.length} von ${filteredEvents.length} Events`}
+                    </p>
+                  </div>
                 </>
               )}
             </div>
