@@ -236,7 +236,7 @@ const EventCard = ({
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
                 title={isFavorited ? "Entfernen" : "Planen"}
               >
                 <Heart
@@ -266,7 +266,7 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 rounded-md transition-all duration-200",
+                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110",
                   nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
@@ -294,7 +294,7 @@ const EventCard = ({
                     toast.info("Ticket-Verkauf demnächst verfügbar");
                   }
                 }}
-                className="group/ticket relative p-1 pr-2 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/ticket relative p-1 pr-2 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
                 title="Ticket kaufen"
               >
                 <ShoppingCart size={16} className="text-[#1e3a8a]" />
