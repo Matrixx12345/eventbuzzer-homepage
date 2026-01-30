@@ -200,7 +200,8 @@ const getCategoryLabel = (event: any): string | undefined => {
   if (combined.includes('food') || combined.includes('kulinar') || combined.includes('gastro') || combined.includes('wein') || combined.includes('käse')) return 'Kulinarik';
   if (combined.includes('nightlife') || combined.includes('party') || combined.includes('club')) return 'Nightlife';
   if (combined.includes('aussicht') || combined.includes('view') || combined.includes('panorama') || combined.includes('berg')) return 'Aussicht';
-  if (combined.includes('see') || combined.includes('lake') || combined.includes('schiff')) return 'See';
+  // Check for 'see' (lake) but exclude 'must-see' tag
+  if ((combined.includes('see') || combined.includes('lake') || combined.includes('schiff')) && !combined.includes('must-see')) return 'See';
   if (combined.includes('bahn') || combined.includes('zug') || combined.includes('train')) return 'Bahn';
   if (combined.includes('altstadt') || combined.includes('city') || combined.includes('stadt')) return 'Stadt';
   if (combined.includes('erlebnis')) return 'Erlebnis';

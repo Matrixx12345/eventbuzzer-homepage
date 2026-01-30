@@ -32,12 +32,6 @@ interface EventsMapProps {
   onSearchThisArea?: () => void;
   totalEventsCount?: number;
   categoryId?: number | null;  // NEW: Filter by category (important for Märkte!)
-  // Nearby zoom feature
-  flyToLocation?: { lng: number; lat: number; zoom: number } | null;
-  showBackButton?: boolean;
-  onBackClick?: () => void;
-  backButtonLabel?: string;
-  onMapStateCapture?: (state: { center: [number, number]; zoom: number }) => void;
 }
 
 // Define GeoJSON feature type for Supercluster
@@ -162,12 +156,6 @@ export function EventsMap({
   onSearchThisArea,
   totalEventsCount = 0,
   categoryId = null,
-  // Nearby zoom feature
-  flyToLocation = null,
-  showBackButton = false,
-  onBackClick,
-  backButtonLabel = "Zurück zu allen Events",
-  onMapStateCapture,
 }: EventsMapProps) {
   // DEBUG: Log what selectedEventIds we're receiving
   console.log('🎯 EventsMap received selectedEventIds:', selectedEventIds);
@@ -1316,29 +1304,6 @@ export function EventsMap({
     return () => resizeObserver.disconnect();
   }, [isVisible, mapReady]);
 
-  // Fly to location when flyToLocation prop changes (for nearby zoom)
-  useEffect(() => {
-    if (!flyToLocation || !map.current || !mapReady) return;
-
-    console.log('🗺️ FlyTo triggered:', { lng: flyToLocation.lng, lat: flyToLocation.lat, zoom: flyToLocation.zoom });
-
-    // Capture current state before flying (for "back" functionality)
-    if (onMapStateCapture) {
-      const center = map.current.getCenter();
-      const zoom = map.current.getZoom();
-      console.log('📍 Capturing previous state:', { center: [center.lng, center.lat], zoom });
-      onMapStateCapture({ center: [center.lng, center.lat], zoom });
-    }
-
-    // Fly to the new location
-    map.current.flyTo({
-      center: [flyToLocation.lng, flyToLocation.lat],
-      zoom: flyToLocation.zoom,
-      duration: 1500,
-      essential: true
-    });
-  }, [flyToLocation, mapReady]);
-
   return (
     <div className="relative w-full h-full">
       {/* Map Container */}
@@ -1479,24 +1444,6 @@ export function EventsMap({
               )}
             </div>
           </>
-        )}
-
-        {/* Back Button - Centered bottom (for nearby zoom feature) */}
-        {showBackButton && onBackClick && (
-          <button
-            onClick={onBackClick}
-            className="absolute bottom-16 left-1/2 -translate-x-1/2 z-30
-                       bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-full
-                       shadow-lg border border-stone-200
-                       hover:bg-white hover:shadow-xl transition-all duration-200
-                       flex items-center gap-2 text-sm font-medium text-stone-700
-                       hover:scale-105"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            {backButtonLabel}
-          </button>
         )}
 
         {/* Event Count - Unten links KLEIN */}

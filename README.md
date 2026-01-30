@@ -296,4 +296,74 @@ displayedScore = baseScore + scoreBoost
 
 ---
 
-**Letzte Aktualisierung:** Januar 28, 2026
+## 🔧 Performance Fix: EventDetail.tsx (Januar 30, 2026)
+
+### Problem: Hohe CPU-Last / Lüfter laut
+
+Die EventDetail-Seite hatte zwei Performance-Probleme im "In der Nähe" Carousel:
+
+### 1. Doppelter Fetch bei Event-Swap
+
+**Vorher (schlecht):**
+```tsx
+useEffect(() => {
+  // fetchNearbyEvents...
+}, [dynamicEvent, slug]);  // ← Beide ändern sich bei swapToEvent = 2x Fetch!
+```
+
+**Nachher (gut):**
+```tsx
+useEffect(() => {
+  // fetchNearbyEvents...
+}, [dynamicEvent?.id, dynamicEvent?.latitude, dynamicEvent?.longitude]);  // ← Nur 1x Fetch
+```
+
+### 2. Distance-Berechnung bei jedem Render
+
+**Vorher (schlecht):**
+```tsx
+{nearbyEvents.map((evt) => {
+  // Diese Berechnung passiert bei JEDEM Render
+  const dist = calculateDistance(...);
+  return <SimilarEventCard distance={dist} />;
+})}
+```
+
+**Nachher (gut):**
+```tsx
+// Berechnung einmal gecached mit useMemo
+const nearbyEventsWithDistance = useMemo(() => {
+  return nearbyEvents.map((evt) => ({
+    ...evt,
+    distanceText: evt.calculatedDistance < 1 ? '< 1 km' : `${Math.round(evt.calculatedDistance)} km`
+  }));
+}, [nearbyEvents]);
+
+// Im JSX nur noch gecachte Werte verwenden
+{nearbyEventsWithDistance.map((evt) => (
+  <SimilarEventCard distance={evt.distanceText} />
+))}
+```
+
+### Betroffene Datei
+- `src/pages/EventDetail.tsx` (Zeilen ~565-621 und ~817-829)
+
+---
+
+## 🔒 Supabase Security: Pro Plan Features (TODO)
+
+Wenn du auf den **Supabase Pro Plan** upgradest, aktiviere diese Security-Features:
+
+**Dashboard → Authentication → Attack Protection:**
+- ✅ **Prevent use of leaked passwords** - Prüft neue Passwörter gegen HaveIBeenPwned-Datenbank
+  - Verhindert dass User Passwörter nutzen, die in Datenlecks aufgetaucht sind
+  - Minimale Friction (95% der User merken nichts)
+  - Schützt vor Account-Übernahme durch Credential Stuffing
+
+**Bereits aktiv (Free Plan):**
+- ✅ Secure email change (beide Email-Adressen müssen bestätigen)
+- ✅ Minimum password length: 6 Zeichen
+
+---
+
+**Letzte Aktualisierung:** Januar 30, 2026

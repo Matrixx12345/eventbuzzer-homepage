@@ -90,10 +90,6 @@ const EventCard = ({
   setNearbyEventsFilter,
   setCurrentPage,
   setDisplayedEventsCount,
-  // Nearby zoom feature
-  setFlyToLocation,
-  previousMapState,
-  setPreviousMapState,
 }: {
   event: Event;
   index: number;
@@ -104,10 +100,6 @@ const EventCard = ({
   setNearbyEventsFilter: (id: string | null) => void;
   setCurrentPage: (page: number) => void;
   setDisplayedEventsCount: (count: number) => void;
-  // Nearby zoom feature
-  setFlyToLocation: (location: { lng: number; lat: number; zoom: number } | null) => void;
-  previousMapState: { center: [number, number]; zoom: number } | null;
-  setPreviousMapState: (state: { center: [number, number]; zoom: number } | null) => void;
 }) => {
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
   const imageUrl = event.image_url || getPlaceholderImage(index);
@@ -271,32 +263,14 @@ const EventCard = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (nearbyEventsFilter === event.id) {
-                    // Deactivate: clear filter and restore map state
                     setNearbyEventsFilter(null);
-                    if (previousMapState) {
-                      setFlyToLocation({
-                        lng: previousMapState.center[0],
-                        lat: previousMapState.center[1],
-                        zoom: previousMapState.zoom
-                      });
-                      setPreviousMapState(null);
-                    }
                   } else {
-                    // Activate: set filter and zoom to event location
                     setIsLoadingNearby(true);
                     setTimeout(() => {
                       setNearbyEventsFilter(event.id);
                       setCurrentPage(1);
                       setDisplayedEventsCount(30);
                       setIsLoadingNearby(false);
-                      // Zoom to event location (map will capture previous state)
-                      if (event.latitude && event.longitude) {
-                        setFlyToLocation({
-                          lng: event.longitude,
-                          lat: event.latitude,
-                          zoom: 10 // Shows ~50km view - good for 10km radius with context
-                        });
-                      }
                     }, 1500);
                   }
                 }}
@@ -394,10 +368,6 @@ const EventList1 = () => {
 
   // Nearby Events Filter
   const [nearbyEventsFilter, setNearbyEventsFilter] = useState<string | null>(null);
-
-  // Map state for nearby zoom feature (save previous state for "back" button)
-  const [previousMapState, setPreviousMapState] = useState<{ center: [number, number]; zoom: number } | null>(null);
-  const [flyToLocation, setFlyToLocation] = useState<{ lng: number; lat: number; zoom: number } | null>(null);
 
   const isFavorited = (eventId: string) => favorites.some(f => f.id === eventId);
 
@@ -784,7 +754,7 @@ const EventList1 = () => {
       <Navbar />
 
       {/* Full-width Filter Bar - hellblauer Hintergrund */}
-      <div className="bg-[#F4F7FA] border-b border-stone-200">
+      <div className="sticky top-16 z-40 bg-[#F4F7FA] border-b border-stone-200">
         <div className="container mx-auto px-6 py-4 max-w-7xl">
           <ListingsFilterBar
             initialCategory={filters.category}
@@ -840,9 +810,9 @@ const EventList1 = () => {
 
             {/* Event List Container */}
             <div className="space-y-3">
-              {/* Subcategory Pills */}
+              {/* Subcategory Pills - Sticky Bar */}
               {filters.categoryId && subCategories.length > 0 && (
-                <div className="bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
+                <div className="sticky top-32 z-10 bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
                   <div className="flex gap-2 min-w-max">
                     <button
                       onClick={() => setSelectedSubcategoryId(null)}
@@ -885,15 +855,6 @@ const EventList1 = () => {
                   <button
                     onClick={() => {
                       setNearbyEventsFilter(null);
-                      // Restore map state
-                      if (previousMapState) {
-                        setFlyToLocation({
-                          lng: previousMapState.center[0],
-                          lat: previousMapState.center[1],
-                          zoom: previousMapState.zoom
-                        });
-                        setPreviousMapState(null);
-                      }
                     }}
                     className="text-orange-600 hover:text-orange-800 transition-colors"
                     title="Filter entfernen"
@@ -934,10 +895,6 @@ const EventList1 = () => {
                         setNearbyEventsFilter={setNearbyEventsFilter}
                         setCurrentPage={setCurrentPage}
                         setDisplayedEventsCount={setDisplayedEventsCount}
-                        // Nearby zoom feature
-                        setFlyToLocation={setFlyToLocation}
-                        previousMapState={previousMapState}
-                        setPreviousMapState={setPreviousMapState}
                       />
                     </div>
                   ))}
@@ -1057,27 +1014,6 @@ const EventList1 = () => {
                 hoveredEventId={hoveredEventId}
                 showOnlyEliteAndFavorites={false}
                 customControls={true}
-                // Nearby zoom feature
-                flyToLocation={flyToLocation}
-                showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
-                onBackClick={() => {
-                  setNearbyEventsFilter(null);
-                  if (previousMapState) {
-                    setFlyToLocation({
-                      lng: previousMapState.center[0],
-                      lat: previousMapState.center[1],
-                      zoom: previousMapState.zoom
-                    });
-                  }
-                  setPreviousMapState(null);
-                }}
-                backButtonLabel="Zurück zu allen Events"
-                onMapStateCapture={(state) => {
-                  // Only capture if we don't already have a previous state (first zoom)
-                  if (!previousMapState) {
-                    setPreviousMapState(state);
-                  }
-                }}
               />
 
               {/* Toggle Button */}

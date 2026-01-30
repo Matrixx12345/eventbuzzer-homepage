@@ -7,7 +7,7 @@ import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { StarRating } from "@/components/StarRating";
 import { ImageGallery } from "@/components/ImageGallery";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -561,11 +561,13 @@ const EventDetail = () => {
   }, [dynamicEvent]);
 
   // Fetch nearby events based on coordinates (direct DB query to get all fields including lat/lng)
+  // Only depends on dynamicEvent.id to avoid double-fetch when swapping events
   useEffect(() => {
     const fetchNearbyEvents = async () => {
       const lat = dynamicEvent?.latitude;
       const lng = dynamicEvent?.longitude;
-      if (!lat || !lng) return;
+      const eventId = dynamicEvent?.id;
+      if (!lat || !lng || !eventId) return;
 
       try {
         // Calculate bounding box for ~30km radius
@@ -579,7 +581,7 @@ const EventDetail = () => {
           .lte('latitude', lat + latDelta)
           .gte('longitude', lng - lngDelta)
           .lte('longitude', lng + lngDelta)
-          .neq('id', dynamicEvent.id)
+          .neq('id', eventId)
           .order('buzz_score', { ascending: false, nullsFirst: false })
           .limit(40);
 
@@ -615,10 +617,10 @@ const EventDetail = () => {
       }
     };
 
-    if (dynamicEvent) {
+    if (dynamicEvent?.id) {
       fetchNearbyEvents();
     }
-  }, [dynamicEvent, slug]);
+  }, [dynamicEvent?.id, dynamicEvent?.latitude, dynamicEvent?.longitude]);
 
   // Format date nicely
   const formatDate = (dateStr?: string) => {
@@ -814,6 +816,20 @@ const EventDetail = () => {
     };
   }, [event.title, event.description, event.image, event.venue, event.location, event.priceFrom, event.ticketLink, dynamicEvent, loading]);
 
+  // Memoize nearby events with pre-calculated distance text to avoid recalculating on every render
+  const nearbyEventsWithDistance = useMemo(() => {
+    return nearbyEvents.map((evt) => {
+      let distanceText = '';
+      if (typeof evt.calculatedDistance === 'number') {
+        distanceText = evt.calculatedDistance < 1 ? '< 1 km' : `${Math.round(evt.calculatedDistance)} km`;
+      }
+      return {
+        ...evt,
+        distanceText,
+      };
+    });
+  }, [nearbyEvents]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -861,10 +877,10 @@ const EventDetail = () => {
       <Navbar />
 
       {/* HERO SECTION - 50/50 Split Layout */}
-      <section className="min-h-[60vh] grid grid-cols-1 lg:grid-cols-2 bg-[#F4F7FA]">
+      <section className="min-h-[48vh] grid grid-cols-1 lg:grid-cols-2 bg-stone-50">
         {/* Left - Event Image with Frame (like EventList1) */}
         <div className="p-4 lg:p-6">
-          <div className="relative h-[36vh] lg:h-[calc(60vh-48px)] overflow-hidden rounded-2xl bg-white p-2 group" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+          <div className="relative h-[28vh] lg:h-[calc(48vh-48px)] overflow-hidden rounded-2xl bg-white p-2 group" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
             <img
               src={event.image}
               alt={event.title}
@@ -884,10 +900,10 @@ const EventDetail = () => {
         </div>
 
         {/* Right - Content Panel - Same color as "In der Nähe" section */}
-        <div className="bg-stone-50 flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[60vh] lg:rounded-r-2xl">
+        <div className="bg-stone-50 flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[48vh] lg:rounded-r-2xl">
           {/* Title - Modal Style */}
           <h1
-            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-6"
+            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-6 mt-4 lg:mt-6"
             style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
           >
             {event.title}
@@ -1114,30 +1130,19 @@ const EventDetail = () => {
               className="w-full"
             >
               <CarouselContent className="-ml-6">
-                {nearbyEvents.map((evt: DynamicEvent & { calculatedDistance?: number }) => {
-                  // Calculate distance - use pre-calculated or compute from coordinates
-                  let distanceText = '';
-                  if (typeof evt.calculatedDistance === 'number') {
-                    distanceText = evt.calculatedDistance < 1 ? '< 1 km' : `${Math.round(evt.calculatedDistance)} km`;
-                  } else if (evt.latitude && evt.longitude && dynamicEvent?.latitude && dynamicEvent?.longitude) {
-                    const dist = calculateDistance(dynamicEvent.latitude, dynamicEvent.longitude, evt.latitude, evt.longitude);
-                    distanceText = dist < 1 ? '< 1 km' : `${Math.round(dist)} km`;
-                  }
-
-                  return (
-                    <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
-                      <SimilarEventCard
-                        slug={evt.external_id || evt.id}
-                        image={evt.image_url || weekendJazz}
-                        title={evt.title}
-                        description={evt.short_description}
-                        location={evt.address_city || getEventLocation(evt)}
-                        distance={distanceText}
-                        onSwap={swapToEvent}
-                      />
-                    </CarouselItem>
-                  );
-                })}
+                {nearbyEventsWithDistance.map((evt) => (
+                  <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
+                    <SimilarEventCard
+                      slug={evt.external_id || evt.id}
+                      image={evt.image_url || weekendJazz}
+                      title={evt.title}
+                      description={evt.short_description}
+                      location={evt.address_city || getEventLocation(evt)}
+                      distance={evt.distanceText}
+                      onSwap={swapToEvent}
+                    />
+                  </CarouselItem>
+                ))}
                 {/* "Mehr anzeigen" Card */}
                 <CarouselItem className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
                   <Link
@@ -1184,7 +1189,7 @@ const EventDetail = () => {
       */}
 
       {/* Footer Spacer */}
-      <div className="h-8 bg-white" />
+      <div className="h-8 bg-stone-50" />
     </div>
   );
 };
