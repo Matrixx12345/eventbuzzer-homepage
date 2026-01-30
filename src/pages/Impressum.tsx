@@ -1,6 +1,10 @@
+import Navbar from "@/components/Navbar";
+
 const Impressum = () => {
   return (
-    <div className="min-h-screen bg-white text-black">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-white text-black">
       <div className="max-w-[800px] mx-auto px-6 py-16">
         <h1 className="text-3xl font-bold mb-12">IMPRESSUM, DATENSCHUTZ & RECHTLICHE HINWEISE</h1>
 
@@ -192,6 +196,7 @@ const Impressum = () => {
         </section>
       </div>
     </div>
+    </>
   );
 };
 
