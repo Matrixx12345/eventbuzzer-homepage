@@ -158,6 +158,15 @@ const EventCard = ({
               ) : null;
             })()}
 
+            {/* Distance Badge - top right (only for nearby filter) */}
+            {nearbyEventsFilter && (event as any).distanceText && (
+              <div className="absolute top-2 right-2 z-10">
+                <span className="bg-white/90 backdrop-blur-sm text-stone-700 text-[10px] font-semibold px-3 py-1.5 rounded-full shadow-sm border border-stone-200/50">
+                  {(event as any).distanceText} entfernt
+                </span>
+              </div>
+            )}
+
             {/* Gallery Dots Indicator - only show if multiple images available */}
             {event.gallery_urls && event.gallery_urls.length > 0 && (
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
@@ -518,27 +527,106 @@ const EventList1 = () => {
     setDisplayedEventsCount(30);
   }, [filters]);
 
+  // Haversine distance calculation (used for geo-deduplication)
+  const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Deduplicate events: same title + distance < 1km = duplicate, keep highest score
+  const deduplicateWithGeo = (events: any[]): any[] => {
+    const result: any[] = [];
+    const processed = new Set<number>();
+
+    for (let i = 0; i < events.length; i++) {
+      if (processed.has(i)) continue;
+
+      const event = events[i];
+      let bestEvent = event;
+
+      // Check gegen alle anderen Events
+      for (let j = i + 1; j < events.length; j++) {
+        if (processed.has(j)) continue;
+
+        const otherEvent = events[j];
+        const titleMatch = event.title.toLowerCase().trim() === otherEvent.title.toLowerCase().trim();
+
+        // Nur wenn Titel gleich und beide haben Koordinaten
+        if (titleMatch && event.latitude && event.longitude && otherEvent.latitude && otherEvent.longitude) {
+          const distance = haversineDistance(
+            event.latitude,
+            event.longitude,
+            otherEvent.latitude,
+            otherEvent.longitude
+          );
+
+          // Wenn näher als 1km → als Duplikat markieren
+          if (distance < 1) {
+            processed.add(j);
+            // Keep the one with higher score
+            if (otherEvent.buzz_score > bestEvent.buzz_score) {
+              bestEvent = otherEvent;
+            }
+          }
+        }
+      }
+
+      result.push(bestEvent);
+      processed.add(i);
+    }
+
+    return result;
+  };
+
   // Filter events based on selected filters (client-side filtering)
   const filteredEvents = useMemo(() => {
     const startTime = performance.now();
     let result = [...rawEvents];
+
+    // CRITICAL: Deduplicate ALL events first (geo-dedup: title + distance < 1km)
+    result = deduplicateWithGeo(result);
 
     // Nearby Events Filter - OVERRIDE all other filters
     if (nearbyEventsFilter) {
       const sourceEvent = rawEvents.find(e => e.id === nearbyEventsFilter);
       if (sourceEvent && sourceEvent.latitude && sourceEvent.longitude) {
         const NEARBY_DISTANCE_KM = 10; // Within 10km
-        result = result.filter(event => {
-          if (event.id === nearbyEventsFilter) return false; // Exclude source event
-          if (!event.latitude || !event.longitude) return false;
-          const distance = calculateDistance(
-            sourceEvent.latitude,
-            sourceEvent.longitude,
-            event.latitude,
-            event.longitude
-          );
-          return distance <= NEARBY_DISTANCE_KM;
+
+        // Map events with calculated distance
+        result = result
+          .map(event => {
+            if (!event.latitude || !event.longitude) return null;
+
+            const distance = event.id === nearbyEventsFilter
+              ? 0 // Source event has 0 distance
+              : calculateDistance(
+                  sourceEvent.latitude,
+                  sourceEvent.longitude,
+                  event.latitude,
+                  event.longitude
+                );
+
+            return {
+              ...event,
+              calculatedDistance: distance,
+              distanceText: distance < 1 ? '< 1 km' : `${Math.round(distance)} km`
+            };
+          })
+          .filter(event => event && event.calculatedDistance <= NEARBY_DISTANCE_KM);
+
+        // Sort by distance (source event appears first with 0km)
+        result.sort((a, b) => {
+          const aDist = a.calculatedDistance ?? 999;
+          const bDist = b.calculatedDistance ?? 999;
+          return aDist - bDist; // Ascending by distance (0km first)
         });
+
         return result; // Return early, ignore other filters
       }
     }
@@ -674,9 +762,18 @@ const EventList1 = () => {
       });
     }
 
-    // 8. SORTING: Elite Events first, then by score/favorites
-    // This ensures best events are always at the top of the list
+    // 8. SORTING
+    // For nearby filter: sort by distance first (closest events first)
+    // For normal view: Elite Events first, then by score/favorites
     result.sort((a, b) => {
+      // Special case: Nearby filter - sort by distance FIRST
+      if (nearbyEventsFilter) {
+        const aDist = a.calculatedDistance ?? 999;
+        const bDist = b.calculatedDistance ?? 999;
+        if (aDist !== bDist) return aDist - bDist; // Ascending by distance (0km first)
+      }
+
+      // Normal sorting (Elite, buzz_score, favorites)
       // 1. Elite Events (buzz_boost = 100) ALWAYS first
       const aIsElite = a.buzz_boost === 100 || a.buzz_boost === "100";
       const bIsElite = b.buzz_boost === 100 || b.buzz_boost === "100";

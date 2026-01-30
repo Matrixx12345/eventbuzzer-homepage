@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { Heart, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useFavorites } from "@/contexts/FavoritesContext";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
-import BuzzTracker from "@/components/BuzzTracker";
+import ActionPill from "@/components/ActionPill";
 import QuickHideButton from "@/components/QuickHideButton";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -20,7 +19,7 @@ interface CleanGridCardProps {
   categoryLabel?: string;
   buzzScore?: number | null;
   externalId?: string;
-  onBuzzChange?: (newScore: number) => void;
+  ticketUrl?: string;
   onClick?: () => void;
   onHide?: () => void;
 }
@@ -36,13 +35,10 @@ const CleanGridCard = ({
   categoryLabel,
   buzzScore,
   externalId,
-  onBuzzChange,
+  ticketUrl,
   onClick,
   onHide
 }: CleanGridCardProps) => {
-  const { isFavorite, toggleFavorite } = useFavorites();
-  const isCurrentlyFavorite = isFavorite(id);
-  
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -50,15 +46,15 @@ const CleanGridCard = ({
       onClick();
     }
   };
-  
+
   return (
     <div onClick={handleClick} className="block h-full cursor-pointer flex-shrink-0 w-full">
       <article className="relative h-full rounded-2xl overflow-hidden group">
         {/* Background Image with premium treatment */}
         <div className="absolute inset-0">
-          <img 
-            src={image} 
-            alt={title} 
+          <img
+            src={image}
+            alt={title}
             className="w-full h-full object-cover transition-all duration-500
                        blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
                        group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0"
@@ -66,7 +62,7 @@ const CleanGridCard = ({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           {/* Subtle Vignette for premium look */}
           <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
-          
+
           {/* QuickHideButton - bottom right of image */}
           {externalId && onHide && (
             <QuickHideButton externalId={externalId} onHide={onHide} />
@@ -82,34 +78,14 @@ const CleanGridCard = ({
           </div>
         )}
 
-        {/* Favorite Button */}
-        <button 
-          onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleFavorite({
-              id,
-              slug,
-              image,
-              title,
-              venue: "",
-              location
-            });
-          }} 
-          className="absolute top-4 right-4 p-2 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/40 transition-colors z-10" 
-          aria-label={isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Heart size={18} className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : "text-white"} />
-        </button>
-
-        {/* Content - Titel, Ort und BuzzTracker */}
+        {/* Content - Titel, Ort und ActionPill */}
         <div className="relative h-full flex flex-col justify-end p-5">
           <h3 className="font-serif text-white text-xl lg:text-2xl font-semibold leading-tight mb-1 line-clamp-2">
             {title}
           </h3>
-          
+
           {/* Location mit Mini-Map Hover */}
-          <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help mb-2">
+          <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help mb-3">
             <span className="border-b border-dotted border-white/40 hover:text-white transition-colors">
               {location}
             </span>
@@ -120,12 +96,12 @@ const CleanGridCard = ({
                 <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-40 h-28 overflow-hidden flex items-center justify-center">
                   <div className="relative w-full h-full">
                     <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
-                    <div 
-                      className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm shadow-black/50" 
+                    <div
+                      className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm shadow-black/50"
                       style={{
                         left: `${(longitude - 5.9) / (10.5 - 5.9) * 100}%`,
                         top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`
-                      }} 
+                      }}
                     />
                   </div>
                 </div>
@@ -134,14 +110,17 @@ const CleanGridCard = ({
             )}
           </div>
 
-          {/* BuzzTracker */}
-          <BuzzTracker 
-            buzzScore={buzzScore} 
-            editable={true}
-            eventId={id}
-            externalId={externalId}
-            onBuzzChange={onBuzzChange}
-          />
+          {/* Glassmorphism ActionPill - linksbündig */}
+          <ActionPill
+              eventId={id}
+              slug={slug}
+              image={image}
+              title={title}
+              location={location}
+              buzzScore={buzzScore}
+              ticketUrl={ticketUrl}
+              variant="dark"
+            />
         </div>
       </article>
     </div>
@@ -420,9 +399,10 @@ const CleanGridSection = ({
     slug: event.id,
     latitude: event.latitude,
     longitude: event.longitude,
-    categoryLabel: getCategoryLabel(event), // Ganzes Event übergeben für intelligente Erkennung
+    categoryLabel: getCategoryLabel(event),
     buzzScore: event.buzz_score,
-    externalId: event.external_id
+    externalId: event.external_id,
+    ticketUrl: event.ticket_link
   }));
 
   return (
@@ -464,14 +444,9 @@ const CleanGridSection = ({
             <div className="flex gap-5">
               {gridEvents.slice(0, 9).map((event) => (
                 <div key={event.id} className="h-[320px] flex-shrink-0 w-[calc(33.333%-14px)] min-w-[280px]">
-                  <CleanGridCard 
-                    {...event} 
+                  <CleanGridCard
+                    {...event}
                     onClick={() => onEventClick?.(event.id)}
-                    onBuzzChange={(newScore) => {
-                      setAllEvents(prev => prev.map(e => 
-                        e.id === event.id ? { ...e, buzz_score: newScore } : e
-                      ));
-                    }}
                     onHide={() => setHiddenIds(prev => new Set([...prev, event.externalId]))}
                   />
                 </div>

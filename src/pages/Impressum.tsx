@@ -185,7 +185,7 @@ const Impressum = () => {
           </p>
 
           <h3 className="font-semibold mt-6 mb-2">Kontakt</h3>
-          <p className="mb-4 leading-relaxed">E-Mail: J.Straton111@gmail.com</p>
+          <p className="mb-4 leading-relaxed">E-Mail: Eventbuzzer1@gmail.com</p>
 
           <h3 className="font-semibold mt-6 mb-2">Vertretungsberechtigte Person</h3>
           <p className="mb-4 leading-relaxed">Jenny Stratonowitsch</p>

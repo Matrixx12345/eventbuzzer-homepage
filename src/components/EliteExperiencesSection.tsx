@@ -4,10 +4,11 @@ import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
-import BuzzTracker from "@/components/BuzzTracker";
+import ActionPill from "@/components/ActionPill";
 import QuickHideButton from "@/components/QuickHideButton";
 
 interface CompactCardProps {
+  id: string;
   title: string;
   description: string;
   image: string;
@@ -17,14 +18,13 @@ interface CompactCardProps {
   categoryLabel?: string;
   ticketUrl?: string;
   buzzScore?: number | null;
-  eventId?: string;
   externalId?: string;
-  onBuzzChange?: (newScore: number) => void;
   onClick?: () => void;
   onHide?: () => void;
 }
 
 const CompactCard = ({
+  id,
   title,
   description,
   image,
@@ -34,39 +34,32 @@ const CompactCard = ({
   categoryLabel,
   ticketUrl,
   buzzScore,
-  eventId,
   externalId,
-  onBuzzChange,
   onClick,
   onHide
 }: CompactCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
-    if (!ticketUrl && onClick) {
+    if (onClick) {
       e.preventDefault();
       onClick();
     }
   };
 
-  const Wrapper = ticketUrl ? 'a' : 'div';
-  const wrapperProps = ticketUrl 
-    ? { href: ticketUrl, target: "_blank", rel: "noopener noreferrer" }
-    : {};
-
   return (
-    <Wrapper {...wrapperProps} onClick={handleClick} className="block cursor-pointer">
+    <div onClick={handleClick} className="block cursor-pointer">
       <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 grid grid-cols-[55%_45%] h-[280px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden">
-          <img 
-            src={image} 
-            alt={title} 
+          <img
+            src={image}
+            alt={title}
             className="w-full h-full object-cover transition-all duration-500
                        blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
-                       group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0" 
+                       group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0"
           />
           {/* Subtle Vignette */}
           <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
-          
+
           {/* Milky Category Pill - top left */}
           {categoryLabel && (
             <div className="absolute top-4 left-4 z-10">
@@ -75,13 +68,13 @@ const CompactCard = ({
               </span>
             </div>
           )}
-          
+
           {/* QuickHideButton - bottom right of image */}
           {externalId && onHide && (
             <QuickHideButton externalId={externalId} onHide={onHide} />
           )}
         </div>
-        
+
         {/* Content - am UNTEREN Rand, alles dicht beieinander */}
         <div className="p-4 px-6 flex flex-col justify-end h-full">
           {/* Location - subtle */}
@@ -93,12 +86,12 @@ const CompactCard = ({
                 <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
                   <div className="relative w-full h-full">
                     <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
-                    <div 
-                      className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm" 
+                    <div
+                      className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm"
                       style={{
                         left: `${(longitude - 5.9) / (10.5 - 5.9) * 100}%`,
                         top: `${(1 - (latitude - 45.8) / (47.8 - 45.8)) * 100}%`
-                      }} 
+                      }}
                     />
                   </div>
                 </div>
@@ -111,21 +104,22 @@ const CompactCard = ({
           <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-1 group-hover:line-clamp-2 leading-tight transition-all duration-200">{title}</h3>
 
           {/* Description - 3 lines */}
-          <p className="text-stone-500 text-sm leading-relaxed line-clamp-3">{description}</p>
+          <p className="text-stone-500 text-sm leading-relaxed line-clamp-3 mb-8">{description}</p>
 
-          {/* BuzzTracker - mit Abstand zur description */}
-          <div className="pt-12">
-            <BuzzTracker 
-              buzzScore={buzzScore} 
-              editable={true}
-              eventId={eventId}
-              externalId={externalId}
-              onBuzzChange={onBuzzChange}
-            />
-          </div>
+          {/* Glassmorphism ActionPill - floating effect */}
+          <ActionPill
+            eventId={id}
+            slug={id}
+            image={image}
+            title={title}
+            location={location}
+            buzzScore={buzzScore}
+            ticketUrl={ticketUrl}
+            variant="light"
+          />
         </div>
       </div>
-    </Wrapper>
+    </div>
   );
 };
 
@@ -235,17 +229,75 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           "schaf", "sheep", "geschieden", "geschoren",
           "wenn schafe geschoren werden", "wenn schafe geschieden werden"
         ];
-        
+
         let filtered = (data || []).filter(event => {
           const searchText = `${event.title || ""} ${event.description || ""}`.toLowerCase();
           return !BLACKLIST.some(keyword => searchText.includes(keyword));
         });
 
-        // 3. Wende Overrides an
+        // 2. Wende Overrides an (VOR Deduplizierung!)
         filtered = filtered.map(event => ({
           ...event,
           buzz_score: overridesMap[event.external_id] ?? event.buzz_score
         }));
+
+        // 3. Deduplizierung mit Geo-Filter: Titel + Distanz
+        const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+          const R = 6371; // Earth radius in km
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        };
+
+        const deduplicateWithGeo = (events: any[]): any[] => {
+          const result: any[] = [];
+          const processed = new Set<number>();
+
+          for (let i = 0; i < events.length; i++) {
+            if (processed.has(i)) continue;
+
+            const event = events[i];
+            let bestEvent = event;
+
+            // Check gegen alle anderen Events
+            for (let j = i + 1; j < events.length; j++) {
+              if (processed.has(j)) continue;
+
+              const otherEvent = events[j];
+              const titleMatch = event.title.toLowerCase().trim() === otherEvent.title.toLowerCase().trim();
+
+              // Nur wenn Titel gleich und beide haben Koordinaten
+              if (titleMatch && event.latitude && event.longitude && otherEvent.latitude && otherEvent.longitude) {
+                const distance = haversineDistance(
+                  event.latitude,
+                  event.longitude,
+                  otherEvent.latitude,
+                  otherEvent.longitude
+                );
+
+                // Wenn näher als 1km → als Duplikat markieren
+                if (distance < 1) {
+                  processed.add(j);
+                  // Keep the one with higher score
+                  if (otherEvent.buzz_score > bestEvent.buzz_score) {
+                    bestEvent = otherEvent;
+                  }
+                }
+              }
+            }
+
+            result.push(bestEvent);
+            processed.add(i);
+          }
+
+          return result;
+        };
+
+        filtered = deduplicateWithGeo(filtered);
 
         const diversified = diversifyEvents(filtered, 2);
         setAllEvents(diversified.slice(0, maxEvents * 2));
@@ -351,15 +403,9 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
           {/* 2x2 Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {cardEvents.map((event) => (
-              <CompactCard 
+              <CompactCard
                 key={event.id}
                 {...event}
-                eventId={event.externalId}
-                onBuzzChange={(newScore) => {
-                  setAllEvents(prev => prev.map(e => 
-                    e.id === event.id ? { ...e, buzz_score: newScore } : e
-                  ));
-                }}
                 onClick={() => onEventClick?.(event.id)}
                 onHide={() => setHiddenIds(prev => new Set([...prev, event.externalId]))}
               />

@@ -350,6 +350,41 @@ const nearbyEventsWithDistance = useMemo(() => {
 
 ---
 
+## 🔄 Event Deduplication Logic (TODO - Affiliate Integration)
+
+**Status:** ✅ MVP implementiert (Title-basiert)
+
+### Aktuelle Implementierung
+- **Datei:** `src/components/EliteExperiencesSection.tsx` (Zeilen ~245-255)
+- **Methode:** Simple Title-basierte Deduplizierung
+- **Logik:** Behält Event mit höherem `buzz_score` bei Duplikaten
+- **Anwendung:** Nur in EliteExperiencesSection (Must-See Events)
+
+**Beispiel:** Foundation Beyeler 1.3 + Foundation Beyeler 6.2 → nur 6.2 bleibt
+
+### Nächster Schritt: Affiliate Integration
+Wenn Affiliate-Partner Events hinzufügen:
+1. **Hybrid-Deduplizierung** implementieren (state-of-the-art):
+   - Geo-Filter: Events within 1-2km Radius
+   - Fuzzy Name Matching: Jaro-Winkler Distance >85%
+   - Scoring: `(geo_score * 0.4 + name_similarity * 0.6)`
+
+2. **Libraries:**
+   - `rapid-fuzzy` oder `fuse.js` für Fuzzy Matching
+   - Haversine Distance für Geo-Berechnung (bereits vorhanden)
+
+3. **Integration in Backend:**
+   - Reusable Utility Function: `src/utils/deduplicateEvents.ts`
+   - Datentafel für Duplikat-Tracking: `is_duplicate_of` Flag
+   - In allen Event-Sections anwenden (nicht nur Elite)
+
+4. **Test-Cases:**
+   - Museum Tinguely Varianten testen
+   - "Kunstmuseum" vs "Art Museum" fuzzy matching
+   - Geo-Clustering für Events am selben Ort
+
+---
+
 ## 🔒 Supabase Security: Pro Plan Features (TODO)
 
 Wenn du auf den **Supabase Pro Plan** upgradest, aktiviere diese Security-Features:
