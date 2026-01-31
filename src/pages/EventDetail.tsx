@@ -482,7 +482,9 @@ const getDistanceInfo = (lat: number, lng: number): { city: string; distance: st
 
 const EventDetail = () => {
   const { slug: urlSlug } = useParams<{ slug: string }>();
-  const [currentSlug, setCurrentSlug] = useState(urlSlug);
+  // Decode URL-encoded slug (e.g., from Pinterest links with spaces/special chars)
+  const decodedSlug = urlSlug ? decodeURIComponent(urlSlug) : undefined;
+  const [currentSlug, setCurrentSlug] = useState(decodedSlug);
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
@@ -493,17 +495,19 @@ const EventDetail = () => {
 
   // Sync with URL changes (e.g., browser back/forward)
   useEffect(() => {
-    if (urlSlug && urlSlug !== currentSlug) {
-      setCurrentSlug(urlSlug);
+    if (urlSlug && decodedSlug !== currentSlug) {
+      setCurrentSlug(decodedSlug);
     }
-  }, [urlSlug]);
+  }, [decodedSlug]);
 
   // Swap to another event without page reload
   const swapToEvent = (newSlug: string) => {
     setCurrentSlug(newSlug);
     setDynamicEvent(null);
     setShowFullDescription(false);
-    window.history.pushState(null, "", `/event/${newSlug}`);
+    // Encode slug for URL to handle special characters properly
+    const encodedNewSlug = encodeURIComponent(newSlug);
+    window.history.pushState(null, "", `/event/${encodedNewSlug}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -846,7 +850,7 @@ const EventDetail = () => {
   const pageDescription = event.description
     ? event.description.substring(0, 155) + (event.description.length > 155 ? '...' : '')
     : `${event.title} in ${event.location} - Entdecke Events in der Schweiz auf EventBuzzer`;
-  const pageUrl = `${SITE_URL}/event/${slug}`;
+  const pageUrl = `${SITE_URL}/event/${encodeURIComponent(slug || "")}`;
 
   return (
     <div className="min-h-screen bg-white">

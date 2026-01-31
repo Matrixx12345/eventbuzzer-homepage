@@ -293,7 +293,8 @@ let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
 
 for (const event of filteredEvents) {
   const slug = event.external_id || event.id;
-  const eventUrl = `${SITE_URL}/event/${slug}`;
+  const encodedSlug = encodeURIComponent(slug);
+  const eventUrl = `${SITE_URL}/event/${encodedSlug}`;
 
   const row = [
     csvEscape(event.image_url),
