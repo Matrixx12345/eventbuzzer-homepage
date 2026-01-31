@@ -907,14 +907,14 @@ const EventDetail = () => {
         <div className="bg-stone-50 flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[48vh] lg:rounded-r-2xl">
           {/* Title - Modal Style */}
           <h1
-            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-6 mt-4 lg:mt-6"
+            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-6 mt-2"
             style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
           >
             {event.title}
           </h1>
 
           {/* Description - Scrollable area */}
-          <div className="flex-1 overflow-y-auto min-h-0 mb-4">
+          <div className="flex-1 overflow-y-auto min-h-0 mb-2">
             {event.description && (
               <div className="text-base text-gray-700 leading-relaxed">
                 <p
@@ -925,7 +925,7 @@ const EventDetail = () => {
                     WebkitHyphens: 'auto',
                     ...(showFullDescription ? {} : {
                       display: '-webkit-box',
-                      WebkitLineClamp: 8,
+                      WebkitLineClamp: 5,
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden'
                     })
@@ -934,12 +934,14 @@ const EventDetail = () => {
                   {event.description}
                 </p>
                 {event.description.length > 400 && (
-                  <button
-                    onClick={() => setShowFullDescription(!showFullDescription)}
-                    className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold mt-2 opacity-80"
-                  >
-                    {showFullDescription ? 'weniger' : 'mehr lesen'}
-                  </button>
+                  <div className="mt-3 pt-2">
+                    <button
+                      onClick={() => setShowFullDescription(!showFullDescription)}
+                      className="text-indigo-900 hover:text-indigo-950 underline underline-offset-2 font-semibold opacity-90 hover:opacity-100 transition-opacity"
+                    >
+                      {showFullDescription ? '← weniger' : 'Mehr lesen →'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
