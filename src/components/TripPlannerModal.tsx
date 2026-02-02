@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect, memo } from 'react';
 import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
@@ -778,14 +778,19 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             body {
               font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
               margin: 0;
-              padding: 75px;
+              padding: 40px;
               color: #1f2937;
-              background: white;
+              background: #f9f9f9;
               line-height: 1.6;
             }
 
             .container {
-              max-width: 700px;
+              max-width: 900px;
+              margin: 0 auto;
+              background: white;
+              padding: 75px;
+              border-radius: 8px;
+              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             }
 
             /* HEADER */
@@ -1492,4 +1497,4 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   );
 };
 
-export default TripPlannerModal;
+export default memo(TripPlannerModal);

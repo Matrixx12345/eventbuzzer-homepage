@@ -641,6 +641,11 @@ const EventList1 = () => {
     setSelectedEvent(null);
   }, []);
 
+  // Stable no-op function for TripPlannerModal onClose
+  const handleTripPlannerClose = useCallback(() => {
+    // Trip planner is always open in this view
+  }, []);
+
 
   // Calculate subcategories for selected category
   const subCategories = useMemo(() => {
@@ -1387,7 +1392,7 @@ const EventList1 = () => {
                 onEventClick={(eventId) => handleMapPinClick(eventId)}
                 isVisible={true}
                 selectedEventIds={favoriteIds}
-                plannedEvents={plannedEventsByDay[activeDay] || []}
+                plannedEvents={useMemo(() => plannedEventsByDay[activeDay] || [], [plannedEventsByDay, activeDay])}
                 activeDay={activeDay}
                 hoveredEventId={hoveredEventId}
                 showOnlyEliteAndFavorites={false}
@@ -1433,7 +1438,7 @@ const EventList1 = () => {
             <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
               <TripPlannerModal
                 isOpen={true}
-                onClose={() => {}}
+                onClose={handleTripPlannerClose}
                 allEvents={rawEvents}
                 isFlipped={false}
                 plannedEventsByDay={plannedEventsByDay}

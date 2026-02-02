@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, forwardRef, useImperativeHandle, memo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Supercluster from "supercluster";
@@ -2004,4 +2004,4 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
 EventsMapComponent.displayName = "EventsMap";
 
-export default EventsMapComponent;
+export default memo(EventsMapComponent);
