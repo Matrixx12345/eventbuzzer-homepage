@@ -115,8 +115,9 @@ const EventCard = ({
   previousMapState,
   setPreviousMapState,
   // Trip Planner
-  plannedEvents,
-  setPlannedEvents,
+  plannedEventsByDay,
+  setPlannedEventsByDay,
+  activeDay,
   handleMapMovement,
 }: {
   event: Event;

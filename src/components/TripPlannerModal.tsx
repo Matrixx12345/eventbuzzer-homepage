@@ -668,7 +668,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     }
   }, [plannedEventsByDay, generateGoogleMapsUrl]);
 
-  // Handler to export trip as PDF with QR code
+  // Handler to export trip as PDF with QR code and timeline layout
   const handleExportPDF = useCallback(() => {
     const allEvents = Object.values(plannedEventsByDay || {}).flat();
     const validEvents = allEvents.filter(pe => pe && pe.event);
@@ -684,7 +684,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       return;
     }
 
-    // Generate QR code URL - kleiner (200x200)
+    // Generate QR code URL (200x200 for PDF)
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
 
     // Create PDF content HTML
@@ -702,69 +702,83 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       return match ? match[0] : text;
     };
 
+    // Helper to format duration
+    const formatDuration = (minutes: number): string => {
+      if (!minutes) return '⏱️ 2h';
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours > 0 && mins > 0) return `⏱️ ${hours}h ${mins}min`;
+      if (hours > 0) return `⏱️ ${hours}h`;
+      return `⏱️ ${mins}min`;
+    };
+
     // Group events by day from plannedEventsByDay structure
     const daysCount = totalDays || 1;
-    const eventsByDay: Record<number, typeof validEvents> = {};
 
-    // Use actual day-based structure instead of artificial splitting
-    for (let day = 1; day <= daysCount; day++) {
-      const dayEvents = plannedEventsByDay?.[day] || [];
-      eventsByDay[day] = dayEvents.filter(pe => pe && pe.event);
-    }
+    // Generate HTML for all days with timeline layout
+    const daysHTML = Array.from({ length: daysCount }, (_, dayIndex) => {
+      const dayNumber = dayIndex + 1;
+      const dayLabel = `Tag ${dayNumber}`;
+      const dayEvents = plannedEventsByDay?.[dayNumber] || [];
+      const validDayEvents = dayEvents.filter(pe => pe && pe.event);
 
-    // Generate HTML for all days
-    const eventsByDayHTML = Object.entries(eventsByDay)
-      .map(([dayNum, dayEvents]) => {
-        const dayNumber = parseInt(dayNum);
-        const dayLabel = daysCount === 1 ? 'Tag' : `Tag ${dayNumber}`;
+      if (validDayEvents.length === 0) return '';
 
-        const dayEventsHTML = dayEvents
-          .map((pe, dayIndex) => {
-            const dayEventIndex = dayIndex + 1;
-            const shortDesc = pe.event.short_description || pe.event.description || '';
-            const truncatedDesc = truncateAtFirstSentence(shortDesc);
+      // Generate timeline + events HTML for this day
+      const timelineEventPairs = validDayEvents
+        .map((pe) => {
+          const shortDesc = pe.event.short_description || pe.event.description || '';
+          const truncatedDesc = truncateAtFirstSentence(shortDesc);
+          const location = pe.event.address_city || pe.event.location || 'Location';
+          const imageUrl = pe.event.image_url || '';
+          const durationFormatted = formatDuration(pe.duration);
 
-            return `
-        <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 6px; background: #ffffff;">
-          <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;">
-            <div style="background: #667eea; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0;">
-              ${dayEventIndex}
-            </div>
-            <div>
-              <div style="font-weight: 600; font-size: 16px; color: #1f2937; margin-bottom: 2px;">
-                ${pe.event.title}
+          return `
+            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;">
+              <!-- Timeline time (left) -->
+              <div style="width: 50px; flex-shrink: 0; text-align: right; padding-top: 2px;">
+                <div style="font-size: 13px; color: #667eea; font-weight: 600;">
+                  ${pe.startTime || '09:00'}
+                </div>
+              </div>
+
+              <!-- Event Card (right) with thumbnail -->
+              <div style="flex: 1; border: 2px solid #d1d5db; border-radius: 8px; padding: 10px; background: white; display: flex; gap: 10px;">
+                <!-- Thumbnail Image -->
+                ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 60px; height: 60px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">` : '<div style="width: 60px; height: 60px; border-radius: 6px; background: #e5e7eb; flex-shrink: 0;"></div>'}
+
+                <!-- Event Details -->
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-weight: 600; font-size: 14px; color: #1f2937; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${pe.event.title}
+                  </div>
+                  <div style="color: #4b5563; font-size: 11px; margin-bottom: 3px;">
+                    📍 ${location}
+                  </div>
+                  ${truncatedDesc ? `<div style="color: #6b7280; font-size: 11px; margin-bottom: 3px; line-height: 1.3;">
+                    ${truncatedDesc}
+                  </div>` : ''}
+                  <div style="color: #9ca3af; font-size: 10px;">
+                    ${durationFormatted}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-            <div style="margin-left: 42px; margin-top: 10px;">
-              <div style="color: #4b5563; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
-                📍 ${pe.event.address_city || pe.event.location || 'Location'}
-              </div>
-              ${truncatedDesc ? `<div style="color: #6b7280; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
-                ${truncatedDesc}
-              </div>` : ''}
-              <div style="color: #9ca3af; font-size: 12px;">
-                ⏱️ ${pe.duration || 120} Minuten
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-          })
-          .join('');
+          `;
+        })
+        .join('');
 
-        return `
-        <div style="margin-bottom: 32px; page-break-inside: avoid;">
-          <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 2px solid #667eea;">
+      return `
+        <div style="margin-bottom: 24px; page-break-inside: avoid; border: 2px solid #d1d5db; border-radius: 8px; padding: 16px; background: white;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0 0 14px 0; padding-bottom: 10px; border-bottom: 2px solid #d1d5db;">
             ${dayLabel}
           </h3>
-          ${dayEventsHTML}
+          <div style="margin-left: 0;">
+            ${timelineEventPairs}
+          </div>
         </div>
       `;
-      })
-      .join('');
-
-    const eventsList = eventsByDayHTML;
+    }).join('');
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -776,35 +790,29 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
               margin: 0;
-              padding: 20px;
+              padding: 16px;
               color: #1f2937;
               background: white;
               line-height: 1.6;
             }
             .container {
-              max-width: 700px;
+              max-width: 1200px;
               margin: 0 auto;
             }
-            .logo {
+            .header {
               text-align: center;
               margin-bottom: 24px;
-              padding-bottom: 16px;
-              border-bottom: 2px solid #667eea;
             }
             .logo-text {
               font-size: 24px;
               font-weight: 700;
               color: #667eea;
-              margin: 0;
+              margin: 0 0 8px 0;
             }
-            .header-info {
-              text-align: center;
-              margin-bottom: 28px;
-            }
-            .date {
+            .header-date {
               color: #6b7280;
               font-size: 13px;
-              margin-bottom: 8px;
+              margin-bottom: 4px;
             }
             .event-count {
               color: #1f2937;
@@ -815,20 +823,21 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               display: flex;
               flex-direction: column;
               align-items: center;
-              margin: 32px 0;
+              margin: 24px 0;
               padding: 20px;
-              border: 1px solid #e5e7eb;
-              border-radius: 6px;
+              border: 2px solid #d1d5db;
+              border-radius: 8px;
+              background: white;
+              page-break-inside: avoid;
             }
             .qr-code {
-              text-align: center;
-              margin-bottom: 16px;
+              margin-bottom: 12px;
             }
             .qr-code img {
               width: 180px;
               height: 180px;
-              border: 1px solid #d1d5db;
-              border-radius: 4px;
+              border: 2px solid #d1d5db;
+              border-radius: 6px;
               display: block;
             }
             .qr-description {
@@ -836,73 +845,34 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               font-size: 12px;
               color: #6b7280;
               line-height: 1.5;
-              max-width: 500px;
             }
             .qr-description strong {
               color: #1f2937;
               display: block;
-              margin-bottom: 6px;
-              font-size: 13px;
-            }
-            .events-section {
-              margin-top: 32px;
-            }
-            .events-title {
-              font-size: 16px;
-              font-weight: 600;
-              color: #1f2937;
-              margin-bottom: 20px;
-              padding-bottom: 12px;
-              border-bottom: 2px solid #667eea;
-            }
-            .event-item {
-              margin-bottom: 24px;
-              padding: 0;
-              border-top: 1px solid #e5e7eb;
-            }
-            .event-number {
-              background: #667eea;
-              color: white;
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              font-size: 14px;
-              flex-shrink: 0;
-              margin-bottom: 8px;
-            }
-            .event-title {
-              font-weight: 600;
-              font-size: 15px;
-              color: #1f2937;
               margin-bottom: 4px;
-            }
-            .event-tag {
-              color: #6b7280;
-              font-size: 12px;
-              margin-bottom: 10px;
-            }
-            .event-location {
-              color: #4b5563;
               font-size: 13px;
-              line-height: 1.5;
-              margin-bottom: 8px;
             }
-            .event-description {
-              color: #6b7280;
-              font-size: 13px;
-              line-height: 1.5;
-              margin-bottom: 8px;
+            .days-container {
+              margin-top: 24px;
+              display: flex;
+              gap: 16px;
+              flex-wrap: wrap;
             }
-            .event-duration {
-              color: #9ca3af;
-              font-size: 12px;
+            .day-section {
+              flex: 1;
+              min-width: 280px;
+              page-break-inside: avoid;
+            }
+            .day-title {
+              font-size: 16px;
+              font-weight: 700;
+              color: #1f2937;
+              margin: 0 0 12px 0;
+              padding-bottom: 8px;
+              border-bottom: 2px solid #d1d5db;
             }
             .footer {
-              margin-top: 40px;
+              margin-top: 32px;
               padding-top: 16px;
               border-top: 1px solid #e5e7eb;
               text-align: center;
@@ -912,7 +882,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             @media print {
               body {
                 margin: 0;
-                padding: 12px;
+                padding: 8px;
               }
               .container {
                 max-width: 100%;
@@ -920,7 +890,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               .qr-section {
                 page-break-inside: avoid;
               }
-              .event-item {
+              .day-section {
                 page-break-inside: avoid;
               }
             }
@@ -928,15 +898,14 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         </head>
         <body>
           <div class="container">
-            <div class="logo">
+            <!-- Header -->
+            <div class="header">
               <p class="logo-text">🎯 EventBuzzer</p>
+              <div class="header-date">${todayDate}</div>
+              <div class="event-count">${validEvents.length} ${validEvents.length === 1 ? 'Event' : 'Events'} in ${daysCount} ${daysCount === 1 ? 'Tag' : 'Tagen'}</div>
             </div>
 
-            <div class="header-info">
-              <div class="date">${todayDate}</div>
-              <div class="event-count">${validEvents.length} ${validEvents.length === 1 ? 'Event' : 'Events'}</div>
-            </div>
-
+            <!-- QR Code Section -->
             <div class="qr-section">
               <div class="qr-code">
                 <img src="${qrCodeUrl}" alt="Route QR Code">
@@ -947,12 +916,14 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               </div>
             </div>
 
-            <div class="events-section">
-              ${eventsList}
+            <!-- Days with Timelines -->
+            <div class="days-container">
+              ${daysHTML}
             </div>
 
+            <!-- Footer -->
             <div class="footer">
-              Erstellt mit EventBuzzer Trip Planner
+              Erstellt mit EventBuzzer Trip Planner • www.eventbuzzer.ch
             </div>
           </div>
         </body>
@@ -960,7 +931,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     `;
 
     // Open in new window for printing
-    const printWindow = window.open('', '', 'width=900,height=1200');
+    const printWindow = window.open('', '', 'width=1400,height=900');
     if (printWindow) {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
@@ -974,7 +945,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     } else {
       toast.error('Popup-Fenster konnte nicht geöffnet werden');
     }
-  }, [plannedEventsByDay, generateGoogleMapsUrl]);
+  }, [plannedEventsByDay, generateGoogleMapsUrl, totalDays]);
 
   // Calculate visible event slots based on current day's planned events
   // Minimum 3 event slots, grows with additional events
