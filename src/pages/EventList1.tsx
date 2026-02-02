@@ -1477,7 +1477,8 @@ const EventList1 = () => {
           event={selectedEvent}
           isOpen={modalOpen}
           onClose={closeEventModal}
-          plannedEvents={plannedEvents}
+          plannedEventsByDay={plannedEventsByDay}
+          activeDay={activeDay}
           onToggleTrip={handleToggleTrip}
         />
       )}

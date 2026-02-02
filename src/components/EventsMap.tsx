@@ -27,6 +27,7 @@ interface EventsMapProps {
   hoveredEventId?: string | null;
   favoriteEvents?: FavoriteEventWithCoords[];
   plannedEvents?: Array<{ eventId: string; event: any; duration: number }>;
+  activeDay?: number;  // Current day for trip planner
   showOnlyEliteAndFavorites?: boolean;
   customControls?: boolean;
   showSearchButton?: boolean;
@@ -161,6 +162,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       showOnlyEliteAndFavorites = false,
       favoriteEvents = [],
       plannedEvents = [],
+      activeDay = 1,
       customControls = false,
       showSearchButton = false,
       onSearchThisArea,

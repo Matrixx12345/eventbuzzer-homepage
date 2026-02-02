@@ -11,13 +11,14 @@ interface EventDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   variant?: 'default' | 'solid'; // default = 75% transparent, solid = 85% less transparent
-  // Trip Planner integration
-  plannedEvents?: Array<{
+  // Trip Planner integration - new day-based structure
+  plannedEventsByDay?: Record<number, Array<{
     eventId: string;
     event: any;
     duration: number;
-  }>;
-  onToggleTrip?: (event: any) => void;
+  }>>;
+  activeDay?: number;
+  onToggleTrip?: (event: any, day?: number) => void;
 }
 
 // Format tag names for display
@@ -54,7 +55,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   isOpen,
   onClose,
   variant = 'default',
-  plannedEvents = [],
+  plannedEventsByDay = {},
+  activeDay = 1,
   onToggleTrip
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -115,7 +117,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   if (!event) return null;
 
   const isFavorited = isFavorite(event.id);
-  const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+  const isInTrip = Object.values(plannedEventsByDay || {})
+    .flat()
+    .some(pe => pe.eventId === event.id);
 
   // Calculate display score with user rating boost
   const baseScore = (event.buzz_score || event.relevance_score || 75) / 20;
@@ -465,7 +469,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <button
                 onClick={() => {
                   if (onToggleTrip) {
-                    onToggleTrip(event);
+                    onToggleTrip(event, activeDay);
                   }
                 }}
                 className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"

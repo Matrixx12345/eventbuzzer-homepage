@@ -547,7 +547,8 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
   // Handler to generate Google Maps URL
   const generateGoogleMapsUrl = useCallback(() => {
-    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const validEvents = allEvents.filter(pe => pe && pe.event);
 
     // Extract coordinates from planned events
     const coordinates: Array<{ lat: number; lng: number; title: string }> = [];
@@ -592,11 +593,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     url += `&travelmode=driving`;
 
     return url;
-  }, [plannedEvents]);
+  }, [plannedEventsByDay]);
 
   // Handler to export route to Google Maps
   const handleExportToGoogleMaps = useCallback(() => {
-    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
       toast.error('Mindestens 2 Events erforderlich');
@@ -636,11 +638,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
     window.open(url, '_blank');
     toast.success(isMobile ? 'Google Maps wird geöffnet...' : 'Google Maps geöffnet!');
-  }, [plannedEvents, generateGoogleMapsUrl]);
+  }, [plannedEventsByDay, generateGoogleMapsUrl]);
 
   // Handler to show QR code or open maps
   const handleShowQRCode = useCallback(() => {
-    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
       toast.error('Mindestens 2 Events erforderlich');
@@ -663,11 +666,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       // On desktop: Show QR code modal
       setShowQRCode(url);
     }
-  }, [plannedEvents, generateGoogleMapsUrl]);
+  }, [plannedEventsByDay, generateGoogleMapsUrl]);
 
   // Handler to export trip as PDF with QR code
   const handleExportPDF = useCallback(() => {
-    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
       toast.error('Mindestens 2 Events erforderlich');
@@ -698,21 +702,14 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       return match ? match[0] : text;
     };
 
-    // Group events by day - only split if multiple days exist
+    // Group events by day from plannedEventsByDay structure
     const daysCount = totalDays || 1;
     const eventsByDay: Record<number, typeof validEvents> = {};
 
-    if (daysCount === 1) {
-      // All events go to Tag 1
-      eventsByDay[1] = validEvents;
-    } else {
-      // Split events across multiple days
-      const eventsPerDay = Math.ceil(validEvents.length / daysCount);
-      for (let day = 1; day <= daysCount; day++) {
-        const startIdx = (day - 1) * eventsPerDay;
-        const endIdx = Math.min(startIdx + eventsPerDay, validEvents.length);
-        eventsByDay[day] = validEvents.slice(startIdx, endIdx);
-      }
+    // Use actual day-based structure instead of artificial splitting
+    for (let day = 1; day <= daysCount; day++) {
+      const dayEvents = plannedEventsByDay?.[day] || [];
+      eventsByDay[day] = dayEvents.filter(pe => pe && pe.event);
     }
 
     // Generate HTML for all days
@@ -722,8 +719,8 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         const dayLabel = daysCount === 1 ? 'Tag' : `Tag ${dayNumber}`;
 
         const dayEventsHTML = dayEvents
-          .map((pe, globalIndex) => {
-            const globalEventIndex = validEvents.indexOf(pe) + 1;
+          .map((pe, dayIndex) => {
+            const dayEventIndex = dayIndex + 1;
             const shortDesc = pe.event.short_description || pe.event.description || '';
             const truncatedDesc = truncateAtFirstSentence(shortDesc);
 
@@ -731,7 +728,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 6px; background: #ffffff;">
           <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;">
             <div style="background: #667eea; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0;">
-              ${globalEventIndex}
+              ${dayEventIndex}
             </div>
             <div>
               <div style="font-weight: 600; font-size: 16px; color: #1f2937; margin-bottom: 2px;">
@@ -977,7 +974,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     } else {
       toast.error('Popup-Fenster konnte nicht geöffnet werden');
     }
-  }, [plannedEvents, generateGoogleMapsUrl]);
+  }, [plannedEventsByDay, generateGoogleMapsUrl]);
 
   // Calculate visible event slots based on current day's planned events
   // Minimum 3 event slots, grows with additional events
