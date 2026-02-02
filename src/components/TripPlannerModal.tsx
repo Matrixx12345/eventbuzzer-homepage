@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
@@ -443,7 +443,11 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   const setPlannedEventsByDay = onSetPlannedEventsByDay || setLocalPlannedEventsByDay;
 
   // Get current day's events for rendering
-  const currentDayEvents = plannedEventsByDay[activeDay] || [];
+  // Memoize currentDayEvents to prevent render loops
+  const currentDayEvents = useMemo(
+    () => plannedEventsByDay[activeDay] || [],
+    [plannedEventsByDay, activeDay]
+  );
 
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string | null>>({});
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
