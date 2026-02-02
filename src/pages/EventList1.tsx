@@ -513,9 +513,6 @@ const EventList1 = () => {
   // Map ref for Trip Planner
   const mapRef = useRef<any>(null);
 
-  // Feature flag for Trip Planner
-  const TRIP_PLANNER_ENABLED = import.meta.env.VITE_FEATURE_TRIP_PLANNER === 'true';
-
   // Use shared hooks
   const { rawEvents, loading, hoveredEventId, setHoveredEventId, handleMapEventsChange } = useEventData();
   const {
@@ -1331,23 +1328,21 @@ const EventList1 = () => {
               </button>
             </div>
 
-            {/* TRIP PLANNER SECTION - Feature Flag Gated */}
-            {TRIP_PLANNER_ENABLED && (
-              <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
-                <TripPlannerModal
-                  isOpen={true}
-                  onClose={() => {}}
-                  allEvents={rawEvents}
-                  isFlipped={false}
-                  plannedEvents={plannedEvents}
-                  onSetPlannedEvents={setPlannedEvents}
-                  activeDay={activeDay}
-                  setActiveDay={setActiveDay}
-                  totalDays={totalDays}
-                  setTotalDays={setTotalDays}
-                />
-              </div>
-            )}
+            {/* TRIP PLANNER SECTION - Always visible */}
+            <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
+              <TripPlannerModal
+                isOpen={true}
+                onClose={() => {}}
+                allEvents={rawEvents}
+                isFlipped={false}
+                plannedEvents={plannedEvents}
+                onSetPlannedEvents={setPlannedEvents}
+                activeDay={activeDay}
+                setActiveDay={setActiveDay}
+                totalDays={totalDays}
+                setTotalDays={setTotalDays}
+              />
+            </div>
 
 
             {/* Floating AI Wizard Button */}
