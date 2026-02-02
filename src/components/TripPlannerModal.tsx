@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
@@ -1023,17 +1023,33 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
   // Calculate visible event slots based on current day's planned events
   // Minimum 3 event slots, grows with additional events
-  const plannedEventsCount = currentDayEvents.filter(e => e && e.event).length;
-  const minEventSlots = 3;
-  const neededEventSlots = Math.max(minEventSlots, plannedEventsCount + 1);
-  const visibleEventSlots = TIME_POINTS.slice(0, neededEventSlots);
+  const plannedEventsCount = useMemo(
+    () => currentDayEvents.filter(e => e && e.event).length,
+    [currentDayEvents]
+  );
+
+  const neededEventSlots = Math.max(3, plannedEventsCount + 1);
+
+  const visibleEventSlots = useMemo(
+    () => TIME_POINTS.slice(0, neededEventSlots),
+    [neededEventSlots]
+  );
 
   // Create slot mapping for current day's events
-  const slotMap: Record<string, Event | null> = {};
-  TIME_POINTS.forEach((_, index) => {
-    const plannedEvent = currentDayEvents[index];
-    slotMap[`time-${index}`] = plannedEvent ? plannedEvent.event : null;
-  });
+  const slotMap = useMemo(() => {
+    const map: Record<string, Event | null> = {};
+    TIME_POINTS.forEach((_, index) => {
+      const plannedEvent = currentDayEvents[index];
+      map[`time-${index}`] = plannedEvent ? plannedEvent.event : null;
+    });
+    return map;
+  }, [currentDayEvents]);
+
+  // Memoize day button array to prevent re-renders
+  const dayButtonArray = useMemo(
+    () => Array.from({ length: totalDays || 2 }),
+    [totalDays]
+  );
 
   const tripPlannerContent = (
     <div className="flex flex-col">
@@ -1189,7 +1205,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             {/* Tag Links */}
             <div className="flex items-center gap-3">
               {/* Dynamic Tags */}
-              {Array.from({ length: totalDays || 2 }).map((_, index) => (
+              {dayButtonArray.map((_, index) => (
                 <button
                   key={`tag-${index + 1}`}
                   onClick={() => setActiveDay?.(index + 1)}
@@ -1314,7 +1330,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 {/* Tag Links + Plus - kompakt in der Mitte */}
                 <div className="flex items-center gap-3">
                   {/* Dynamic Tags */}
-                  {Array.from({ length: totalDays || 2 }).map((_, index) => (
+                  {dayButtonArray.map((_, index) => (
                     <button
                       key={`tag-flipped-${index + 1}`}
                       onClick={() => setActiveDay?.(index + 1)}
