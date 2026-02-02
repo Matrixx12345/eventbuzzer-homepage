@@ -14,6 +14,131 @@ npm run dev
 
 Server läuft auf: http://localhost:8081
 
+---
+
+## ⚠️ React Performance & Render Loop Detection
+
+**WICHTIG:** Render Loops sind schwer zu debuggen. Wenn der **Lüfter ständig läuft** oder die **CPU hoch ist**, überprüfe IMMER diese Patterns:
+
+### 🔴 Häufige Fehler
+
+#### 1. **Array/Object References in Dependencies**
+```tsx
+// ❌ FALSCH - Neues Array wird jedem Render erstellt!
+const currentDayEvents = plannedEventsByDay[activeDay] || [];
+
+const handler = useCallback(() => {
+  // ...
+}, [currentDayEvents]); // currentDayEvents ändert sich IMMER!
+```
+
+**Problem:** `currentDayEvents` ist ein neuer Array jedes Render → Dependency ändert sich → Handler wird neu erstellt → Re-render → Loop! ♻️
+
+**✅ LÖSUNG: useMemo verwenden**
+```tsx
+// ✅ RICHTIG - Array wird nur neu erstellt wenn nötig
+const currentDayEvents = useMemo(
+  () => plannedEventsByDay[activeDay] || [],
+  [plannedEventsByDay, activeDay]
+);
+
+const handler = useCallback(() => {
+  // ...
+}, [currentDayEvents]); // Jetzt stabil!
+```
+
+#### 2. **State Updates in Effects ohne Dependencies**
+```tsx
+// ❌ FALSCH - useEffect ohne Dependencies
+useEffect(() => {
+  setState(something);
+}); // Triggert nach JEDEM Render!
+```
+
+**✅ RICHTIG:**
+```tsx
+useEffect(() => {
+  setState(something);
+}, [dependency]); // Mit expliziten Dependencies!
+```
+
+#### 3. **setState in useCallback ohne Memoization**
+```tsx
+// ❌ FALSCH
+const moveEvent = useCallback((index) => {
+  const newArray = [...currentDayEvents]; // Neue Reference!
+  setPlannedEventsByDay(updated);
+}, [currentDayEvents]); // Neue Dependency jedes Render!
+```
+
+#### 4. **Inline Objects/Arrays in Props**
+```tsx
+// ❌ FALSCH
+<Component data={{ foo: 'bar' }} /> // Neues Object jedem Render!
+
+// ✅ RICHTIG
+const data = useMemo(() => ({ foo: 'bar' }), []);
+<Component data={data} />
+```
+
+### 🔍 Debugging Checklist
+
+Wenn **Lüfter läuft / CPU hoch**:
+
+1. **Browser DevTools → Performance Tab:**
+   - Recording für 5 Sekunden starten
+   - Schauen welche Komponenten ständig re-rendern
+
+2. **Console auf Warnings checken:**
+   - "Too many re-renders"
+   - "Nested button" Warnings (HTML-Nesting Fehler)
+
+3. **Code Review für diese Patterns:**
+   ```tsx
+   // useCallback mit Array/Object Dependency
+   const myHandler = useCallback(() => {
+     // ...
+   }, [data || []]); // ← Array wird neu erstellt!
+
+   // Array/Object ohne useMemo in Dependencies
+   const items = someState.items || [];
+   useEffect(() => {
+     // ...
+   }, [items]); // ← items ändert sich immer!
+   ```
+
+4. **Vite Dev Server neustarten:**
+   ```bash
+   Ctrl+C
+   npm run dev
+   ```
+
+5. **Browser Cache löschen:**
+   - DevTools → Application → Clear site data
+   - Hard Refresh (Cmd+Shift+R)
+
+### ✅ Best Practices für dieses Projekt
+
+**TripPlannerModal.tsx Pattern:**
+```tsx
+// 1. Import useMemo
+import React, { useState, useCallback, useRef, useMemo } from 'react';
+
+// 2. Memoize any derived state
+const currentDayEvents = useMemo(
+  () => plannedEventsByDay[activeDay] || [],
+  [plannedEventsByDay, activeDay]
+);
+
+// 3. useCallback mit stabilen Dependencies
+const handleMove = useCallback((index) => {
+  const updated = { ...plannedEventsByDay, [activeDay]: newEvents };
+  setPlannedEventsByDay(updated);
+}, [plannedEventsByDay, activeDay, setPlannedEventsByDay]);
+```
+
+---
+
 ## 📁 Projekt-Struktur
 
 ```
