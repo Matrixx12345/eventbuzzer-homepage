@@ -817,7 +817,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               display: flex;
               flex-direction: row;
               align-items: flex-start;
-              gap: 20px;
+              gap: 5px;
               flex-shrink: 0;
               margin-right: 20px;
             }
@@ -834,8 +834,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               text-align: left;
               display: flex;
               flex-direction: column;
-              gap: 4px;
-              margin-left: 25px;
+              gap: 2px;
             }
 
             .qr-text strong {
@@ -952,26 +951,26 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
             .event-title-line {
               font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-              font-size: 14px;
+              font-size: 17px;
               font-weight: 600;
               color: #1f2937;
-              margin-bottom: 4px;
+              margin-bottom: 6px;
               line-height: 1.3;
               letter-spacing: 0.2px;
             }
 
             .event-description {
               font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-              font-size: 12px;
+              font-size: 13px;
               color: #6b7280;
-              margin-bottom: 4px;
+              margin-bottom: 3px;
               line-height: 1.4;
               letter-spacing: 0.2px;
             }
 
             .event-duration {
               font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-              font-size: 11px;
+              font-size: 12px;
               color: #9ca3af;
               line-height: 1.3;
               letter-spacing: 0.1px;
@@ -1010,7 +1009,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 <img src="${qrCodeUrl}" alt="Route QR Code" class="qr-code">
                 <div class="qr-text">
                   <strong>Mit Handy scannen<br>für Google Maps</strong>
-                  <span>Öffne die komplette Route mit allen Zwischenstationen</span>
+                  <span>Öffne die komplette Route<br>mit allen Zwischenstationen</span>
                 </div>
               </div>
             </div>
