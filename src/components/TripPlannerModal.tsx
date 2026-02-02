@@ -740,30 +740,22 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             const durationFormatted = formatDuration(pe.duration);
 
             return `
-              <div class="event-item" style="display: flex; gap: 14px; align-items: center;">
-                <!-- Thumbnail -->
-                <div style="flex-shrink: 0;">
-                  ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 90px; height: 68px; border-radius: 6px; object-fit: cover;">` : '<div style="width: 90px; height: 68px; border-radius: 6px; background: #e5e7eb;"></div>'}
+              <div class="event-item">
+                <!-- Zone 1: Thumbnail (4:3) -->
+                <div class="event-thumb">
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}">` : ''}
                 </div>
-                <!-- Time -->
-                <div style="flex-shrink: 0; width: 50px; text-align: center;">
-                  <div style="font-size: 14px; font-weight: 600; color: #1f2937;">
-                    ${time}
-                  </div>
+                <!-- Zone 2: Zeit -->
+                <div class="event-time">
+                  <div>${time}</div>
                 </div>
-                <!-- Separator -->
-                <div style="width: 1px; height: 60px; background: #d1d5db;"></div>
-                <!-- Content -->
-                <div style="flex: 1;">
-                  <div style="font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">
-                    ${pe.event.title} | ${location}
-                  </div>
-                  ${truncatedDesc ? `<div style="font-size: 12px; color: #6b7280; margin-bottom: 3px; line-height: 1.4;">
-                    ${truncatedDesc}
-                  </div>` : ''}
-                  <div style="font-size: 11px; color: #9ca3af;">
-                    ${durationFormatted}
-                  </div>
+                <!-- Zone 3: Trennlinie -->
+                <div class="event-separator"></div>
+                <!-- Zone 4: Textblock -->
+                <div class="event-content">
+                  <div class="event-title-line">${pe.event.title} | ${location}</div>
+                  ${truncatedDesc ? `<div class="event-description">${truncatedDesc}</div>` : ''}
+                  <div class="event-duration">${durationFormatted}</div>
                 </div>
               </div>
             `;
@@ -779,102 +771,192 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           <meta charset="UTF-8">
           <title>Trip Planner - EventBuzzer</title>
           <style>
+            * {
+              box-sizing: border-box;
+            }
+
             body {
               font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
               margin: 0;
-              padding: 30px 40px;
+              padding: 75px;
               color: #1f2937;
               background: white;
               line-height: 1.6;
             }
+
             .container {
-              max-width: 650px;
-              margin: 0 auto;
+              max-width: 700px;
             }
 
-            /* Header - Logo and QR on same line */
+            /* HEADER */
             .header {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              margin-bottom: 40px;
-              padding-bottom: 30px;
-              border-bottom: 1px solid #d1d5db;
-            }
-            .logo-text {
-              font-family: Georgia, 'Playfair Display', serif;
-              font-size: 36px;
-              font-weight: 700;
-              color: #1f2937;
-              margin: 0;
-              letter-spacing: 2px;
+              margin-bottom: 50px;
             }
 
-            /* QR Section - right side */
+            .logo-text {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 40px;
+              font-weight: 400;
+              color: #1f2937;
+              margin: 0;
+              letter-spacing: 4px;
+              flex: 1;
+            }
+
+            /* QR Container - Rechts */
             .qr-container {
               display: flex;
-              gap: 12px;
-              align-items: flex-start;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 10px;
+              flex-shrink: 0;
             }
-            .qr-code img {
-              width: 140px;
-              height: 140px;
-              border: 1px solid #d1d5db;
-              border-radius: 4px;
+
+            .qr-code {
+              width: 100px;
+              height: 100px;
+              border: none;
+              border-radius: 0px;
+              display: block;
             }
+
             .qr-text {
+              text-align: right;
               display: flex;
               flex-direction: column;
-              justify-content: center;
-              gap: 4px;
+              gap: 3px;
             }
+
             .qr-text strong {
-              font-size: 12px;
-              font-weight: 700;
-              color: #1f2937;
-              line-height: 1.3;
-            }
-            .qr-text span {
               font-size: 11px;
+              font-weight: 600;
+              color: #1f2937;
+              line-height: 1.4;
+            }
+
+            .qr-text span {
+              font-size: 10px;
               color: #6b7280;
               line-height: 1.3;
             }
 
-            /* Days Container - all days undereinander */
+            /* DAYS CONTAINER */
             .days-container {
               display: flex;
               flex-direction: column;
-              gap: 24px;
+              gap: 28px;
             }
 
-            /* Day Section with rounded border */
+            /* DAY SECTION */
             .day-section {
-              border: 1px solid #d1d5db;
-              border-radius: 18px;
-              padding: 24px;
+              border: 1px solid #e5e7eb;
+              border-radius: 15px;
+              padding: 28px;
               page-break-inside: avoid;
               background: white;
             }
+
             .day-title {
-              font-size: 14px;
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-size: 11px;
               font-weight: 700;
               color: #1f2937;
-              margin: 0 0 16px 0;
-              letter-spacing: 0.5px;
+              margin: 0 0 20px 0;
+              letter-spacing: 1.5px;
+              text-transform: uppercase;
             }
 
-            /* Event entries */
+            /* EVENT ITEMS - 4 Zonen */
             .event-item {
-              margin-bottom: 18px;
+              display: flex;
+              gap: 14px;
+              margin-bottom: 20px;
+              align-items: stretch;
             }
+
             .event-item:last-child {
               margin-bottom: 0;
             }
 
+            /* Zone 1: Thumbnail */
+            .event-thumb {
+              flex-shrink: 0;
+              width: 80px;
+              height: 60px;
+              border-radius: 6px;
+              overflow: hidden;
+              background: #e5e7eb;
+            }
+
+            .event-thumb img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+            }
+
+            /* Zone 2: Zeit */
+            .event-time {
+              flex-shrink: 0;
+              width: 45px;
+              text-align: center;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+
+            .event-time div {
+              font-size: 13px;
+              font-weight: 600;
+              color: #1f2937;
+              line-height: 1;
+            }
+
+            /* Zone 3: Trennlinie */
+            .event-separator {
+              width: 0.5px;
+              background: #e5e7eb;
+              flex-shrink: 0;
+              margin: 0 8px;
+            }
+
+            /* Zone 4: Textblock */
+            .event-content {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+
+            .event-title-line {
+              font-size: 13px;
+              font-weight: 600;
+              color: #1f2937;
+              margin-bottom: 6px;
+              line-height: 1.3;
+            }
+
+            .event-description {
+              font-size: 11px;
+              color: #6b7280;
+              margin-bottom: 4px;
+              line-height: 1.4;
+            }
+
+            .event-duration {
+              font-size: 10px;
+              color: #9ca3af;
+              line-height: 1.3;
+            }
+
+            /* FOOTER */
             .footer {
-              margin-top: 40px;
-              padding-top: 16px;
-              border-top: 1px solid #d1d5db;
+              margin-top: 50px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
               text-align: center;
               color: #9ca3af;
               font-size: 10px;
@@ -883,7 +965,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             @media print {
               body {
                 margin: 0;
-                padding: 20px 30px;
+                padding: 75px;
               }
               .container {
                 max-width: 100%;
