@@ -26,6 +26,7 @@ interface EventsMapProps {
   selectedEventIds?: string[];
   hoveredEventId?: string | null;
   favoriteEvents?: FavoriteEventWithCoords[];
+  plannedEvents?: Array<{ eventId: string; event: any; duration: number }>;
   showOnlyEliteAndFavorites?: boolean;
   customControls?: boolean;
   showSearchButton?: boolean;
@@ -159,6 +160,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       hoveredEventId = null,
       showOnlyEliteAndFavorites = false,
       favoriteEvents = [],
+      plannedEvents = [],
       customControls = false,
       showSearchButton = false,
       onSearchThisArea,
@@ -175,16 +177,19 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
   ) => {
   // DEBUG: Log what selectedEventIds we're receiving
   console.log('🎯 EventsMap received selectedEventIds:', selectedEventIds);
+  console.log('📍 EventsMap received plannedEvents:', plannedEvents?.length || 0, 'items');
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const favoriteMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const eliteMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const plannedEventMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const superclusterRef = useRef<Supercluster | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activePopupRef = useRef<mapboxgl.Popup | null>(null);
   const eliteEventsRef = useRef<MapEvent[]>([]);
+  const polylineSourceRef = useRef<boolean>(false);
 
   // Expose map instance via ref for external components (e.g., EventList1 for Trip Planner)
   useImperativeHandle(ref, () => map.current, []);
@@ -199,6 +204,56 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
   const [is3DMode, setIs3DMode] = useState(false);
   const [currentPitch, setCurrentPitch] = useState(0);
   const [currentBearing, setCurrentBearing] = useState(0);
+
+  // Route visibility state
+  const [routeVisible, setRouteVisible] = useState(true);
+
+  // Handle route toggle - just toggle the state, useEffect will handle visibility
+  const handleRouteToggle = useCallback(() => {
+    console.log('🔄 Route toggle clicked! Current routeVisible:', routeVisible);
+    setRouteVisible(prev => {
+      console.log('  Setting routeVisible to:', !prev);
+      return !prev;
+    });
+  }, [routeVisible]);
+
+
+  // Watch routeVisible state and toggle marker/polyline visibility
+  useEffect(() => {
+    if (!map.current) return;
+
+    console.log('👁️ Route visibility changed to:', routeVisible);
+    console.log('  plannedEventMarkersRef.current length:', plannedEventMarkersRef.current.length);
+
+    // Toggle polyline visibility
+    try {
+      if (map.current.getLayer('route-polyline-layer')) {
+        map.current.setLayoutProperty(
+          'route-polyline-layer',
+          'visibility',
+          routeVisible ? 'visible' : 'none'
+        );
+        console.log('✅ Polyline visibility set to:', routeVisible ? 'visible' : 'none');
+      }
+    } catch (e) {
+      console.warn('⚠️ Polyline error:', e);
+    }
+
+    // Toggle marker visibility - remove or add markers
+    plannedEventMarkersRef.current.forEach((marker, index) => {
+      try {
+        if (routeVisible) {
+          marker.addTo(map.current!);
+          console.log(`✅ Marker ${index} added back`);
+        } else {
+          marker.remove();
+          console.log(`✅ Marker ${index} removed`);
+        }
+      } catch (e) {
+        console.error(`❌ Error toggling marker ${index}:`, e);
+      }
+    });
+  }, [routeVisible]);
 
   // Toggle filter
   const toggleFilter = useCallback((filterKey: string) => {
@@ -232,6 +287,18 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
   // Stable Set for selectedEventIds (O(1) lookup statt O(n))
   const selectedIdsSet = useMemo(() => new Set(selectedEventIds), [selectedEventIds]);
+
+  // Map for planned events with their order numbers (1, 2, 3, etc.)
+  const plannedEventsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    console.log('📍 Creating plannedEventsMap from:', plannedEvents?.length || 0, 'events');
+    plannedEvents?.forEach((item, index) => {
+      map.set(item.eventId, index + 1);
+      console.log(`  - ${item.eventId} => #${index + 1}`);
+    });
+    console.log('📍 plannedEventsMap created with', map.size, 'entries');
+    return map;
+  }, [plannedEvents]);
 
   // Load events from Edge Function based on map bounds
   const loadEventsInView = useCallback(async () => {
@@ -629,6 +696,88 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         });
 
         // Create popup for performance mode event
+        const popup = new mapboxgl.Popup({
+          offset: 25,
+          closeButton: true,
+          closeOnClick: false,
+          maxWidth: '220px',
+          anchor: 'top-right'
+        }).setHTML(createPopupHTML(event));
+
+        // Marker erstellen
+        const marker = new mapboxgl.Marker({ element: wrapper })
+          .setLngLat([longitude, latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
+
+        markersRef.current.push(marker);
+      });
+
+      // Render planned events (numbered pins) in performance mode
+      console.log('🔢 Performance Mode - Planned Events:', plannedEvents?.length || 0);
+      plannedEvents?.forEach((plannedEvent) => {
+        const event = plannedEvent.event;
+        const orderNumber = plannedEventsMap.get(plannedEvent.eventId);
+        console.log(`🔢 Planned Event: ${event.title}, Order: ${orderNumber}, Lat: ${event.latitude}, Lng: ${event.longitude}`);
+        if (!orderNumber || !event.latitude || !event.longitude) {
+          console.log(`❌ Skipped: orderNumber=${orderNumber}, lat=${event.latitude}, lng=${event.longitude}`);
+          return;
+        }
+
+        const longitude = event.longitude;
+        const latitude = event.latitude;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.cursor = 'pointer';
+        wrapper.style.zIndex = '10002';
+
+        const inner = document.createElement('div');
+        inner.style.cssText = `
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: 2px solid white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          font-weight: bold;
+          color: white;
+          filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.4));
+          transition: transform 0.2s;
+        `;
+        inner.textContent = String(orderNumber);
+
+        wrapper.appendChild(inner);
+
+        // Hover-Animation
+        wrapper.addEventListener('mouseenter', () => {
+          inner.style.transform = 'scale(1.2)';
+        });
+        wrapper.addEventListener('mouseleave', () => {
+          inner.style.transform = 'scale(1)';
+        });
+
+        // Click-Handler
+        wrapper.addEventListener('click', () => {
+          if (onEventClick) {
+            onEventClick(event.id);
+            if (is3DMode && map.current) {
+              map.current.flyTo({
+                center: [longitude, latitude],
+                zoom: Math.max(map.current.getZoom(), 14),
+                pitch: 60,
+                bearing: 0,
+                duration: 2000,
+                essential: true
+              });
+            }
+          }
+        });
+
+        // Create popup for planned event
         const popup = new mapboxgl.Popup({
           offset: 25,
           closeButton: true,
@@ -1122,8 +1271,194 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       eliteMarkersRef.current.push(marker);
     });
 
-    console.log(`✅ Markers rendered - ${eliteMarkersRef.current.length} Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray)`);
-  }, [onEventClick, selectedIdsSet, showOnlyEliteAndFavorites, hoveredEventId, createPopupHTML]);
+    // ========================================
+    // PHASE 4: Render Planned Events (Trip Planner)
+    // Numbered pins for events in the trip planner
+    // ========================================
+    console.log('🔢 PHASE 4 - Planned Events:', plannedEvents?.length || 0);
+    plannedEventMarkersRef.current = [];
+    plannedEvents?.forEach((plannedEvent) => {
+      const event = plannedEvent.event;
+      const orderNumber = plannedEventsMap.get(plannedEvent.eventId);
+
+      console.log(`🔢 Planned Event Phase 4: ${event.title}, Order: ${orderNumber}, Lat: ${event.latitude}, Lng: ${event.longitude}`);
+      if (!orderNumber || !event.latitude || !event.longitude) {
+        console.log(`❌ Phase 4 Skipped: orderNumber=${orderNumber}, lat=${event.latitude}, lng=${event.longitude}`);
+        return;
+      }
+
+      const longitude = event.longitude;
+      const latitude = event.latitude;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'cursor: pointer; z-index: 10002;';
+
+      const inner = document.createElement('div');
+      inner.style.cssText = `
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: 2px solid white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.4));
+        transition: transform 0.2s;
+      `;
+      inner.textContent = String(orderNumber);
+
+      wrapper.appendChild(inner);
+
+      // Hover-Animation
+      wrapper.addEventListener('mouseenter', () => {
+        inner.style.transform = 'scale(1.2)';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        inner.style.transform = 'scale(1)';
+      });
+
+      // Click-Handler
+      wrapper.addEventListener('click', () => {
+        if (onEventClick) {
+          onEventClick(event.id);
+
+          // Fly to event in 3D mode
+          if (is3DMode && map.current) {
+            map.current.flyTo({
+              center: [longitude, latitude],
+              zoom: Math.max(map.current.getZoom(), 14),
+              pitch: 60,
+              bearing: 0,
+              duration: 2000,
+              essential: true
+            });
+          }
+        }
+      });
+
+      // Create popup for planned event
+      const popup = new mapboxgl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '220px',
+        className: 'event-popup',
+        anchor: 'top-right'
+      }).setHTML(createPopupHTML(event));
+
+      // Close any active popup when opening a new one
+      popup.on('open', () => {
+        if (activePopupRef.current && activePopupRef.current !== popup) {
+          activePopupRef.current.remove();
+        }
+        activePopupRef.current = popup;
+      });
+
+      console.log(`✅ Creating marker #${orderNumber} at [${longitude}, ${latitude}]`);
+      const marker = new mapboxgl.Marker({ element: wrapper })
+        .setLngLat([longitude, latitude])
+        .setPopup(popup);
+
+      // Only add to map if route is visible
+      if (routeVisible) {
+        marker.addTo(map.current!);
+      }
+
+      markersRef.current.push(marker);
+      plannedEventMarkersRef.current.push(marker);
+      console.log(`✅ Marker #${orderNumber} added!`);
+    });
+
+    // ========================================
+    // PHASE 5: Render Route Polylines (Connect Planned Events)
+    // ========================================
+    if (plannedEvents && plannedEvents.length >= 2 && map.current && routeVisible) {
+      console.log('🛣️ PHASE 5 - Creating route polyline for', plannedEvents.length, 'events');
+
+      // Sort planned events by order number to ensure correct line path
+      const sortedPlannedEvents = [...plannedEvents].sort((a, b) => {
+        const orderA = plannedEventsMap.get(a.eventId) || 0;
+        const orderB = plannedEventsMap.get(b.eventId) || 0;
+        return orderA - orderB;
+      });
+
+      // Create coordinates array for polyline (connect events in order)
+      const routeCoordinates: [number, number][] = sortedPlannedEvents
+        .map(pe => {
+          const event = pe.event;
+          if (event.longitude && event.latitude) {
+            return [event.longitude, event.latitude] as [number, number];
+          }
+          return null;
+        })
+        .filter((coord): coord is [number, number] => coord !== null);
+
+      if (routeCoordinates.length >= 2) {
+        console.log('🛣️ Route polyline coordinates:', routeCoordinates);
+
+        // Create GeoJSON LineString feature
+        const routeFeature: GeoJSON.Feature<GeoJSON.LineString> = {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: routeCoordinates
+          },
+          properties: {}
+        };
+
+        // Remove existing polyline source and layer if they exist
+        try {
+          if (map.current.getLayer('route-polyline-layer')) {
+            map.current.removeLayer('route-polyline-layer');
+          }
+          if (map.current.getSource('route-polyline')) {
+            map.current.removeSource('route-polyline');
+          }
+        } catch (e) {
+          // Layer/source doesn't exist yet, that's fine
+        }
+
+        // Add source
+        map.current.addSource('route-polyline', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [routeFeature]
+          }
+        });
+
+        // Add line layer - styled to look like a street route
+        try {
+          map.current.addLayer({
+            id: 'route-polyline-layer',
+            type: 'line',
+            source: 'route-polyline',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': 'rgba(102, 126, 234, 0.6)',
+              'line-width': 3,
+              'line-opacity': 0.8,
+              'line-dasharray': [3, 2] // Dashed line effect
+            }
+          });
+        } catch (e) {
+          console.warn('⚠️ Could not add polyline layer:', e);
+        }
+
+        console.log('✅ Route polyline rendered successfully');
+      }
+    }
+
+    console.log(`✅ Markers rendered - ${eliteMarkersRef.current.length} Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray) + ${plannedEvents?.length || 0} Planned`);
+    console.log(`✅ Total markers in scene: ${markersRef.current.length}`);
+  }, [onEventClick, selectedIdsSet, showOnlyEliteAndFavorites, hoveredEventId, createPopupHTML, plannedEventsMap, plannedEvents]);
 
   // Initialize map
   useEffect(() => {
@@ -1474,7 +1809,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           </div>
         )}
 
-        {/* "Search this area" Button - Google Maps Style (inside map at top) */}
+        {/* Top Center Controls - Search Button */}
         {showSearchButton && onSearchThisArea && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
             <button
@@ -1485,6 +1820,22 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <span className="text-gray-700">Suche in diesem Bereich</span>
+            </button>
+          </div>
+        )}
+
+        {/* Route Toggle - Top Left */}
+        {plannedEvents && plannedEvents.length >= 2 && (
+          <div className="absolute top-4 left-4 z-10">
+            <button
+              onClick={handleRouteToggle}
+              className={`px-4 py-2 rounded-full shadow-lg border transition-colors font-medium text-sm ${
+                routeVisible
+                  ? 'bg-white/90 backdrop-blur-sm hover:bg-white border-gray-200 text-gray-700'
+                  : 'bg-white/50 backdrop-blur-sm hover:bg-white/70 border-gray-300 text-gray-600'
+              }`}
+            >
+              <span>{routeVisible ? 'Route ausblenden' : 'Route einblenden'}</span>
             </button>
           </div>
         )}

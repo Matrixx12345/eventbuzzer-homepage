@@ -214,7 +214,21 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       venue: event.venue_name || "",
       image: event.image_url || "",
       location: event.address_city || event.location || "",
-      date: event.start_date ? new Date(event.start_date).toLocaleDateString('de-CH') : ""
+      date: event.start_date ? new Date(event.start_date).toLocaleDateString('de-CH') : "",
+      // Extended fields for richer favorites display
+      short_description: event.short_description || "",
+      description: event.description || "",
+      tags: event.tags || [],
+      image_url: event.image_url || "",
+      venue_name: event.venue_name || "",
+      address_city: event.address_city || "",
+      start_date: event.start_date || "",
+      end_date: event.end_date || "",
+      price_from: event.price_from,
+      external_id: event.external_id || event.id,
+      ticket_url: event.ticket_url || "",
+      url: event.url || "",
+      buzz_score: event.buzz_score || event.relevance_score,
     });
 
     // ONLY show toast when ADDING to favorites (not when removing)

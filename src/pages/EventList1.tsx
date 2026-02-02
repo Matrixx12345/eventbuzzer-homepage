@@ -79,6 +79,13 @@ interface TaxonomyItem {
   is_active?: boolean;
 }
 
+// Multi-day Trip Planner - events organized by day
+type PlannedEventsByDay = Record<number, Array<{
+  eventId: string;
+  event: Event;
+  duration: number;
+  startTime?: string;
+}>>;
 
 // Helper functions for rating system
 const getUserRating = (eventId: string): number | null => {
@@ -110,6 +117,7 @@ const EventCard = ({
   // Trip Planner
   plannedEvents,
   setPlannedEvents,
+  handleMapMovement,
 }: {
   event: Event;
   index: number;
@@ -125,8 +133,10 @@ const EventCard = ({
   previousMapState: { center: [number, number]; zoom: number } | null;
   setPreviousMapState: (state: { center: [number, number]; zoom: number } | null) => void;
   // Trip Planner
-  plannedEvents: Array<{ eventId: string; event: Event; duration: number }>;
-  setPlannedEvents: (events: Array<{ eventId: string; event: Event; duration: number }>) => void;
+  plannedEventsByDay: PlannedEventsByDay;
+  setPlannedEventsByDay: (events: PlannedEventsByDay) => void;
+  activeDay: number;
+  handleMapMovement: (events: Array<{ eventId: string; event: Event; duration: number }>) => void;
 }) => {
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
   const [showRatingPopup, setShowRatingPopup] = useState(false);
@@ -162,8 +172,8 @@ const EventCard = ({
   const goldStars = Math.floor(rating); // z.B. Math.floor(3.75) = 3
   const grayStars = 5 - goldStars; // z.B. 5 - 3 = 2
 
-  // Check if event is already in trip planner
-  const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+  // Check if event is already in trip planner (across all days)
+  const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === event.id);
 
   // Handle rating submission
   const handleRating = (ratingValue: number) => {
@@ -445,8 +455,12 @@ const EventCard = ({
                   setTimeout(() => setCoffeeClickFeedback(false), 600);
 
                   if (isInTrip) {
-                    // Remove from trip
-                    setPlannedEvents(plannedEvents.filter(pe => pe.eventId !== event.id));
+                    // Remove from trip (remove from all days)
+                    const updated = { ...plannedEventsByDay };
+                    Object.keys(updated).forEach(day => {
+                      updated[Number(day)] = updated[Number(day)].filter(pe => pe.eventId !== event.id);
+                    });
+                    setPlannedEventsByDay(updated);
                     toast(`${event.title} aus der Reise entfernt`);
                   } else {
                     // Get default duration (2.5h for museums, 2h otherwise)
@@ -454,14 +468,23 @@ const EventCard = ({
                     const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
                     const defaultDuration = isMuseum ? 150 : 120; // minutes
 
-                    // Add event to trip planner
-                    setPlannedEvents([...plannedEvents, {
-                      eventId: event.id,
-                      event: event,
-                      duration: defaultDuration
-                    }]);
+                    // Add event to current active day
+                    const currentDayEvents = plannedEventsByDay[activeDay] || [];
+                    const updated = {
+                      ...plannedEventsByDay,
+                      [activeDay]: [...currentDayEvents, {
+                        eventId: event.id,
+                        event: event,
+                        duration: defaultDuration
+                      }]
+                    };
+                    setPlannedEventsByDay(updated);
 
-                    toast(`${event.title} zur Reise hinzugefügt`);
+                    // For map movement, flatten all events
+                    const allEvents = Object.values(updated).flat();
+                    handleMapMovement(allEvents);
+
+                    toast(`${event.title} zu Tag ${activeDay} hinzugefügt`);
                   }
                 }}
                 className={cn(
@@ -503,12 +526,17 @@ const EventList1 = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Trip Planner state - Array of PlannedEvents
-  const [plannedEvents, setPlannedEvents] = useState<Array<{
-    eventId: string;
-    event: Event;
-    duration: number; // in minutes
-  }>>([]);
+  // Trip Planner state - Events organized by day
+  const [plannedEventsByDay, setPlannedEventsByDay] = useState<PlannedEventsByDay>({
+    1: [],
+    2: [],
+  });
+
+  // DEBUG: Log plannedEventsByDay changes
+  useEffect(() => {
+    const totalEvents = Object.values(plannedEventsByDay).flat().length;
+    console.log('🔍 EventList1: plannedEventsByDay changed:', totalEvents, 'total items across', Object.keys(plannedEventsByDay).length, 'days', plannedEventsByDay);
+  }, [plannedEventsByDay]);
 
   // Map ref for Trip Planner
   const mapRef = useRef<any>(null);
@@ -562,6 +590,20 @@ const EventList1 = () => {
       image: event.image_url || getPlaceholderImage(0),
       location: locationName,
       date: event.start_date || "",
+      // Extended fields for richer favorites display
+      short_description: event.short_description || "",
+      description: event.description || "",
+      tags: event.tags || [],
+      image_url: event.image_url || getPlaceholderImage(0),
+      venue_name: event.venue_name || "",
+      address_city: event.address_city || "",
+      start_date: event.start_date || "",
+      end_date: event.end_date || "",
+      price_from: event.price_from,
+      external_id: event.external_id || event.id,
+      ticket_url: event.ticket_url || "",
+      url: event.url || "",
+      buzz_score: event.buzz_score || event.relevance_score,
     };
 
     toggleFavorite(favoriteData);
@@ -961,13 +1003,52 @@ const EventList1 = () => {
     }
   }, [rawEvents]);
 
+  // Move map to show planned events
+  const handleMapMovement = useCallback((newEvents: Array<{ eventId: string; event: Event; duration: number }>) => {
+    if (!mapRef.current || newEvents.length === 0) return;
+
+    // Filter events with valid coordinates
+    const eventsWithCoords = newEvents.filter(pe => pe.event.latitude && pe.event.longitude);
+    if (eventsWithCoords.length === 0) return;
+
+    if (eventsWithCoords.length === 1) {
+      // Single event: panTo with fixed zoom
+      const event = eventsWithCoords[0].event;
+      mapRef.current.flyTo({
+        center: [event.longitude, event.latitude],
+        zoom: 12,
+        duration: 1500,
+        essential: true
+      });
+    } else {
+      // Multiple events: fitBounds to show all
+      const lngs = eventsWithCoords.map(pe => pe.event.longitude);
+      const lats = eventsWithCoords.map(pe => pe.event.latitude);
+      const bounds = [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)]
+      ];
+
+      mapRef.current.fitBounds(bounds, {
+        padding: 80,
+        duration: 1500,
+        essential: true
+      });
+    }
+  }, []);
+
   // Toggle event in trip planner (for EventDetailModal)
   const handleToggleTrip = useCallback((event: Event) => {
-    const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+    // Check all days
+    const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === event.id);
 
     if (isInTrip) {
-      // Remove from trip
-      setPlannedEvents(plannedEvents.filter(pe => pe.eventId !== event.id));
+      // Remove from trip (remove from all days)
+      const updated = { ...plannedEventsByDay };
+      Object.keys(updated).forEach(day => {
+        updated[Number(day)] = updated[Number(day)].filter(pe => pe.eventId !== event.id);
+      });
+      setPlannedEventsByDay(updated);
       toast(`${event.title} aus der Reise entfernt`);
     } else {
       // Add to trip with smart duration
@@ -975,15 +1056,25 @@ const EventList1 = () => {
       const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
       const defaultDuration = isMuseum ? 150 : 120; // minutes
 
-      setPlannedEvents([...plannedEvents, {
-        eventId: event.id,
-        event: event,
-        duration: defaultDuration
-      }]);
+      const currentDayEvents = plannedEventsByDay[activeDay] || [];
+      const updated = {
+        ...plannedEventsByDay,
+        [activeDay]: [...currentDayEvents, {
+          eventId: event.id,
+          event: event,
+          duration: defaultDuration
+        }]
+      };
 
-      toast(`${event.title} zur Reise hinzugefügt`);
+      setPlannedEventsByDay(updated);
+
+      // For map movement, flatten all events
+      const allEvents = Object.values(updated).flat();
+      handleMapMovement(allEvents);
+
+      toast(`${event.title} zu Tag ${activeDay} hinzugefügt`);
     }
-  }, [plannedEvents]);
+  }, [plannedEventsByDay, activeDay, handleMapMovement]);
 
   return (
     <div className="min-h-screen bg-[#F4F7FA]">
@@ -1174,8 +1265,10 @@ const EventList1 = () => {
                         previousMapState={previousMapState}
                         setPreviousMapState={setPreviousMapState}
                         // Trip Planner
-                        plannedEvents={plannedEvents}
-                        setPlannedEvents={setPlannedEvents}
+                        plannedEventsByDay={plannedEventsByDay}
+                        setPlannedEventsByDay={setPlannedEventsByDay}
+                        activeDay={activeDay}
+                        handleMapMovement={handleMapMovement}
                       />
                     </div>
                   ))}
@@ -1282,12 +1375,19 @@ const EventList1 = () => {
               )}
             >
               {/* EventsMap Component */}
+              {(() => {
+                const currentDayEvents = plannedEventsByDay[activeDay] || [];
+                console.log('🗺️ EventList1 rendering EventsMap with plannedEvents for Tag', activeDay, ':', currentDayEvents.length, 'items');
+                return null;
+              })()}
               <EventsMap
                 ref={mapRef}
                 onEventsChange={handleMapEventsChange}
                 onEventClick={(eventId) => handleMapPinClick(eventId)}
                 isVisible={true}
                 selectedEventIds={favoriteIds}
+                plannedEvents={plannedEventsByDay[activeDay] || []}
+                activeDay={activeDay}
                 hoveredEventId={hoveredEventId}
                 showOnlyEliteAndFavorites={false}
                 customControls={true}
@@ -1335,8 +1435,8 @@ const EventList1 = () => {
                 onClose={() => {}}
                 allEvents={rawEvents}
                 isFlipped={false}
-                plannedEvents={plannedEvents}
-                onSetPlannedEvents={setPlannedEvents}
+                plannedEventsByDay={plannedEventsByDay}
+                onSetPlannedEventsByDay={setPlannedEventsByDay}
                 activeDay={activeDay}
                 setActiveDay={setActiveDay}
                 totalDays={totalDays}

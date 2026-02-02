@@ -86,7 +86,7 @@ export const ActionPill = ({
     }
   };
 
-  // Style variants - dark is transparent with outline, light has white background
+  // Style variants - dark is transparent with outline, light has glassmorphism
   const pillStyles = variant === 'dark'
     ? {
         background: 'transparent',
@@ -96,11 +96,11 @@ export const ActionPill = ({
         boxShadow: 'none'
       }
     : {
-        background: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)'
+        background: 'rgba(255, 255, 255, 0.25)',
+        backdropFilter: 'blur(30px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
       };
 
   const textColor = variant === 'dark' ? 'text-white/60' : 'text-gray-700';
@@ -117,31 +117,34 @@ export const ActionPill = ({
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-full",
-        variant === 'dark' ? "gap-6 px-5 py-1" : "gap-3 px-4 py-1.5",
+        "inline-flex items-center rounded-full",
+        variant === 'dark' ? "px-8 py-2.5" : "px-16 py-1.5",
         className
       )}
-      style={pillStyles}
+      style={{
+        ...pillStyles,
+        gap: variant === 'dark' ? '1rem' : '1.5rem'
+      }}
     >
       {/* Star Rating */}
-      <div className="flex items-center gap-1.5" style={iconShadow}>
-        <Star size={14} className="text-[#fbbf24] stroke-[1.5]" />
-        <span className={cn("text-sm font-semibold", textColor)}>
+      <div className="flex items-center gap-2" style={iconShadow}>
+        <Star size={16} className="text-[#fbbf24] stroke-[1.5]" />
+        <span className={cn("text-base font-semibold", textColor)}>
           {rating}
         </span>
       </div>
 
       {/* Divider */}
-      <div className={cn("w-px h-4", dividerColor)} />
+      <div className={cn("w-px h-6", dividerColor)} />
 
       {/* Favorit */}
       <button
         onClick={handleFavoriteClick}
-        className="group/heart relative p-0.5 hover:scale-110 transition-all duration-200"
+        className="group/heart relative p-1 hover:scale-110 transition-all duration-200"
         style={iconShadow}
       >
         <Heart
-          size={15}
+          size={18}
           className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : iconColor}
         />
         {/* Tooltip */}
@@ -154,15 +157,15 @@ export const ActionPill = ({
       </button>
 
       {/* Divider */}
-      <div className={cn("w-px h-4", dividerColor)} />
+      <div className={cn("w-px h-6", dividerColor)} />
 
       {/* Share */}
       <button
         onClick={handleShareClick}
-        className="group/share relative p-0.5 hover:scale-110 transition-all duration-200"
+        className="group/share relative p-1 hover:scale-110 transition-all duration-200"
         style={iconShadow}
       >
-        <Share2 size={15} className={iconColor} />
+        <Share2 size={18} className={iconColor} />
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-50 pointer-events-none">
           <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
@@ -173,15 +176,15 @@ export const ActionPill = ({
       </button>
 
       {/* Divider */}
-      <div className={cn("w-px h-4", dividerColor)} />
+      <div className={cn("w-px h-6", dividerColor)} />
 
       {/* Ticket */}
       <button
         onClick={handleTicketClick}
-        className="group/ticket relative p-0.5 hover:scale-110 transition-all duration-200"
+        className="group/ticket relative p-1 hover:scale-110 transition-all duration-200"
         style={iconShadow}
       >
-        <ShoppingCart size={15} className={variant === 'dark' ? "text-white/60" : "text-[#1e3a8a]"} />
+        <ShoppingCart size={18} className={variant === 'dark' ? "text-white/60" : "text-[#1e3a8a]"} />
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
           <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">

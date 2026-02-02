@@ -5,12 +5,58 @@ import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { SITE_URL } from "@/config/constants";
 import FavoritesFilterBar, { FilterOption } from "@/components/FavoritesFilterBar";
-import { useFavorites } from "@/contexts/FavoritesContext";
+import { useFavorites, FavoriteEvent } from "@/contexts/FavoritesContext";
+import { EventDetailModal } from "@/components/EventDetailModal";
+import { ActionPill } from "@/components/ActionPill";
 import heroImage from "@/assets/hero-mountains.jpg";
 
+// Helper to format tag names for display
+const formatTagName = (tag: string): string => {
+  const tagMap: Record<string, string> = {
+    'familie-freundlich': 'Familie',
+    'must-see': 'Must-See',
+    'mistwetter': 'Mistwetter',
+    'ganzjährig': 'Ganzjährig',
+    'wellness': 'Wellness',
+    'natur': 'Natur',
+    'kunst': 'Kunst',
+    'kultur': 'Kultur',
+  };
+  return tagMap[tag] || tag;
+};
+
+// Convert FavoriteEvent to event format for EventDetailModal
+const favoriteToEvent = (favorite: FavoriteEvent) => ({
+  id: favorite.id,
+  title: favorite.title,
+  image_url: favorite.image_url || favorite.image,
+  short_description: favorite.short_description || "",
+  description: favorite.description || "",
+  tags: favorite.tags || [],
+  venue_name: favorite.venue_name || favorite.venue,
+  address_city: favorite.address_city || favorite.location,
+  location: favorite.location,
+  start_date: favorite.start_date || "",
+  end_date: favorite.end_date || "",
+  price_from: favorite.price_from,
+  external_id: favorite.external_id || favorite.slug || favorite.id,
+  ticket_url: favorite.ticket_url || "",
+  url: favorite.url || "",
+  buzz_score: favorite.buzz_score,
+});
+
 const Favorites = () => {
-  const { favorites, toggleFavorite } = useFavorites();
+  const { favorites } = useFavorites();
   const [activeFilter, setActiveFilter] = useState<FilterOption>("all");
+  const [selectedEvent, setSelectedEvent] = useState<ReturnType<typeof favoriteToEvent> | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Handle card click to open modal
+  const handleCardClick = (favorite: FavoriteEvent) => {
+    const event = favoriteToEvent(favorite);
+    setSelectedEvent(event);
+    setModalOpen(true);
+  };
 
   const filteredFavorites = useMemo(() => {
     let result = [...favorites];
@@ -23,7 +69,7 @@ const Favorites = () => {
         });
         break;
       case "recently-added":
-        result.sort((a, b) => b.addedAt - a.addedAt);
+        result.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
         break;
       case "this-weekend":
         break;
@@ -128,49 +174,59 @@ const Favorites = () => {
           ) : (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
               {filteredFavorites.map((event, index) => (
-                <article 
+                <article
                   key={event.id}
-                  className="break-inside-avoid bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300"
+                  onClick={() => handleCardClick(event)}
+                  className="break-inside-avoid bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
                 >
-                  <Link to={`/event/${event.slug}`}>
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className={`w-full object-cover hover:scale-105 transition-transform duration-500 ${
-                          index === 0 ? 'aspect-[5/6]' : 'h-auto'
-                        }`}
-                      />
-                      
-                      {/* Favorite Button */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleFavorite(event);
-                        }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
-                        aria-label="Remove from favorites"
-                      >
-                        <Heart
-                          size={18}
-                          className="fill-red-500 text-red-500"
-                        />
-                      </button>
-                    </div>
-                  </Link>
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={event.image_url || event.image}
+                      alt={event.title}
+                      className={`w-full object-cover hover:scale-105 transition-transform duration-500 ${
+                        index === 0 ? 'aspect-[5/6]' : 'h-auto'
+                      }`}
+                    />
 
-                  <div className="p-4">
-                    <Link to={`/event/${event.slug}`}>
-                      <h3 className="text-base font-semibold text-neutral-900 line-clamp-2 hover:text-neutral-600 transition-colors">
+                    {/* Category Tags on Image - top left, show only first one */}
+                    {event.tags && event.tags.length > 0 && (
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-white/70 backdrop-blur-md text-gray-800 text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded">
+                          {formatTagName(event.tags[0])}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4 flex flex-col h-full">
+                    <div className="flex-1">
+                      <h3 className="text-base font-semibold text-neutral-900 line-clamp-2">
                         {event.title}
                       </h3>
-                    </Link>
-                    <p className="text-sm text-neutral-500 mt-1">{event.venue}</p>
-                    <p className="text-sm text-neutral-400">{event.location}</p>
-                    {event.date && (
-                      <p className="text-sm font-medium text-neutral-700 mt-2">{event.date}</p>
-                    )}
+                      <p className="text-sm text-neutral-400 mt-1">{event.address_city || event.location}</p>
+
+                      {/* Short Description */}
+                      {event.short_description && (
+                        <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
+                          {event.short_description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Action Pill at bottom */}
+                    <div className="mt-4 flex justify-center">
+                      <ActionPill
+                        eventId={event.id}
+                        slug={event.slug}
+                        image={event.image}
+                        title={event.title}
+                        venue={event.venue}
+                        location={event.address_city || event.location}
+                        buzzScore={event.buzz_score}
+                        ticketUrl={event.ticket_url}
+                        variant="light"
+                      />
+                    </div>
                   </div>
                 </article>
               ))}
@@ -178,6 +234,17 @@ const Favorites = () => {
           )}
         </div>
       </section>
+
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        event={selectedEvent}
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        variant="solid"
+      />
     </div>
   );
 };

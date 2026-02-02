@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart } from 'lucide-react';
+import React, { useState, useCallback, useRef } from 'react';
+import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -13,15 +13,35 @@ interface Event {
   address_city?: string;
   external_id?: string;
   category_main_id?: string;
+  latitude?: number;
+  longitude?: number;
+  short_description?: string;
+  description?: string;
+  venue_name?: string;
+  tags?: string[];
+  start_date?: string;
+  end_date?: string;
+  price_from?: number;
+  ticket_url?: string;
+  url?: string;
+  buzz_score?: number;
 }
+
+// Multi-day Trip Planner - events organized by day
+type PlannedEventsByDay = Record<number, Array<{
+  eventId: string;
+  event: Event;
+  duration: number;
+  startTime?: string;
+}>>;
 
 interface TripPlannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   allEvents?: Event[];
   isFlipped?: boolean;
-  plannedEvents?: Array<{ eventId: string; event: Event; duration: number }>;
-  onSetPlannedEvents?: (events: Array<{ eventId: string; event: Event; duration: number }>) => void;
+  plannedEventsByDay?: PlannedEventsByDay;
+  onSetPlannedEventsByDay?: (events: PlannedEventsByDay) => void;
   // Tag navigation
   activeDay?: number;
   setActiveDay?: (day: number) => void;
@@ -52,7 +72,7 @@ interface FavoritesBackSideProps {
   favorites: any[];
   onEventClick: (event: Event) => void;
   onAddToTrip: (event: Event) => void;
-  plannedEvents: Array<{ eventId: string; event: Event; duration: number }>;
+  plannedEventsByDay: PlannedEventsByDay;
 }
 
 const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
@@ -60,7 +80,7 @@ const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
   favorites,
   onEventClick,
   onAddToTrip,
-  plannedEvents,
+  plannedEventsByDay,
 }) => {
   const { toggleFavorite } = useFavorites();
 
@@ -89,7 +109,7 @@ const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
         ) : (
           <div className="space-y-3">
             {favorites.map((favorite) => {
-              const isInTrip = plannedEvents.some(pe => pe.eventId === favorite.id);
+              const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === favorite.id);
               return (
                 <div
                   key={favorite.id}
@@ -133,7 +153,7 @@ const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleFavorite(favorite.id, favorite);
+                        toggleFavorite(favorite);
                       }}
                       className="p-2 text-red-500 hover:bg-red-50 rounded transition-all"
                       title="Aus Favoriten entfernen"
@@ -410,22 +430,26 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   onClose,
   allEvents = [],
   isFlipped = false,
-  plannedEvents: propPlannedEvents = [],
-  onSetPlannedEvents,
+  plannedEventsByDay: propPlannedEventsByDay,
+  onSetPlannedEventsByDay,
   activeDay = 1,
   setActiveDay,
   totalDays = 2,
   setTotalDays,
 }) => {
   // Use props if provided, otherwise use local state
-  const [localPlannedEvents, setLocalPlannedEvents] = useState<Array<{ eventId: string; event: Event; duration: number }>>([]);
-  const plannedEvents = propPlannedEvents && propPlannedEvents.length > 0 ? propPlannedEvents : localPlannedEvents;
-  const setPlannedEvents = onSetPlannedEvents || setLocalPlannedEvents;
+  const [localPlannedEventsByDay, setLocalPlannedEventsByDay] = useState<PlannedEventsByDay>({ 1: [], 2: [] });
+  const plannedEventsByDay = propPlannedEventsByDay || localPlannedEventsByDay;
+  const setPlannedEventsByDay = onSetPlannedEventsByDay || setLocalPlannedEventsByDay;
+
+  // Get current day's events for rendering
+  const currentDayEvents = plannedEventsByDay[activeDay] || [];
 
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string | null>>({});
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [selectedEventForModal, setSelectedEventForModal] = useState<Event | null>(null);
   const [isFlippedLocal, setIsFlippedLocal] = useState(false);
+  const [qrCodeUrl, setShowQRCode] = useState<string | null>(null);
 
   // Get favorites context
   const { favorites, toggleFavorite } = useFavorites();
@@ -441,65 +465,531 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       return;
     }
 
-    const newEvents = [...plannedEvents];
-    const draggedEvent = newEvents[draggedIndex];
+    const newDayEvents = [...currentDayEvents];
+    const draggedEvent = newDayEvents[draggedIndex];
 
     // Remove from old position
-    newEvents.splice(draggedIndex, 1);
+    newDayEvents.splice(draggedIndex, 1);
     // Insert at new position
-    newEvents.splice(targetIndex, 0, draggedEvent);
+    newDayEvents.splice(targetIndex, 0, draggedEvent);
 
-    setPlannedEvents(newEvents);
+    const updated = {
+      ...plannedEventsByDay,
+      [activeDay]: newDayEvents
+    };
+    setPlannedEventsByDay(updated);
     setDraggedIndex(null);
-  }, [draggedIndex, plannedEvents, setPlannedEvents]);
+  }, [draggedIndex, currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   // Reorder handlers
   const handleMoveEventUp = useCallback((index: number) => {
     if (index <= 0) return;
-    const newEvents = [...plannedEvents];
-    [newEvents[index], newEvents[index - 1]] = [newEvents[index - 1], newEvents[index]];
-    setPlannedEvents(newEvents);
-  }, [plannedEvents, setPlannedEvents]);
+    const newDayEvents = [...currentDayEvents];
+    [newDayEvents[index], newDayEvents[index - 1]] = [newDayEvents[index - 1], newDayEvents[index]];
+    const updated = {
+      ...plannedEventsByDay,
+      [activeDay]: newDayEvents
+    };
+    setPlannedEventsByDay(updated);
+  }, [currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   const handleMoveEventDown = useCallback((index: number) => {
-    if (index >= plannedEvents.length - 1) return;
-    const newEvents = [...plannedEvents];
-    [newEvents[index], newEvents[index + 1]] = [newEvents[index + 1], newEvents[index]];
-    setPlannedEvents(newEvents);
-  }, [plannedEvents, setPlannedEvents]);
+    if (index >= currentDayEvents.length - 1) return;
+    const newDayEvents = [...currentDayEvents];
+    [newDayEvents[index], newDayEvents[index + 1]] = [newDayEvents[index + 1], newDayEvents[index]];
+    const updated = {
+      ...plannedEventsByDay,
+      [activeDay]: newDayEvents
+    };
+    setPlannedEventsByDay(updated);
+  }, [currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   const handleRemoveEvent = useCallback((slotIndex: number) => {
-    setPlannedEvents(plannedEvents.filter((_, i) => i !== slotIndex));
-  }, [plannedEvents, setPlannedEvents]);
+    const newDayEvents = currentDayEvents.filter((_, i) => i !== slotIndex);
+    const updated = {
+      ...plannedEventsByDay,
+      [activeDay]: newDayEvents
+    };
+    setPlannedEventsByDay(updated);
+  }, [currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   // Handler to add favorited event to trip planner
   const handleAddFavoriteToTrip = useCallback((event: Event) => {
-    const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+    // Check all days
+    const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === event.id);
     if (!isInTrip) {
       const isMuseum = isMuseumEvent(event);
       const defaultDuration = isMuseum ? 150 : 120;
 
-      setPlannedEvents([...plannedEvents, {
-        eventId: event.id,
-        event: event,
-        duration: defaultDuration
-      }]);
-
-      toast.success(`${event.title} zum Trip hinzugefügt`);
+      const updated = {
+        ...plannedEventsByDay,
+        [activeDay]: [...currentDayEvents, {
+          eventId: event.id,
+          event: event,
+          duration: defaultDuration
+        }]
+      };
+      setPlannedEventsByDay(updated);
+      toast.success(`${event.title} zu Tag ${activeDay} hinzugefügt`);
     }
-  }, [plannedEvents, setPlannedEvents]);
+  }, [plannedEventsByDay, activeDay, currentDayEvents, setPlannedEventsByDay]);
 
-  // Calculate visible event slots based on planned events
+  // Helper to get location name with proper fallbacks
+  const getLocationName = (event: Event): string => {
+    return (
+      event.title ||
+      event.venue_name ||
+      event.address_city ||
+      event.location ||
+      `Location ${event.latitude}, ${event.longitude}`
+    );
+  };
+
+  // Handler to generate Google Maps URL
+  const generateGoogleMapsUrl = useCallback(() => {
+    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+
+    // Extract coordinates from planned events
+    const coordinates: Array<{ lat: number; lng: number; title: string }> = [];
+    validEvents.forEach((plannedEvent) => {
+      const event = plannedEvent.event;
+      if (event.latitude && event.longitude) {
+        coordinates.push({
+          lat: event.latitude,
+          lng: event.longitude,
+          title: getLocationName(event)
+        });
+      }
+    });
+
+    if (coordinates.length < 2) {
+      return null;
+    }
+
+    // Format with event names so they show in Google Maps
+    const originName = encodeURIComponent(coordinates[0].title);
+    const originCoords = `${coordinates[0].lat},${coordinates[0].lng}`;
+    const origin = `${originName}|${originCoords}`;
+
+    const destName = encodeURIComponent(coordinates[coordinates.length - 1].title);
+    const destCoords = `${coordinates[coordinates.length - 1].lat},${coordinates[coordinates.length - 1].lng}`;
+    const destination = `${destName}|${destCoords}`;
+
+    const waypoints = coordinates
+      .slice(1, -1)
+      .map((coord) => {
+        const name = encodeURIComponent(coord.title);
+        return `${name}|${coord.lat},${coord.lng}`;
+      })
+      .join('|');
+
+    let url = `https://www.google.com/maps/dir/?api=1`;
+    url += `&origin=${origin}`;
+    url += `&destination=${destination}`;
+    if (waypoints) {
+      url += `&waypoints=${waypoints}`;
+    }
+    url += `&travelmode=driving`;
+
+    return url;
+  }, [plannedEvents]);
+
+  // Handler to export route to Google Maps
+  const handleExportToGoogleMaps = useCallback(() => {
+    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+
+    if (validEvents.length < 2) {
+      toast.error('Mindestens 2 Events erforderlich');
+      return;
+    }
+
+    // Extract coordinates from planned events
+    const coordinates: Array<{ lat: number; lng: number; title: string }> = [];
+    validEvents.forEach((plannedEvent) => {
+      const event = plannedEvent.event;
+      if (event.latitude && event.longitude) {
+        coordinates.push({
+          lat: event.latitude,
+          lng: event.longitude,
+          title: getLocationName(event)
+        });
+      } else {
+        console.warn(`⚠️ Event "${event.title}" hat keine Koordinaten`);
+      }
+    });
+
+    if (coordinates.length < 2) {
+      toast.error(`Nur ${coordinates.length} Event(s) mit Koordinaten gefunden. Mindestens 2 erforderlich.`);
+      return;
+    }
+
+    const url = generateGoogleMapsUrl();
+    if (!url) {
+      toast.error('Route konnte nicht generiert werden');
+      return;
+    }
+
+    console.log('🗺️ Generated Maps URL:', url);
+
+    // For mobile: try to open Google Maps app first, fallback to web
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    window.open(url, '_blank');
+    toast.success(isMobile ? 'Google Maps wird geöffnet...' : 'Google Maps geöffnet!');
+  }, [plannedEvents, generateGoogleMapsUrl]);
+
+  // Handler to show QR code or open maps
+  const handleShowQRCode = useCallback(() => {
+    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+
+    if (validEvents.length < 2) {
+      toast.error('Mindestens 2 Events erforderlich');
+      return;
+    }
+
+    const url = generateGoogleMapsUrl();
+    if (!url) {
+      toast.error('Route konnte nicht generiert werden');
+      return;
+    }
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // On mobile: Open Google Maps directly
+      window.open(url, '_blank');
+      toast.success('Google Maps wird geöffnet...');
+    } else {
+      // On desktop: Show QR code modal
+      setShowQRCode(url);
+    }
+  }, [plannedEvents, generateGoogleMapsUrl]);
+
+  // Handler to export trip as PDF with QR code
+  const handleExportPDF = useCallback(() => {
+    const validEvents = plannedEvents.filter(pe => pe && pe.event);
+
+    if (validEvents.length < 2) {
+      toast.error('Mindestens 2 Events erforderlich');
+      return;
+    }
+
+    const url = generateGoogleMapsUrl();
+    if (!url) {
+      toast.error('Route konnte nicht generiert werden');
+      return;
+    }
+
+    // Generate QR code URL - kleiner (200x200)
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+
+    // Create PDF content HTML
+    const todayDate = new Date().toLocaleDateString('de-CH', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Helper to truncate description at first sentence
+    const truncateAtFirstSentence = (text: string): string => {
+      if (!text) return '';
+      const match = text.match(/^[^.!?]*[.!?]/);
+      return match ? match[0] : text;
+    };
+
+    // Group events by day - only split if multiple days exist
+    const daysCount = totalDays || 1;
+    const eventsByDay: Record<number, typeof validEvents> = {};
+
+    if (daysCount === 1) {
+      // All events go to Tag 1
+      eventsByDay[1] = validEvents;
+    } else {
+      // Split events across multiple days
+      const eventsPerDay = Math.ceil(validEvents.length / daysCount);
+      for (let day = 1; day <= daysCount; day++) {
+        const startIdx = (day - 1) * eventsPerDay;
+        const endIdx = Math.min(startIdx + eventsPerDay, validEvents.length);
+        eventsByDay[day] = validEvents.slice(startIdx, endIdx);
+      }
+    }
+
+    // Generate HTML for all days
+    const eventsByDayHTML = Object.entries(eventsByDay)
+      .map(([dayNum, dayEvents]) => {
+        const dayNumber = parseInt(dayNum);
+        const dayLabel = daysCount === 1 ? 'Tag' : `Tag ${dayNumber}`;
+
+        const dayEventsHTML = dayEvents
+          .map((pe, globalIndex) => {
+            const globalEventIndex = validEvents.indexOf(pe) + 1;
+            const shortDesc = pe.event.short_description || pe.event.description || '';
+            const truncatedDesc = truncateAtFirstSentence(shortDesc);
+
+            return `
+        <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 6px; background: #ffffff;">
+          <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;">
+            <div style="background: #667eea; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0;">
+              ${globalEventIndex}
+            </div>
+            <div>
+              <div style="font-weight: 600; font-size: 16px; color: #1f2937; margin-bottom: 2px;">
+                ${pe.event.title}
+              </div>
+            </div>
+          </div>
+            <div style="margin-left: 42px; margin-top: 10px;">
+              <div style="color: #4b5563; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
+                📍 ${pe.event.address_city || pe.event.location || 'Location'}
+              </div>
+              ${truncatedDesc ? `<div style="color: #6b7280; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
+                ${truncatedDesc}
+              </div>` : ''}
+              <div style="color: #9ca3af; font-size: 12px;">
+                ⏱️ ${pe.duration || 120} Minuten
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+          })
+          .join('');
+
+        return `
+        <div style="margin-bottom: 32px; page-break-inside: avoid;">
+          <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 2px solid #667eea;">
+            ${dayLabel}
+          </h3>
+          ${dayEventsHTML}
+        </div>
+      `;
+      })
+      .join('');
+
+    const eventsList = eventsByDayHTML;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Trip Planner - EventBuzzer</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+              margin: 0;
+              padding: 20px;
+              color: #1f2937;
+              background: white;
+              line-height: 1.6;
+            }
+            .container {
+              max-width: 700px;
+              margin: 0 auto;
+            }
+            .logo {
+              text-align: center;
+              margin-bottom: 24px;
+              padding-bottom: 16px;
+              border-bottom: 2px solid #667eea;
+            }
+            .logo-text {
+              font-size: 24px;
+              font-weight: 700;
+              color: #667eea;
+              margin: 0;
+            }
+            .header-info {
+              text-align: center;
+              margin-bottom: 28px;
+            }
+            .date {
+              color: #6b7280;
+              font-size: 13px;
+              margin-bottom: 8px;
+            }
+            .event-count {
+              color: #1f2937;
+              font-weight: 600;
+              font-size: 16px;
+            }
+            .qr-section {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              margin: 32px 0;
+              padding: 20px;
+              border: 1px solid #e5e7eb;
+              border-radius: 6px;
+            }
+            .qr-code {
+              text-align: center;
+              margin-bottom: 16px;
+            }
+            .qr-code img {
+              width: 180px;
+              height: 180px;
+              border: 1px solid #d1d5db;
+              border-radius: 4px;
+              display: block;
+            }
+            .qr-description {
+              text-align: center;
+              font-size: 12px;
+              color: #6b7280;
+              line-height: 1.5;
+              max-width: 500px;
+            }
+            .qr-description strong {
+              color: #1f2937;
+              display: block;
+              margin-bottom: 6px;
+              font-size: 13px;
+            }
+            .events-section {
+              margin-top: 32px;
+            }
+            .events-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #1f2937;
+              margin-bottom: 20px;
+              padding-bottom: 12px;
+              border-bottom: 2px solid #667eea;
+            }
+            .event-item {
+              margin-bottom: 24px;
+              padding: 0;
+              border-top: 1px solid #e5e7eb;
+            }
+            .event-number {
+              background: #667eea;
+              color: white;
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              font-size: 14px;
+              flex-shrink: 0;
+              margin-bottom: 8px;
+            }
+            .event-title {
+              font-weight: 600;
+              font-size: 15px;
+              color: #1f2937;
+              margin-bottom: 4px;
+            }
+            .event-tag {
+              color: #6b7280;
+              font-size: 12px;
+              margin-bottom: 10px;
+            }
+            .event-location {
+              color: #4b5563;
+              font-size: 13px;
+              line-height: 1.5;
+              margin-bottom: 8px;
+            }
+            .event-description {
+              color: #6b7280;
+              font-size: 13px;
+              line-height: 1.5;
+              margin-bottom: 8px;
+            }
+            .event-duration {
+              color: #9ca3af;
+              font-size: 12px;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 16px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #9ca3af;
+              font-size: 11px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 12px;
+              }
+              .container {
+                max-width: 100%;
+              }
+              .qr-section {
+                page-break-inside: avoid;
+              }
+              .event-item {
+                page-break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="logo">
+              <p class="logo-text">🎯 EventBuzzer</p>
+            </div>
+
+            <div class="header-info">
+              <div class="date">${todayDate}</div>
+              <div class="event-count">${validEvents.length} ${validEvents.length === 1 ? 'Event' : 'Events'}</div>
+            </div>
+
+            <div class="qr-section">
+              <div class="qr-code">
+                <img src="${qrCodeUrl}" alt="Route QR Code">
+              </div>
+              <div class="qr-description">
+                <strong>Mit Handy scannen für Google Maps</strong>
+                <span>Öffne die komplette Route mit allen Zwischenstationen</span>
+              </div>
+            </div>
+
+            <div class="events-section">
+              ${eventsList}
+            </div>
+
+            <div class="footer">
+              Erstellt mit EventBuzzer Trip Planner
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Open in new window for printing
+    const printWindow = window.open('', '', 'width=900,height=1200');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+
+      // Wait for images to load, then print
+      setTimeout(() => {
+        printWindow.print();
+      }, 1000);
+
+      toast.success('PDF-Vorschau geöffnet. Speichern unter "Drucken" → "Als PDF speichern"');
+    } else {
+      toast.error('Popup-Fenster konnte nicht geöffnet werden');
+    }
+  }, [plannedEvents, generateGoogleMapsUrl]);
+
+  // Calculate visible event slots based on current day's planned events
   // Minimum 3 event slots, grows with additional events
-  const plannedEventsCount = plannedEvents.filter(e => e && e.event).length;
+  const plannedEventsCount = currentDayEvents.filter(e => e && e.event).length;
   const minEventSlots = 3;
   const neededEventSlots = Math.max(minEventSlots, plannedEventsCount + 1);
   const visibleEventSlots = TIME_POINTS.slice(0, neededEventSlots);
 
-  // Create slot mapping for events
+  // Create slot mapping for current day's events
   const slotMap: Record<string, Event | null> = {};
   TIME_POINTS.forEach((_, index) => {
-    const plannedEvent = plannedEvents[index];
+    const plannedEvent = currentDayEvents[index];
     slotMap[`time-${index}`] = plannedEvent ? plannedEvent.event : null;
   });
 
@@ -587,28 +1077,57 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           </div>
         </div>
 
-        {/* Bottom Buttons */}
-        <div className="flex gap-3 pt-6 border-t border-gray-200">
-          <button
-            className="flex-1 px-4 py-2 text-sm font-medium text-white
-                       bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={plannedEvents.every((e) => !e)}
-          >
-            Trip speichern
-          </button>
-          <button
-            className="flex-1 px-4 py-2 text-sm font-medium text-white
-                       bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={plannedEvents.every((e) => !e)}
-            onClick={() => {
-              // PDF export placeholder
-              alert('PDF-Export wird in Kürze implementiert');
-            }}
-          >
-            Als PDF exportieren
-          </button>
+        {/* Bottom Buttons - Grid Layout */}
+        <div className="pt-6 border-t border-gray-200 space-y-2">
+          {/* Row 1: Trip speichern + Google Maps */}
+          <div className="flex gap-3">
+            <button
+              className="flex-1 px-4 py-2 text-sm font-medium text-white
+                         bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={plannedEvents.every((e) => !e)}
+            >
+              Trip speichern
+            </button>
+            <button
+              className="flex-1 px-4 py-2 text-sm font-medium text-white
+                         bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2"
+              disabled={plannedEvents.every((e) => !e)}
+              onClick={handleExportToGoogleMaps}
+              title="Route mit Wegpunkten zu Google Maps öffnen"
+            >
+              <MapPin size={16} />
+              <span>Google Maps</span>
+            </button>
+          </div>
+
+          {/* Row 2: QR-Code + PDF Export */}
+          <div className="flex gap-3">
+            <button
+              className="flex-1 px-4 py-2 text-sm font-medium text-white
+                         bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2"
+              disabled={plannedEvents.every((e) => !e)}
+              onClick={handleShowQRCode}
+              title="QR-Code zum Scannen mit dem Handy"
+            >
+              <QrCode size={16} />
+              <span>QR-Code</span>
+            </button>
+            <button
+              className="flex-1 px-4 py-2 text-sm font-medium text-white
+                         bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={plannedEvents.every((e) => !e)}
+              onClick={handleExportPDF}
+              title="Trip als PDF mit QR-Code exportieren"
+            >
+              Als PDF exportieren
+            </button>
+          </div>
         </div>
       </div>
   );
@@ -623,31 +1142,21 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
             {/* Tag Links */}
             <div className="flex items-center gap-3">
-              {/* Tag 1 - Active */}
-              <button
-                onClick={() => setActiveDay?.(1)}
-                className={cn(
-                  "text-xs font-medium transition-all",
-                  activeDay === 1
-                    ? "text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                )}
-              >
-                Tag 1
-              </button>
-
-              {/* Tag 2 - Inactive */}
-              <button
-                onClick={() => setActiveDay?.(2)}
-                className={cn(
-                  "text-xs font-medium transition-all",
-                  activeDay === 2
-                    ? "text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                )}
-              >
-                Tag 2
-              </button>
+              {/* Dynamic Tags */}
+              {Array.from({ length: totalDays || 2 }).map((_, index) => (
+                <button
+                  key={`tag-${index + 1}`}
+                  onClick={() => setActiveDay?.(index + 1)}
+                  className={cn(
+                    "text-xs font-medium transition-all",
+                    activeDay === index + 1
+                      ? "text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  )}
+                >
+                  Tag {index + 1}
+                </button>
+              ))}
 
               {/* + Button */}
               {totalDays && totalDays < 5 && (
@@ -750,31 +1259,21 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
                 {/* Tag Links + Plus - kompakt in der Mitte */}
                 <div className="flex items-center gap-3">
-                  {/* Tag 1 - Active */}
-                  <button
-                    onClick={() => setActiveDay?.(1)}
-                    className={cn(
-                      "px-2 py-1 rounded text-sm font-semibold transition-all",
-                      activeDay === 1
-                        ? "text-gray-900 bg-gray-100"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    )}
-                  >
-                    Tag 1
-                  </button>
-
-                  {/* Tag 2 - Inactive */}
-                  <button
-                    onClick={() => setActiveDay?.(2)}
-                    className={cn(
-                      "px-2 py-1 rounded text-sm font-semibold transition-all",
-                      activeDay === 2
-                        ? "text-gray-900 bg-gray-100"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    )}
-                  >
-                    Tag 2
-                  </button>
+                  {/* Dynamic Tags */}
+                  {Array.from({ length: totalDays || 2 }).map((_, index) => (
+                    <button
+                      key={`tag-flipped-${index + 1}`}
+                      onClick={() => setActiveDay?.(index + 1)}
+                      className={cn(
+                        "px-2 py-1 rounded text-sm font-semibold transition-all",
+                        activeDay === index + 1
+                          ? "text-gray-900 bg-gray-100"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      )}
+                    >
+                      Tag {index + 1}
+                    </button>
+                  ))}
 
                   {/* + Button */}
                   {totalDays && totalDays < 5 && (
@@ -847,6 +1346,70 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           }
         }}
       />
+
+      {/* QR Code Modal */}
+      {qrCodeUrl && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4"
+          onClick={() => setShowQRCode(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Route zu Google Maps</h2>
+              <button
+                onClick={() => setShowQRCode(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex justify-center mb-6 bg-gray-50 p-6 rounded-lg">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCodeUrl)}`}
+                alt="Route QR Code"
+                className="w-full max-w-xs"
+              />
+            </div>
+
+            {/* Instructions */}
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600 mb-2">
+                Scanne diesen QR-Code mit deinem Handy um die Route in Google Maps zu öffnen
+              </p>
+              <p className="text-xs text-gray-400">
+                Die Route wird mit allen Zwischenstationen geöffnet
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowQRCode(null)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700
+                           bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Schließen
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(qrCodeUrl);
+                  toast.success('Link kopiert!');
+                }}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white
+                           bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors"
+              >
+                Link kopieren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

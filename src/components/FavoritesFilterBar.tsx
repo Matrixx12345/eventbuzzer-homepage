@@ -16,7 +16,7 @@ const filterOptions: { id: FilterOption; label: string }[] = [
 
 const FavoritesFilterBar = ({ activeFilter, onFilterChange }: FavoritesFilterBarProps) => {
   return (
-    <div className="sticky top-16 z-40 backdrop-blur-xl bg-white/70 border-b border-white/40 py-4">
+    <div className="backdrop-blur-xl bg-white/70 border-b border-white/40 py-4">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
           {filterOptions.map((option) => (

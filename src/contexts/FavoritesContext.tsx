@@ -9,6 +9,20 @@ export interface FavoriteEvent {
   location: string;
   date: string;
   addedAt?: number;
+  // Extended fields for EventDetailModal and richer display
+  short_description?: string;
+  description?: string;
+  tags?: string[];
+  image_url?: string;
+  venue_name?: string;
+  address_city?: string;
+  start_date?: string;
+  end_date?: string;
+  price_from?: number;
+  external_id?: string;
+  ticket_url?: string;
+  url?: string;
+  buzz_score?: number;
 }
 
 interface FavoritesContextType {
