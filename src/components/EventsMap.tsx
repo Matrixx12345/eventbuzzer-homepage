@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Supercluster from "supercluster";
@@ -147,28 +147,32 @@ function getDominantCategory(categories: Record<CategoryType, number>): Category
   return dominant;
 }
 
-export function EventsMap({
-  events = [],
-  onEventClick,
-  onEventsChange,
-  onBoundsChange,
-  isVisible = true,
-  selectedEventIds = [],
-  hoveredEventId = null,
-  showOnlyEliteAndFavorites = false,
-  favoriteEvents = [],
-  customControls = false,
-  showSearchButton = false,
-  onSearchThisArea,
-  totalEventsCount = 0,
-  categoryId = null,
-  // Nearby zoom feature
-  flyToLocation = null,
-  showBackButton = false,
-  onBackClick,
-  backButtonLabel = "Zurück zu allen Events",
-  onMapStateCapture,
-}: EventsMapProps) {
+const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
+  (
+    {
+      events = [],
+      onEventClick,
+      onEventsChange,
+      onBoundsChange,
+      isVisible = true,
+      selectedEventIds = [],
+      hoveredEventId = null,
+      showOnlyEliteAndFavorites = false,
+      favoriteEvents = [],
+      customControls = false,
+      showSearchButton = false,
+      onSearchThisArea,
+      totalEventsCount = 0,
+      categoryId = null,
+      // Nearby zoom feature
+      flyToLocation = null,
+      showBackButton = false,
+      onBackClick,
+      backButtonLabel = "Zurück zu allen Events",
+      onMapStateCapture,
+    },
+    ref
+  ) => {
   // DEBUG: Log what selectedEventIds we're receiving
   console.log('🎯 EventsMap received selectedEventIds:', selectedEventIds);
 
@@ -181,6 +185,9 @@ export function EventsMap({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activePopupRef = useRef<mapboxgl.Popup | null>(null);
   const eliteEventsRef = useRef<MapEvent[]>([]);
+
+  // Expose map instance via ref for external components (e.g., EventList1 for Trip Planner)
+  useImperativeHandle(ref, () => map.current, []);
 
   const [loading, setLoading] = useState(false);
   const [eventCount, setEventCount] = useState(0);
@@ -445,7 +452,23 @@ export function EventsMap({
     const description = event.description || "";
 
     return `
-      <div style="width: 200px; cursor: pointer;" class="event-popup">
+      <style>
+        .popup-icon-button {
+          border: none;
+          background: none;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          transition: transform 0.2s ease;
+        }
+        .popup-icon-button:hover {
+          transform: scale(1.15);
+        }
+      </style>
+      <div style="width: 200px; cursor: pointer;" class="event-popup" data-event-id="${event.id}">
         <img
           src="${imageUrl}"
           alt="${event.title}"
@@ -453,18 +476,64 @@ export function EventsMap({
           onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400'"
         />
         <div style="padding: 8px;">
-          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${categoryColor};"></div>
-            <span style="font-size: 10px; color: ${categoryColor}; font-weight: 600; text-transform: uppercase;">
-              ${category === "elite" ? "⭐ Elite" : category}
-            </span>
-          </div>
           <div style="font-weight: 600; font-size: 14px; line-height: 1.3; color: #1a1a1a; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
             ${event.title}
           </div>
           ${city ? `<div style="font-size: 12px; color: #666; margin-bottom: 4px;">${city}</div>` : ""}
-          ${description ? `<div style="font-size: 11px; color: #555; line-height: 1.4;">${description}</div>` : ""}
-          ${event.buzz_score ? `<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">🔥 Buzz: ${event.buzz_score.toFixed(1)}</div>` : ""}
+          ${description ? `<div style="font-size: 11px; color: #555; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${description}</div>` : ""}
+
+          <!-- Icons Pull: Glasmorphism Container -->
+          <div style="
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin-top: 12px;
+            padding: 8px 4px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(31, 38, 135, 0.05);
+          ">
+            <!-- Star Icon -->
+            <button class="popup-icon-button popup-star" data-event-id="${event.id}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5">
+                <polygon points="12 2 15.09 10.26 24 10.35 17.77 16.01 20.16 24.02 12 18.77 3.84 24.02 6.23 16.01 0 10.35 8.91 10.26 12 2"></polygon>
+              </svg>
+            </button>
+
+            <!-- Divider -->
+            <div style="width: 1px; height: 16px; background: rgba(156, 163, 175, 0.4);"></div>
+
+            <!-- Heart Icon -->
+            <button class="popup-icon-button popup-heart" data-event-id="${event.id}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+
+            <!-- Divider -->
+            <div style="width: 1px; height: 16px; background: rgba(156, 163, 175, 0.4);"></div>
+
+            <!-- MapPin Icon -->
+            <button class="popup-icon-button popup-mappin" data-event-id="${event.id}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </button>
+
+            <!-- Divider -->
+            <div style="width: 1px; height: 16px; background: rgba(156, 163, 175, 0.4);"></div>
+
+            <!-- Briefcase Icon -->
+            <button class="popup-icon-button popup-briefcase" data-event-id="${event.id}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -564,7 +633,8 @@ export function EventsMap({
           offset: 25,
           closeButton: true,
           closeOnClick: false,
-          maxWidth: '220px'
+          maxWidth: '220px',
+          anchor: 'top-right'
         }).setHTML(createPopupHTML(event));
 
         // Marker erstellen
@@ -734,7 +804,8 @@ export function EventsMap({
           closeButton: true,
           closeOnClick: false,
           maxWidth: '220px',
-          className: 'event-popup' // For custom z-index styling
+          className: 'event-popup', // For custom z-index styling
+          anchor: 'top-right'
         }).setHTML(createPopupHTML(event));
 
         // Close any active popup when opening a new one
@@ -743,6 +814,35 @@ export function EventsMap({
             activePopupRef.current.remove();
           }
           activePopupRef.current = popup;
+
+          // Add click handlers to the popup
+          const popupElement = popup.getElement();
+          if (popupElement) {
+            // Use event delegation on the entire popup element
+            popupElement.addEventListener('click', (e: any) => {
+              const target = e.target as HTMLElement;
+              const clickedButton = target.closest('.popup-icon-button') as HTMLButtonElement;
+
+              if (!clickedButton) {
+                // Main popup click - open event details
+                onEventClick?.(event.id);
+                return;
+              }
+
+              // Icon button was clicked
+              e.stopPropagation();
+
+              if (clickedButton.classList.contains('popup-star')) {
+                console.log('⭐ Star clicked for event:', event.id);
+              } else if (clickedButton.classList.contains('popup-heart')) {
+                console.log('❤️ Heart clicked for event:', event.id);
+              } else if (clickedButton.classList.contains('popup-mappin')) {
+                console.log('📍 MapPin clicked for event:', event.id);
+              } else if (clickedButton.classList.contains('popup-briefcase')) {
+                console.log('🧳 Briefcase clicked for event:', event.id);
+              }
+            });
+          }
         });
 
         const marker = new mapboxgl.Marker({ element: wrapper })
@@ -847,7 +947,8 @@ export function EventsMap({
             closeButton: true,
             closeOnClick: false,
             maxWidth: '220px',
-            className: 'event-popup' // For custom z-index styling
+            className: 'event-popup', // For custom z-index styling
+            anchor: 'top-right'
           }).setHTML(createPopupHTML(event));
 
           // Close any active popup when opening a new one
@@ -909,7 +1010,8 @@ export function EventsMap({
             closeButton: true,
             closeOnClick: false,
             maxWidth: '220px',
-            className: 'event-popup' // For custom z-index styling
+            className: 'event-popup', // For custom z-index styling
+            anchor: 'top-right'
           }).setHTML(createPopupHTML(event));
 
           // Close any active popup when opening a new one
@@ -982,7 +1084,8 @@ export function EventsMap({
         closeButton: true,
         closeOnClick: false,
         maxWidth: '220px',
-        className: 'event-popup'
+        className: 'event-popup',
+        anchor: 'top-right'
       }).setHTML(createPopupHTML(event));
 
       popup.on('open', () => {
@@ -990,6 +1093,25 @@ export function EventsMap({
           activePopupRef.current.remove();
         }
         activePopupRef.current = popup;
+
+        // Position popup at top-right of map and add click handler
+        setTimeout(() => {
+          const popupElement = popup.getElement();
+          if (popupElement && mapContainer.current) {
+            // Position at top-right of map container
+            popupElement.style.position = 'absolute';
+            popupElement.style.top = '10px';
+            popupElement.style.right = '10px';
+            popupElement.style.left = 'auto';
+            popupElement.style.bottom = 'auto';
+            popupElement.style.transform = 'none';
+
+            const clickHandler = () => {
+              onEventClick?.(event.id);
+            };
+            popupElement.addEventListener('click', clickHandler);
+          }
+        }, 0);
       });
 
       const marker = new mapboxgl.Marker({ element: wrapper })
@@ -1340,7 +1462,7 @@ export function EventsMap({
   }, [flyToLocation, mapReady]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" style={{ isolation: 'isolate' }}>
       {/* Map Container */}
       <div className="relative w-full h-full">
         <div ref={mapContainer} className="w-full h-full" />
@@ -1509,8 +1631,24 @@ export function EventsMap({
         )}
 
       </div>
+
+      {/* CSS to constrain Mapbox popups z-index */}
+      <style>{`
+        .mapboxgl-popup {
+          z-index: 5 !important;
+        }
+        .mapboxgl-popup-content {
+          z-index: 5 !important;
+        }
+        .event-popup {
+          z-index: 5 !important;
+        }
+      `}</style>
     </div>
   );
 }
+);
 
-export default EventsMap;
+EventsMapComponent.displayName = "EventsMap";
+
+export default EventsMapComponent;

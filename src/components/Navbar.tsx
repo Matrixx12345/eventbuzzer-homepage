@@ -3,6 +3,7 @@ import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import {
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { favorites } = useFavorites();
   const navigate = useNavigate();
 
   const navLinks = [
@@ -51,9 +53,14 @@ const Navbar = () => {
               <Link
                 key={link.label}
                 to={link.href}
-                className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors"
+                className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative"
               >
                 {link.label}
+                {link.label === "Favoriten" && favorites.length > 0 && (
+                  <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {favorites.length}
+                  </span>
+                )}
               </Link>
             ))}
 
@@ -131,10 +138,15 @@ const Navbar = () => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors"
+                  className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
+                  {link.label === "Favoriten" && favorites.length > 0 && (
+                    <span className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {favorites.length}
+                    </span>
+                  )}
                 </Link>
               ))}
 

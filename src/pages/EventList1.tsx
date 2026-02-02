@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
@@ -6,7 +6,7 @@ import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { Heart, MapPin, Maximize2, Minimize2, X, ShoppingCart, Star } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, X, Plus, Star, Briefcase } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -29,6 +29,7 @@ import {
   CITY_COORDINATES,
 } from "@/utils/eventUtilities";
 import { EventDetailModal } from "@/components/EventDetailModal";
+import { TripPlannerModal } from "@/components/TripPlannerModal";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -79,6 +80,18 @@ interface TaxonomyItem {
 }
 
 
+// Helper functions for rating system
+const getUserRating = (eventId: string): number | null => {
+  const ratings = JSON.parse(localStorage.getItem('eventRatings') || '{}');
+  return ratings[eventId] || null;
+};
+
+const setUserRating = (eventId: string, rating: number) => {
+  const ratings = JSON.parse(localStorage.getItem('eventRatings') || '{}');
+  ratings[eventId] = rating;
+  localStorage.setItem('eventRatings', JSON.stringify(ratings));
+};
+
 // Event Card Component - Opens Modal on Click
 const EventCard = ({
   event,
@@ -94,6 +107,9 @@ const EventCard = ({
   setFlyToLocation,
   previousMapState,
   setPreviousMapState,
+  // Trip Planner
+  plannedEvents,
+  setPlannedEvents,
 }: {
   event: Event;
   index: number;
@@ -108,9 +124,24 @@ const EventCard = ({
   setFlyToLocation: (location: { lng: number; lat: number; zoom: number } | null) => void;
   previousMapState: { center: [number, number]; zoom: number } | null;
   setPreviousMapState: (state: { center: [number, number]; zoom: number } | null) => void;
+  // Trip Planner
+  plannedEvents: Array<{ eventId: string; event: Event; duration: number }>;
+  setPlannedEvents: (events: Array<{ eventId: string; event: Event; duration: number }>) => void;
 }) => {
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [userRating, setUserRatingState] = useState<number | null>(null);
+  const [coffeeClickFeedback, setCoffeeClickFeedback] = useState(false);
+
   const imageUrl = event.image_url || getPlaceholderImage(index);
+
+  // Load user's existing rating for this event
+  useEffect(() => {
+    if (event?.id) {
+      setUserRatingState(getUserRating(event.id));
+    }
+  }, [event?.id]);
 
   // Location formatieren - EXAKT wie auf "Alle Events" Seite
   const locationName = getEventLocation(event);
@@ -124,10 +155,23 @@ const EventCard = ({
   const buzzScore = event.buzz_score || event.relevance_score || 75;
   const isHot = buzzScore >= 80;
 
-  // Rating berechnen (0-5) basierend auf buzzScore (0-100)
-  const rating = buzzScore / 20; // z.B. 75 / 20 = 3.75
+  // Rating berechnen (0-5) basierend auf buzzScore (0-100) + user rating boost
+  const baseRating = buzzScore / 20; // z.B. 75 / 20 = 3.75
+  const ratingBoost = userRating ? (userRating - 3) * 0.1 : 0;
+  const rating = Math.min(5, Math.max(0, baseRating + ratingBoost));
   const goldStars = Math.floor(rating); // z.B. Math.floor(3.75) = 3
   const grayStars = 5 - goldStars; // z.B. 5 - 3 = 2
+
+  // Check if event is already in trip planner
+  const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+
+  // Handle rating submission
+  const handleRating = (ratingValue: number) => {
+    setUserRating(event.id, ratingValue);
+    setUserRatingState(ratingValue);
+    setShowRatingPopup(false);
+    toast.success(`Danke für deine Bewertung! ⭐ ${ratingValue}/5`, { duration: 2000 });
+  };
 
   return (
     <article
@@ -240,13 +284,69 @@ const EventCard = ({
                 boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
               }}
             >
-              {/* Star Rating */}
-              <div className="flex items-center gap-1.5 pl-2">
-                <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                <span className="text-sm font-semibold text-gray-800">
-                  {rating.toFixed(1)}
-                </span>
-              </div>
+              {/* Star Rating - Clickable with Popover */}
+              <Popover open={showRatingPopup} onOpenChange={setShowRatingPopup}>
+                <PopoverTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRatingPopup(true);
+                    }}
+                    className="group/rating relative flex items-center gap-1.5 pl-2 pointer-events-auto"
+                  >
+                    <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
+                    <span className="text-sm font-semibold text-gray-800">
+                      {rating.toFixed(1)}
+                    </span>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/rating:block z-50 pointer-events-none">
+                      <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                        Event bewerten
+                      </div>
+                      <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4"
+                  align="start"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-gray-800">
+                      Event bewerten
+                    </div>
+                    <div className="flex gap-2 justify-center py-2">
+                      {[1, 2, 3, 4, 5].map((starValue) => (
+                        <button
+                          key={starValue}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRating(starValue);
+                          }}
+                          onMouseEnter={() => setHoverRating(starValue)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="p-1 transition-transform hover:scale-110"
+                        >
+                          <Star
+                            size={24}
+                            className={cn(
+                              starValue <= (hoverRating || userRating || 0)
+                                ? 'fill-[#fcd34d] text-[#fcd34d]'
+                                : 'text-gray-300'
+                            )}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    {userRating && (
+                      <div className="text-xs text-gray-500 text-center">
+                        Deine Bewertung: {userRating}/5 ⭐
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               {/* Divider */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
@@ -257,7 +357,7 @@ const EventCard = ({
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
+                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
               >
                 <Heart
                   size={16}
@@ -311,7 +411,7 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110",
+                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110 pointer-events-auto",
                   nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
@@ -335,23 +435,50 @@ const EventCard = ({
               {/* Divider */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
-              {/* Ticket kaufen - DUNKELBLAU */}
+              {/* Zu Trip Planner hinzufügen */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (event.ticket_url || event.url) {
-                    window.open(event.ticket_url || event.url, '_blank');
+
+                  // Visual feedback
+                  setCoffeeClickFeedback(true);
+                  setTimeout(() => setCoffeeClickFeedback(false), 600);
+
+                  if (isInTrip) {
+                    // Remove from trip
+                    setPlannedEvents(plannedEvents.filter(pe => pe.eventId !== event.id));
+                    toast(`${event.title} aus der Reise entfernt`);
                   } else {
-                    toast.info("Ticket-Verkauf demnächst verfügbar");
+                    // Get default duration (2.5h for museums, 2h otherwise)
+                    const museumKeywords = ['museum', 'galerie', 'gallery', 'kunstmuseum', 'art museum'];
+                    const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
+                    const defaultDuration = isMuseum ? 150 : 120; // minutes
+
+                    // Add event to trip planner
+                    setPlannedEvents([...plannedEvents, {
+                      eventId: event.id,
+                      event: event,
+                      duration: defaultDuration
+                    }]);
+
+                    toast(`${event.title} zur Reise hinzugefügt`);
                   }
                 }}
-                className="group/ticket relative p-1 pr-2 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200"
+                className={cn(
+                  "group/trip-add relative p-1 pr-2 rounded-md transition-all duration-200 pointer-events-auto hover:bg-white/30",
+                  coffeeClickFeedback && "scale-95"
+                )}
               >
-                <ShoppingCart size={16} className="text-[#1e3a8a]" />
+                <Briefcase size={16} className={cn(
+                  "transition-colors duration-200",
+                  isInTrip && "text-red-500",
+                  !isInTrip && "text-gray-700",
+                  coffeeClickFeedback && "opacity-70"
+                )} />
                 {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/trip-add:block z-50 pointer-events-none">
                   <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-                    Ticket kaufen
+                    {isInTrip ? "Aus Reise entfernen" : "Zur Reise hinzufügen"}
                   </div>
                   <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
                 </div>
@@ -367,12 +494,27 @@ const EventCard = ({
 
 const EventList1 = () => {
   const [searchParams] = useSearchParams();
-  const [mapExpanded, setMapExpanded] = useState(true);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const [activeDay, setActiveDay] = useState<number>(1);
+  const [totalDays, setTotalDays] = useState<number>(2);
   const [chatbotOpen, setChatbotOpen] = useState(false);
 
   // Modal state
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Trip Planner state - Array of PlannedEvents
+  const [plannedEvents, setPlannedEvents] = useState<Array<{
+    eventId: string;
+    event: Event;
+    duration: number; // in minutes
+  }>>([]);
+
+  // Map ref for Trip Planner
+  const mapRef = useRef<any>(null);
+
+  // Feature flag for Trip Planner
+  const TRIP_PLANNER_ENABLED = import.meta.env.VITE_FEATURE_TRIP_PLANNER === 'true';
 
   // Use shared hooks
   const { rawEvents, loading, hoveredEventId, setHoveredEventId, handleMapEventsChange } = useEventData();
@@ -458,6 +600,7 @@ const EventList1 = () => {
     setModalOpen(false);
     setSelectedEvent(null);
   }, []);
+
 
   // Calculate subcategories for selected category
   const subCategories = useMemo(() => {
@@ -813,35 +956,37 @@ const EventList1 = () => {
 
   // Map Pin Click Handler - Auto-jump to correct page
   const handleMapPinClick = useCallback((eventId: string) => {
-    const eventIndex = filteredEvents.findIndex(e => e.id === eventId);
-
-    if (eventIndex === -1) {
-      return;
+    // Find the event from rawEvents
+    const event = rawEvents.find(e => e.id === eventId);
+    if (event) {
+      setSelectedEvent(event);
+      setModalOpen(true);
     }
+  }, [rawEvents]);
 
-    // Calculate which page this event is on
-    const targetPage = Math.floor(eventIndex / EVENTS_PER_PAGE) + 1;
+  // Toggle event in trip planner (for EventDetailModal)
+  const handleToggleTrip = useCallback((event: Event) => {
+    const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
 
-    // Jump to page if different
-    if (targetPage !== currentPage) {
-      setCurrentPage(targetPage);
-      setDisplayedEventsCount(30); // Reset to initial count
-
-      // Wait for re-render, then scroll to event
-      setTimeout(() => {
-        const eventElement = document.querySelector(`[data-event-id="${eventId}"]`);
-        if (eventElement) {
-          eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
+    if (isInTrip) {
+      // Remove from trip
+      setPlannedEvents(plannedEvents.filter(pe => pe.eventId !== event.id));
+      toast(`${event.title} aus der Reise entfernt`);
     } else {
-      // Same page, just scroll to it
-      const eventElement = document.querySelector(`[data-event-id="${eventId}"]`);
-      if (eventElement) {
-        eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      // Add to trip with smart duration
+      const museumKeywords = ['museum', 'galerie', 'gallery', 'kunstmuseum', 'art museum'];
+      const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
+      const defaultDuration = isMuseum ? 150 : 120; // minutes
+
+      setPlannedEvents([...plannedEvents, {
+        eventId: event.id,
+        event: event,
+        duration: defaultDuration
+      }]);
+
+      toast(`${event.title} zur Reise hinzugefügt`);
     }
-  }, [filteredEvents, currentPage, EVENTS_PER_PAGE]);
+  }, [plannedEvents]);
 
   return (
     <div className="min-h-screen bg-[#F4F7FA]">
@@ -903,15 +1048,11 @@ const EventList1 = () => {
       </div>
 
       <main className="container mx-auto px-3 py-6 max-w-7xl">
-        {/* Split Layout - Event-Karten 10% schmaler für mehr Platz rechts */}
+        {/* Split Layout - Map hat feste Breite, Event-Liste flexibel */}
         <div className="flex gap-8 items-start">
-          {/* Left: Event List - 63% Breite (vorher 70%), 500px wenn Map groß (vorher 550px) */}
+          {/* Left: Event List - Nimmt restlichen Platz */}
           <div
-            className="flex-shrink-0 transition-all duration-300"
-            style={{
-              width: mapExpanded ? "calc(55% - 2rem)" : "63%",
-              maxWidth: mapExpanded ? "none" : "100%",
-            }}
+            className="flex-1 transition-all duration-300 min-w-0"
           >
             {/* SEO-optimierter Einleitungs-Text (300+ Wörter) - Hidden from UI, visible to Google */}
             <div className="sr-only">
@@ -1035,6 +1176,9 @@ const EventList1 = () => {
                         setFlyToLocation={setFlyToLocation}
                         previousMapState={previousMapState}
                         setPreviousMapState={setPreviousMapState}
+                        // Trip Planner
+                        plannedEvents={plannedEvents}
+                        setPlannedEvents={setPlannedEvents}
                       />
                     </div>
                   ))}
@@ -1129,161 +1273,110 @@ const EventList1 = () => {
             </div>
           </div>
 
-          {/* Right: Expandable Map + Chatbot - Breiter (34% statt 27%) */}
+          {/* Right: Map + Trip Planner - Fixed width */}
           <div
-            className={cn(
-              "flex-shrink-0 space-y-6 transition-all duration-300 sticky top-36",
-              mapExpanded ? "w-[45%]" : "w-[34%] mr-4"
-            )}
+            className="flex-shrink-0 w-[45%] space-y-4 transition-all duration-300"
           >
-            {/* Map Container - 15% mehr Höhe (340px statt 296px) */}
-            <div
-              className={cn(
-                "relative bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-200 transition-all duration-300",
-                mapExpanded
-                  ? "h-[calc(100vh-200px)] w-full"
-                  : "h-[340px] w-full"
-              )}
-            >
-              {/* EventsMap Komponente - SIMPLE version without search button */}
-              <EventsMap
-                onEventsChange={handleMapEventsChange}
-                onEventClick={(eventId) => handleMapPinClick(eventId)}
-                isVisible={true}
-                selectedEventIds={favoriteIds}
-                hoveredEventId={hoveredEventId}
-                showOnlyEliteAndFavorites={false}
-                customControls={true}
-                // Nearby zoom feature
-                flyToLocation={flyToLocation}
-                showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
-                onBackClick={() => {
-                  setNearbyEventsFilter(null);
-                  if (previousMapState) {
-                    setFlyToLocation({
-                      lng: previousMapState.center[0],
-                      lat: previousMapState.center[1],
-                      zoom: previousMapState.zoom
-                    });
-                  }
-                  setPreviousMapState(null);
-                }}
-                backButtonLabel="Zurück zu allen Events"
-                onMapStateCapture={(state) => {
-                  // Only capture if we don't already have a previous state (first zoom)
-                  if (!previousMapState) {
-                    setPreviousMapState(state);
-                  }
-                }}
-              />
+            {/* New Layout: Header + Map + Trip Planner - Feature Flag Gated */}
+            {TRIP_PLANNER_ENABLED && (
+              <div className="space-y-4">
 
-              {/* Toggle Button */}
-              <button
-                onClick={() => setMapExpanded(!mapExpanded)}
-                className="absolute top-3 right-3 w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
-                aria-label={mapExpanded ? "Karte verkleinern" : "Karte vergrößern"}
-              >
-                {mapExpanded ? (
-                  <Minimize2 size={18} className="text-gray-700" />
-                ) : (
-                  <Maximize2 size={18} className="text-gray-700" />
-                )}
-              </button>
-            </div>
-
-            {/* Miniatur Chatbot - klickbar, öffnet volle Version rechts */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all h-[280px] flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between px-3 pt-3 pb-2">
-                <h3 className="font-sans text-sm text-gray-900 font-semibold">
-                  Dein Event-Assistent
-                </h3>
-              </div>
-
-              {/* Messages - Mini mit mehr Abstand nach unten */}
-              <div className="px-3 pb-5">
-                <div className="flex justify-start">
-                  <div className="max-w-[90%] px-2.5 py-1.5 rounded-xl text-sm bg-white text-gray-900 rounded-bl-md shadow-sm border border-gray-100 leading-relaxed">
-                    Hi! 👋 Verrate mir deinen Wunsch oder lass uns das Richtige über mein Quiz finden! ✨
-                  </div>
-                </div>
-              </div>
-
-              {/* Mission Buttons - Mini - 4 Pills in 2x2 Grid mit Interaktivität und mehr Abstand nach unten */}
-              <div className="px-3 pb-5 grid grid-cols-2 gap-1.5">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setChatbotOpen(true);
-                  }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
+                {/* MAP SECTION - Always visible, expandable */}
+                <div
+                  className={cn(
+                    "relative bg-white overflow-hidden transition-all duration-300 rounded-2xl border border-stone-200 shadow-sm",
+                    mapExpanded ? "h-[412px]" : "h-[200px]"
+                  )}
                 >
-                  <span>🧘</span>
-                  <span>Solo</span>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setChatbotOpen(true);
-                  }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
-                >
-                  <span>👨‍👩‍👧</span>
-                  <span>Familie</span>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setChatbotOpen(true);
-                  }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
-                >
-                  <span>🎉</span>
-                  <span>Freunde</span>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setChatbotOpen(true);
-                  }}
-                  className="py-1.5 px-2 text-center rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 text-xs font-medium flex items-center justify-center gap-1 transition-all"
-                >
-                  <span>💕</span>
-                  <span>Zu zweit</span>
-                </button>
-              </div>
-
-              {/* Input Area - Mini mit Interaktivität */}
-              <div className="px-3 pb-3">
-                <div className="flex gap-1.5 items-end">
-                  <input
-                    type="text"
-                    placeholder="Ich möchte diesen Samstag..."
-                    className="flex-1 bg-white border-gray-200 rounded-lg text-xs px-2 py-1.5 text-gray-900"
-                    onFocus={(e) => {
-                      e.stopPropagation();
-                      setChatbotOpen(true);
+                  {/* EventsMap Component */}
+                  <EventsMap
+                    ref={mapRef}
+                    onEventsChange={handleMapEventsChange}
+                    onEventClick={(eventId) => handleMapPinClick(eventId)}
+                    isVisible={true}
+                    selectedEventIds={favoriteIds}
+                    hoveredEventId={hoveredEventId}
+                    showOnlyEliteAndFavorites={false}
+                    customControls={true}
+                    // Nearby zoom feature
+                    flyToLocation={flyToLocation}
+                    showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
+                    onBackClick={() => {
+                      setNearbyEventsFilter(null);
+                      if (previousMapState) {
+                        setFlyToLocation({
+                          lng: previousMapState.center[0],
+                          lat: previousMapState.center[1],
+                          zoom: previousMapState.zoom
+                        });
+                      }
+                      setPreviousMapState(null);
+                    }}
+                    backButtonLabel="Zurück zu allen Events"
+                    onMapStateCapture={(state) => {
+                      // Only capture if we don't already have a previous state (first zoom)
+                      if (!previousMapState) {
+                        setPreviousMapState(state);
+                      }
                     }}
                   />
+
+                  {/* Expand/Collapse Button - Top Right */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setChatbotOpen(true);
-                    }}
-                    className="bg-[hsl(var(--wizard-accent))] hover:bg-[hsl(var(--wizard-accent))]/90 text-white rounded-lg px-2.5 py-1.5 text-xs transition-all"
+                    onClick={() => setMapExpanded(!mapExpanded)}
+                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+                    aria-label={mapExpanded ? "Karte verkleinern" : "Karte vergrößern"}
                   >
-                    ✨
+                    {mapExpanded ? (
+                      <Minimize2 size={18} className="text-gray-700" />
+                    ) : (
+                      <Maximize2 size={18} className="text-gray-700" />
+                    )}
                   </button>
                 </div>
-              </div>
-            </div>
 
-            {/* Volle ChatbotPopup - öffnet sich RECHTS */}
-            <ChatbotPopupRight
-              isOpen={chatbotOpen}
-              onClose={() => setChatbotOpen(false)}
-              onOpen={() => setChatbotOpen(true)}
-            />
+                {/* TRIP PLANNER SECTION - Always visible below map */}
+                <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
+                  <TripPlannerModal
+                    isOpen={true}
+                    onClose={() => {}}
+                    allEvents={rawEvents}
+                    isFlipped={false}
+                    plannedEvents={plannedEvents}
+                    onSetPlannedEvents={setPlannedEvents}
+                    activeDay={activeDay}
+                    setActiveDay={setActiveDay}
+                    totalDays={totalDays}
+                    setTotalDays={setTotalDays}
+                  />
+                </div>
+
+              </div>
+            )}
+
+
+            {/* Floating AI Wizard Button */}
+            <button
+              onClick={() => setChatbotOpen(true)}
+              className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-110 z-50 flex items-center justify-center group"
+              title="AI Assistant öffnen"
+            >
+              <style>{`
+                @keyframes float {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-8px); }
+                }
+                .fab-button {
+                  animation: float 3s ease-in-out infinite;
+                }
+                .fab-glow {
+                  box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+                }
+              `}</style>
+              <span className="text-3xl group-hover:animate-spin">✨</span>
+              {/* Glowing ring */}
+              <div className="absolute inset-0 rounded-full border-2 border-transparent bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
           </div>
         </div>
       </main>
@@ -1294,8 +1387,11 @@ const EventList1 = () => {
           event={selectedEvent}
           isOpen={modalOpen}
           onClose={closeEventModal}
+          plannedEvents={plannedEvents}
+          onToggleTrip={handleToggleTrip}
         />
       )}
+
     </div>
   );
 };

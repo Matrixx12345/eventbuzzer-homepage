@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight, Calendar, MapPin, DollarSign, Briefcase, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
@@ -11,6 +11,13 @@ interface EventDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   variant?: 'default' | 'solid'; // default = 75% transparent, solid = 85% less transparent
+  // Trip Planner integration
+  plannedEvents?: Array<{
+    eventId: string;
+    event: any;
+    duration: number;
+  }>;
+  onToggleTrip?: (event: any) => void;
 }
 
 // Format tag names for display
@@ -42,7 +49,14 @@ const setUserRating = (eventId: string, rating: number) => {
   localStorage.setItem('eventRatings', JSON.stringify(ratings));
 };
 
-export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onClose, variant = 'default' }) => {
+export const EventDetailModal: React.FC<EventDetailModalProps> = ({
+  event,
+  isOpen,
+  onClose,
+  variant = 'default',
+  plannedEvents = [],
+  onToggleTrip
+}) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showTagsPopup, setShowTagsPopup] = useState(false);
@@ -56,11 +70,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
-  // Reset position and description when modal opens
+  // Reset position, description, and rating state when modal opens
   useEffect(() => {
     if (isOpen) {
       setPosition({ x: 0, y: 0 });
       setShowFullDescription(false);
+      // Reset rating state - will be loaded by event?.id useEffect
+      setUserRatingState(null);
     }
   }, [isOpen]);
 
@@ -91,14 +107,15 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
 
   // Load user's existing rating for this event
   useEffect(() => {
-    if (event?.id) {
+    if (event?.id && isOpen) {
       setUserRatingState(getUserRating(event.id));
     }
-  }, [event?.id]);
+  }, [event?.id, isOpen]);
 
   if (!event) return null;
 
   const isFavorited = isFavorite(event.id);
+  const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
 
   // Calculate display score with user rating boost
   const baseScore = (event.buzz_score || event.relevance_score || 75) / 20;
@@ -323,7 +340,51 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
           })()}
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-6">
-            <div className="flex items-center gap-7">
+            <div className="flex items-center gap-5">
+              {/* Rating - Klickbar für User-Bewertung */}
+              <Popover open={showRatingPopup} onOpenChange={setShowRatingPopup}>
+                <PopoverTrigger asChild>
+                  <button
+                    className={`flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border ${userRating ? 'border-[#fbbf24] border-2' : 'border-gray-300'} text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md group`}
+                    title={userRating ? `Deine Bewertung: ${userRating}/5` : "Event bewerten"}
+                  >
+                    <Star size={20} className="fill-yellow-400 text-yellow-400" />
+                    <span className="text-sm font-semibold text-[#fbbf24]">{displayScore}</span>
+                    {userRating && <Check size={14} className="text-green-500" />}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" align="center">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 text-center">
+                    {userRating ? 'Deine Bewertung ändern:' : 'Event bewerten:'}
+                  </p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => handleRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star
+                          size={24}
+                          className={
+                            (hoverRating || userRating || 0) >= star
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  {userRating && (
+                    <p className="text-[10px] text-gray-400 text-center mt-1">
+                      Du hast {userRating}/5 gegeben
+                    </p>
+                  )}
+                </PopoverContent>
+              </Popover>
+
               {/* Favorite Button */}
               <button
                 onClick={handleToggleFavorite}
@@ -334,15 +395,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                   size={20}
                   className={isFavorited ? "fill-current text-red-500" : ""}
                 />
-              </button>
-
-              {/* Calendar Button */}
-              <button
-                onClick={exportToCalendar}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
-                title="Im Kalender speichern"
-              >
-                <CalendarPlus size={20} />
               </button>
 
               {/* Share Button */}
@@ -395,52 +447,21 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpe
                 </PopoverContent>
               </Popover>
 
-              {/* Rating - Klickbar für User-Bewertung */}
-              <Popover open={showRatingPopup} onOpenChange={setShowRatingPopup}>
-                <PopoverTrigger asChild>
-                  <button
-                    className="flex items-center gap-1.5 group"
-                    title="Event bewerten"
-                  >
-                    <div className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 shadow-md group-hover:border-yellow-400 group-hover:bg-yellow-50 transition-all">
-                      <Star size={20} className={userRating ? "fill-yellow-400 text-yellow-400" : "text-yellow-500"} />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">
-                      {displayScore}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-3" align="center">
-                  <p className="text-xs font-semibold text-gray-500 mb-2 text-center">
-                    {userRating ? 'Deine Bewertung ändern:' : 'Event bewerten:'}
-                  </p>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 hover:scale-110 transition-transform"
-                      >
-                        <Star
-                          size={24}
-                          className={
-                            (hoverRating || userRating || 0) >= star
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  {userRating && (
-                    <p className="text-[10px] text-gray-400 text-center mt-1">
-                      Du hast {userRating}/5 gegeben
-                    </p>
-                  )}
-                </PopoverContent>
-              </Popover>
+              {/* Briefcase Button - Add to Trip */}
+              <button
+                onClick={() => {
+                  if (onToggleTrip) {
+                    onToggleTrip(event);
+                  }
+                }}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
+                title={isInTrip ? "Aus Reiseplanung entfernen" : "Zur Reiseplanung hinzufügen"}
+              >
+                <Briefcase
+                  size={20}
+                  className={isInTrip ? "text-red-500" : ""}
+                />
+              </button>
             </div>
 
             {/* Ticket Button - dunkleres Blau, breiter, rechtsbündig */}

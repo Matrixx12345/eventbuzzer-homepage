@@ -730,7 +730,7 @@ const EventDetail = () => {
       date: dateDisplay,
       time: timeDisplay,
       distance: distanceInfo?.distance || "",
-      description: dynamicEvent.long_description || dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
+      description: dynamicEvent.description || dynamicEvent.short_description || "Beschreibung folgt.",
       ticketLink: dynamicEvent.ticket_link,
       priceFrom: dynamicEvent.price_from,
       priceTo: dynamicEvent.price_to,
@@ -907,7 +907,7 @@ const EventDetail = () => {
         <div className="bg-stone-50 flex flex-col px-6 py-8 lg:px-12 xl:px-16 lg:h-[48vh] lg:rounded-r-2xl">
           {/* Title - Modal Style */}
           <h1
-            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-6 mt-2"
+            className="text-4xl lg:text-5xl font-serif text-gray-900 mb-3 mt-0"
             style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}
           >
             {event.title}
@@ -933,7 +933,7 @@ const EventDetail = () => {
                 >
                   {event.description}
                 </p>
-                {event.description.length > 400 && (
+                {event.description.length > 200 && (
                   <div className="mt-3 pt-2">
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
@@ -954,7 +954,7 @@ const EventDetail = () => {
           </div>
 
           {/* Fixed Bottom Section */}
-          <div className="mt-auto">
+          <div className="mt-auto pt-8">
             {/* Action Buttons - Modal Style Round Icons */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-5">
