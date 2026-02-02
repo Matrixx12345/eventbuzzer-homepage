@@ -728,44 +728,32 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
       if (validDayEvents.length === 0) return '';
 
-      // Generate timeline + events HTML for this day
-      const timelineEventPairs = validDayEvents
+      // Generate events HTML for this day - simple list layout
+      const eventsList = validDayEvents
         .map((pe) => {
           const shortDesc = pe.event.short_description || pe.event.description || '';
           const truncatedDesc = truncateAtFirstSentence(shortDesc);
           const location = pe.event.address_city || pe.event.location || 'Location';
           const imageUrl = pe.event.image_url || '';
-          const durationFormatted = formatDuration(pe.duration);
+          const time = pe.startTime || '09:00';
 
           return `
-            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;">
-              <!-- Timeline time (left) -->
-              <div style="width: 50px; flex-shrink: 0; text-align: right; padding-top: 2px;">
-                <div style="font-size: 13px; color: #667eea; font-weight: 600;">
-                  ${pe.startTime || '09:00'}
-                </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;">
+              <!-- Thumbnail Image -->
+              <div style="flex-shrink: 0;">
+                ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover;">` : '<div style="width: 70px; height: 70px; border-radius: 8px; background: #e5e7eb;"></div>'}
               </div>
 
-              <!-- Event Card (right) with thumbnail -->
-              <div style="flex: 1; border: 2px solid #d1d5db; border-radius: 8px; padding: 10px; background: white; display: flex; gap: 10px;">
-                <!-- Thumbnail Image -->
-                ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 60px; height: 60px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">` : '<div style="width: 60px; height: 60px; border-radius: 6px; background: #e5e7eb; flex-shrink: 0;"></div>'}
-
-                <!-- Event Details -->
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-weight: 600; font-size: 14px; color: #1f2937; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    ${pe.event.title}
-                  </div>
-                  <div style="color: #4b5563; font-size: 11px; margin-bottom: 3px;">
-                    📍 ${location}
-                  </div>
-                  ${truncatedDesc ? `<div style="color: #6b7280; font-size: 11px; margin-bottom: 3px; line-height: 1.3;">
-                    ${truncatedDesc}
-                  </div>` : ''}
-                  <div style="color: #9ca3af; font-size: 10px;">
-                    ${durationFormatted}
-                  </div>
+              <!-- Event Details -->
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13px; line-height: 1.5; margin-bottom: 4px;">
+                  <span style="color: #667eea; font-weight: 600;">${time}</span>
+                  <span style="color: #1f2937; font-weight: 600;"> | ${pe.event.title}</span>
+                  <span style="color: #4b5563;"> | ${location}</span>
                 </div>
+                ${truncatedDesc ? `<div style="font-size: 12px; color: #6b7280; line-height: 1.4;">
+                  ${truncatedDesc}
+                </div>` : ''}
               </div>
             </div>
           `;
@@ -773,12 +761,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         .join('');
 
       return `
-        <div style="margin-bottom: 24px; page-break-inside: avoid; border: 2px solid #d1d5db; border-radius: 8px; padding: 16px; background: white;">
-          <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0 0 14px 0; padding-bottom: 10px; border-bottom: 2px solid #d1d5db;">
+        <div style="margin-bottom: 20px; page-break-inside: avoid; border: 2px solid #d1d5db; border-radius: 8px; padding: 16px; background: white;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #d1d5db;">
             ${dayLabel}
           </h3>
-          <div style="margin-left: 0;">
-            ${timelineEventPairs}
+          <div>
+            ${eventsList}
           </div>
         </div>
       `;
