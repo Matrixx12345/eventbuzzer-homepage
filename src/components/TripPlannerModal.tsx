@@ -797,8 +797,9 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             .header {
               display: flex;
               justify-content: space-between;
-              align-items: flex-start;
+              align-items: center;
               margin-bottom: 50px;
+              gap: 30px;
             }
 
             .logo-text {
@@ -815,9 +816,10 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             .qr-container {
               display: flex;
               flex-direction: row;
-              align-items: center;
-              gap: 15px;
+              align-items: flex-start;
+              gap: 20px;
               flex-shrink: 0;
+              margin-right: 20px;
             }
 
             .qr-code {
@@ -832,24 +834,29 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               text-align: left;
               display: flex;
               flex-direction: column;
-              gap: 3px;
+              gap: 4px;
+              margin-left: 25px;
             }
 
             .qr-text strong {
               font-family: Georgia, 'Playfair Display', serif;
-              font-size: 14px;
+              font-size: 13px;
               font-weight: 400;
               color: #1f2937;
-              line-height: 1.3;
-              letter-spacing: 0.5px;
+              line-height: 1.2;
+              letter-spacing: 0.3px;
+              display: block;
+              white-space: normal;
             }
 
             .qr-text span {
               font-family: Georgia, 'Playfair Display', serif;
-              font-size: 12px;
+              font-size: 11px;
               color: #6b7280;
-              line-height: 1.4;
-              letter-spacing: 0.3px;
+              line-height: 1.5;
+              letter-spacing: 0.2px;
+              display: block;
+              white-space: normal;
             }
 
             /* DAYS CONTAINER */
@@ -895,7 +902,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               flex-shrink: 0;
               width: 80px;
               height: 60px;
-              border-radius: 6px;
+              border-radius: 12px;
               overflow: hidden;
               background: #e5e7eb;
             }
@@ -929,7 +936,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
             /* Zone 3: Trennlinie */
             .event-separator {
-              width: 1px;
+              width: 2.5px;
               background: #d1d5db;
               flex-shrink: 0;
               margin: 0 10px;
@@ -944,27 +951,30 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             }
 
             .event-title-line {
-              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
               font-size: 14px;
               font-weight: 600;
               color: #1f2937;
               margin-bottom: 4px;
               line-height: 1.3;
+              letter-spacing: 0.2px;
             }
 
             .event-description {
-              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
               font-size: 12px;
               color: #6b7280;
               margin-bottom: 4px;
               line-height: 1.4;
+              letter-spacing: 0.2px;
             }
 
             .event-duration {
-              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
               font-size: 11px;
               color: #9ca3af;
               line-height: 1.3;
+              letter-spacing: 0.1px;
             }
 
             /* FOOTER */
