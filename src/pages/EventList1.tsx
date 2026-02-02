@@ -1277,80 +1277,75 @@ const EventList1 = () => {
           <div
             className="flex-shrink-0 w-[45%] space-y-4 transition-all duration-300"
           >
-            {/* New Layout: Header + Map + Trip Planner - Feature Flag Gated */}
+            {/* MAP SECTION - ALWAYS renders to load events */}
+            <div
+              className={cn(
+                "relative bg-white overflow-hidden transition-all duration-300 rounded-2xl border border-stone-200 shadow-sm",
+                mapExpanded ? "h-[412px]" : "h-[200px]"
+              )}
+            >
+              {/* EventsMap Component */}
+              <EventsMap
+                ref={mapRef}
+                onEventsChange={handleMapEventsChange}
+                onEventClick={(eventId) => handleMapPinClick(eventId)}
+                isVisible={true}
+                selectedEventIds={favoriteIds}
+                hoveredEventId={hoveredEventId}
+                showOnlyEliteAndFavorites={false}
+                customControls={true}
+                // Nearby zoom feature
+                flyToLocation={flyToLocation}
+                showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
+                onBackClick={() => {
+                  setNearbyEventsFilter(null);
+                  if (previousMapState) {
+                    setFlyToLocation({
+                      lng: previousMapState.center[0],
+                      lat: previousMapState.center[1],
+                      zoom: previousMapState.zoom
+                    });
+                  }
+                  setPreviousMapState(null);
+                }}
+                backButtonLabel="Zurück zu allen Events"
+                onMapStateCapture={(state) => {
+                  // Only capture if we don't already have a previous state (first zoom)
+                  if (!previousMapState) {
+                    setPreviousMapState(state);
+                  }
+                }}
+              />
+
+              {/* Expand/Collapse Button - Top Right */}
+              <button
+                onClick={() => setMapExpanded(!mapExpanded)}
+                className="absolute top-3 right-3 w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+                aria-label={mapExpanded ? "Karte verkleinern" : "Karte vergrößern"}
+              >
+                {mapExpanded ? (
+                  <Minimize2 size={18} className="text-gray-700" />
+                ) : (
+                  <Maximize2 size={18} className="text-gray-700" />
+                )}
+              </button>
+            </div>
+
+            {/* TRIP PLANNER SECTION - Feature Flag Gated */}
             {TRIP_PLANNER_ENABLED && (
-              <div className="space-y-4">
-
-                {/* MAP SECTION - Always visible, expandable */}
-                <div
-                  className={cn(
-                    "relative bg-white overflow-hidden transition-all duration-300 rounded-2xl border border-stone-200 shadow-sm",
-                    mapExpanded ? "h-[412px]" : "h-[200px]"
-                  )}
-                >
-                  {/* EventsMap Component */}
-                  <EventsMap
-                    ref={mapRef}
-                    onEventsChange={handleMapEventsChange}
-                    onEventClick={(eventId) => handleMapPinClick(eventId)}
-                    isVisible={true}
-                    selectedEventIds={favoriteIds}
-                    hoveredEventId={hoveredEventId}
-                    showOnlyEliteAndFavorites={false}
-                    customControls={true}
-                    // Nearby zoom feature
-                    flyToLocation={flyToLocation}
-                    showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
-                    onBackClick={() => {
-                      setNearbyEventsFilter(null);
-                      if (previousMapState) {
-                        setFlyToLocation({
-                          lng: previousMapState.center[0],
-                          lat: previousMapState.center[1],
-                          zoom: previousMapState.zoom
-                        });
-                      }
-                      setPreviousMapState(null);
-                    }}
-                    backButtonLabel="Zurück zu allen Events"
-                    onMapStateCapture={(state) => {
-                      // Only capture if we don't already have a previous state (first zoom)
-                      if (!previousMapState) {
-                        setPreviousMapState(state);
-                      }
-                    }}
-                  />
-
-                  {/* Expand/Collapse Button - Top Right */}
-                  <button
-                    onClick={() => setMapExpanded(!mapExpanded)}
-                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
-                    aria-label={mapExpanded ? "Karte verkleinern" : "Karte vergrößern"}
-                  >
-                    {mapExpanded ? (
-                      <Minimize2 size={18} className="text-gray-700" />
-                    ) : (
-                      <Maximize2 size={18} className="text-gray-700" />
-                    )}
-                  </button>
-                </div>
-
-                {/* TRIP PLANNER SECTION - Always visible below map */}
-                <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
-                  <TripPlannerModal
-                    isOpen={true}
-                    onClose={() => {}}
-                    allEvents={rawEvents}
-                    isFlipped={false}
-                    plannedEvents={plannedEvents}
-                    onSetPlannedEvents={setPlannedEvents}
-                    activeDay={activeDay}
-                    setActiveDay={setActiveDay}
-                    totalDays={totalDays}
-                    setTotalDays={setTotalDays}
-                  />
-                </div>
-
+              <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
+                <TripPlannerModal
+                  isOpen={true}
+                  onClose={() => {}}
+                  allEvents={rawEvents}
+                  isFlipped={false}
+                  plannedEvents={plannedEvents}
+                  onSetPlannedEvents={setPlannedEvents}
+                  activeDay={activeDay}
+                  setActiveDay={setActiveDay}
+                  totalDays={totalDays}
+                  setTotalDays={setTotalDays}
+                />
               </div>
             )}
 
