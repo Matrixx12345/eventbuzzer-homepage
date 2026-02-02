@@ -1111,7 +1111,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                          bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed
                          flex items-center justify-center gap-2"
-              disabled={plannedEvents.every((e) => !e)}
+              disabled={currentDayEvents.every((e) => !e)}
               onClick={handleShowQRCode}
               title="QR-Code zum Scannen mit dem Handy"
             >
@@ -1122,7 +1122,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               className="flex-1 px-4 py-2 text-sm font-medium text-white
                          bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={plannedEvents.every((e) => !e)}
+              disabled={currentDayEvents.every((e) => !e)}
               onClick={handleExportPDF}
               title="Trip als PDF mit QR-Code exportieren"
             >
@@ -1187,20 +1187,28 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           event={selectedEventForModal}
           isOpen={!!selectedEventForModal}
           onClose={() => setSelectedEventForModal(null)}
-          plannedEvents={plannedEvents}
-          onToggleTrip={(event) => {
-            const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+          plannedEventsByDay={plannedEventsByDay}
+          activeDay={activeDay}
+          onToggleTrip={(event, day = activeDay) => {
+            const allEventsFlat = Object.values(plannedEventsByDay).flat();
+            const isInTrip = allEventsFlat.some(pe => pe.eventId === event.id);
             if (isInTrip) {
-              setPlannedEvents(plannedEvents.filter(pe => pe.eventId !== event.id));
+              const updated = { ...plannedEventsByDay };
+              updated[day] = (updated[day] || []).filter(pe => pe.eventId !== event.id);
+              setPlannedEventsByDay(updated);
             } else {
               const museumKeywords = ['museum', 'galerie', 'gallery', 'kunstmuseum', 'art museum'];
               const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
               const defaultDuration = isMuseum ? 150 : 120;
-              setPlannedEvents([...plannedEvents, {
-                eventId: event.id,
-                event: event,
-                duration: defaultDuration
-              }]);
+              const updated = {
+                ...plannedEventsByDay,
+                [day]: [...(plannedEventsByDay[day] || []), {
+                  eventId: event.id,
+                  event: event,
+                  duration: defaultDuration
+                }]
+              };
+              setPlannedEventsByDay(updated);
             }
           }}
         />
@@ -1320,7 +1328,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               favorites={favorites}
               onEventClick={(event) => setSelectedEventForModal(event)}
               onAddToTrip={handleAddFavoriteToTrip}
-              plannedEvents={plannedEvents}
+              plannedEventsByDay={plannedEventsByDay}
             />
           </div>
         </div>
@@ -1330,20 +1338,28 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         event={selectedEventForModal}
         isOpen={!!selectedEventForModal}
         onClose={() => setSelectedEventForModal(null)}
-        plannedEvents={plannedEvents}
-        onToggleTrip={(event) => {
-          const isInTrip = plannedEvents.some(pe => pe.eventId === event.id);
+        plannedEventsByDay={plannedEventsByDay}
+        activeDay={activeDay}
+        onToggleTrip={(event, day = activeDay) => {
+          const allEventsFlat = Object.values(plannedEventsByDay).flat();
+          const isInTrip = allEventsFlat.some(pe => pe.eventId === event.id);
           if (isInTrip) {
-            setPlannedEvents(plannedEvents.filter(pe => pe.eventId !== event.id));
+            const updated = { ...plannedEventsByDay };
+            updated[day] = (updated[day] || []).filter(pe => pe.eventId !== event.id);
+            setPlannedEventsByDay(updated);
           } else {
             const museumKeywords = ['museum', 'galerie', 'gallery', 'kunstmuseum', 'art museum'];
             const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
             const defaultDuration = isMuseum ? 150 : 120;
-            setPlannedEvents([...plannedEvents, {
-              eventId: event.id,
-              event: event,
-              duration: defaultDuration
-            }]);
+            const updated = {
+              ...plannedEventsByDay,
+              [day]: [...(plannedEventsByDay[day] || []), {
+                eventId: event.id,
+                event: event,
+                duration: defaultDuration
+              }]
+            };
+            setPlannedEventsByDay(updated);
           }
         }}
       />
