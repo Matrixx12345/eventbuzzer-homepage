@@ -814,9 +814,9 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             /* QR Container - Rechts */
             .qr-container {
               display: flex;
-              flex-direction: column;
-              align-items: flex-end;
-              gap: 10px;
+              flex-direction: row;
+              align-items: center;
+              gap: 15px;
               flex-shrink: 0;
             }
 
@@ -829,23 +829,27 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             }
 
             .qr-text {
-              text-align: right;
+              text-align: left;
               display: flex;
               flex-direction: column;
               gap: 3px;
             }
 
             .qr-text strong {
-              font-size: 11px;
-              font-weight: 600;
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 14px;
+              font-weight: 400;
               color: #1f2937;
-              line-height: 1.4;
+              line-height: 1.3;
+              letter-spacing: 0.5px;
             }
 
             .qr-text span {
-              font-size: 10px;
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 12px;
               color: #6b7280;
-              line-height: 1.3;
+              line-height: 1.4;
+              letter-spacing: 0.3px;
             }
 
             /* DAYS CONTAINER */
@@ -857,7 +861,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
             /* DAY SECTION */
             .day-section {
-              border: 1px solid #e5e7eb;
+              border: 2px solid #9ca3af;
               border-radius: 15px;
               padding: 28px;
               page-break-inside: avoid;
@@ -865,12 +869,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             }
 
             .day-title {
-              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-              font-size: 11px;
-              font-weight: 700;
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 24px;
+              font-weight: 400;
               color: #1f2937;
-              margin: 0 0 20px 0;
-              letter-spacing: 1.5px;
+              margin: 0 0 24px 0;
+              letter-spacing: 1px;
               text-transform: uppercase;
             }
 
@@ -906,26 +910,29 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             /* Zone 2: Zeit */
             .event-time {
               flex-shrink: 0;
-              width: 45px;
+              width: 50px;
               text-align: center;
               display: flex;
               align-items: center;
               justify-content: center;
+              padding-right: 8px;
             }
 
             .event-time div {
-              font-size: 13px;
-              font-weight: 600;
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 14px;
+              font-weight: 400;
               color: #1f2937;
               line-height: 1;
+              letter-spacing: 0.3px;
             }
 
             /* Zone 3: Trennlinie */
             .event-separator {
-              width: 0.5px;
-              background: #e5e7eb;
+              width: 1px;
+              background: #d1d5db;
               flex-shrink: 0;
-              margin: 0 8px;
+              margin: 0 10px;
             }
 
             /* Zone 4: Textblock */
@@ -937,22 +944,25 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             }
 
             .event-title-line {
-              font-size: 13px;
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-size: 14px;
               font-weight: 600;
               color: #1f2937;
-              margin-bottom: 6px;
+              margin-bottom: 4px;
               line-height: 1.3;
             }
 
             .event-description {
-              font-size: 11px;
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-size: 12px;
               color: #6b7280;
               margin-bottom: 4px;
               line-height: 1.4;
             }
 
             .event-duration {
-              font-size: 10px;
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              font-size: 11px;
               color: #9ca3af;
               line-height: 1.3;
             }
