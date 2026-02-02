@@ -816,7 +816,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             .qr-container {
               display: flex;
               flex-direction: row;
-              align-items: center;
+              align-items: flex-start;
               gap: 5px;
               flex-shrink: 0;
               margin-right: 20px;
@@ -836,9 +836,11 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               text-align: left;
               display: flex;
               flex-direction: column;
-              justify-content: center;
+              justify-content: space-between;
               height: 90px;
               gap: 0;
+              padding: 0;
+              margin: 0;
             }
 
             .qr-text strong {
@@ -850,7 +852,8 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               letter-spacing: 0.3px;
               display: block;
               white-space: normal;
-              margin-bottom: 8px;
+              margin: 0;
+              padding: 0;
             }
 
             .qr-text span {
@@ -861,6 +864,8 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               letter-spacing: 0.2px;
               display: block;
               white-space: normal;
+              margin: 0;
+              padding: 0;
             }
 
             /* DAYS CONTAINER */
@@ -955,13 +960,13 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             }
 
             .event-title-line {
-              font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-              font-size: 17px;
-              font-weight: 600;
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 18px;
+              font-weight: 500;
               color: #1f2937;
               margin-bottom: 6px;
               line-height: 1.3;
-              letter-spacing: 0.2px;
+              letter-spacing: 0.3px;
             }
 
             .event-description {
