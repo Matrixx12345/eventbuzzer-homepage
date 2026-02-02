@@ -816,43 +816,48 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             .qr-container {
               display: flex;
               flex-direction: row;
-              align-items: flex-start;
+              align-items: center;
               gap: 5px;
               flex-shrink: 0;
               margin-right: 20px;
+              height: 90px;
             }
 
             .qr-code {
-              width: 100px;
-              height: 100px;
+              width: 90px;
+              height: 90px;
               border: none;
               border-radius: 0px;
               display: block;
+              flex-shrink: 0;
             }
 
             .qr-text {
               text-align: left;
               display: flex;
               flex-direction: column;
-              gap: 2px;
+              justify-content: center;
+              height: 90px;
+              gap: 0;
             }
 
             .qr-text strong {
               font-family: Georgia, 'Playfair Display', serif;
-              font-size: 13px;
+              font-size: 14px;
               font-weight: 400;
               color: #1f2937;
-              line-height: 1.2;
+              line-height: 1.1;
               letter-spacing: 0.3px;
               display: block;
               white-space: normal;
+              margin-bottom: 8px;
             }
 
             .qr-text span {
               font-family: Georgia, 'Playfair Display', serif;
-              font-size: 11px;
+              font-size: 12px;
               color: #6b7280;
-              line-height: 1.5;
+              line-height: 1.2;
               letter-spacing: 0.2px;
               display: block;
               white-space: normal;
