@@ -248,7 +248,7 @@ const EventSlot: React.FC<{
       <div className="flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
 
       {/* Event Slot - RIGHT, centered */}
-      <button
+      <div
         draggable={event ? true : false}
         onDragStart={(e) => {
           if (event && onDragStart) {
@@ -419,7 +419,7 @@ const EventSlot: React.FC<{
           </div>
         )}
 
-      </button>
+      </div>
     </div>
   );
 };
