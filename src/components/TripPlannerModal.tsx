@@ -706,14 +706,14 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       return match ? match[0] : text;
     };
 
-    // Helper to format duration
+    // Helper to format duration - no emoji
     const formatDuration = (minutes: number): string => {
-      if (!minutes) return '⏱️ 2h';
+      if (!minutes) return '2h';
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
-      if (hours > 0 && mins > 0) return `⏱️ ${hours}h ${mins}min`;
-      if (hours > 0) return `⏱️ ${hours}h`;
-      return `⏱️ ${mins}min`;
+      if (hours > 0 && mins > 0) return `${hours}h ${mins}min`;
+      if (hours > 0) return `${hours}h`;
+      return `${mins}min`;
     };
 
     // Group events by day from plannedEventsByDay structure
@@ -728,46 +728,46 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
       if (validDayEvents.length === 0) return '';
 
-      // Generate events HTML for this day - simple list layout
-      const eventsList = validDayEvents
-        .map((pe) => {
-          const shortDesc = pe.event.short_description || pe.event.description || '';
-          const truncatedDesc = truncateAtFirstSentence(shortDesc);
-          const location = pe.event.address_city || pe.event.location || 'Location';
-          const imageUrl = pe.event.image_url || '';
-          const time = pe.startTime || '09:00';
-
-          return `
-            <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;">
-              <!-- Thumbnail Image -->
-              <div style="flex-shrink: 0;">
-                ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover;">` : '<div style="width: 70px; height: 70px; border-radius: 8px; background: #e5e7eb;"></div>'}
-              </div>
-
-              <!-- Event Details -->
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 13px; line-height: 1.5; margin-bottom: 4px;">
-                  <span style="color: #667eea; font-weight: 600;">${time}</span>
-                  <span style="color: #1f2937; font-weight: 600;"> | ${pe.event.title}</span>
-                  <span style="color: #4b5563;"> | ${location}</span>
-                </div>
-                ${truncatedDesc ? `<div style="font-size: 12px; color: #6b7280; line-height: 1.4;">
-                  ${truncatedDesc}
-                </div>` : ''}
-              </div>
-            </div>
-          `;
-        })
-        .join('');
-
       return `
-        <div style="margin-bottom: 20px; page-break-inside: avoid; border: 2px solid #d1d5db; border-radius: 8px; padding: 16px; background: white;">
-          <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #d1d5db;">
-            ${dayLabel}
-          </h3>
-          <div>
-            ${eventsList}
-          </div>
+        <div class="day-section">
+          <div class="day-title">${dayLabel}</div>
+          ${validDayEvents.map((pe) => {
+            const shortDesc = pe.event.short_description || pe.event.description || '';
+            const truncatedDesc = truncateAtFirstSentence(shortDesc);
+            const location = pe.event.address_city || pe.event.location || 'Location';
+            const imageUrl = pe.event.image_url || '';
+            const time = pe.startTime || '09:00';
+            const durationFormatted = formatDuration(pe.duration);
+
+            return `
+              <div class="event-item" style="display: flex; gap: 14px; align-items: center;">
+                <!-- Thumbnail -->
+                <div style="flex-shrink: 0;">
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 90px; height: 68px; border-radius: 6px; object-fit: cover;">` : '<div style="width: 90px; height: 68px; border-radius: 6px; background: #e5e7eb;"></div>'}
+                </div>
+                <!-- Time -->
+                <div style="flex-shrink: 0; width: 50px; text-align: center;">
+                  <div style="font-size: 14px; font-weight: 600; color: #1f2937;">
+                    ${time}
+                  </div>
+                </div>
+                <!-- Separator -->
+                <div style="width: 1px; height: 60px; background: #d1d5db;"></div>
+                <!-- Content -->
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                    ${pe.event.title} | ${location}
+                  </div>
+                  ${truncatedDesc ? `<div style="font-size: 12px; color: #6b7280; margin-bottom: 3px; line-height: 1.4;">
+                    ${truncatedDesc}
+                  </div>` : ''}
+                  <div style="font-size: 11px; color: #9ca3af;">
+                    ${durationFormatted}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
     }).join('');
@@ -780,107 +780,113 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           <title>Trip Planner - EventBuzzer</title>
           <style>
             body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
               margin: 0;
-              padding: 16px;
+              padding: 30px 40px;
               color: #1f2937;
               background: white;
               line-height: 1.6;
             }
             .container {
-              max-width: 1200px;
+              max-width: 650px;
               margin: 0 auto;
             }
+
+            /* Header - Logo and QR on same line */
             .header {
-              text-align: center;
-              margin-bottom: 24px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 40px;
+              padding-bottom: 30px;
+              border-bottom: 1px solid #d1d5db;
             }
             .logo-text {
-              font-size: 24px;
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 36px;
               font-weight: 700;
-              color: #667eea;
-              margin: 0 0 8px 0;
-            }
-            .header-date {
-              color: #6b7280;
-              font-size: 13px;
-              margin-bottom: 4px;
-            }
-            .event-count {
               color: #1f2937;
-              font-weight: 600;
-              font-size: 16px;
+              margin: 0;
+              letter-spacing: 2px;
             }
-            .qr-section {
+
+            /* QR Section - right side */
+            .qr-container {
               display: flex;
-              flex-direction: column;
-              align-items: center;
-              margin: 24px 0;
-              padding: 20px;
-              border: 2px solid #d1d5db;
-              border-radius: 8px;
-              background: white;
-              page-break-inside: avoid;
-            }
-            .qr-code {
-              margin-bottom: 12px;
+              gap: 12px;
+              align-items: flex-start;
             }
             .qr-code img {
-              width: 180px;
-              height: 180px;
-              border: 2px solid #d1d5db;
-              border-radius: 6px;
-              display: block;
+              width: 140px;
+              height: 140px;
+              border: 1px solid #d1d5db;
+              border-radius: 4px;
             }
-            .qr-description {
-              text-align: center;
-              font-size: 12px;
-              color: #6b7280;
-              line-height: 1.5;
-            }
-            .qr-description strong {
-              color: #1f2937;
-              display: block;
-              margin-bottom: 4px;
-              font-size: 13px;
-            }
-            .days-container {
-              margin-top: 24px;
+            .qr-text {
               display: flex;
-              gap: 16px;
-              flex-wrap: wrap;
+              flex-direction: column;
+              justify-content: center;
+              gap: 4px;
             }
-            .day-section {
-              flex: 1;
-              min-width: 280px;
-              page-break-inside: avoid;
-            }
-            .day-title {
-              font-size: 16px;
+            .qr-text strong {
+              font-size: 12px;
               font-weight: 700;
               color: #1f2937;
-              margin: 0 0 12px 0;
-              padding-bottom: 8px;
-              border-bottom: 2px solid #d1d5db;
+              line-height: 1.3;
             }
+            .qr-text span {
+              font-size: 11px;
+              color: #6b7280;
+              line-height: 1.3;
+            }
+
+            /* Days Container - all days undereinander */
+            .days-container {
+              display: flex;
+              flex-direction: column;
+              gap: 24px;
+            }
+
+            /* Day Section with rounded border */
+            .day-section {
+              border: 1px solid #d1d5db;
+              border-radius: 18px;
+              padding: 24px;
+              page-break-inside: avoid;
+              background: white;
+            }
+            .day-title {
+              font-size: 14px;
+              font-weight: 700;
+              color: #1f2937;
+              margin: 0 0 16px 0;
+              letter-spacing: 0.5px;
+            }
+
+            /* Event entries */
+            .event-item {
+              margin-bottom: 18px;
+            }
+            .event-item:last-child {
+              margin-bottom: 0;
+            }
+
             .footer {
-              margin-top: 32px;
+              margin-top: 40px;
               padding-top: 16px;
-              border-top: 1px solid #e5e7eb;
+              border-top: 1px solid #d1d5db;
               text-align: center;
               color: #9ca3af;
-              font-size: 11px;
+              font-size: 10px;
             }
+
             @media print {
               body {
                 margin: 0;
-                padding: 8px;
+                padding: 20px 30px;
               }
               .container {
                 max-width: 100%;
-              }
-              .qr-section {
-                page-break-inside: avoid;
               }
               .day-section {
                 page-break-inside: avoid;
@@ -890,25 +896,19 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         </head>
         <body>
           <div class="container">
-            <!-- Header -->
+            <!-- Header with Logo and QR -->
             <div class="header">
-              <p class="logo-text">🎯 EventBuzzer</p>
-              <div class="header-date">${todayDate}</div>
-              <div class="event-count">${validEvents.length} ${validEvents.length === 1 ? 'Event' : 'Events'} in ${daysCount} ${daysCount === 1 ? 'Tag' : 'Tagen'}</div>
-            </div>
-
-            <!-- QR Code Section -->
-            <div class="qr-section">
-              <div class="qr-code">
-                <img src="${qrCodeUrl}" alt="Route QR Code">
-              </div>
-              <div class="qr-description">
-                <strong>Mit Handy scannen für Google Maps</strong>
-                <span>Öffne die komplette Route mit allen Zwischenstationen</span>
+              <h1 class="logo-text">EventBuzzer</h1>
+              <div class="qr-container">
+                <img src="${qrCodeUrl}" alt="Route QR Code" class="qr-code">
+                <div class="qr-text">
+                  <strong>Mit Handy scannen<br>für Google Maps</strong>
+                  <span>Öffne die komplette Route mit allen Zwischenstationen</span>
+                </div>
               </div>
             </div>
 
-            <!-- Days with Timelines -->
+            <!-- Days Container - all stacked vertically -->
             <div class="days-container">
               ${daysHTML}
             </div>
