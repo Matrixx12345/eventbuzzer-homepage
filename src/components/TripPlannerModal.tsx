@@ -1034,7 +1034,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
             {/* Timeline Items - Only event slots, no spacers */}
             {visibleEventSlots.map((timePoint, eventIndex) => {
-              const plannedEvent = plannedEvents[eventIndex];
+              const plannedEvent = currentDayEvents[eventIndex];
 
               return (
                 <EventSlot
@@ -1049,20 +1049,24 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                     const isMuseum = museumKeywords.some(keyword => selectedEvent.title.toLowerCase().includes(keyword));
                     const duration = isMuseum ? 150 : 120;
 
-                    setPlannedEvents(prev => {
-                      const newEvents = [...prev];
-                      newEvents[eventIndex] = {
-                        eventId: selectedEvent.id,
-                        event: selectedEvent,
-                        duration: duration
-                      };
-                      return newEvents;
-                    });
+                    const updated = {
+                      ...plannedEventsByDay,
+                      [activeDay]: [
+                        ...(plannedEventsByDay[activeDay] || []).slice(0, eventIndex),
+                        {
+                          eventId: selectedEvent.id,
+                          event: selectedEvent,
+                          duration: duration
+                        },
+                        ...(plannedEventsByDay[activeDay] || []).slice(eventIndex + 1)
+                      ]
+                    };
+                    setPlannedEventsByDay(updated);
                   }}
                   onMoveUp={() => handleMoveEventUp(eventIndex)}
                   onMoveDown={() => handleMoveEventDown(eventIndex)}
                   canMoveUp={eventIndex > 0}
-                  canMoveDown={eventIndex < plannedEvents.length - 1}
+                  canMoveDown={eventIndex < currentDayEvents.length - 1}
                   allEvents={allEvents}
                   slotIndex={eventIndex}
                   onDragStart={handleDragStart}
@@ -1082,7 +1086,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               className="flex-1 px-4 py-2 text-sm font-medium text-white
                          bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={plannedEvents.every((e) => !e)}
+              disabled={currentDayEvents.every((e) => !e)}
             >
               Trip speichern
             </button>
@@ -1091,7 +1095,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                          bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed
                          flex items-center justify-center gap-2"
-              disabled={plannedEvents.every((e) => !e)}
+              disabled={currentDayEvents.every((e) => !e)}
               onClick={handleExportToGoogleMaps}
               title="Route mit Wegpunkten zu Google Maps öffnen"
             >
