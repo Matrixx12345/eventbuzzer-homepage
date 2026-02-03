@@ -822,11 +822,11 @@ const TripPlannerPage: React.FC = () => {
             <EmptyState />
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-6 items-start">
             {[1, 2, 3].map((day) => {
               const dayEvents = plannedEventsByDay[day] || [];
               return (
-                <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 w-full">
                   {/* Day Header */}
                   <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
                     <h3 className="text-lg font-bold text-gray-900">Tag {day}</h3>
@@ -843,17 +843,17 @@ const TripPlannerPage: React.FC = () => {
                         {dayEvents.map((pe, index) => (
                           <div key={pe.eventId} className="relative flex items-center gap-3 group">
                             {/* Time Label - LEFT */}
-                            <div className="flex-shrink-0 w-12 text-right text-xs font-semibold text-gray-600 self-center">
+                            <div className="flex-shrink-0 w-12 text-right text-xs font-semibold text-gray-600">
                               {TIME_POINTS[index] || '—'}
                             </div>
 
                             {/* Timeline Dot - MIDDLE - centered */}
-                            <div className="flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" />
+                            <div className="flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
 
-                            {/* Event Card - RIGHT */}
+                            {/* Event Card - RIGHT - fixed width */}
                             <div
                               onClick={() => handleEventClick(pe.event)}
-                              className="flex-1 p-2 rounded-lg border-2 border-gray-500 bg-white hover:border-gray-600 transition-all cursor-pointer flex items-center justify-between gap-2"
+                              className="p-2 rounded-lg border-2 border-gray-500 bg-white hover:border-gray-600 transition-all cursor-pointer flex items-center justify-between gap-2 w-80 flex-shrink-0"
                             >
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {pe.event.image_url && (
@@ -864,9 +864,15 @@ const TripPlannerPage: React.FC = () => {
                                   />
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{pe.event.title}</p>
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {pe.event.title.length > 25 ? pe.event.title.substring(0, 25) : pe.event.title}
+                                  </p>
                                   {(pe.event.location || pe.event.address_city) && (
-                                    <p className="text-xs text-gray-900 truncate">{pe.event.location || pe.event.address_city}</p>
+                                    <p className="text-xs text-gray-900 truncate">
+                                      {((pe.event.location || pe.event.address_city || '').length > 25
+                                        ? (pe.event.location || pe.event.address_city || '').substring(0, 25)
+                                        : (pe.event.location || pe.event.address_city))}
+                                    </p>
                                   )}
                                   {pe.duration && (
                                     <div className="mt-1">
