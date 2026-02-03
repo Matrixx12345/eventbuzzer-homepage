@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect, memo } from 'react';
-import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode } from 'lucide-react';
+import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -86,15 +86,16 @@ const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
 
   return (
     <div className="w-full h-auto bg-white flex flex-col p-6 rounded-lg">
-      {/* Header with centered title and close button */}
-      <div className="flex items-center justify-center mb-6 pb-4 border-b border-gray-200 relative">
+      {/* Header with centered title and back button */}
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <h2 className="text-lg font-bold text-gray-500">Favoriten</h2>
         <button
           onClick={onFlipBack}
-          className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0 absolute right-0"
-          title="Zurück zum Trip Planner"
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors text-sm font-medium"
+          title="Zurück zum Tagesplaner"
         >
-          <X size={20} />
+          <ArrowLeft size={18} />
+          <span>Zurück zum Tagesplaner</span>
         </button>
       </div>
 
@@ -1455,31 +1456,60 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
             {/* Tag Links */}
             <div className="flex items-center gap-3">
-              {/* Dynamic Tags */}
-              {dayButtonArray.map((_, index) => (
-                <button
-                  key={`tag-${index + 1}`}
-                  onClick={() => setActiveDay?.(index + 1)}
-                  className={cn(
-                    "text-xs font-medium transition-all",
-                    activeDay === index + 1
-                      ? "text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  )}
-                >
-                  Tag {index + 1}
-                </button>
-              ))}
+              {/* Dynamic Tags with remove button */}
+              {dayButtonArray.map((_, index) => {
+                const dayNumber = index + 1;
+                const canRemove = totalDays && totalDays > 2 && dayNumber > 2;
+                return (
+                  <div key={`tag-${dayNumber}`} className="relative group">
+                    <button
+                      onClick={() => setActiveDay?.(dayNumber)}
+                      className={cn(
+                        "text-xs font-medium transition-all",
+                        activeDay === dayNumber
+                          ? "text-gray-900"
+                          : "text-gray-500 hover:text-gray-700"
+                      )}
+                    >
+                      Tag {dayNumber}
+                    </button>
+                    {canRemove && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (setTotalDays) {
+                            const newTotal = totalDays - 1;
+                            setTotalDays(newTotal);
+                            if (activeDay === dayNumber) {
+                              setActiveDay?.(Math.min(activeDay, newTotal));
+                            } else if (activeDay > dayNumber) {
+                              setActiveDay?.(activeDay - 1);
+                            }
+                          }
+                        }}
+                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Tag entfernen"
+                      >
+                        <X size={8} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
-              {/* + Button - max 4 days */}
+              {/* + Button - max 4 days with tooltip */}
               {totalDays && totalDays < 4 && (
-                <button
-                  onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 4))}
-                  className="text-gray-500 hover:text-gray-700 transition-all"
-                  title="Tag hinzufügen"
-                >
-                  <Plus size={14} />
-                </button>
+                <div className="relative group">
+                  <button
+                    onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 4))}
+                    className="text-gray-500 hover:text-gray-700 transition-all"
+                  >
+                    <Plus size={14} />
+                  </button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Tag hinzufügen
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1580,31 +1610,61 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
                 {/* Tag Links + Plus - kompakt in der Mitte */}
                 <div className="flex items-center gap-3">
-                  {/* Dynamic Tags */}
-                  {dayButtonArray.map((_, index) => (
-                    <button
-                      key={`tag-flipped-${index + 1}`}
-                      onClick={() => setActiveDay?.(index + 1)}
-                      className={cn(
-                        "px-2 py-1 rounded text-sm font-semibold transition-all",
-                        activeDay === index + 1
-                          ? "text-gray-900 bg-gray-100"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                      )}
-                    >
-                      Tag {index + 1}
-                    </button>
-                  ))}
+                  {/* Dynamic Tags with remove button */}
+                  {dayButtonArray.map((_, index) => {
+                    const dayNumber = index + 1;
+                    const canRemove = totalDays && totalDays > 2 && dayNumber > 2;
+                    return (
+                      <div key={`tag-wrapper-${dayNumber}`} className="relative group">
+                        <button
+                          onClick={() => setActiveDay?.(dayNumber)}
+                          className={cn(
+                            "px-2 py-1 rounded text-sm font-semibold transition-all",
+                            activeDay === dayNumber
+                              ? "text-gray-900 bg-gray-100"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          )}
+                        >
+                          Tag {dayNumber}
+                        </button>
+                        {canRemove && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (setTotalDays) {
+                                // Remove this day and shift active day if needed
+                                const newTotal = totalDays - 1;
+                                setTotalDays(newTotal);
+                                if (activeDay === dayNumber) {
+                                  setActiveDay?.(Math.min(activeDay, newTotal));
+                                } else if (activeDay > dayNumber) {
+                                  setActiveDay?.(activeDay - 1);
+                                }
+                              }
+                            }}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Tag entfernen"
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
 
-                  {/* + Button - max 4 days */}
+                  {/* + Button - max 4 days with tooltip */}
                   {totalDays && totalDays < 4 && (
-                    <button
-                      onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 4))}
-                      className="p-1 rounded text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
-                      title="Tag hinzufügen"
-                    >
-                      <Plus size={16} />
-                    </button>
+                    <div className="relative group">
+                      <button
+                        onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 4))}
+                        className="p-1 rounded text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
+                      >
+                        <Plus size={16} />
+                      </button>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        Tag hinzufügen
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -1618,13 +1678,6 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                   title="Favoriten anzeigen"
                 >
                   Favoriten
-                </button>
-
-                <button
-                  onClick={onClose}
-                  className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
-                >
-                  <X size={20} />
                 </button>
               </div>
               <div className="overflow-y-auto">
