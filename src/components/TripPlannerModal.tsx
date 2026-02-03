@@ -999,13 +999,220 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             @media print {
               body {
                 margin: 0;
-                padding: 75px;
+                padding: 0;
+                background: white;
+                line-height: 1.6;
               }
+
               .container {
+                width: 170mm;
+                margin: 0;
+                padding: 20mm;
                 max-width: 100%;
+                background: white;
+                box-shadow: none;
+                border-radius: 0;
               }
+
+              /* HEADER */
+              .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 20mm;
+                gap: 10mm;
+              }
+
+              .logo-text {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 28pt;
+                font-weight: 400;
+                color: #1f2937;
+                margin: 0;
+                letter-spacing: 3pt;
+                flex: 1;
+              }
+
+              /* QR Container - Exact sizing for print */
+              .qr-container {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 5mm;
+                flex-shrink: 0;
+                width: auto;
+                height: auto;
+              }
+
+              .qr-code {
+                width: 25mm;
+                height: 25mm;
+                border: none;
+                display: block;
+                flex-shrink: 0;
+              }
+
+              .qr-text {
+                text-align: left;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 25mm;
+                gap: 0;
+              }
+
+              .qr-text strong {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 11pt;
+                font-weight: 400;
+                color: #1f2937;
+                line-height: 1.2;
+                letter-spacing: 0.2pt;
+                display: block;
+                margin: 0;
+                padding: 0;
+              }
+
+              .qr-text span {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 10pt;
+                color: #6b7280;
+                line-height: 1.3;
+                letter-spacing: 0.1pt;
+                display: block;
+                margin: 0;
+                padding: 0;
+              }
+
+              /* DAYS CONTAINER */
+              .days-container {
+                display: flex;
+                flex-direction: column;
+                gap: 10mm;
+              }
+
+              /* DAY SECTION - Full width */
               .day-section {
+                width: 100%;
+                border: 1pt solid #9ca3af;
+                border-radius: 8pt;
+                padding: 10mm;
+                margin: 0 0 10mm 0;
                 page-break-inside: avoid;
+                background: white;
+                box-sizing: border-box;
+              }
+
+              .day-title {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 14pt;
+                font-weight: 400;
+                color: #1f2937;
+                margin: 0 0 8mm 0;
+                letter-spacing: 1pt;
+                text-transform: uppercase;
+              }
+
+              /* EVENT ITEMS - Precise measurements */
+              .event-item {
+                display: flex;
+                gap: 5mm;
+                margin-bottom: 8mm;
+                align-items: flex-start;
+              }
+
+              .event-item:last-child {
+                margin-bottom: 0;
+              }
+
+              /* Zone 1: Thumbnail - 35mm fixed */
+              .event-thumb {
+                flex-shrink: 0;
+                width: 35mm;
+                height: 26.25mm;
+                border-radius: 6pt;
+                overflow: hidden;
+                background: #e5e7eb;
+              }
+
+              .event-thumb img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+              }
+
+              /* Zone 2: Zeit */
+              .event-time {
+                flex-shrink: 0;
+                width: 15mm;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+              }
+
+              .event-time div {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 10pt;
+                font-weight: 400;
+                color: #1f2937;
+                line-height: 1;
+                letter-spacing: 0.2pt;
+              }
+
+              /* Zone 3: Trennlinie */
+              .event-separator {
+                width: 0.5pt;
+                background: #d1d5db;
+                flex-shrink: 0;
+                margin: 0 3mm;
+              }
+
+              /* Zone 4: Textblock */
+              .event-content {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+              }
+
+              .event-title-line {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 12pt;
+                font-weight: 500;
+                color: #1f2937;
+                margin-bottom: 2mm;
+                line-height: 1.2;
+                letter-spacing: 0.2pt;
+              }
+
+              .event-description {
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+                font-size: 9pt;
+                color: #6b7280;
+                margin-bottom: 1mm;
+                line-height: 1.4;
+                letter-spacing: 0.1pt;
+              }
+
+              .event-duration {
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+                font-size: 8pt;
+                color: #9ca3af;
+                line-height: 1.3;
+                letter-spacing: 0pt;
+              }
+
+              /* FOOTER */
+              .footer {
+                margin-top: 20mm;
+                padding-top: 10mm;
+                border-top: 1pt solid #d1d5db;
+                text-align: center;
+                color: #9ca3af;
+                font-size: 8pt;
               }
             }
           </style>
