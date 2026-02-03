@@ -1471,10 +1471,10 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 </button>
               ))}
 
-              {/* + Button */}
-              {totalDays && totalDays < 5 && (
+              {/* + Button - max 4 days */}
+              {totalDays && totalDays < 4 && (
                 <button
-                  onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 5))}
+                  onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 4))}
                   className="text-gray-500 hover:text-gray-700 transition-all"
                   title="Tag hinzufügen"
                 >
@@ -1596,10 +1596,10 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                     </button>
                   ))}
 
-                  {/* + Button */}
-                  {totalDays && totalDays < 5 && (
+                  {/* + Button - max 4 days */}
+                  {totalDays && totalDays < 4 && (
                     <button
-                      onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 5))}
+                      onClick={() => setTotalDays?.(Math.min((totalDays || 2) + 1, 4))}
                       className="p-1 rounded text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
                       title="Tag hinzufügen"
                     >

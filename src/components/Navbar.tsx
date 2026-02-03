@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +16,14 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { favorites } = useFavorites();
+  const { totalEventCount } = useTripPlanner();
   const navigate = useNavigate();
 
   const navLinks = [
     { label: "Startseite", href: "/" },
     { label: "Events", href: "/eventlist1" },
     { label: "Favoriten", href: "/favorites" },
+    { label: "Reiseplaner", href: "/reiseplaner" },
   ];
 
   const adminLinks = [
@@ -59,6 +62,11 @@ const Navbar = () => {
                 {link.label === "Favoriten" && favorites.length > 0 && (
                   <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {favorites.length}
+                  </span>
+                )}
+                {link.label === "Reiseplaner" && totalEventCount > 0 && (
+                  <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {totalEventCount}
                   </span>
                 )}
               </Link>
@@ -145,6 +153,11 @@ const Navbar = () => {
                   {link.label === "Favoriten" && favorites.length > 0 && (
                     <span className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {favorites.length}
+                    </span>
+                  )}
+                  {link.label === "Reiseplaner" && totalEventCount > 0 && (
+                    <span className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {totalEventCount}
                     </span>
                   )}
                 </Link>

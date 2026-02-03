@@ -6,6 +6,7 @@ import { SITE_URL } from "@/config/constants";
 import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useTripPlanner, PlannedEventsByDay } from "@/contexts/TripPlannerContext";
 import { Heart, MapPin, Maximize2, Minimize2, X, Plus, Star, Briefcase } from "lucide-react";
 import {
   Popover,
@@ -79,13 +80,7 @@ interface TaxonomyItem {
   is_active?: boolean;
 }
 
-// Multi-day Trip Planner - events organized by day
-type PlannedEventsByDay = Record<number, Array<{
-  eventId: string;
-  event: Event;
-  duration: number;
-  startTime?: string;
-}>>;
+// PlannedEventsByDay type is now imported from TripPlannerContext
 
 // Helper functions for rating system
 const getUserRating = (eventId: string): number | null => {
@@ -519,25 +514,24 @@ const EventCard = ({
 const EventList1 = () => {
   const [searchParams] = useSearchParams();
   const [mapExpanded, setMapExpanded] = useState(false);
-  const [activeDay, setActiveDay] = useState<number>(1);
-  const [totalDays, setTotalDays] = useState<number>(2);
   const [chatbotOpen, setChatbotOpen] = useState(false);
 
   // Modal state
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Trip Planner state - Events organized by day
-  const [plannedEventsByDay, setPlannedEventsByDay] = useState<PlannedEventsByDay>({
-    1: [],
-    2: [],
-  });
-
-  // DEBUG: Log plannedEventsByDay changes
-  useEffect(() => {
-    const totalEvents = Object.values(plannedEventsByDay).flat().length;
-    console.log('🔍 EventList1: plannedEventsByDay changed:', totalEvents, 'total items across', Object.keys(plannedEventsByDay).length, 'days', plannedEventsByDay);
-  }, [plannedEventsByDay]);
+  // Trip Planner state from Context (shared with TripPlannerPage)
+  const {
+    plannedEventsByDay,
+    setPlannedEventsByDay,
+    activeDay,
+    setActiveDay,
+    totalDays,
+    setTotalDays,
+    isInTrip,
+    addEventToDay,
+    removeEventFromTrip,
+  } = useTripPlanner();
 
   // Map ref for Trip Planner
   const mapRef = useRef<any>(null);
@@ -1045,42 +1039,24 @@ const EventList1 = () => {
 
   // Toggle event in trip planner (for EventDetailModal)
   const handleToggleTrip = useCallback((event: Event) => {
-    // Check all days
-    const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === event.id);
-
-    if (isInTrip) {
+    if (isInTrip(event.id)) {
       // Remove from trip (remove from all days)
-      const updated = { ...plannedEventsByDay };
-      Object.keys(updated).forEach(day => {
-        updated[Number(day)] = updated[Number(day)].filter(pe => pe.eventId !== event.id);
-      });
-      setPlannedEventsByDay(updated);
+      removeEventFromTrip(event.id);
       toast(`${event.title} aus der Reise entfernt`);
     } else {
-      // Add to trip with smart duration
-      const museumKeywords = ['museum', 'galerie', 'gallery', 'kunstmuseum', 'art museum'];
-      const isMuseum = museumKeywords.some(keyword => event.title.toLowerCase().includes(keyword));
-      const defaultDuration = isMuseum ? 150 : 120; // minutes
+      // Add to trip (context handles smart duration)
+      addEventToDay(event, activeDay);
 
-      const currentDayEvents = plannedEventsByDay[activeDay] || [];
-      const updated = {
-        ...plannedEventsByDay,
-        [activeDay]: [...currentDayEvents, {
-          eventId: event.id,
-          event: event,
-          duration: defaultDuration
-        }]
-      };
-
-      setPlannedEventsByDay(updated);
-
-      // For map movement, flatten all events
-      const allEvents = Object.values(updated).flat();
-      handleMapMovement(allEvents);
+      // For map movement, flatten all events (after state update)
+      const updatedEvents = [
+        ...Object.values(plannedEventsByDay).flat(),
+        { eventId: event.id, event, duration: 120 }
+      ];
+      handleMapMovement(updatedEvents);
 
       toast(`${event.title} zu Tag ${activeDay} hinzugefügt`);
     }
-  }, [plannedEventsByDay, activeDay, handleMapMovement]);
+  }, [isInTrip, removeEventFromTrip, addEventToDay, activeDay, plannedEventsByDay, handleMapMovement]);
 
   return (
     <div className="min-h-screen bg-[#F4F7FA]">

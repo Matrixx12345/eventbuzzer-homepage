@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
+import { TripPlannerProvider } from "./contexts/TripPlannerContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import EventsNew from "./pages/EventsNew";
@@ -15,6 +16,7 @@ import EventList1 from "./pages/EventList1";
 import EventPlanner2 from "./pages/EventPlanner2";
 import TripPlanner from "./pages/TripPlanner";
 import TripPlanerNew from "./pages/TripPlanerNew";
+import TripPlannerPage from "./pages/TripPlannerPage";
 import Impressum from "./pages/Impressum";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SupabaseTest from "./pages/SupabaseTest";
@@ -37,6 +39,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <FavoritesProvider>
+          <TripPlannerProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -53,6 +56,7 @@ const App = () => (
               <Route path="/eventplanner2" element={<ErrorBoundary><EventPlanner2 /></ErrorBoundary>} />
               <Route path="/trip-planner" element={<ErrorBoundary><TripPlanner /></ErrorBoundary>} />
               <Route path="/trip-planer-neu" element={<ErrorBoundary><TripPlanerNew /></ErrorBoundary>} />
+              <Route path="/reiseplaner" element={<ErrorBoundary><TripPlannerPage /></ErrorBoundary>} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/supabase-test" element={<SupabaseTest />} />
               <Route path="/admin-upload" element={<AdminUpload />} />
@@ -68,6 +72,7 @@ const App = () => (
             <LegalFooter />
           </BrowserRouter>
         </TooltipProvider>
+          </TripPlannerProvider>
       </FavoritesProvider>
     </AuthProvider>
   </QueryClientProvider>
