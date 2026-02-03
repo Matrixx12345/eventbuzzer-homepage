@@ -997,6 +997,11 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               font-size: 10px;
             }
 
+            /* Hide subtext in screen version, show only in print */
+            .logo-subtext {
+              display: none;
+            }
+
             @media print {
               body {
                 margin: 0;
@@ -1036,6 +1041,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               }
 
               .logo-subtext {
+                display: block;
                 font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
                 font-size: 9pt;
                 color: #aaa;
