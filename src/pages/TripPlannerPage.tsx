@@ -180,9 +180,9 @@ const TripPlannerPage: React.FC = () => {
     window.open(qrUrl, '_blank');
   }, [generateGoogleMapsUrl]);
 
-  // Export PDF
+  // Export PDF with TripPlannerModal design
   const handleExportPDF = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay).flat();
+    const allEvents = Object.values(plannedEventsByDay || {}).flat();
     const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
@@ -191,7 +191,13 @@ const TripPlannerPage: React.FC = () => {
     }
 
     const url = generateGoogleMapsUrl();
-    const qrCodeUrl = url ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}` : '';
+    if (!url) {
+      toast.error('Route konnte nicht generiert werden');
+      return;
+    }
+
+    // Generate QR code URL (200x200 for PDF)
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
 
     // Helper to truncate description at first sentence
     const truncateAtFirstSentence = (text: string): string => {
@@ -200,33 +206,47 @@ const TripPlannerPage: React.FC = () => {
       return match ? match[0] : text;
     };
 
-    // Generate HTML for all days
-    const daysHTML = Array.from({ length: totalDays }, (_, dayIndex) => {
+    // Group events by day from plannedEventsByDay structure
+    const daysCount = totalDays || 1;
+
+    // Generate HTML for all days with timeline layout
+    const daysHTML = Array.from({ length: daysCount }, (_, dayIndex) => {
       const dayNumber = dayIndex + 1;
       const dayLabel = `Tag ${dayNumber}`;
-      const dayEvents = plannedEventsByDay[dayNumber] || [];
+      const dayEvents = plannedEventsByDay?.[dayNumber] || [];
+      const validDayEvents = dayEvents.filter(pe => pe && pe.event);
 
-      if (dayEvents.length === 0) return '';
+      if (validDayEvents.length === 0) return '';
 
       return `
-        <div style="margin-bottom: 32px;">
-          <h3 style="font-family: Georgia, serif; font-size: 18px; color: #1f2937; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #3b82f6;">
-            ${dayLabel}
-          </h3>
-          ${dayEvents.map((pe, index) => {
+        <div class="day-section">
+          <div class="day-title">${dayLabel}</div>
+          ${validDayEvents.map((pe) => {
             const shortDesc = pe.event.short_description || pe.event.description || '';
             const truncatedDesc = truncateAtFirstSentence(shortDesc);
-            const location = pe.event.address_city || pe.event.location || '';
+            const location = pe.event.address_city || pe.event.location || 'Location';
             const imageUrl = pe.event.image_url || '';
+            const time = pe.startTime || '09:00';
+            const durationFormatted = formatDuration(pe.duration);
 
             return `
-              <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">
-                ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">` : ''}
-                <div style="flex: 1;">
-                  <div style="font-weight: 600; font-size: 14px; color: #1f2937; margin-bottom: 4px;">${index + 1}. ${pe.event.title}</div>
-                  ${location ? `<div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">📍 ${location}</div>` : ''}
-                  ${truncatedDesc ? `<div style="font-size: 12px; color: #9ca3af;">${truncatedDesc}</div>` : ''}
-                  <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">⏱️ ${formatDuration(pe.duration)}</div>
+              <div class="event-item">
+                <!-- Zone 1: Thumbnail (4:3) -->
+                <div class="event-thumb">
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}">` : ''}
+                </div>
+                <!-- Zone 2: Zeit (für Screen - wird in Print oben angezeigt) -->
+                <div class="event-time">
+                  <div>${time}</div>
+                </div>
+                <!-- Zone 3: Trennlinie -->
+                <div class="event-separator"></div>
+                <!-- Zone 4: Textblock mit Zeit oben (Print) -->
+                <div class="event-content">
+                  <div class="event-time-header">${time}</div>
+                  <div class="event-title-line">${pe.event.title} | ${location}</div>
+                  ${truncatedDesc ? `<div class="event-description">${truncatedDesc}</div>` : ''}
+                  <div class="event-duration">${durationFormatted}</div>
                 </div>
               </div>
             `;
@@ -240,49 +260,513 @@ const TripPlannerPage: React.FC = () => {
       <html>
         <head>
           <meta charset="UTF-8">
-          <title>Mein Reiseplaner - EventBuzzer</title>
+          <title>Trip Planner - EventBuzzer</title>
           <style>
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 40px; color: #1f2937; }
-            .container { max-width: 800px; margin: 0 auto; }
-            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-            .logo { font-family: Georgia, serif; font-size: 28px; letter-spacing: 2px; }
-            .logo-subtext { font-size: 12px; color: #9ca3af; }
-            .qr-section { text-align: center; }
-            .qr-section img { width: 100px; height: 100px; }
-            .qr-text { font-size: 10px; color: #6b7280; margin-top: 4px; }
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              margin: 0;
+              padding: 40px;
+              color: #1f2937;
+              background: #f9f9f9;
+              line-height: 1.6;
+            }
+
+            .container {
+              max-width: 900px;
+              margin: 0 auto;
+              background: white;
+              padding: 75px;
+              border-radius: 8px;
+              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            /* HEADER */
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 50px;
+              gap: 30px;
+            }
+
+            .logo-text {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 40px;
+              font-weight: 400;
+              color: #1f2937;
+              margin: 0;
+              letter-spacing: 4px;
+              flex: 1;
+            }
+
+            /* QR Container - Rechts */
+            .qr-container {
+              display: flex;
+              flex-direction: row;
+              align-items: flex-start;
+              gap: 5px;
+              flex-shrink: 0;
+              margin-right: 20px;
+              height: 90px;
+            }
+
+            .qr-code {
+              width: 90px;
+              height: 90px;
+              border: none;
+              border-radius: 0px;
+              display: block;
+              flex-shrink: 0;
+            }
+
+            .qr-text {
+              text-align: left;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              height: 90px;
+              gap: 0;
+              padding: 0;
+              margin: 0;
+            }
+
+            .qr-text strong {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 14px;
+              font-weight: 400;
+              color: #1f2937;
+              line-height: 1.1;
+              letter-spacing: 0.3px;
+              display: block;
+              white-space: normal;
+              margin: 0;
+              padding: 0;
+            }
+
+            .qr-text span {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 12px;
+              color: #6b7280;
+              line-height: 1.2;
+              letter-spacing: 0.2px;
+              display: block;
+              white-space: normal;
+              margin: 0;
+              padding: 0;
+            }
+
+            /* DAYS CONTAINER */
+            .days-container {
+              display: flex;
+              flex-direction: column;
+              gap: 28px;
+            }
+
+            /* DAY SECTION */
+            .day-section {
+              border: 2px solid #9ca3af;
+              border-radius: 15px;
+              padding: 28px;
+              page-break-inside: avoid;
+              background: white;
+            }
+
+            .day-title {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 24px;
+              font-weight: 400;
+              color: #1f2937;
+              margin: 0 0 24px 0;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+            }
+
+            /* EVENT ITEMS - 4 Zonen */
+            .event-item {
+              display: flex;
+              gap: 14px;
+              margin-bottom: 20px;
+              align-items: stretch;
+            }
+
+            .event-item:last-child {
+              margin-bottom: 0;
+            }
+
+            /* Zone 1: Thumbnail */
+            .event-thumb {
+              flex-shrink: 0;
+              width: 80px;
+              height: 60px;
+              border-radius: 12px;
+              overflow: hidden;
+              background: #e5e7eb;
+            }
+
+            .event-thumb img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+            }
+
+            /* Zone 2: Zeit */
+            .event-time {
+              flex-shrink: 0;
+              width: 50px;
+              text-align: center;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding-right: 8px;
+            }
+
+            .event-time div {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 14px;
+              font-weight: 400;
+              color: #1f2937;
+              line-height: 1;
+              letter-spacing: 0.3px;
+            }
+
+            /* Zone 3: Trennlinie */
+            .event-separator {
+              width: 2.5px;
+              background: #d1d5db;
+              flex-shrink: 0;
+              margin: 0 10px;
+            }
+
+            /* Zone 4: Textblock */
+            .event-content {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+
+            .event-title-line {
+              font-family: Georgia, 'Playfair Display', serif;
+              font-size: 18px;
+              font-weight: 500;
+              color: #1f2937;
+              margin-bottom: 6px;
+              line-height: 1.3;
+              letter-spacing: 0.3px;
+            }
+
+            .event-description {
+              font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+              font-size: 13px;
+              color: #6b7280;
+              margin-bottom: 3px;
+              line-height: 1.4;
+              letter-spacing: 0.2px;
+            }
+
+            .event-duration {
+              font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+              font-size: 12px;
+              color: #9ca3af;
+              line-height: 1.3;
+              letter-spacing: 0.1px;
+            }
+
+            /* FOOTER */
+            .footer {
+              margin-top: 50px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #9ca3af;
+              font-size: 10px;
+            }
+
+            /* Hide subtext in screen version, show only in print */
+            .logo-subtext {
+              display: none;
+            }
+
+            /* Zeit über Titel im Print - initially hidden */
+            .event-time-header {
+              display: none;
+            }
+
             @media print {
-              body { margin: 20mm; }
-              .container { max-width: 100%; }
+              body {
+                margin: 0;
+                padding: 0;
+                background: white;
+                line-height: 1.6;
+              }
+
+              .container {
+                width: 212.5mm;
+                margin: 0 auto;
+                padding: 6mm;
+                max-width: 100%;
+                background: white;
+                box-shadow: none;
+                border-radius: 0;
+                box-sizing: border-box;
+              }
+
+              /* HEADER */
+              .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 10mm;
+                gap: 10mm;
+              }
+
+              .logo-text {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 20pt;
+                font-weight: 400;
+                color: #1f2937;
+                margin: 0 0 0.5mm 0;
+                letter-spacing: 2pt;
+                flex: 1;
+              }
+
+              .logo-subtext {
+                display: block;
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+                font-size: 9pt;
+                color: #aaa;
+                letter-spacing: 0.3pt;
+              }
+
+              /* QR Container - Exact sizing for print */
+              .qr-container {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 5mm;
+                flex-shrink: 0;
+                width: auto;
+                height: auto;
+              }
+
+              .qr-code {
+                width: 25mm;
+                height: 25mm;
+                border: none;
+                display: block;
+                flex-shrink: 0;
+              }
+
+              .qr-text {
+                text-align: left;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 25mm;
+                gap: 0;
+              }
+
+              .qr-text strong {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 11pt;
+                font-weight: 400;
+                color: #1f2937;
+                line-height: 1.2;
+                letter-spacing: 0.2pt;
+                display: block;
+                margin: 0;
+                padding: 0;
+              }
+
+              .qr-text span {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 10pt;
+                color: #6b7280;
+                line-height: 1.3;
+                letter-spacing: 0.1pt;
+                display: block;
+                margin: 0;
+                padding: 0;
+              }
+
+              /* DAYS CONTAINER */
+              .days-container {
+                display: flex;
+                flex-direction: column;
+                gap: 10mm;
+              }
+
+              /* DAY SECTION - Super schmal Padding für 25% mehr Platz */
+              .day-section {
+                width: 100%;
+                border: 1pt solid #d1d5db;
+                border-radius: 6pt;
+                padding: 6mm;
+                margin: 0 0 8mm 0;
+                page-break-inside: avoid;
+                background: white;
+                box-sizing: border-box;
+              }
+
+              .day-title {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 14pt;
+                font-weight: 400;
+                color: #1f2937;
+                margin: 0 0 5mm 0;
+                letter-spacing: 1pt;
+                text-transform: uppercase;
+              }
+
+              /* EVENT ITEMS - LAYOUT: Zeit-LINKS | Bild | TEXT-dominant */
+              .event-item {
+                display: flex;
+                gap: 4mm;
+                margin-bottom: 5mm;
+                align-items: flex-start;
+              }
+
+              .event-item:last-child {
+                margin-bottom: 0;
+              }
+
+              /* Spalte 1: Zeit - HIDDEN (wird oben in Text angezeigt) */
+              .event-time {
+                display: none !important;
+              }
+
+              .event-time div {
+                display: none !important;
+              }
+
+              /* Zeit über Titel im Print */
+              .event-time-header {
+                display: block;
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 8pt;
+                font-weight: 600;
+                color: #999;
+                line-height: 1;
+                letter-spacing: 0pt;
+                margin-bottom: 1mm;
+              }
+
+              /* Spalte 2: Thumbnail - NEBEN Zeit (links vom Text), klein */
+              .event-thumb {
+                flex-shrink: 0;
+                width: 25mm;
+                height: 18.75mm;
+                border-radius: 3pt;
+                overflow: hidden;
+                background: #e5e7eb;
+              }
+
+              .event-thumb img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+              }
+
+              /* Spalte 3: Trennlinie - Minimal */
+              .event-separator {
+                display: none;
+              }
+
+              /* Spalte 4: Textblock - DOMINANT, das Hauptelement */
+              .event-content {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+              }
+
+              .event-title-line {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 9.5pt;
+                font-weight: 700;
+                color: #1f2937;
+                margin-bottom: 1mm;
+                line-height: 1.2;
+                letter-spacing: 0.2pt;
+              }
+
+              .event-description {
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+                font-size: 8.5pt;
+                color: #555;
+                margin-bottom: 1mm;
+                line-height: 1.4;
+                letter-spacing: 0.1pt;
+              }
+
+              .event-duration {
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+                font-size: 8pt;
+                color: #9ca3af;
+                line-height: 1.3;
+                letter-spacing: 0pt;
+              }
+
+              /* FOOTER - HIDDEN */
+              .footer {
+                display: none !important;
+              }
             }
           </style>
         </head>
         <body>
           <div class="container">
+            <!-- Header with Logo and QR -->
             <div class="header">
               <div>
-                <div class="logo">EventBuzzer</div>
+                <h1 class="logo-text">EventBuzzer</h1>
                 <div class="logo-subtext">Geplant mit eventbuzzer.com</div>
               </div>
-              ${qrCodeUrl ? `
-                <div class="qr-section">
-                  <img src="${qrCodeUrl}" alt="QR Code">
-                  <div class="qr-text">Scan für Google Maps Route</div>
+              <div class="qr-container">
+                <img src="${qrCodeUrl}" alt="Route QR Code" class="qr-code">
+                <div class="qr-text">
+                  <strong>Mit Handy scannen<br>für Google Maps</strong>
+                  <span>Öffne die komplette Route<br>mit allen Zwischenstationen</span>
                 </div>
-              ` : ''}
+              </div>
             </div>
-            ${daysHTML}
+
+            <!-- Days Container - all stacked vertically -->
+            <div class="days-container">
+              ${daysHTML}
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+              Erstellt mit EventBuzzer Trip Planner • www.eventbuzzer.ch
+            </div>
           </div>
         </body>
       </html>
     `;
 
-    const printWindow = window.open('', '_blank');
+    // Open in new window for printing
+    const printWindow = window.open('', '', 'width=1400,height=900');
     if (printWindow) {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      setTimeout(() => printWindow.print(), 500);
+
+      // Wait for images to load, then print
+      setTimeout(() => {
+        printWindow.print();
+      }, 1000);
+
+      toast.success('PDF-Vorschau geöffnet. Speichern unter "Drucken" → "Als PDF speichern"');
+    } else {
+      toast.error('Popup-Fenster konnte nicht geöffnet werden');
     }
-  }, [plannedEventsByDay, totalDays, generateGoogleMapsUrl]);
+  }, [plannedEventsByDay, generateGoogleMapsUrl, totalDays]);
 
   // Save trip (just shows toast - data is already in localStorage via context)
   const handleSaveTrip = useCallback(() => {
