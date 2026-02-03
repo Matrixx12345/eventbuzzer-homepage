@@ -45,9 +45,9 @@ const CompactEventCard = ({
 }: CompactEventCardProps) => {
   return (
     <Link to={`/event/${id}`} className="block cursor-pointer">
-      <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 flex flex-col h-[420px]">
+      <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 flex flex-col h-[420px]">
         {/* Image with premium treatment */}
-        <div className="relative overflow-hidden h-[220px] flex-shrink-0">
+        <div className="relative overflow-hidden h-[220px] flex-shrink-0 rounded-t-2xl">
           <img
             src={image}
             alt={title}

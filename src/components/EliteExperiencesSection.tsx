@@ -49,9 +49,9 @@ const CompactCard = ({
 
   return (
     <div onClick={handleClick} className="block cursor-pointer">
-      <div className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 grid grid-cols-[55%_45%] h-[280px]">
+      <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 grid grid-cols-[55%_45%] h-[280px]">
         {/* Image with premium treatment */}
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden rounded-l-2xl">
           <img
             src={image}
             alt={title}

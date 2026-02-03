@@ -51,9 +51,9 @@ const CleanGridCard = ({
 
   return (
     <div onClick={handleClick} className="block h-full cursor-pointer flex-shrink-0 w-full">
-      <article className="relative h-full rounded-2xl overflow-hidden group">
+      <article className="relative h-full rounded-2xl overflow-visible group">
         {/* Background Image with premium treatment */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 rounded-2xl overflow-hidden">
           <img
             src={image}
             alt={title}
