@@ -1021,7 +1021,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-start;
-                margin-bottom: 20mm;
+                margin-bottom: 10mm;
                 gap: 10mm;
               }
 
@@ -1118,7 +1118,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               /* EVENT ITEMS - LAYOUT: Zeit-LINKS | Bild | TEXT-dominant */
               .event-item {
                 display: flex;
-                gap: 1.5mm;
+                gap: 4mm;
                 margin-bottom: 5mm;
                 align-items: flex-start;
               }
