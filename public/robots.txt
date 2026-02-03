@@ -1,23 +1,10 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# EventBuzzer - robots.txt
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://eventbuzzer.ch/sitemap.xml
+# Sitemap Location
+Sitemap: https://eventbuzzer.ch/sitemap-index.xml
 
-# Disallow admin pages
+# Disallow admin and API routes
+Disallow: /api/
 Disallow: /admin/
-Disallow: /admin-upload
-Disallow: /auth/
-Disallow: /supabase-test
