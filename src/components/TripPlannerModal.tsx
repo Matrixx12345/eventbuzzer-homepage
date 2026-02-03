@@ -745,14 +745,15 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 <div class="event-thumb">
                   ${imageUrl ? `<img src="${imageUrl}" alt="${pe.event.title}">` : ''}
                 </div>
-                <!-- Zone 2: Zeit -->
+                <!-- Zone 2: Zeit (für Screen - wird in Print oben angezeigt) -->
                 <div class="event-time">
                   <div>${time}</div>
                 </div>
                 <!-- Zone 3: Trennlinie -->
                 <div class="event-separator"></div>
-                <!-- Zone 4: Textblock -->
+                <!-- Zone 4: Textblock mit Zeit oben (Print) -->
                 <div class="event-content">
+                  <div class="event-time-header">${time}</div>
                   <div class="event-title-line">${pe.event.title} | ${location}</div>
                   ${truncatedDesc ? `<div class="event-description">${truncatedDesc}</div>` : ''}
                   <div class="event-duration">${durationFormatted}</div>
@@ -1126,25 +1127,24 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 margin-bottom: 0;
               }
 
-              /* Spalte 1: Zeit - LINKS vom Bild, klein & dezent */
+              /* Spalte 1: Zeit - HIDDEN (wird oben in Text angezeigt) */
               .event-time {
-                flex-shrink: 0;
-                width: 11mm;
-                text-align: right;
-                display: flex;
-                align-items: flex-start;
-                justify-content: flex-end;
-                padding: 0;
-                padding-top: 0.5mm;
+                display: none !important;
               }
 
               .event-time div {
+                display: none !important;
+              }
+
+              /* Zeit über Titel im Print */
+              .event-time-header {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 7.5pt;
+                font-size: 8pt;
                 font-weight: 600;
-                color: #aaa;
+                color: #999;
                 line-height: 1;
                 letter-spacing: 0pt;
+                margin-bottom: 1mm;
               }
 
               /* Spalte 2: Thumbnail - NEBEN Zeit (links vom Text), klein */
