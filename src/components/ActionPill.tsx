@@ -1,7 +1,9 @@
-import { Heart, Star, ShoppingCart, Share2 } from "lucide-react";
+import { Heart, Star, Briefcase, Share2 } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Event } from "@/hooks/useEventData";
 
 interface ActionPillProps {
   eventId: string;
@@ -15,6 +17,7 @@ interface ActionPillProps {
   startDate?: string;
   className?: string;
   variant?: 'light' | 'dark'; // 'dark' for cards with dark backgrounds
+  event?: Event; // Optional: full event object for trip planner
 }
 
 /**
@@ -32,10 +35,13 @@ export const ActionPill = ({
   ticketUrl,
   startDate,
   className,
-  variant = 'light'
+  variant = 'light',
+  event
 }: ActionPillProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isInTrip, addEventToDay, removeEventFromTrip } = useTripPlanner();
   const isCurrentlyFavorite = isFavorite(eventId);
+  const isCurrentlyInTrip = isInTrip(eventId);
 
   // Convert buzz score (0-100) to rating (0-5)
   const score = buzzScore ?? 50;
@@ -63,13 +69,30 @@ export const ActionPill = ({
     toast.success("Link kopiert!");
   };
 
-  const handleTicketClick = (e: React.MouseEvent) => {
+  const handleTripPlannerClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (ticketUrl) {
-      window.open(ticketUrl, '_blank');
+
+    if (isCurrentlyInTrip) {
+      // Remove from trip
+      removeEventFromTrip(eventId);
+      toast.success("Aus Trip Planner entfernt");
     } else {
-      toast.info("Ticket-Verkauf demnächst verfügbar");
+      // Add to trip - construct Event object if not provided
+      const eventObj: Event = event || {
+        id: eventId,
+        external_id: slug,
+        title,
+        image_url: image,
+        location,
+        venue_name: venue,
+        buzz_score: buzzScore,
+        ticket_url: ticketUrl,
+        start_date: startDate,
+      };
+
+      addEventToDay(eventObj);
+      toast.success("Zu Trip Planner hinzugefügt");
     }
   };
 
@@ -159,17 +182,23 @@ export const ActionPill = ({
       {/* Divider */}
       <div className={cn("w-px h-4", variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent")} />
 
-      {/* Ticket */}
+      {/* Trip Planner */}
       <button
-        onClick={handleTicketClick}
-        className="group/ticket relative p-1 hover:scale-110 transition-all duration-200"
+        onClick={handleTripPlannerClick}
+        className="group/trip relative p-1 hover:scale-110 transition-all duration-200"
         style={iconShadow}
       >
-        <ShoppingCart size={18} className={variant === 'dark' ? "text-white/60" : "text-[#1e3a8a]"} />
+        <Briefcase
+          size={18}
+          className={cn(
+            "transition-colors duration-200",
+            isCurrentlyInTrip ? "fill-blue-500 text-blue-500" : iconColor
+          )}
+        />
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/ticket:block z-50 pointer-events-none">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/trip:block z-50 pointer-events-none">
           <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-            Ticket kaufen
+            {isCurrentlyInTrip ? "Aus Trip Planner entfernen" : "Zu Trip Planner hinzufügen"}
           </div>
           <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
         </div>

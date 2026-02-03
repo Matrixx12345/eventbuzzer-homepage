@@ -26,6 +26,7 @@ interface CompactEventCardProps {
   ticketUrl?: string;
   buzzScore?: number | null;
   startDate?: string;
+  fullEvent?: any; // Full event object for trip planner
 }
 
 const CompactEventCard = ({
@@ -39,7 +40,8 @@ const CompactEventCard = ({
   categoryLabel,
   ticketUrl,
   buzzScore,
-  startDate
+  startDate,
+  fullEvent
 }: CompactEventCardProps) => {
   return (
     <Link to={`/event/${id}`} className="block cursor-pointer">
@@ -114,6 +116,7 @@ const CompactEventCard = ({
               ticketUrl={ticketUrl}
               startDate={startDate}
               variant="light"
+              event={fullEvent}
             />
           </div>
         </div>
@@ -325,6 +328,7 @@ const CityCategoryPage = () => {
                   ticketUrl={event.ticket_link}
                   buzzScore={event.buzz_score}
                   startDate={event.start_date}
+                  fullEvent={event}
                 />
               ))}
             </div>

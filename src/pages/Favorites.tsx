@@ -225,6 +225,7 @@ const Favorites = () => {
                         buzzScore={event.buzz_score}
                         ticketUrl={event.ticket_url}
                         variant="light"
+                        event={event as any}
                       />
                     </div>
                   </div>

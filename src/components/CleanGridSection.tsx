@@ -22,6 +22,7 @@ interface CleanGridCardProps {
   ticketUrl?: string;
   onClick?: () => void;
   onHide?: () => void;
+  fullEvent?: any; // Full event object for trip planner
 }
 
 const CleanGridCard = ({
@@ -37,7 +38,8 @@ const CleanGridCard = ({
   externalId,
   ticketUrl,
   onClick,
-  onHide
+  onHide,
+  fullEvent
 }: CleanGridCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -120,6 +122,7 @@ const CleanGridCard = ({
               buzzScore={buzzScore}
               ticketUrl={ticketUrl}
               variant="dark"
+              event={fullEvent}
             />
         </div>
       </article>
@@ -402,7 +405,8 @@ const CleanGridSection = ({
     categoryLabel: getCategoryLabel(event),
     buzzScore: event.buzz_score,
     externalId: event.external_id,
-    ticketUrl: event.ticket_link
+    ticketUrl: event.ticket_link,
+    fullEvent: event
   }));
 
   return (

@@ -21,6 +21,7 @@ interface CompactCardProps {
   externalId?: string;
   onClick?: () => void;
   onHide?: () => void;
+  fullEvent?: any; // Full event object for trip planner
 }
 
 const CompactCard = ({
@@ -36,7 +37,8 @@ const CompactCard = ({
   buzzScore,
   externalId,
   onClick,
-  onHide
+  onHide,
+  fullEvent
 }: CompactCardProps) => {
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
@@ -116,6 +118,7 @@ const CompactCard = ({
             buzzScore={buzzScore}
             ticketUrl={ticketUrl}
             variant="light"
+            event={fullEvent}
           />
         </div>
       </div>
@@ -359,7 +362,8 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
     categoryLabel: getCategoryLabel(event), // Ganzes Event übergeben
     ticketUrl: event.ticket_link,
     buzzScore: event.buzz_score,
-    externalId: event.external_id
+    externalId: event.external_id,
+    fullEvent: event
   }));
 
   // Check if we should show "Alle anzeigen" card (on last page with less than 4 events)
