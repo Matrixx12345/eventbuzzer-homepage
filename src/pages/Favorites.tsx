@@ -127,12 +127,12 @@ const Favorites = () => {
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
           <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-2">
-            Your Favorites
+            Deine Favoriten
           </h1>
           <p className="text-white/80 text-sm md:text-base">
-            {favorites.length === 0 
-              ? "Start exploring and save events you love" 
-              : `${favorites.length} saved ${favorites.length === 1 ? 'event' : 'events'} waiting for you`
+            {favorites.length === 0
+              ? "Erkunde Events und speichere deine Favoriten"
+              : `${favorites.length} gespeicherte${favorites.length === 1 ? 's Event' : ' Events'} warten auf dich`
             }
           </p>
         </div>
@@ -151,23 +151,23 @@ const Favorites = () => {
             <div className="text-center py-20">
               <Heart size={64} className="mx-auto text-neutral-300 mb-6" />
               <h2 className="font-serif text-2xl text-neutral-900 mb-3">
-                {favorites.length === 0 
-                  ? "No favorites yet" 
-                  : "No events match this filter"
+                {favorites.length === 0
+                  ? "Noch keine Favoriten"
+                  : "Keine Events passen zu diesem Filter"
                 }
               </h2>
               <p className="text-neutral-600 mb-8">
-                {favorites.length === 0 
-                  ? "Click the heart icon on any event to save it here" 
-                  : "Try a different filter to see your saved events"
+                {favorites.length === 0
+                  ? "Klicke auf das Herz-Symbol bei einem Event, um es hier zu speichern"
+                  : "Versuche einen anderen Filter, um deine gespeicherten Events zu sehen"
                 }
               </p>
               {favorites.length === 0 && (
-                <Link 
+                <Link
                   to="/"
                   className="inline-block bg-neutral-900 text-white px-8 py-3 rounded-full font-medium hover:bg-neutral-800 transition-colors"
                 >
-                  Explore Events
+                  Events erkunden
                 </Link>
               )}
             </div>

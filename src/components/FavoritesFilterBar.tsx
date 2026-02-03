@@ -8,10 +8,10 @@ interface FavoritesFilterBarProps {
 }
 
 const filterOptions: { id: FilterOption; label: string }[] = [
-  { id: "all", label: "All Saved" },
-  { id: "upcoming", label: "Upcoming" },
-  { id: "recently-added", label: "Recently Added" },
-  { id: "this-weekend", label: "This Weekend" },
+  { id: "all", label: "Alle gespeichert" },
+  { id: "upcoming", label: "Kommend" },
+  { id: "recently-added", label: "Kürzlich hinzugefügt" },
+  { id: "this-weekend", label: "Dieses Wochenende" },
 ];
 
 const FavoritesFilterBar = ({ activeFilter, onFilterChange }: FavoritesFilterBarProps) => {
