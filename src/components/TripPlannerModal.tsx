@@ -1092,12 +1092,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 gap: 10mm;
               }
 
-              /* DAY SECTION - Full width, generous padding (Galerie-Look) */
+              /* DAY SECTION - Minimal padding für mehr Platz */
               .day-section {
                 width: 100%;
                 border: 1pt solid #d1d5db;
                 border-radius: 6pt;
-                padding: 15mm;
+                padding: 20px;
                 margin: 0 0 10mm 0;
                 page-break-inside: avoid;
                 background: white;
@@ -1109,16 +1109,16 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 font-size: 14pt;
                 font-weight: 400;
                 color: #1f2937;
-                margin: 0 0 12mm 0;
+                margin: 0 0 8mm 0;
                 letter-spacing: 1pt;
                 text-transform: uppercase;
               }
 
-              /* EVENT ITEMS - 3-Spalten-Modell: Zeit | Bild | Text */
+              /* EVENT ITEMS - TEXT-FIRST: Uhrzeit klein | Bild klein | TEXT dominant */
               .event-item {
                 display: flex;
-                gap: 3mm;
-                margin-bottom: 12mm;
+                gap: 2mm;
+                margin-bottom: 8mm;
                 align-items: flex-start;
               }
 
@@ -1126,32 +1126,32 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 margin-bottom: 0;
               }
 
-              /* Spalte 1: Zeit (18mm) - Linker Anker */
+              /* Spalte 1: Zeit - Sehr klein & kompakt */
               .event-time {
                 flex-shrink: 0;
-                width: 18mm;
-                text-align: center;
+                width: 12mm;
+                text-align: right;
                 display: flex;
                 align-items: flex-start;
-                justify-content: center;
+                justify-content: flex-end;
                 padding: 0;
               }
 
               .event-time div {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 9pt;
+                font-size: 8pt;
                 font-weight: 600;
-                color: #1f2937;
-                line-height: 1.2;
-                letter-spacing: 0.2pt;
+                color: #999;
+                line-height: 1.1;
+                letter-spacing: 0pt;
               }
 
-              /* Spalte 2: Thumbnail (40mm) - Optischer Anker */
+              /* Spalte 2: Thumbnail - Klein & prägnant */
               .event-thumb {
                 flex-shrink: 0;
-                width: 40mm;
-                height: 30mm;
-                border-radius: 4pt;
+                width: 28mm;
+                height: 21mm;
+                border-radius: 3pt;
                 overflow: hidden;
                 background: #e5e7eb;
               }
@@ -1163,16 +1163,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 display: block;
               }
 
-              /* Spalte 3: Zeitstrahl (Trennlinie) - Visuelle Verbindung */
+              /* Spalte 3: Trennlinie - Minimal */
               .event-separator {
-                width: 1.5pt;
-                background: #d1d5db;
-                flex-shrink: 0;
-                margin: 0 3mm;
-                min-height: 30mm;
+                display: none;
               }
 
-              /* Spalte 4: Textblock - Flexibler Platz */
+              /* Spalte 4: Textblock - DOMINANT, das Hauptelement */
               .event-content {
                 flex: 1;
                 display: flex;
@@ -1182,18 +1178,18 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
               .event-title-line {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 10pt;
-                font-weight: 600;
+                font-size: 11pt;
+                font-weight: 700;
                 color: #1f2937;
-                margin-bottom: 2mm;
-                line-height: 1.3;
-                letter-spacing: 0.2pt;
+                margin-bottom: 1.5mm;
+                line-height: 1.2;
+                letter-spacing: 0.3pt;
               }
 
               .event-description {
                 font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
                 font-size: 8.5pt;
-                color: #6b7280;
+                color: #555;
                 margin-bottom: 1mm;
                 line-height: 1.4;
                 letter-spacing: 0.1pt;
