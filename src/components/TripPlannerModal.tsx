@@ -1027,12 +1027,19 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
               .logo-text {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 28pt;
+                font-size: 20pt;
                 font-weight: 400;
                 color: #1f2937;
-                margin: 0;
-                letter-spacing: 3pt;
+                margin: 0 0 2mm 0;
+                letter-spacing: 2pt;
                 flex: 1;
+              }
+
+              .logo-subtext {
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+                font-size: 9pt;
+                color: #666;
+                letter-spacing: 0.3pt;
               }
 
               /* QR Container - Exact sizing for print */
@@ -1179,12 +1186,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
               .event-title-line {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 11pt;
+                font-size: 9.5pt;
                 font-weight: 700;
                 color: #1f2937;
-                margin-bottom: 1.5mm;
+                margin-bottom: 1mm;
                 line-height: 1.2;
-                letter-spacing: 0.3pt;
+                letter-spacing: 0.2pt;
               }
 
               .event-description {
@@ -1204,14 +1211,9 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 letter-spacing: 0pt;
               }
 
-              /* FOOTER */
+              /* FOOTER - HIDDEN */
               .footer {
-                margin-top: 20mm;
-                padding-top: 10mm;
-                border-top: 1pt solid #d1d5db;
-                text-align: center;
-                color: #9ca3af;
-                font-size: 8pt;
+                display: none !important;
               }
             }
           </style>
@@ -1220,7 +1222,10 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           <div class="container">
             <!-- Header with Logo and QR -->
             <div class="header">
-              <h1 class="logo-text">EventBuzzer</h1>
+              <div>
+                <h1 class="logo-text">EventBuzzer</h1>
+                <div class="logo-subtext">Geplant mit eventbuzzer.com</div>
+              </div>
               <div class="qr-container">
                 <img src="${qrCodeUrl}" alt="Route QR Code" class="qr-code">
                 <div class="qr-text">
