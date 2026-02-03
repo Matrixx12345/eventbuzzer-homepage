@@ -1006,12 +1006,13 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
               .container {
                 width: 170mm;
-                margin: 0;
+                margin: 0 auto;
                 padding: 20mm;
-                max-width: 100%;
+                max-width: 170mm;
                 background: white;
                 box-shadow: none;
                 border-radius: 0;
+                box-sizing: border-box;
               }
 
               /* HEADER */
@@ -1091,11 +1092,11 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 gap: 10mm;
               }
 
-              /* DAY SECTION - Full width */
+              /* DAY SECTION - Full width, subtle border */
               .day-section {
                 width: 100%;
-                border: 1pt solid #9ca3af;
-                border-radius: 8pt;
+                border: 1pt solid #d1d5db;
+                border-radius: 6pt;
                 padding: 10mm;
                 margin: 0 0 10mm 0;
                 page-break-inside: avoid;
@@ -1113,11 +1114,11 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 text-transform: uppercase;
               }
 
-              /* EVENT ITEMS - Precise measurements */
+              /* EVENT ITEMS - Compact layout: Bild + Text only */
               .event-item {
                 display: flex;
                 gap: 5mm;
-                margin-bottom: 8mm;
+                margin-bottom: 6mm;
                 align-items: flex-start;
               }
 
@@ -1125,12 +1126,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 margin-bottom: 0;
               }
 
-              /* Zone 1: Thumbnail - 35mm fixed */
+              /* Zone 1: Thumbnail - 30mm fixed, 22mm height (4:3 ratio) */
               .event-thumb {
                 flex-shrink: 0;
-                width: 35mm;
-                height: 26.25mm;
-                border-radius: 6pt;
+                width: 30mm;
+                height: 22.5mm;
+                border-radius: 4pt;
                 overflow: hidden;
                 background: #e5e7eb;
               }
@@ -1142,35 +1143,21 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 display: block;
               }
 
-              /* Zone 2: Zeit */
+              /* Zone 2: Zeit - HIDDEN in print, Zeit wird erste Zeile im Text */
               .event-time {
-                flex-shrink: 0;
-                width: 15mm;
-                text-align: center;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
+                display: none !important;
               }
 
               .event-time div {
-                font-family: Georgia, 'Playfair Display', serif;
-                font-size: 10pt;
-                font-weight: 400;
-                color: #1f2937;
-                line-height: 1;
-                letter-spacing: 0.2pt;
+                display: none !important;
               }
 
-              /* Zone 3: Trennlinie */
+              /* Zone 3: Trennlinie - HIDDEN in print */
               .event-separator {
-                width: 0.5pt;
-                background: #d1d5db;
-                flex-shrink: 0;
-                margin: 0 3mm;
+                display: none !important;
               }
 
-              /* Zone 4: Textblock */
+              /* Zone 4: Textblock - flexes to fill remaining space */
               .event-content {
                 flex: 1;
                 display: flex;
@@ -1178,19 +1165,24 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 justify-content: flex-start;
               }
 
+              /* Zeit-Info als erste Zeile im Text */
+              .event-time + .event-separator + .event-content::before {
+                content: attr(data-time);
+              }
+
               .event-title-line {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 12pt;
-                font-weight: 500;
+                font-size: 10pt;
+                font-weight: 700;
                 color: #1f2937;
-                margin-bottom: 2mm;
+                margin-bottom: 1mm;
                 line-height: 1.2;
                 letter-spacing: 0.2pt;
               }
 
               .event-description {
                 font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-                font-size: 9pt;
+                font-size: 8.5pt;
                 color: #6b7280;
                 margin-bottom: 1mm;
                 line-height: 1.4;
