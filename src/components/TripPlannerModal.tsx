@@ -1030,7 +1030,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 font-size: 20pt;
                 font-weight: 400;
                 color: #1f2937;
-                margin: 0 0 2mm 0;
+                margin: 0 0 0.5mm 0;
                 letter-spacing: 2pt;
                 flex: 1;
               }
@@ -1038,7 +1038,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               .logo-subtext {
                 font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
                 font-size: 9pt;
-                color: #666;
+                color: #aaa;
                 letter-spacing: 0.3pt;
               }
 
