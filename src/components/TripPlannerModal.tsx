@@ -1092,12 +1092,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 gap: 10mm;
               }
 
-              /* DAY SECTION - Full width, subtle border */
+              /* DAY SECTION - Full width, generous padding (Galerie-Look) */
               .day-section {
                 width: 100%;
                 border: 1pt solid #d1d5db;
                 border-radius: 6pt;
-                padding: 10mm;
+                padding: 15mm;
                 margin: 0 0 10mm 0;
                 page-break-inside: avoid;
                 background: white;
@@ -1109,16 +1109,16 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 font-size: 14pt;
                 font-weight: 400;
                 color: #1f2937;
-                margin: 0 0 8mm 0;
+                margin: 0 0 12mm 0;
                 letter-spacing: 1pt;
                 text-transform: uppercase;
               }
 
-              /* EVENT ITEMS - Compact layout: Bild + Text only */
+              /* EVENT ITEMS - 3-Spalten-Modell: Zeit | Bild | Text */
               .event-item {
                 display: flex;
-                gap: 5mm;
-                margin-bottom: 6mm;
+                gap: 3mm;
+                margin-bottom: 12mm;
                 align-items: flex-start;
               }
 
@@ -1126,11 +1126,31 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 margin-bottom: 0;
               }
 
-              /* Zone 1: Thumbnail - 30mm fixed, 22mm height (4:3 ratio) */
+              /* Spalte 1: Zeit (18mm) - Linker Anker */
+              .event-time {
+                flex-shrink: 0;
+                width: 18mm;
+                text-align: center;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 0;
+              }
+
+              .event-time div {
+                font-family: Georgia, 'Playfair Display', serif;
+                font-size: 9pt;
+                font-weight: 600;
+                color: #1f2937;
+                line-height: 1.2;
+                letter-spacing: 0.2pt;
+              }
+
+              /* Spalte 2: Thumbnail (40mm) - Optischer Anker */
               .event-thumb {
                 flex-shrink: 0;
-                width: 30mm;
-                height: 22.5mm;
+                width: 40mm;
+                height: 30mm;
                 border-radius: 4pt;
                 overflow: hidden;
                 background: #e5e7eb;
@@ -1143,21 +1163,16 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 display: block;
               }
 
-              /* Zone 2: Zeit - HIDDEN in print, Zeit wird erste Zeile im Text */
-              .event-time {
-                display: none !important;
-              }
-
-              .event-time div {
-                display: none !important;
-              }
-
-              /* Zone 3: Trennlinie - HIDDEN in print */
+              /* Spalte 3: Zeitstrahl (Trennlinie) - Visuelle Verbindung */
               .event-separator {
-                display: none !important;
+                width: 1.5pt;
+                background: #d1d5db;
+                flex-shrink: 0;
+                margin: 0 3mm;
+                min-height: 30mm;
               }
 
-              /* Zone 4: Textblock - flexes to fill remaining space */
+              /* Spalte 4: Textblock - Flexibler Platz */
               .event-content {
                 flex: 1;
                 display: flex;
@@ -1165,18 +1180,13 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 justify-content: flex-start;
               }
 
-              /* Zeit-Info als erste Zeile im Text */
-              .event-time + .event-separator + .event-content::before {
-                content: attr(data-time);
-              }
-
               .event-title-line {
                 font-family: Georgia, 'Playfair Display', serif;
                 font-size: 10pt;
-                font-weight: 700;
+                font-weight: 600;
                 color: #1f2937;
-                margin-bottom: 1mm;
-                line-height: 1.2;
+                margin-bottom: 2mm;
+                line-height: 1.3;
                 letter-spacing: 0.2pt;
               }
 
