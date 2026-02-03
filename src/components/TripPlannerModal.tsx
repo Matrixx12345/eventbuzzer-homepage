@@ -1008,7 +1008,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 width: 212.5mm;
                 margin: 0 auto;
                 padding: 6mm;
-                max-width: 212.5mm;
+                max-width: 100%;
                 background: white;
                 box-shadow: none;
                 border-radius: 0;
