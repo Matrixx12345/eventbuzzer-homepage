@@ -113,11 +113,22 @@ function extractCities(events) {
   return Array.from(cities).filter(Boolean);
 }
 
+// Escape XML special characters
+function escapeXML(text) {
+  if (!text) return text;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 // Generate XML for URL entry
 function generateURLEntry(loc, changefreq = 'weekly', priority = '0.8') {
   const currentDate = new Date().toISOString();
   return `  <url>
-    <loc>${loc}</loc>
+    <loc>${escapeXML(loc)}</loc>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
     <lastmod>${currentDate}</lastmod>
