@@ -1,4 +1,4 @@
-import { Heart, Star, ShoppingCart, Share2, Calendar } from "lucide-react";
+import { Heart, Star, ShoppingCart, Share2 } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,8 @@ export const ActionPill = ({
       image,
       title,
       venue,
-      location
+      location,
+      date: startDate || ""
     });
   };
 
@@ -60,20 +61,6 @@ export const ActionPill = ({
     const url = `${window.location.origin}/event/${slug || eventId}`;
     navigator.clipboard.writeText(url);
     toast.success("Link kopiert!");
-  };
-
-  const handleCalendarClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Create Google Calendar link
-    const eventTitle = encodeURIComponent(title);
-    const eventLocation = encodeURIComponent(location || venue || "");
-    const date = startDate ? new Date(startDate) : new Date();
-    const dateStr = date.toISOString().replace(/-|:|\.\d+/g, '').slice(0, 15) + 'Z';
-    const endDate = new Date(date.getTime() + 2 * 60 * 60 * 1000); // +2 hours
-    const endDateStr = endDate.toISOString().replace(/-|:|\.\d+/g, '').slice(0, 15) + 'Z';
-    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${dateStr}/${endDateStr}&location=${eventLocation}`;
-    window.open(calendarUrl, '_blank');
   };
 
   const handleTicketClick = (e: React.MouseEvent) => {
@@ -105,9 +92,6 @@ export const ActionPill = ({
 
   const textColor = variant === 'dark' ? 'text-white/60' : 'text-gray-700';
   const iconColor = variant === 'dark' ? 'text-white/60' : 'text-gray-600';
-  const dividerColor = variant === 'dark'
-    ? 'bg-gradient-to-b from-transparent via-white/30 to-transparent'
-    : 'bg-gradient-to-b from-transparent via-gray-300/60 to-transparent';
 
   // Shadow for dark variant icons to be visible on photos
   const iconShadow = variant === 'dark'
@@ -117,25 +101,22 @@ export const ActionPill = ({
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full",
-        variant === 'dark' ? "px-8 py-2.5" : "px-16 py-1.5",
+        "flex items-center justify-between rounded-full w-full",
+        variant === 'dark' ? "px-6 py-2.5" : "px-6 py-2",
         className
       )}
-      style={{
-        ...pillStyles,
-        gap: variant === 'dark' ? '1rem' : '1.5rem'
-      }}
+      style={pillStyles}
     >
       {/* Star Rating */}
-      <div className="flex items-center gap-2" style={iconShadow}>
+      <div className="flex items-center gap-1.5" style={iconShadow}>
         <Star size={16} className="text-[#fbbf24] stroke-[1.5]" />
-        <span className={cn("text-base font-semibold", textColor)}>
+        <span className={cn("text-sm font-semibold", textColor)}>
           {rating}
         </span>
       </div>
 
       {/* Divider */}
-      <div className={cn("w-px h-6", dividerColor)} />
+      <div className={cn("w-px h-4", variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent")} />
 
       {/* Favorit */}
       <button
@@ -157,7 +138,7 @@ export const ActionPill = ({
       </button>
 
       {/* Divider */}
-      <div className={cn("w-px h-6", dividerColor)} />
+      <div className={cn("w-px h-4", variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent")} />
 
       {/* Share */}
       <button
@@ -176,7 +157,7 @@ export const ActionPill = ({
       </button>
 
       {/* Divider */}
-      <div className={cn("w-px h-6", dividerColor)} />
+      <div className={cn("w-px h-4", variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent")} />
 
       {/* Ticket */}
       <button

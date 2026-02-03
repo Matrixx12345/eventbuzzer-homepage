@@ -248,3 +248,74 @@ export const calculateDistance = (
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
+
+// ============================================================================
+// SEO SLUG GENERATION
+// ============================================================================
+
+/**
+ * Converts text to SEO-friendly slug
+ * Rules:
+ * - All lowercase
+ * - Hyphens instead of spaces/underscores
+ * - No umlauts (ä → ae, ö → oe, ü → ue)
+ * - No special characters
+ * - No filler words
+ *
+ * Examples:
+ * - "Zürich" → "zuerich"
+ * - "Museen & Galerien" → "museen-galerien"
+ * - "St. Gallen" → "st-gallen"
+ */
+export const generateSlug = (text: string): string => {
+  if (!text) return "";
+
+  let slug = text.toLowerCase().trim();
+
+  // Replace umlauts
+  const umlautMap: Record<string, string> = {
+    'ä': 'ae', 'ö': 'oe', 'ü': 'ue',
+    'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a',
+    'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
+    'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
+    'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o',
+    'ù': 'u', 'ú': 'u', 'û': 'u',
+    'ñ': 'n', 'ç': 'c', 'ß': 'ss'
+  };
+
+  for (const [char, replacement] of Object.entries(umlautMap)) {
+    slug = slug.replaceAll(char, replacement);
+  }
+
+  // Replace spaces, underscores, and special chars with hyphens
+  slug = slug.replace(/[\s_&/\\]+/g, '-');
+
+  // Remove all non-alphanumeric characters except hyphens
+  slug = slug.replace(/[^a-z0-9-]/g, '');
+
+  // Remove multiple consecutive hyphens
+  slug = slug.replace(/-+/g, '-');
+
+  // Remove leading/trailing hyphens
+  slug = slug.replace(/^-+|-+$/g, '');
+
+  return slug;
+};
+
+/**
+ * Generate city slug from event location data
+ * Prioritizes address_city, falls back to location or getNearestPlace
+ */
+export const getCitySlug = (event: any): string => {
+  const city = getEventLocation(event);
+  return generateSlug(city);
+};
+
+/**
+ * Get category slug from event data
+ * Uses getCategoryLabel to determine category, then converts to slug
+ */
+export const getCategorySlug = (event: any): string => {
+  const label = getCategoryLabel(event);
+  return label ? generateSlug(label) : "";
+};

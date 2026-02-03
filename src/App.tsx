@@ -28,6 +28,8 @@ import AdminChatbot from "./pages/AdminChatbot";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import CategoryPage from "./pages/CategoryPage";
+import CityCategoryPage from "./pages/CityCategoryPage";
 import LegalFooter from "./components/LegalFooter";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ExitIntentPopup from "./components/ExitIntentPopup";
@@ -49,6 +51,9 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/event/:slug" element={<EventDetail />} />
+              {/* SEO Category Pages */}
+              <Route path="/kategorie/:slug" element={<CategoryPage />} />
+              <Route path="/events/:city/:categorySlug" element={<CityCategoryPage />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/listings" element={<ErrorBoundary><Listings /></ErrorBoundary>} />
               <Route path="/eventlist1" element={<ErrorBoundary><EventList1 /></ErrorBoundary>} />

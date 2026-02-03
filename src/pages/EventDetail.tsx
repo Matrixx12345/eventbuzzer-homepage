@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking";
 import { getNearestPlace } from "@/utils/swissPlaces";
+import { generateEventSchema } from "@/utils/schemaGenerator";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { getCategoryLabel, getEventLocation, generateSlug, getCitySlug, getCategorySlug } from "@/utils/eventUtilities";
 import {
   Popover,
   PopoverContent,
@@ -879,6 +882,31 @@ const EventDetail = () => {
       </Helmet>
 
       <Navbar />
+
+      {/* Breadcrumb Navigation */}
+      {dynamicEvent && (
+        <div className="bg-white border-b border-stone-200">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Breadcrumb
+              items={[
+                { label: "Events", href: "/eventlist1" },
+                {
+                  label: getEventLocation(dynamicEvent) || "Schweiz",
+                  href: `/events/${getCitySlug(dynamicEvent)}`
+                },
+                ...(getCategoryLabel(dynamicEvent)
+                  ? [{
+                      label: getCategoryLabel(dynamicEvent)!,
+                      href: `/kategorie/${getCategorySlug(dynamicEvent)}`
+                    }]
+                  : []
+                )
+              ]}
+              currentPage={dynamicEvent.title}
+            />
+          </div>
+        </div>
+      )}
 
       {/* HERO SECTION - 50/50 Split Layout */}
       <section className="min-h-[48vh] grid grid-cols-1 lg:grid-cols-2 bg-stone-50">

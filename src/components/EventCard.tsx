@@ -1,4 +1,5 @@
 import { Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { EventRatingButtons } from "./EventRatingButtons";
 import { StarRating } from "./StarRating";
@@ -25,6 +26,7 @@ interface EventCardProps {
   category_sub_id?: string;
   created_at?: string;
   buzz_score?: number | null;
+  onEventClick?: (eventId: string) => void;
 }
 
 const EventCard = ({
@@ -45,6 +47,7 @@ const EventCard = ({
   category_sub_id,
   created_at,
   buzz_score,
+  onEventClick,
 }: EventCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { sendLike } = useLikeOnFavorite();
@@ -62,15 +65,27 @@ const EventCard = ({
     }
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Allow modifier keys and middle-click to open in new tab/window
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) {
+      return;
+    }
     // Track click silently (fire-and-forget)
     trackEventClick(id);
+
+    // If onEventClick is provided, open modal instead of navigating
+    if (onEventClick) {
+      e.preventDefault();
+      onEventClick(id);
+    }
   };
 
   return (
-    <article 
+    <Link
+      to={`/event/${slug}`}
       onClick={handleCardClick}
-      className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full border border-stone-200 cursor-pointer"
+      className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full border border-stone-200 cursor-pointer block"
+      aria-label={`View ${title}`}
     >
       {/* Image Section - 2.5:1 ultra-compact with premium treatment */}
       <div className="relative aspect-[2.5/1] overflow-hidden">
@@ -105,14 +120,20 @@ const EventCard = ({
         <p className="text-sm text-stone-700 truncate">{venue}</p>
 
         {/* Location with Mini-Map Hover Tooltip */}
-        <div className="group/map relative inline-flex items-center gap-1.5 text-sm text-stone-700 cursor-help w-fit">
+        <div
+          className="group/map relative inline-flex items-center gap-1.5 text-sm text-stone-700 cursor-help w-fit"
+          onClick={(e) => e.stopPropagation()}
+        >
           <span className="text-red-600">📍</span>
           <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
             {location || "Schweiz"}
           </span>
 
           {/* Mini-Map Tooltip */}
-          <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
+          <div
+            className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
               <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
                 <img 
@@ -149,7 +170,7 @@ const EventCard = ({
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 };
 

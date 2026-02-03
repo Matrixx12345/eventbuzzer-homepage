@@ -16,6 +16,60 @@ Server läuft auf: http://localhost:8081
 
 ---
 
+## ⚠️ CRITICAL: Supabase Client Usage
+
+**ALWAYS use the correct Supabase client:**
+
+### ✅ For Events Data - Use `externalSupabase`
+
+```typescript
+import { externalSupabase } from "@/integrations/supabase/externalClient";
+
+// Query events
+const { data } = await externalSupabase
+  .from("events")
+  .select("*")
+  .order("buzz_score", { ascending: false });
+```
+
+### ✅ For User Auth/Profiles - Use `supabase`
+
+```typescript
+import { supabase } from "@/integrations/supabase/client";
+
+// Auth operations
+const { data: { user } } = await supabase.auth.getUser();
+
+// Profiles
+const { data } = await supabase.from("profiles").select("*");
+```
+
+### 🔑 Why Two Clients?
+
+- **External DB (tfkiyvhfhvkejpljsnrk)** - Contains ALL events, favorites, user data
+  - URL: `https://tfkiyvhfhvkejpljsnrk.supabase.co`
+  - Tables: `events`, `favorites`, `profiles`, `event_vibe_overrides`
+  - Used by: Event pages, category pages, EventList, EventDetail
+
+- **Lovable Cloud (phlhbbjeqabjhkkyennz)** - Minimal backup for user profiles only
+  - URL: `https://phlhbbjeqabjhkkyennz.supabase.co`
+  - Tables: `profiles` only (rest empty)
+  - Rarely used - mostly for Lovable Cloud compatibility
+
+### ❌ Common Mistake
+
+```typescript
+// WRONG - events table doesn't exist in Lovable Cloud!
+import { supabase } from "@/integrations/supabase/client";
+const { data } = await supabase.from("events").select("*"); // ❌ Error!
+
+// CORRECT
+import { externalSupabase } from "@/integrations/supabase/externalClient";
+const { data } = await externalSupabase.from("events").select("*"); // ✅
+```
+
+---
+
 ## ⚠️ React Performance & Render Loop Detection
 
 **WICHTIG:** Render Loops sind schwer zu debuggen. Wenn der **Lüfter ständig läuft** oder die **CPU hoch ist**, überprüfe IMMER diese Patterns:
