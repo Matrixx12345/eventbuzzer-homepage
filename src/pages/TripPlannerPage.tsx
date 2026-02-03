@@ -44,85 +44,27 @@ const formatDuration = (minutes: number): string => {
   return `${mins}min`;
 };
 
-// Empty State Component with Timeline Illustration (wie TripPlannerModal)
+// Empty State Component - Simple illustration without timeline
 const EmptyState: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-12 px-4">
-    {/* Timeline-Style Illustration */}
-    <div className="w-full max-w-md mb-8 opacity-50">
-      {/* Timeline Container */}
-      <div className="relative">
-        {/* Vertical Line */}
-        <div className="absolute left-[19px] top-3 bottom-3 w-0.5 bg-gray-200" />
-
-        {/* Time Slot 1 - 09:00 */}
-        <div className="flex items-start gap-4 mb-6">
-          {/* Time + Dot */}
-          <div className="flex flex-col items-center w-10 flex-shrink-0">
-            <span className="text-xs text-gray-400 mb-1">09:00</span>
-            <div className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm z-10" />
-          </div>
-          {/* Empty Slot */}
-          <div className="flex-1 border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-12 bg-gray-200 rounded-lg flex-shrink-0" />
-              <div className="flex-1">
-                <div className="h-3 bg-gray-200 rounded w-3/4 mb-2" />
-                <div className="h-2 bg-gray-200 rounded w-1/2" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Time Slot 2 - 11:00 - Highlighted */}
-        <div className="flex items-start gap-4 mb-6">
-          {/* Time + Dot */}
-          <div className="flex flex-col items-center w-10 flex-shrink-0">
-            <span className="text-xs text-gray-400 mb-1">11:00</span>
-            <div className="w-3 h-3 rounded-full bg-slate-700 border-2 border-white shadow-sm z-10" />
-          </div>
-          {/* Event Card - Highlighted - Horizontal Layout */}
-          <div className="flex-1 border-2 border-slate-600 rounded-xl bg-white shadow-sm overflow-hidden">
-            <div className="flex items-stretch h-20">
-              {/* Image left - 4:3 aspect */}
-              <div className="w-28 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0">
-                <MapPin size={24} className="text-slate-400" />
-              </div>
-              {/* Text right with briefcase */}
-              <div className="flex-1 p-3 relative">
-                <div className="h-3.5 bg-gray-300 rounded w-full mb-1.5" />
-                <div className="flex items-center gap-1 mb-1">
-                  <MapPin size={10} className="text-gray-300" />
-                  <div className="h-2.5 bg-gray-200 rounded w-16" />
+    {/* Event Card Illustration with Briefcase */}
+    <div className="w-full max-w-sm mb-8 opacity-50">
+      <div className="border-2 border-slate-600 rounded-xl bg-white shadow-sm overflow-hidden">
+        <div className="flex items-stretch h-24">
+          {/* Image left */}
+          <div className="w-32 bg-gradient-to-br from-slate-100 to-slate-200 flex-shrink-0" />
+          {/* Text right with briefcase */}
+          <div className="flex-1 p-4 relative">
+            <div className="h-4 bg-gray-300 rounded w-full mb-2" />
+            <div className="h-3 bg-gray-200 rounded w-20 mb-2" />
+            <div className="h-2.5 bg-gray-200 rounded w-16" />
+            {/* Briefcase - bottom right, highlighted */}
+            <div className="absolute bottom-3 right-3">
+              <div className="relative">
+                <div className="absolute -inset-2 bg-slate-700 rounded-full opacity-30 animate-pulse" />
+                <div className="relative bg-slate-700 text-white p-2 rounded-full">
+                  <Briefcase size={16} />
                 </div>
-                <div className="h-2 bg-gray-200 rounded w-12" />
-                {/* Briefcase - bottom right in text area, highlighted */}
-                <div className="absolute bottom-2 right-2">
-                  <div className="relative">
-                    <div className="absolute -inset-1.5 bg-slate-700 rounded-full opacity-30 animate-pulse" />
-                    <div className="relative bg-slate-700 text-white p-1.5 rounded-full">
-                      <Briefcase size={14} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Time Slot 3 - 13:00 */}
-        <div className="flex items-start gap-4">
-          {/* Time + Dot */}
-          <div className="flex flex-col items-center w-10 flex-shrink-0">
-            <span className="text-xs text-gray-400 mb-1">13:00</span>
-            <div className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white shadow-sm z-10" />
-          </div>
-          {/* Empty Slot */}
-          <div className="flex-1 border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-12 bg-gray-200 rounded-lg flex-shrink-0" />
-              <div className="flex-1">
-                <div className="h-3 bg-gray-200 rounded w-2/3 mb-2" />
-                <div className="h-2 bg-gray-200 rounded w-1/3" />
               </div>
             </div>
           </div>
@@ -131,7 +73,7 @@ const EmptyState: React.FC = () => (
     </div>
 
     <h3 className="text-xl font-semibold text-gray-800 mb-2 text-center">
-      Dein Reiseplaner ist noch leer
+      Noch keine Events für diesen Tag
     </h3>
     <p className="text-gray-500 text-center max-w-md mb-6">
       Klicke auf das Koffersymbol bei einem Event, um es zu deiner Reise hinzuzufügen.
@@ -379,7 +321,7 @@ const TripPlannerPage: React.FC = () => {
 
       <Navbar />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="mx-auto px-[15px] py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Mein Reiseplaner</h1>
@@ -390,132 +332,130 @@ const TripPlannerPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Day Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-          <div className="flex items-center gap-1 p-3 border-b border-gray-100 overflow-x-auto">
-            {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-              const dayEventCount = (plannedEventsByDay[day] || []).length;
+        {/* Content - All Days Grid */}
+        {totalEventCount === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <EmptyState />
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-6">
+            {[1, 2, 3].map((day) => {
+              const dayEvents = plannedEventsByDay[day] || [];
               return (
-                <button
-                  key={day}
-                  onClick={() => setActiveDay(day)}
-                  className={cn(
-                    'px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap',
-                    activeDay === day
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                  {/* Day Header */}
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900">Tag {day}</h3>
+                    <span className="text-xs text-gray-500">{dayEvents.length} Event{dayEvents.length !== 1 ? 's' : ''}</span>
+                  </div>
+
+                  {/* Timeline + Events OR Empty State */}
+                  {dayEvents.length > 0 ? (
+                    <div className="relative pt-12">
+                      {/* Vertical Timeline Line - centered through dots */}
+                      <div className="absolute left-[66px] top-12 bottom-0 w-0.5 bg-gray-300 z-0" />
+
+                      <div className="space-y-4 relative z-10">
+                        {dayEvents.map((pe, index) => (
+                          <div key={pe.eventId} className="relative flex items-center gap-3 group">
+                            {/* Time Label - LEFT */}
+                            <div className="flex-shrink-0 w-12 text-right text-xs font-semibold text-gray-600 self-center">
+                              {TIME_POINTS[index] || '—'}
+                            </div>
+
+                            {/* Timeline Dot - MIDDLE - centered */}
+                            <div className="flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" />
+
+                            {/* Event Card - RIGHT */}
+                            <div
+                              onClick={() => handleEventClick(pe.event)}
+                              className="flex-1 p-2 rounded-lg border-2 border-gray-500 bg-white hover:border-gray-600 transition-all cursor-pointer flex items-center justify-between gap-2"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {pe.event.image_url && (
+                                  <img
+                                    src={pe.event.image_url}
+                                    alt={pe.event.title}
+                                    className="w-20 h-20 rounded-md object-cover flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{pe.event.title}</p>
+                                  {(pe.event.location || pe.event.address_city) && (
+                                    <p className="text-xs text-gray-900 truncate">{pe.event.location || pe.event.address_city}</p>
+                                  )}
+                                  {pe.duration && (
+                                    <div className="mt-1">
+                                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-white text-xs text-gray-700 font-medium border border-gray-200">
+                                        {pe.duration >= 90 ? (
+                                          pe.duration % 60 > 0 ? `${Math.floor(pe.duration / 60)}h ${pe.duration % 60} min` : `${Math.floor(pe.duration / 60)} Stunden`
+                                        ) : (
+                                          `${pe.duration} min`
+                                        )}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Action Buttons - Right side */}
+                              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeEventFromTrip(pe.eventId);
+                                  }}
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Entfernen"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (index > 0) {
+                                      const newEvents = [...dayEvents];
+                                      [newEvents[index - 1], newEvents[index]] = [newEvents[index], newEvents[index - 1]];
+                                      setPlannedEventsByDay({ ...plannedEventsByDay, [day]: newEvents });
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
+                                  title="Nach oben"
+                                >
+                                  <ChevronUp size={16} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (index < dayEvents.length - 1) {
+                                      const newEvents = [...dayEvents];
+                                      [newEvents[index], newEvents[index + 1]] = [newEvents[index + 1], newEvents[index]];
+                                      setPlannedEventsByDay({ ...plannedEventsByDay, [day]: newEvents });
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
+                                  title="Nach unten"
+                                >
+                                  <ChevronDown size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <EmptyState />
                   )}
-                >
-                  Tag {day}
-                  {dayEventCount > 0 && (
-                    <span className={cn(
-                      'text-xs px-1.5 py-0.5 rounded-full',
-                      activeDay === day ? 'bg-slate-600' : 'bg-gray-300'
-                    )}>
-                      {dayEventCount}
-                    </span>
-                  )}
-                </button>
+                </div>
               );
             })}
-
-            {/* Add Day Button */}
-            {totalDays < 4 && (
-              <button
-                onClick={addDay}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Tag hinzufügen"
-              >
-                <Plus size={18} />
-              </button>
-            )}
           </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {totalEventCount === 0 ? (
-              <EmptyState />
-            ) : currentDayEvents.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <p className="mb-2">Keine Events für Tag {activeDay}</p>
-                <p className="text-sm">Füge Events über die Event-Seite hinzu oder wechsle zu einem anderen Tag.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {currentDayEvents.map((pe, index) => (
-                  <div
-                    key={pe.eventId}
-                    className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
-                    onClick={() => handleEventClick(pe.event)}
-                  >
-                    {/* Order Number */}
-                    <div className="flex-shrink-0 w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      {index + 1}
-                    </div>
-
-                    {/* Image */}
-                    {pe.event.image_url && (
-                      <img
-                        src={pe.event.image_url}
-                        alt={pe.event.title}
-                        className="w-20 h-16 object-cover rounded-lg flex-shrink-0"
-                      />
-                    )}
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate">{pe.event.title}</h3>
-                      {(pe.event.address_city || pe.event.location) && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                          <MapPin size={12} />
-                          {pe.event.address_city || pe.event.location}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">{formatDuration(pe.duration)}</p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleMoveUp(index)}
-                        disabled={index === 0}
-                        className={cn(
-                          'p-1.5 rounded transition-colors',
-                          index === 0 ? 'text-gray-300' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'
-                        )}
-                        title="Nach oben"
-                      >
-                        <ChevronUp size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleMoveDown(index)}
-                        disabled={index >= currentDayEvents.length - 1}
-                        className={cn(
-                          'p-1.5 rounded transition-colors',
-                          index >= currentDayEvents.length - 1 ? 'text-gray-300' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'
-                        )}
-                        title="Nach unten"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                      <button
-                        onClick={() => removeEventFromTrip(pe.eventId)}
-                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Entfernen"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         {totalEventCount > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <button
               onClick={handleSaveTrip}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
@@ -543,23 +483,6 @@ const TripPlannerPage: React.FC = () => {
             >
               <FileText size={18} />
               <span className="text-sm font-medium">Als PDF</span>
-            </button>
-          </div>
-        )}
-
-        {/* Clear Trip */}
-        {totalEventCount > 0 && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => {
-                if (confirm('Möchtest du wirklich alle Events aus deinem Reiseplaner entfernen?')) {
-                  clearTrip();
-                  toast.success('Reiseplaner geleert');
-                }
-              }}
-              className="text-sm text-gray-400 hover:text-red-500 transition-colors"
-            >
-              Reiseplaner leeren
             </button>
           </div>
         )}
