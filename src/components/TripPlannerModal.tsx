@@ -1092,13 +1092,13 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 gap: 10mm;
               }
 
-              /* DAY SECTION - Minimal padding für mehr Platz */
+              /* DAY SECTION - Super schmal Padding für 25% mehr Platz */
               .day-section {
                 width: 100%;
                 border: 1pt solid #d1d5db;
                 border-radius: 6pt;
-                padding: 20px;
-                margin: 0 0 10mm 0;
+                padding: 6mm;
+                margin: 0 0 8mm 0;
                 page-break-inside: avoid;
                 background: white;
                 box-sizing: border-box;
@@ -1109,16 +1109,16 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 font-size: 14pt;
                 font-weight: 400;
                 color: #1f2937;
-                margin: 0 0 8mm 0;
+                margin: 0 0 5mm 0;
                 letter-spacing: 1pt;
                 text-transform: uppercase;
               }
 
-              /* EVENT ITEMS - TEXT-FIRST: Uhrzeit klein | Bild klein | TEXT dominant */
+              /* EVENT ITEMS - LAYOUT: Zeit-LINKS | Bild | TEXT-dominant */
               .event-item {
                 display: flex;
-                gap: 2mm;
-                margin-bottom: 8mm;
+                gap: 1.5mm;
+                margin-bottom: 5mm;
                 align-items: flex-start;
               }
 
@@ -1126,31 +1126,32 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                 margin-bottom: 0;
               }
 
-              /* Spalte 1: Zeit - Sehr klein & kompakt */
+              /* Spalte 1: Zeit - LINKS vom Bild, klein & dezent */
               .event-time {
                 flex-shrink: 0;
-                width: 12mm;
+                width: 11mm;
                 text-align: right;
                 display: flex;
                 align-items: flex-start;
                 justify-content: flex-end;
                 padding: 0;
+                padding-top: 0.5mm;
               }
 
               .event-time div {
                 font-family: Georgia, 'Playfair Display', serif;
-                font-size: 8pt;
+                font-size: 7.5pt;
                 font-weight: 600;
-                color: #999;
-                line-height: 1.1;
+                color: #aaa;
+                line-height: 1;
                 letter-spacing: 0pt;
               }
 
-              /* Spalte 2: Thumbnail - Klein & prägnant */
+              /* Spalte 2: Thumbnail - NEBEN Zeit (links vom Text), klein */
               .event-thumb {
                 flex-shrink: 0;
-                width: 28mm;
-                height: 21mm;
+                width: 25mm;
+                height: 18.75mm;
                 border-radius: 3pt;
                 overflow: hidden;
                 background: #e5e7eb;
