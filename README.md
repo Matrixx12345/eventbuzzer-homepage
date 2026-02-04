@@ -257,13 +257,72 @@ Noch keine Authentifizierung - öffentlich zugänglich.
 5. **Google Analytics** - GA4 Tracking + Custom Events
 6. **Lazy Loading** - `loading="lazy"` auf allen Bildern
 
-### Sitemap generieren
+### Sitemap & SEO-Friendly Event URLs generieren
 
 ```bash
-node scripts/generate-sitemap.mjs
+node scripts/generate-sitemap-chunked.mjs
 ```
 
-Erstellt `public/sitemap.xml` mit allen Event-URLs.
+Erstellt:
+- `public/sitemap-index.xml` - Index aller Sitemaps
+- `public/sitemap-events-*.xml` - Event-Sitemaps (bis 500 URLs pro Datei)
+- `public/sitemap-categories.xml` - Kategorieseiten
+- `public/sitemap-city-categories*.xml` - Stadt × Kategorie Kombinationen
+- `public/event-slug-mapping.json` - Mapping SEO-Slugs → external_ids
+
+#### SEO-Friendly Slug System
+
+**Problem gelöst:** Google konnte Event-URLs nicht indexieren, weil die Sitemaps UUID-basierte oder `manual_` Präfix-URLs mit Slugs generiert haben, die nicht auflösbar waren.
+
+**Lösung:** SEO-friendly Slugs aus Event-Titel + Stadt kombinieren:
+- `museum-tinguely` statt `mys_attr_ee786c45-3bd6-490f-8951-bcf4a3a61213`
+- `olympisches-museum-lausanne` statt `manual_olympic_museum`
+- Diese URLs sind Google-freundlich und einprägsam
+
+**Wie es funktioniert:**
+
+1. **Sitemap-Generator** (`scripts/generate-sitemap-chunked.mjs`):
+   - Fetcht alle Events aus Supabase
+   - Generiert SEO-Slug: `generateEventSlug(title, city)` → "museum-tinguely"
+   - Erstellt Mapping: `"museum-tinguely" → "manual_tinguely"` (external_id)
+   - Schreibt `public/event-slug-mapping.json`
+   - Generiert Sitemaps mit SEO-Slugs
+
+2. **EventDetail.tsx** (`src/pages/EventDetail.tsx`):
+   - Lädt `event-slug-mapping.json`
+   - Resolves SEO-Slug → external_id
+   - Queries Supabase mit korrektem external_id
+   - Fallback-Kette:
+     1. SEO-Slug aus Mapping
+     2. Direct external_id query
+     3. ID-Basis query
+
+3. **Beispiel-Mapping** (`public/event-slug-mapping.json`):
+```json
+{
+  "museum-tinguely": "manual_tinguely",
+  "olympisches-museum-lausanne": "manual_olympic_museum",
+  "kunstmuseum-basel": "manual_kunstmuseum_basel"
+}
+```
+
+**Nach Änderungen:**
+```bash
+# 1. Neuen SEO-Slug-Mapping generieren
+node scripts/generate-sitemap-chunked.mjs
+
+# 2. Commiten
+git add public/sitemap-*.xml public/event-slug-mapping.json
+git commit -m "Update sitemaps with SEO-friendly slugs"
+
+# 3. In Google Search Console einreichen
+# URL: https://eventbuzzer.ch/sitemap-index.xml
+```
+
+**Wichtig für Google Search Console:**
+- Submission URL: `https://eventbuzzer.ch/sitemap-index.xml` (NOT individual sitemaps)
+- Alle Events sind jetzt mit SEO-Slugs indexierbar
+- Google wird URLs wie `/event/museum-tinguely` crawlen
 
 ### Google Analytics Setup
 

@@ -75,7 +75,7 @@ async function fetchAllEvents() {
   while (hasMore) {
     const { data, error } = await supabase
       .from('events')
-      .select('id, external_id, created_at, address_city, location')
+      .select('id, external_id, title, created_at, address_city, location')
       .range(from, from + batchSize - 1)
       .order('id', { ascending: true });
 
@@ -99,6 +99,21 @@ async function fetchAllEvents() {
 
   console.log(`✅ Found ${allEvents.length} events total`);
   return allEvents;
+}
+
+// Generate SEO-friendly slug from title + location
+function generateEventSlug(title, city) {
+  let parts = [];
+
+  if (title) {
+    parts.push(generateSlug(title));
+  }
+
+  if (city) {
+    parts.push(generateSlug(city));
+  }
+
+  return parts.join('-') || generateSlug(title);
 }
 
 // Extract unique cities from events
@@ -178,14 +193,24 @@ async function main() {
     chunks.push(events.slice(i, i + CHUNK_SIZE));
   }
 
+  // Create slug mapping for EventDetail.tsx lookup
+  const slugMapping = {};
+
   chunks.forEach((chunk, index) => {
-    const urls = chunk.map(event =>
-      generateURLEntry(
-        `${SITE_URL}/event/${event.external_id || event.id}`,
+    const urls = chunk.map(event => {
+      // Generate SEO-friendly slug from title + location
+      const city = event.address_city || event.location;
+      const seoSlug = generateEventSlug(event.title, city);
+
+      // Store mapping: slug → external_id (for EventDetail lookup)
+      slugMapping[seoSlug] = event.external_id || event.id;
+
+      return generateURLEntry(
+        `${SITE_URL}/event/${seoSlug}`,
         'daily',  // Events change frequently - crawl daily
         '1.0'      // Highest priority - most valuable URLs
-      )
-    );
+      );
+    });
 
     const filename = `sitemap-events-${index + 1}.xml`;
     const xml = generateSitemapXML(urls);
@@ -193,6 +218,11 @@ async function main() {
     sitemapFiles.push(filename);
     console.log(`   ✅ ${filename} - ${chunk.length} URLs`);
   });
+
+  // Write slug mapping to JSON file for EventDetail.tsx
+  const mappingFile = join(publicDir, 'event-slug-mapping.json');
+  writeFileSync(mappingFile, JSON.stringify(slugMapping, null, 2));
+  console.log(`\n📝 Created event-slug-mapping.json (${Object.keys(slugMapping).length} entries)`);
 
   // 3. Generate category sitemap
   console.log('\n📄 Generating category sitemap...');

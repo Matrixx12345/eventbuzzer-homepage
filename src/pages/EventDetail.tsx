@@ -523,21 +523,60 @@ const EventDetail = () => {
   const isStaticEvent = slug && eventsData[slug];
   const isDynamicEvent = slug && !isStaticEvent;
 
+  // Helper: Resolve SEO slug to external_id using slug mapping
+  const resolveSlugToExternalId = async (seoSlug: string): Promise<string | null> => {
+    try {
+      const response = await fetch('/event-slug-mapping.json');
+      if (!response.ok) return null;
+      const mapping = await response.json();
+      return mapping[seoSlug] || null;
+    } catch (err) {
+      console.error('Error loading slug mapping:', err);
+      return null;
+    }
+  };
+
   // Fetch dynamic event from Supabase - direct DB query to get all fields including coordinates
   useEffect(() => {
     if (isDynamicEvent) {
       const fetchEvent = async () => {
         setLoading(true);
         try {
-          // Try by external_id first, then by id
-          let { data, error } = await supabase
-            .from('events')
-            .select('*')
-            .eq('external_id', slug)
-            .single();
+          // Step 1: Try to resolve SEO slug to external_id using slug mapping
+          let resolvedExternalId = null;
+          try {
+            resolvedExternalId = await resolveSlugToExternalId(slug);
+          } catch (err) {
+            console.error('Error resolving SEO slug:', err);
+          }
 
+          let data = null;
+          let error = null;
+
+          // Step 2: If resolved external_id found, try that first
+          if (resolvedExternalId) {
+            const result = await supabase
+              .from('events')
+              .select('*')
+              .eq('external_id', resolvedExternalId)
+              .single();
+            data = result.data;
+            error = result.error;
+          }
+
+          // Step 3: Try by external_id directly (fallback)
           if (error || !data) {
-            // Try by id
+            const result = await supabase
+              .from('events')
+              .select('*')
+              .eq('external_id', slug)
+              .single();
+            data = result.data;
+            error = result.error;
+          }
+
+          // Step 4: Try by id as last resort
+          if (error || !data) {
             const result = await supabase
               .from('events')
               .select('*')
@@ -689,7 +728,7 @@ const EventDetail = () => {
 
   if (isStaticEvent) {
     event = { ...defaultEvent, ...eventsData[slug!] };
-  } else if (dynamicEvent) {
+  } else if (dynamicEvent && !loading) {
     // Build full address: street, PLZ + city, country
     // Don't add "Schweiz" twice if address_city is already a country name
     const cityIsCountry = isCountryName(dynamicEvent.address_city);
