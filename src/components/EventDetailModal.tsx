@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
 import { getNearestPlace } from '@/utils/swissPlaces';
+import { generateEventSlug, getEventLocation } from '@/utils/eventUtilities';
 
 interface EventDetailModalProps {
   event: any;
@@ -63,32 +64,6 @@ const isCountryName = (str?: string) => {
   return COUNTRY_NAMES.includes(str.toLowerCase().trim());
 };
 
-// Get city/location (ALWAYS returns something - never empty, never just "Schweiz")
-const getEventLocation = (event: any): string => {
-  // Priority 1: address_city (if not a country)
-  const city = event.address_city?.trim();
-  if (city && city.length > 0 && !isCountryName(city)) {
-    return city;
-  }
-
-  // Priority 2: venue_name (if not same as title and not a country)
-  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountryName(event.venue_name)) {
-    return event.venue_name.trim();
-  }
-
-  // Priority 3: location (if not same as title and not a country)
-  if (event.location && event.location.trim() !== event.title.trim() && !isCountryName(event.location)) {
-    return event.location.trim();
-  }
-
-  // Priority 4: Reconstruct from lat/lng
-  if (event.latitude && event.longitude) {
-    return getNearestPlace(event.latitude, event.longitude);
-  }
-
-  // Last resort (should rarely happen)
-  return "Schweiz";
-};
 
 // Get full address with all details (street + city + country ALWAYS)
 const getFullAddress = (event: any): string => {
@@ -192,6 +167,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     .flat()
     .some(pe => pe.eventId === event.id);
 
+  // Generate SEO-friendly slug for URLs
+  const eventLocation = getEventLocation(event);
+  const seoSlug = generateEventSlug(event.title, eventLocation);
+
   // Calculate display score with user rating boost
   const baseScore = (event.buzz_score || event.relevance_score || 75) / 20;
   const ratingBoost = userRating ? (userRating - 3) * 0.1 : 0;
@@ -216,7 +195,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     const endDate = event.end_date ? formatDateForICS(event.end_date) : '';
     const location = event.venue_name || event.address_city || event.location || "Schweiz";
     const description = (event.short_description || event.description || "").replace(/\n/g, '\\n');
-    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+    const eventUrl = `${window.location.origin}/event/${seoSlug}`;
 
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -250,7 +229,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
   // Copy link to clipboard
   const copyToClipboard = async () => {
-    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+    const eventUrl = `${window.location.origin}/event/${seoSlug}`;
     try {
       await navigator.clipboard.writeText(eventUrl);
       toast.success("Link kopiert!", {
@@ -266,14 +245,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
   // WhatsApp share
   const shareViaWhatsApp = () => {
-    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+    const eventUrl = `${window.location.origin}/event/${seoSlug}`;
     const text = `Check out this event: ${event.title} ${eventUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   // Email share
   const shareViaEmail = () => {
-    const eventUrl = `${window.location.origin}/event/${event.external_id || event.id}`;
+    const eventUrl = `${window.location.origin}/event/${seoSlug}`;
     const subject = `Event: ${event.title}`;
     const body = `Hallo,\n\nIch habe diesen Event gefunden:\n${event.title}\n\n${eventUrl}\n\nLiebe Grüsse`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -609,11 +588,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
             {/* Detail Page Link - Chevron im Footer */}
             <Link
-              to={`/event/${event.external_id || event.id}`}
+              to={`/event/${seoSlug}`}
               className="ml-auto -mr-2 flex items-center gap-0.5 text-indigo-900 hover:text-indigo-950 font-medium transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Navigating to:", `/event/${event.external_id || event.id}`, "external_id:", event.external_id, "id:", event.id);
                 onClose(); // Close modal before navigating
               }}
             >

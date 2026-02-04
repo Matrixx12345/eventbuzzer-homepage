@@ -319,3 +319,22 @@ export const getCategorySlug = (event: any): string => {
   const label = getCategoryLabel(event);
   return label ? generateSlug(label) : "";
 };
+
+/**
+ * Generate SEO-friendly event slug from title + location
+ * Used for sitemap generation and URL creation
+ * Example: "Museum Tinguely" + "Basel" → "museum-tinguely-basel"
+ */
+export const generateEventSlug = (title: string, location: string): string => {
+  let parts = [];
+
+  if (title) {
+    parts.push(generateSlug(title));
+  }
+
+  if (location) {
+    parts.push(generateSlug(location));
+  }
+
+  return parts.join('-') || generateSlug(title);
+};

@@ -16,7 +16,7 @@ import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking"
 import { getNearestPlace } from "@/utils/swissPlaces";
 import { generateEventSchema } from "@/utils/schemaGenerator";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { getCategoryLabel, getEventLocation, generateSlug, getCitySlug, getCategorySlug } from "@/utils/eventUtilities";
+import { getCategoryLabel, getEventLocation, generateSlug, getCitySlug, getCategorySlug, generateEventSlug } from "@/utils/eventUtilities";
 import {
   Popover,
   PopoverContent,
@@ -1213,19 +1213,23 @@ const EventDetail = () => {
               className="w-full"
             >
               <CarouselContent className="-ml-6">
-                {nearbyEventsWithDistance.map((evt) => (
-                  <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
-                    <SimilarEventCard
-                      slug={evt.external_id || evt.id}
-                      image={evt.image_url || weekendJazz}
-                      title={evt.title}
-                      description={evt.short_description}
-                      location={evt.address_city || getEventLocation(evt)}
-                      distance={evt.distanceText}
-                      onSwap={swapToEvent}
-                    />
-                  </CarouselItem>
-                ))}
+                {nearbyEventsWithDistance.map((evt) => {
+                  const eventLocation = evt.address_city || getEventLocation(evt);
+                  const seoSlug = generateEventSlug(evt.title, eventLocation);
+                  return (
+                    <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
+                      <SimilarEventCard
+                        slug={seoSlug}
+                        image={evt.image_url || weekendJazz}
+                        title={evt.title}
+                        description={evt.short_description}
+                        location={eventLocation}
+                        distance={evt.distanceText}
+                        onSwap={swapToEvent}
+                      />
+                    </CarouselItem>
+                  );
+                })}
                 {/* "Mehr anzeigen" Card */}
                 <CarouselItem className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
                   <Link
