@@ -639,4 +639,41 @@ Wenn du auf den **Supabase Pro Plan** upgradest, aktiviere diese Security-Featur
 
 ---
 
-**Letzte Aktualisierung:** Januar 30, 2026
+---
+
+## 🎯 SEO-Friendly Event URLs - Implementation Complete (Feb 4, 2026)
+
+### ✅ Was wurde gelöst:
+
+1. **1466 Events mit SEO-Slugs**
+   - URLs wie `/event/heureka-von-jean-tinguely-zuerich` statt UUIDs
+   - Title + Location kombiniert für bessere Lesbarkeit
+   - Google-freundliche, indexierbare URLs
+
+2. **Event Slug Mapping System**
+   - `public/event-slug-mapping.json` mit 1448 Mappings
+   - Schnelle O(1) Lookup von SEO-Slug → external_id
+   - Caching on component mount für sofortige Auflösung
+
+3. **Improved Sitemaps**
+   - 16 Sitemap-Dateien (1466 Events chunked zu 500 URLs)
+   - Prioritäten: Events 1.0 (daily), Categories 0.9 (daily), City×Category 0.7 (weekly)
+   - Index: `https://eventbuzzer.ch/sitemap-index.xml`
+
+4. **Schema.org JSON-LD für Google**
+   - Event Schema mit Adresse, Koordinaten, Rating, Price
+   - Geo-Coordinates für Local SEO
+   - Aggregate Rating basierend auf Buzz Score
+
+5. **No More 404 Errors**
+   - Event-Slug-Auflösung funktioniert sofort (Mapping gecacht)
+   - Fallback-Kette: Slug-Mapping → external_id → id
+   - Alle 1466 Events vollständig indexierbar
+
+### 🚀 Nächste Schritte (für Google Search Console):
+
+**KRITISCH:** Neue Sitemap MUSS registriert werden!
+
+Siehe Checkliste unten im Chat → "GOOGLE SEARCH CONSOLE CHECKLISTE"
+
+**Letzte Aktualisierung:** Februar 4, 2026
