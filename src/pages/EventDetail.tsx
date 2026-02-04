@@ -526,14 +526,19 @@ const EventDetail = () => {
   // Helper: Resolve SEO slug to external_id using slug mapping
   const resolveSlugToExternalId = async (seoSlug: string): Promise<string | null> => {
     try {
+      // Try to fetch the slug mapping
       const response = await fetch('/event-slug-mapping.json');
-      if (!response.ok) return null;
-      const mapping = await response.json();
-      return mapping[seoSlug] || null;
+      if (response.ok) {
+        const mapping = await response.json();
+        if (mapping[seoSlug]) {
+          console.log(`✅ Resolved SEO slug "${seoSlug}" → "${mapping[seoSlug]}"`);
+          return mapping[seoSlug];
+        }
+      }
     } catch (err) {
-      console.error('Error loading slug mapping:', err);
-      return null;
+      console.error('❌ Error loading slug mapping:', err);
     }
+    return null;
   };
 
   // Fetch dynamic event from Supabase - direct DB query to get all fields including coordinates
