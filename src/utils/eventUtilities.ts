@@ -98,7 +98,7 @@ export const getEventLocation = (event: any): string => {
     return event.venue_name.trim();
   }
 
-  if (event.location && !isCountry(event.location)) {
+  if (event.location && event.location.trim() !== event.title.trim() && !isCountry(event.location)) {
     return event.location.trim();
   }
 

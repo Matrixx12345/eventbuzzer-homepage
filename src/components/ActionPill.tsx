@@ -153,8 +153,8 @@ export const ActionPill = ({
           className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : iconColor}
         />
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
-          <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-[999] pointer-events-none">
+          <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-xl border border-gray-200">
             {isCurrentlyFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
           </div>
           <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
@@ -172,8 +172,8 @@ export const ActionPill = ({
       >
         <Share2 size={18} className={iconColor} />
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-50 pointer-events-none">
-          <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-[999] pointer-events-none">
+          <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-xl border border-gray-200">
             Link teilen
           </div>
           <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
@@ -197,8 +197,8 @@ export const ActionPill = ({
           )}
         />
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/trip:block z-[9999] pointer-events-none whitespace-nowrap">
-          <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg shadow-lg border border-gray-200">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/trip:block z-[999] pointer-events-none whitespace-nowrap">
+          <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg shadow-xl border border-gray-200">
             {isCurrentlyInTrip ? "Aus Trip Planner entfernen" : "Zu Trip Planner hinzufügen"}
           </div>
           <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
