@@ -123,6 +123,7 @@ export const ActionPill = ({
 
   return (
     <div
+      data-action-pill
       className={cn(
         "flex items-center justify-between rounded-full w-full",
         variant === 'dark' ? "px-6 py-2.5" : "px-6 py-2",

@@ -28,7 +28,7 @@ interface CompactEventCardProps {
   buzzScore?: number | null;
   startDate?: string;
   fullEvent?: any; // Full event object for trip planner
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 const CompactEventCard = ({
@@ -47,7 +47,7 @@ const CompactEventCard = ({
   onClick
 }: CompactEventCardProps) => {
   return (
-    <div onClick={onClick} className="block cursor-pointer">
+    <div onClick={onClick} className="block cursor-pointer relative hover:z-50">
       <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 flex flex-col h-[420px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden h-[220px] flex-shrink-0 rounded-t-2xl">
@@ -142,7 +142,7 @@ const CategoryPage = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
@@ -310,8 +310,13 @@ const CategoryPage = () => {
                   buzzScore={event.buzz_score}
                   startDate={event.start_date}
                   fullEvent={event}
-                  onClick={() => {
-                    setSelectedEventId(event.id);
+                  onClick={(e: React.MouseEvent) => {
+                    // Check if click is on ActionPill
+                    const target = e.target as HTMLElement;
+                    if (target.closest('[data-action-pill]')) {
+                      return; // Don't open modal if clicking on ActionPill
+                    }
+                    setSelectedEvent(event);
                     setModalOpen(true);
                   }}
                 />
@@ -322,13 +327,13 @@ const CategoryPage = () => {
       </section>
 
       {/* Event Detail Modal */}
-      {selectedEventId && (
+      {selectedEvent && (
         <EventDetailModal
-          eventId={selectedEventId}
+          event={selectedEvent}
           isOpen={modalOpen}
           onClose={() => {
             setModalOpen(false);
-            setSelectedEventId(null);
+            setSelectedEvent(null);
           }}
         />
       )}
