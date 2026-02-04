@@ -100,8 +100,8 @@ const CompactEventCard = ({
               )}
             </div>
 
-            {/* Title - 2 lines */}
-            <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-2 leading-tight">{title}</h3>
+            {/* Title - 1 line */}
+            <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-1 leading-tight">{title}</h3>
 
             {/* Description - 2 lines */}
             <p className="text-stone-500 text-sm leading-relaxed line-clamp-2 mb-4">{description}</p>
