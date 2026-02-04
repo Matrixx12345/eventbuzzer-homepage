@@ -84,16 +84,25 @@ const getFullAddress = (event: any): string => {
   // If no address yet, use getEventLocation (city from venue/location/lat-lng)
   if (addressParts.length === 0) {
     const location = getEventLocation(event);
-    addressParts.push(location);
+    // Only add if it's not just "Schweiz"
+    if (location && location !== "Schweiz") {
+      addressParts.push(location);
+    }
   }
 
-  // Always add Schweiz at the end (unless city is already a country)
+  // Determine if we should add Schweiz
   const lastCity = event.address_city || getEventLocation(event);
-  if (!isCountryName(lastCity)) {
+  const shouldAddSchweiz = lastCity && lastCity !== "Schweiz" && !isCountryName(lastCity);
+
+  if (shouldAddSchweiz) {
     addressParts.push("Schweiz");
   }
 
-  return addressParts.join(", ");
+  // Return address, filtering out empty strings
+  const fullAddress = addressParts.filter(Boolean).join(", ");
+
+  // Always return something meaningful - never just "Schweiz"
+  return fullAddress && fullAddress !== "Schweiz" ? fullAddress : "";
 };
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
@@ -563,8 +572,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             )}
 
             {(() => {
-              // ALWAYS show complete address: "Street, ZIP City, Schweiz" OR "City, Schweiz" OR reconstructed from lat/lng
-              const displayLocation = getFullAddress(event);
+              // Try full address first, fallback to location
+              let displayLocation = getFullAddress(event);
+
+              // If no full address, use city/location
+              if (!displayLocation) {
+                displayLocation = getEventLocation(event);
+              }
 
               return displayLocation && displayLocation !== "Schweiz" && (
                 <div className="flex items-center gap-1.5">
