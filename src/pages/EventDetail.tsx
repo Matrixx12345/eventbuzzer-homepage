@@ -496,7 +496,28 @@ const EventDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [nearbyEvents, setNearbyEvents] = useState<(DynamicEvent & { calculatedDistance?: number })[]>([]);
+  const [slugMapping, setSlugMapping] = useState<Record<string, string> | null>(null);
   const referralTrackedRef = useRef(false);
+
+  // Load and cache slug mapping on component mount (only once)
+  useEffect(() => {
+    const loadSlugMapping = async () => {
+      try {
+        const response = await fetch('/event-slug-mapping.json');
+        if (response.ok) {
+          const mapping = await response.json();
+          setSlugMapping(mapping);
+          console.log('✅ Slug mapping loaded and cached');
+        }
+      } catch (err) {
+        console.error('❌ Error loading slug mapping:', err);
+      }
+    };
+
+    if (!slugMapping) {
+      loadSlugMapping();
+    }
+  }, []);
 
   // Sync with URL changes (e.g., browser back/forward)
   useEffect(() => {
@@ -523,22 +544,15 @@ const EventDetail = () => {
   const isStaticEvent = slug && eventsData[slug];
   const isDynamicEvent = slug && !isStaticEvent;
 
-  // Helper: Resolve SEO slug to external_id using slug mapping
-  const resolveSlugToExternalId = async (seoSlug: string): Promise<string | null> => {
-    try {
-      // Try to fetch the slug mapping
-      const response = await fetch('/event-slug-mapping.json');
-      if (response.ok) {
-        const mapping = await response.json();
-        if (mapping[seoSlug]) {
-          console.log(`✅ Resolved SEO slug "${seoSlug}" → "${mapping[seoSlug]}"`);
-          return mapping[seoSlug];
-        }
-      }
-    } catch (err) {
-      console.error('❌ Error loading slug mapping:', err);
+  // Helper: Resolve SEO slug to external_id using cached slug mapping (SYNCHRONOUS)
+  const resolveSlugToExternalId = (seoSlug: string): string | null => {
+    if (!slugMapping) return null;
+
+    const resolved = slugMapping[seoSlug] || null;
+    if (resolved) {
+      console.log(`✅ Resolved SEO slug "${seoSlug}" → "${resolved}"`);
     }
-    return null;
+    return resolved;
   };
 
   // Fetch dynamic event from Supabase - direct DB query to get all fields including coordinates
@@ -547,13 +561,8 @@ const EventDetail = () => {
       const fetchEvent = async () => {
         setLoading(true);
         try {
-          // Step 1: Try to resolve SEO slug to external_id using slug mapping
-          let resolvedExternalId = null;
-          try {
-            resolvedExternalId = await resolveSlugToExternalId(slug);
-          } catch (err) {
-            console.error('Error resolving SEO slug:', err);
-          }
+          // Step 1: Try to resolve SEO slug to external_id using CACHED slug mapping (synchronous)
+          const resolvedExternalId = resolveSlugToExternalId(slug);
 
           let data = null;
           let error = null;
