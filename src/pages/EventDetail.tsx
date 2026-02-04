@@ -691,10 +691,12 @@ const EventDetail = () => {
     event = { ...defaultEvent, ...eventsData[slug!] };
   } else if (dynamicEvent) {
     // Build full address: street, PLZ + city, country
+    // Don't add "Schweiz" twice if address_city is already a country name
+    const cityIsCountry = isCountryName(dynamicEvent.address_city);
     const addressParts = [
       dynamicEvent.address_street,
       [dynamicEvent.address_zip, dynamicEvent.address_city].filter(Boolean).join(" "),
-      "Schweiz"
+      cityIsCountry ? null : "Schweiz"  // Only add "Schweiz" if city is not already a country
     ].filter(Boolean);
     // Use real image if available, otherwise fallback to placeholder
     const hasValidImage = dynamicEvent.image_url && dynamicEvent.image_url.trim() !== '';

@@ -197,7 +197,7 @@ export const ActionPill = ({
           )}
         />
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/trip:block z-50 pointer-events-none">
+        <div className="absolute bottom-full left-1/2 -translate-x-[calc(50%+3px)] mb-2 hidden group-hover/trip:block z-50 pointer-events-none">
           <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
             {isCurrentlyInTrip ? "Aus Reise entfernen" : "Zur Reise hinzufügen"}
           </div>

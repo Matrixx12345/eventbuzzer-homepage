@@ -362,7 +362,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         <div className="space-y-3 mt-4 pr-3">
           {/* Title UNDER the image */}
           <DialogHeader>
-            <DialogTitle className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
+            <DialogTitle className="text-2xl font-serif text-gray-900 truncate" style={{ fontFamily: 'Garamond, "New York", Georgia, serif' }}>{event.title}</DialogTitle>
           </DialogHeader>
 
           {/* Description UNDER the title - expandable */}

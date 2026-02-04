@@ -106,7 +106,7 @@ export const getEventLocation = (event: any): string => {
     return getNearestPlace(event.latitude, event.longitude);
   }
 
-  return "";
+  return "Schweiz";  // Always show at least "Schweiz" as location
 };
 
 // ============================================================================
