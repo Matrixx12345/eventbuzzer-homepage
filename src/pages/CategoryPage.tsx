@@ -9,6 +9,7 @@ import { getCategoryBySlug } from "@/config/categories";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { getCategoryLabel, getEventLocation, generateSlug } from "@/utils/eventUtilities";
 import { Loader2 } from "lucide-react";
+import { EventDetailModal } from "@/components/EventDetailModal";
 
 /**
  * CompactEventCard for Category Pages
@@ -27,6 +28,7 @@ interface CompactEventCardProps {
   buzzScore?: number | null;
   startDate?: string;
   fullEvent?: any; // Full event object for trip planner
+  onClick?: () => void;
 }
 
 const CompactEventCard = ({
@@ -41,10 +43,11 @@ const CompactEventCard = ({
   ticketUrl,
   buzzScore,
   startDate,
-  fullEvent
+  fullEvent,
+  onClick
 }: CompactEventCardProps) => {
   return (
-    <Link to={`/event/${id}`} className="block cursor-pointer">
+    <div onClick={onClick} className="block cursor-pointer">
       <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 flex flex-col h-[420px]">
         {/* Image with premium treatment */}
         <div className="relative overflow-hidden h-[220px] flex-shrink-0 rounded-t-2xl">
@@ -121,7 +124,7 @@ const CompactEventCard = ({
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 
@@ -139,6 +142,8 @@ const CategoryPage = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -305,12 +310,28 @@ const CategoryPage = () => {
                   buzzScore={event.buzz_score}
                   startDate={event.start_date}
                   fullEvent={event}
+                  onClick={() => {
+                    setSelectedEventId(event.id);
+                    setModalOpen(true);
+                  }}
                 />
               ))}
             </div>
           )}
         </div>
       </section>
+
+      {/* Event Detail Modal */}
+      {selectedEventId && (
+        <EventDetailModal
+          eventId={selectedEventId}
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedEventId(null);
+          }}
+        />
+      )}
     </div>
   );
 };

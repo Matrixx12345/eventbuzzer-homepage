@@ -2,13 +2,14 @@ import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { SITE_URL } from "@/config/constants";
-import { Heart, MapPin, Calendar, Plus, ArrowRight, Loader2, Share2, CalendarPlus, Copy, Mail } from "lucide-react";
+import { Heart, MapPin, Star, Plus, ArrowRight, Loader2, Share2, Briefcase, Copy, Mail } from "lucide-react";
 import ImageAttribution from "@/components/ImageAttribution";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
 import { StarRating } from "@/components/StarRating";
 import { ImageGallery } from "@/components/ImageGallery";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { trackEventReferral, isExternalReferral } from "@/services/buzzTracking";
@@ -489,6 +490,7 @@ const EventDetail = () => {
   const decodedSlug = urlSlug ? decodeURIComponent(urlSlug) : undefined;
   const [currentSlug, setCurrentSlug] = useState(decodedSlug);
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isInTrip, addEventToDay, removeEventFromTrip } = useTripPlanner();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [dynamicEvent, setDynamicEvent] = useState<DynamicEvent | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -983,9 +985,17 @@ const EventDetail = () => {
 
           {/* Fixed Bottom Section */}
           <div className="mt-auto pt-8">
-            {/* Action Buttons - Modal Style Round Icons */}
+            {/* Action Buttons - Modal Style with Rating Pill */}
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-3">
+              {/* Rating Pill - Stern + Bewertung */}
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 shadow-md">
+                <Star size={16} className="text-[#fbbf24] fill-[#fbbf24]" />
+                <span className="text-sm font-semibold text-gray-700">
+                  {(event.buzzScore || 0).toFixed(1)}
+                </span>
+              </div>
+
               {/* Favorite Button */}
               <button
                 onClick={() => toggleFavorite({
@@ -1001,35 +1011,6 @@ const EventDetail = () => {
                 title={isFavorite(eventId) ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
               >
                 <Heart size={20} className={isFavorite(eventId) ? "fill-current text-red-500" : ""} />
-              </button>
-
-              {/* Calendar Button */}
-              <button
-                onClick={() => {
-                  const startDate = dynamicEvent?.start_date ? new Date(dynamicEvent.start_date) : new Date();
-                  const endDate = dynamicEvent?.end_date ? new Date(dynamicEvent.end_date) : new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-                  const formatICSDate = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                  const escapeICS = (text: string) => text.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
-                  const eventUrl = window.location.href;
-                  const shortDesc = event.description?.substring(0, 200) || '';
-                  const fullDescription = `${shortDesc}${shortDesc.length >= 200 ? '...' : ''}\\n\\nMehr Infos auf EventBuzzer: ${eventUrl}`;
-                  const locationStr = [event.venue, event.address].filter(Boolean).join(', ');
-                  const uid = `${eventId}-${Date.now()}@eventbuzzer.ch`;
-                  const icsContent = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//EventBuzzer//Event Calendar//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${formatICSDate(new Date())}`,`DTSTART:${formatICSDate(startDate)}`,`DTEND:${formatICSDate(endDate)}`,`SUMMARY:${escapeICS(event.title)}`,`DESCRIPTION:${escapeICS(fullDescription)}`,`LOCATION:${escapeICS(locationStr)}`,`URL:${eventUrl}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
-                  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                  const link = document.createElement('a');
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `${event.title.replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '').replace(/\s+/g, '_')}.ics`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  URL.revokeObjectURL(link.href);
-                  toast({ title: "Kalender-Export", description: "Die .ics Datei wurde heruntergeladen." });
-                }}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:scale-105 transition-all shadow-md"
-                title="Im Kalender speichern"
-              >
-                <CalendarPlus size={20} />
               </button>
 
               {/* Share Button */}
@@ -1083,10 +1064,34 @@ const EventDetail = () => {
                 </PopoverContent>
               </Popover>
 
-              {/* Star Rating */}
-              <div className="flex items-center gap-1.5">
-                <StarRating eventId={eventId} buzzScore={event.buzzScore} size="md" />
-              </div>
+              {/* Trip Planner Button */}
+              <button
+                onClick={() => {
+                  const eventForTrip = {
+                    id: eventId,
+                    external_id: slug,
+                    title: event.title,
+                    image_url: event.image,
+                    location: event.location,
+                    venue_name: event.venue,
+                    buzz_score: event.buzzScore,
+                    ticket_url: event.ticketLink,
+                    start_date: dynamicEvent?.start_date,
+                  };
+
+                  if (isInTrip(eventId)) {
+                    removeEventFromTrip(eventId);
+                    toast({ title: "Aus Trip Planner entfernt" });
+                  } else {
+                    addEventToDay(eventForTrip);
+                    toast({ title: "Zu Trip Planner hinzugefügt" });
+                  }
+                }}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-300 hover:border-gray-400 hover:scale-105 transition-all shadow-md"
+                title={isInTrip(eventId) ? "Aus Trip Planner entfernen" : "Zu Trip Planner hinzufügen"}
+              >
+                <Briefcase size={20} className={isInTrip(eventId) ? "text-red-500" : "text-gray-500"} />
+              </button>
             </div>
 
               {/* Ticket Button - Modal Style */}
@@ -1115,7 +1120,6 @@ const EventDetail = () => {
                 )}
                 {event.date && (
                   <div className="flex items-center gap-1.5">
-                    <Calendar size={16} className="text-gray-500" />
                     <span>{event.date}</span>
                   </div>
                 )}
