@@ -5,6 +5,7 @@ import { Heart, CalendarPlus, Share2, Copy, Mail, Star, ChevronRight, Calendar, 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
+import { getNearestPlace } from '@/utils/swissPlaces';
 
 interface EventDetailModalProps {
   event: any;
@@ -62,7 +63,7 @@ const isCountryName = (str?: string) => {
   return COUNTRY_NAMES.includes(str.toLowerCase().trim());
 };
 
-// Get clean location display (same logic as EventDetail.tsx)
+// Get city/location (ALWAYS returns something - never empty, never just "Schweiz")
 const getEventLocation = (event: any): string => {
   // Priority 1: address_city (if not a country)
   const city = event.address_city?.trim();
@@ -80,18 +81,42 @@ const getEventLocation = (event: any): string => {
     return event.location.trim();
   }
 
-  // Fallback
+  // Priority 4: Reconstruct from lat/lng
+  if (event.latitude && event.longitude) {
+    return getNearestPlace(event.latitude, event.longitude);
+  }
+
+  // Last resort (should rarely happen)
   return "Schweiz";
 };
 
-// Get full address (street, city, country)
+// Get full address with all details (street + city + country ALWAYS)
 const getFullAddress = (event: any): string => {
-  const cityIsCountry = isCountryName(event.address_city);
-  const addressParts = [
-    event.address_street,
-    [event.address_zip, event.address_city].filter(Boolean).join(" "),
-    cityIsCountry ? null : "Schweiz"
-  ].filter(Boolean);
+  const addressParts: string[] = [];
+
+  // Add street if available
+  if (event.address_street?.trim()) {
+    addressParts.push(event.address_street.trim());
+  }
+
+  // Add postal code + city if available
+  if (event.address_zip?.trim() && event.address_city?.trim()) {
+    addressParts.push(`${event.address_zip.trim()} ${event.address_city.trim()}`);
+  } else if (event.address_city?.trim()) {
+    addressParts.push(event.address_city.trim());
+  }
+
+  // If no address yet, use getEventLocation (city from venue/location/lat-lng)
+  if (addressParts.length === 0) {
+    const location = getEventLocation(event);
+    addressParts.push(location);
+  }
+
+  // Always add Schweiz at the end (unless city is already a country)
+  const lastCity = event.address_city || getEventLocation(event);
+  if (!isCountryName(lastCity)) {
+    addressParts.push("Schweiz");
+  }
 
   return addressParts.join(", ");
 };
@@ -559,17 +584,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             )}
 
             {(() => {
-              // Always show full address: "Street, City, Schweiz" or at least "City, Schweiz"
-              let displayLocation = "";
-
-              if (event.address_street) {
-                // Full address with street
-                displayLocation = getFullAddress(event);
-              } else {
-                // City/venue only - add ", Schweiz"
-                const location = getEventLocation(event);
-                displayLocation = location !== "Schweiz" ? `${location}, Schweiz` : "Schweiz";
-              }
+              // ALWAYS show complete address: "Street, ZIP City, Schweiz" OR "City, Schweiz" OR reconstructed from lat/lng
+              const displayLocation = getFullAddress(event);
 
               return displayLocation && displayLocation !== "Schweiz" && (
                 <div className="flex items-center gap-1.5">
