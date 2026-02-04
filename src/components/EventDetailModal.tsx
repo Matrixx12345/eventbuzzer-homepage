@@ -559,10 +559,17 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             )}
 
             {(() => {
-              // Use full address if available, otherwise location
-              const displayLocation = event.address_street
-                ? getFullAddress(event)
-                : getEventLocation(event);
+              // Always show full address: "Street, City, Schweiz" or at least "City, Schweiz"
+              let displayLocation = "";
+
+              if (event.address_street) {
+                // Full address with street
+                displayLocation = getFullAddress(event);
+              } else {
+                // City/venue only - add ", Schweiz"
+                const location = getEventLocation(event);
+                displayLocation = location !== "Schweiz" ? `${location}, Schweiz` : "Schweiz";
+              }
 
               return displayLocation && displayLocation !== "Schweiz" && (
                 <div className="flex items-center gap-1.5">
