@@ -182,8 +182,8 @@ async function main() {
     const urls = chunk.map(event =>
       generateURLEntry(
         `${SITE_URL}/event/${event.external_id || event.id}`,
-        'weekly',
-        '0.8'
+        'daily',  // Events change frequently - crawl daily
+        '1.0'      // Highest priority - most valuable URLs
       )
     );
 
