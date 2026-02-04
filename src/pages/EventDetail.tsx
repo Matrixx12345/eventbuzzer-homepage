@@ -576,6 +576,11 @@ const EventDetail = () => {
               .single();
             data = result.data;
             error = result.error;
+            if (data) {
+              console.log(`✅ Found event by resolved external_id: ${resolvedExternalId}`);
+            } else if (error) {
+              console.log(`⚠️ Step 2 failed (resolved external_id): ${error?.message}`);
+            }
           }
 
           // Step 3: Try by external_id directly (fallback)
@@ -587,6 +592,11 @@ const EventDetail = () => {
               .single();
             data = result.data;
             error = result.error;
+            if (data) {
+              console.log(`✅ Found event by external_id slug: ${slug}`);
+            } else if (error) {
+              console.log(`⚠️ Step 3 failed (external_id): ${error?.message}`);
+            }
           }
 
           // Step 4: Try by id as last resort
@@ -598,14 +608,22 @@ const EventDetail = () => {
               .single();
             data = result.data;
             error = result.error;
+            if (data) {
+              console.log(`✅ Found event by id: ${slug}`);
+            } else if (error) {
+              console.log(`⚠️ Step 4 failed (id): ${error?.message}`);
+            }
           }
 
-          if (error) throw error;
+          if (error) {
+            console.error(`❌ Event not found for slug: "${slug}"`, error);
+            throw error;
+          }
           if (data) {
             setDynamicEvent(data);
           }
-        } catch (err) {
-          console.error("Error fetching event:", err);
+        } catch (err: any) {
+          console.error(`❌ Error fetching event for slug "${slug}":`, err?.message || err);
         } finally {
           setLoading(false);
         }
