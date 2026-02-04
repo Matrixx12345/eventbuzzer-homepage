@@ -198,7 +198,7 @@ const CityCategoryPage = () => {
     };
 
     fetchEvents();
-  }, [city, categorySlug, category]);
+  }, [city, categorySlug]);  // Only city and categorySlug - category is derived and causes loop if included
 
   // 404 - Category not found
   if (!category) {

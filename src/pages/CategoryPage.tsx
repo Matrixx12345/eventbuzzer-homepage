@@ -186,7 +186,7 @@ const CategoryPage = () => {
     };
 
     fetchEvents();
-  }, [slug, category]);
+  }, [slug]);  // Only slug - category is derived from slug and causes loop if included
 
   // 404 - Category not found
   if (!category) {
