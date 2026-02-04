@@ -38,6 +38,51 @@ const formatTagName = (tag: string): string => {
   return tagMap[tag] || tag;
 };
 
+// Country names to filter out from location display
+const COUNTRY_NAMES = [
+  "schweiz", "switzerland", "suisse", "svizzera",
+  "germany", "deutschland", "france", "frankreich",
+  "austria", "österreich", "italy", "italien", "liechtenstein",
+];
+
+const isCountryName = (str?: string) => {
+  if (!str) return true;
+  return COUNTRY_NAMES.includes(str.toLowerCase().trim());
+};
+
+// Get clean location display (same logic as EventDetail.tsx)
+const getEventLocation = (event: any): string => {
+  // Priority 1: address_city (if not a country)
+  const city = event.address_city?.trim();
+  if (city && city.length > 0 && !isCountryName(city)) {
+    return city;
+  }
+
+  // Priority 2: venue_name (if not same as title and not a country)
+  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountryName(event.venue_name)) {
+    return event.venue_name.trim();
+  }
+
+  // Priority 3: location (if not same as title and not a country)
+  if (event.location && event.location.trim() !== event.title.trim() && !isCountryName(event.location)) {
+    return event.location.trim();
+  }
+
+  // Fallback
+  return "Schweiz";
+};
+
+// Get full address (street, city, country)
+const getFullAddress = (event: any): string => {
+  const addressParts = [
+    event.address_street,
+    [event.address_zip, event.address_city].filter(Boolean).join(" "),
+    "Schweiz"
+  ].filter(Boolean);
+
+  return addressParts.join(", ");
+};
+
 // Helper to get/set user ratings from localStorage
 const getUserRating = (eventId: string): number | null => {
   const ratings = JSON.parse(localStorage.getItem('eventRatings') || '{}');
@@ -512,12 +557,19 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               </div>
             )}
 
-            {event.venue_name && (
-              <div className="flex items-center gap-1.5">
-                <MapPin size={16} className="text-gray-600" />
-                <span>{event.venue_name}</span>
-              </div>
-            )}
+            {(() => {
+              // Use full address if available, otherwise location
+              const displayLocation = event.address_street
+                ? getFullAddress(event)
+                : getEventLocation(event);
+
+              return displayLocation && displayLocation !== "Schweiz" && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin size={16} className="text-gray-600" />
+                  <span>{displayLocation}</span>
+                </div>
+              );
+            })()}
 
             {event.price_from !== null && event.price_from !== undefined && (
               <div className="flex items-center gap-1.5">
