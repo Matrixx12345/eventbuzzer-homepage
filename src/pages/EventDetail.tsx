@@ -785,25 +785,29 @@ const EventDetail = () => {
       }
     };
 
+    // Add offers with price and validFrom (required by Google)
+    const offerData: any = {
+      "@type": "Offer",
+      "priceCurrency": "CHF",
+      "url": event.ticketLink || window.location.href,
+      "availability": "https://schema.org/InStock",
+      "validFrom": dynamicEvent?.start_date || new Date().toISOString()
+    };
+
     // Add price if available
-    if (event.priceFrom) {
-      schema["offers"] = {
-        "@type": "Offer",
-        "price": event.priceFrom,
-        "priceCurrency": "CHF",
-        "url": event.ticketLink || window.location.href,
-        "availability": "https://schema.org/InStock"
-      };
+    if (event.priceFrom && event.priceFrom > 0) {
+      offerData.price = event.priceFrom;
+    } else {
+      offerData.price = "0";  // Free event
     }
 
-    // Add performer for certain categories
-    const categoryId = String(dynamicEvent?.category_sub_id || '');
-    if (categoryId.includes('music') || categoryId.includes('concert')) {
-      schema["performer"] = {
-        "@type": "PerformingGroup",
-        "name": event.title
-      };
-    }
+    schema["offers"] = offerData;
+
+    // Add performer for ALL events (required by Google) - use venue or event title
+    schema["performer"] = {
+      "@type": "PerformingGroup",
+      "name": event.venue || event.title
+    };
 
     // Create and inject script tag
     const scriptId = 'event-schema-ld';
