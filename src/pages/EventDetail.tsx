@@ -557,7 +557,8 @@ const EventDetail = () => {
 
   // Fetch dynamic event from Supabase - direct DB query to get all fields including coordinates
   useEffect(() => {
-    if (isDynamicEvent) {
+    // IMPORTANT: Only fetch when we have the slug mapping loaded! Otherwise resolveSlugToExternalId returns null
+    if (isDynamicEvent && slugMapping) {
       const fetchEvent = async () => {
         setLoading(true);
         try {
@@ -630,7 +631,7 @@ const EventDetail = () => {
       };
       fetchEvent();
     }
-  }, [slug, isDynamicEvent]);
+  }, [slug, isDynamicEvent, slugMapping]);
 
   // Track referral visits (once per page load)
   useEffect(() => {
