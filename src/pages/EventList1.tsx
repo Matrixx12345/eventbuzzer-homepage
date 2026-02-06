@@ -97,7 +97,6 @@ const setUserRating = (eventId: string, rating: number) => {
   localStorage.setItem('eventRatings', JSON.stringify(ratings));
 };
 
-// Event Card Component - Opens Modal on Click
 const EventCard = ({
   event,
   index,
@@ -179,20 +178,18 @@ const EventCard = ({
     setUserRating(event.id, ratingValue);
     setUserRatingState(ratingValue);
     setShowRatingPopup(false);
-    toast.success(`Danke für deine Bewertung! ⭐ ${ratingValue}/5`, { duration: 2000, position: "top-center" });
+    toast.success(`Danke für deine Bewertung! ⭐ ${ratingValue}/5`, { duration: 2000 });
   };
 
   return (
     <article
       onClick={() => onEventClick(event)}
-      className="group bg-white rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg max-w-full"
+      className="group bg-white rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      {/* Mobile: Vertical layout | Desktop: Horizontal layout */}
-      <div className="w-full flex flex-col md:flex-row gap-0 md:gap-4 md:h-[200px]">
+      <div className="flex gap-4 h-[200px]">
         {/* Image Section - Frame with even padding (like modal) */}
-        {/* Mobile: Full width, 140px height | Desktop: 308px width, 200px height */}
-        <div className="relative w-full md:w-[308px] flex-shrink-0 h-[140px] md:h-[200px] p-1.5 md:p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+        <div className="relative w-[308px] flex-shrink-0 h-[200px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
           <div className="relative w-full h-full overflow-hidden rounded">
             <img
               src={imageUrl}
@@ -237,17 +234,15 @@ const EventCard = ({
         </div>
 
         {/* Content Section */}
-        {/* Mobile: Compact padding | Desktop: Standard padding */}
-        <div className="w-full md:flex-1 px-3 md:px-4 pt-2 md:pt-4 pb-2 md:pb-3 flex flex-col justify-between min-w-0">
-          <div className="mt-0 md:mt-4">
+        <div className="flex-1 px-4 pt-4 pb-3 flex flex-col justify-between min-w-0">
+          <div className="mt-4">
             {/* Title - ALWAYS 1 line only */}
-            {/* Mobile: Smaller text | Desktop: Normal text */}
-            <h3 className="text-base md:text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-0.5 md:mb-2 truncate leading-tight font-sans">
+            <h3 className="text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-2 truncate leading-none font-sans">
               {event.title}
             </h3>
 
             {/* Location - NO PIN */}
-            <div className="text-xs md:text-sm text-stone-900 mb-1 md:mb-2">
+            <div className="text-sm text-stone-900 mb-2">
               {locationText}
 
               {/* Mini-Map Tooltip */}
@@ -273,10 +268,10 @@ const EventCard = ({
               )}
             </div>
 
-            {/* Description - hidden on mobile, show on desktop */}
+            {/* Description - always show short description with 2 line clamp */}
             {event.short_description && (
               <p
-                className="hidden md:block text-sm text-gray-500 leading-relaxed line-clamp-2"
+                className="text-sm text-gray-500 leading-relaxed line-clamp-2"
                 lang="de"
                 style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
               >
@@ -286,16 +281,17 @@ const EventCard = ({
           </div>
 
           {/* MacBook Pro Style Glassmorphism Action Pill */}
-          <div
-            className="flex w-full md:w-auto items-center justify-around md:justify-start gap-2 md:gap-4 px-3 md:px-6 py-1.5 md:py-2 rounded-full mt-2 md:mt-4"
-            style={{
-              background: 'rgba(255, 255, 255, 0.25)',
-              backdropFilter: 'blur(30px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-            }}
-          >
+          <div className="flex items-center justify-start pt-4">
+            <div
+              className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
+              style={{
+                background: 'rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(30px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+              }}
+            >
               {/* Star Rating - Clickable with Popover */}
               <Popover open={showRatingPopup} onOpenChange={setShowRatingPopup}>
                 <PopoverTrigger asChild>
@@ -304,10 +300,10 @@ const EventCard = ({
                       e.stopPropagation();
                       setShowRatingPopup(true);
                     }}
-                    className="group/rating relative flex items-center gap-1 md:gap-1.5 px-1.5 md:pl-2 pointer-events-auto"
+                    className="group/rating relative flex items-center gap-1.5 pl-2 pointer-events-auto"
                   >
-                    <Star size={16} className="md:w-5 md:h-5 text-[#fbbf24] fill-none stroke-[1.5]" />
-                    <span className="hidden md:inline text-sm font-semibold text-gray-800">
+                    <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
+                    <span className="text-sm font-semibold text-gray-800">
                       {rating.toFixed(1)}
                     </span>
                     {/* Tooltip */}
@@ -360,7 +356,7 @@ const EventCard = ({
                 </PopoverContent>
               </Popover>
 
-              {/* Divider - mobile & desktop */}
+              {/* Divider */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
               {/* Favorit */}
@@ -369,11 +365,11 @@ const EventCard = ({
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 md:p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
+                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
               >
                 <Heart
                   size={16}
-                  className={cn("md:w-4 md:h-4", isFavorited ? "fill-red-500 text-red-500" : "text-gray-700")}
+                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
                 />
                 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
@@ -384,7 +380,7 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider - mobile & desktop */}
+              {/* Divider */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
               {/* Events in der Nähe */}
@@ -423,7 +419,7 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 md:p-1 rounded-md transition-all duration-200 hover:scale-110 pointer-events-auto",
+                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110 pointer-events-auto",
                   nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
@@ -431,7 +427,6 @@ const EventCard = ({
                 <MapPin
                   size={16}
                   className={cn(
-                    "md:w-4 md:h-4",
                     nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
                     isLoadingNearby && "animate-spin"
                   )}
@@ -445,31 +440,8 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider - mobile & desktop */}
+              {/* Divider */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
-
-              {/* Share - DESKTOP ONLY (hidden on mobile) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const url = `${window.location.origin}/event/${event.external_id || event.id}`;
-                  navigator.clipboard.writeText(url);
-                  toast.success("Link kopiert!", { duration: 2000, position: "top-center" });
-                }}
-                className="hidden md:flex group/share relative p-1 md:p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
-              >
-                <Share2 size={16} className="md:w-4 md:h-4 text-gray-700" />
-                {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-50 pointer-events-none">
-                  <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
-                    Link teilen
-                  </div>
-                  <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
-                </div>
-              </button>
-
-              {/* Divider - hidden on mobile */}
-              <div className="hidden md:block w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
               {/* Zu Trip Planner hinzufügen */}
               <button
@@ -514,12 +486,12 @@ const EventCard = ({
                   }
                 }}
                 className={cn(
-                  "group/trip-add relative p-1 md:p-1 md:pr-2 rounded-md transition-all duration-200 pointer-events-auto hover:bg-white/30",
+                  "group/trip-add relative p-1 pr-2 rounded-md transition-all duration-200 pointer-events-auto hover:bg-white/30",
                   coffeeClickFeedback && "scale-95"
                 )}
               >
                 <Briefcase size={16} className={cn(
-                  "md:w-4 md:h-4 transition-colors duration-200",
+                  "transition-colors duration-200",
                   isInTrip && "text-red-500",
                   !isInTrip && "text-gray-700",
                   coffeeClickFeedback && "opacity-70"
@@ -532,6 +504,7 @@ const EventCard = ({
                   <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
                 </div>
               </button>
+            </div>
           </div>
         </div>
       </div>
