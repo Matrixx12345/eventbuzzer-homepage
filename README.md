@@ -16,6 +16,39 @@ Server läuft auf: http://localhost:8081
 
 ---
 
+## 🆘 FALLBACK: Ideal State (2026-02-04)
+
+**Falls die Website komplett kaputt ist und nichts geht**, zurück zu diesem stabilen Stand:
+
+```bash
+# Commit 4124f48 (2026-02-04) = IDEAL_STATE
+# Alle neuen Features funktionieren, Design perfekt, keine Bugs
+
+git reset --hard 4124f48
+git push origin main --force  # Nur notfalls!
+```
+
+**Backup Location:**
+- `/tmp/IDEAL_STATE_4124f48/` - kompletter src/ + supabase/ + config
+
+**Was in 4124f48 funktioniert:**
+- ✅ EventList1 Design (descriptions 2 Zeilen, icons perfekt positioniert)
+- ✅ Map Größe korrekt (h-412px expanded, h-200px collapsed)
+- ✅ Alle Filter + Kategorien
+- ✅ EventDetail Modal
+- ✅ Trip Planner Context
+- ✅ Favorites
+
+**Was NICHT in 4124f48 (noch nicht hinzugefügt):**
+- ❌ Mobile Version (MobileTopDetailCard, ViewModeSwitcher)
+- ❌ AdminPendingEvents Page
+- ❌ PartnerUpload Form
+- ❌ MobileBottomNav
+
+Siehe Phase 3 unten wie man diese SAUBER hinzufügt ohne Design zu zerschießen.
+
+---
+
 ## ⚠️ CRITICAL: Supabase Client Usage
 
 **ALWAYS use the correct Supabase client:**
@@ -677,3 +710,94 @@ Wenn du auf den **Supabase Pro Plan** upgradest, aktiviere diese Security-Featur
 Siehe Checkliste unten im Chat → "GOOGLE SEARCH CONSOLE CHECKLISTE"
 
 **Letzte Aktualisierung:** Februar 4, 2026
+
+---
+
+## 🔍 PHASE 2: Design-Breaking Commits Forensik (4124f48 → HEAD)
+
+### ❌ BREAKS DESIGN - NICHT HINZUFÜGEN:
+Diese Commits zerschießen das Layout/Design von EventList1 + ListingsFilterBar:
+
+1. **be27038** (2026-02-06) - "Fix build error - remove unused useTravelpayoutsVerification imports"
+   - ❌ Entfernte Trip Planner Logic aus EventList1.tsx
+   - ❌ Entfernte Rating System
+   - ❌ Design wurde NICHT dabei kaputt, aber zu viele Funktionen weg
+
+2. **b511de9** (2026-02-05) - "Add Travelpayouts verification to all pages via hook"
+   - ❌ Brach EventList1 Layout massiv
+   - ❌ FilterBar beschädigt
+   - ❌ NICHT NEHMEN
+
+3. **cd741d1** bis **55f861c** (2026-02-05) - Mobile Version "Implement mobile-first event detail popup"
+   - ⚠️ Mobile-Änderungen waren okay
+   - ❌ ABER führten zu Desktop-Layout Breaks
+   - ❌ Kombiniert mit anderen Commits = Design-Katastrophe
+
+### ✅ SAFE - KÖNNEN HINZUGEFÜGT WERDEN:
+Diese Commits sind für NEUE FEATURES und brechen nichts:
+
+1. **90c124b** - "Add Partner Event Upload form - Phase 1 implementation"
+   - ✅ Neue Seite `/partner`
+   - ✅ Kein Touch an EventList1 oder Filterbar
+   - ✅ SAFE
+
+2. **89af8d6** - "Add admin approval system for partner events - Phase 2"
+   - ✅ Neue Seite `/admin/pending-events`
+   - ✅ AdminPendingEvents Component
+   - ✅ Kein Desktop Layout Touch
+   - ✅ SAFE
+
+3. **465271a** - "Add 'Hosten' to mobile bottom navigation"
+   - ✅ Neue MobileBottomNav Component
+   - ✅ Rein mobile-spezifisch
+   - ✅ SAFE (wenn sauber implementiert)
+
+4. **f0c107a** - "Add image file upload to partner event form"
+   - ✅ Partnership mit Partner Upload
+   - ✅ Nur Form-Feature
+   - ✅ SAFE
+
+---
+
+## 🚀 PHASE 3: Surgical Re-Add der Features
+
+### Schritt-für-Schritt Roadmap (TESTET NACH JEDEM):
+
+```
+1. ✅ 4124f48 = Baseline (IDEAL STATE)
+   └─ TEST: EventList Design perfekt
+
+2. ➕ 90c124b = PartnerUpload Page
+   └─ TEST: Seite funktioniert, Design noch ok?
+
+3. ➕ 89af8d6 = AdminPendingEvents Page
+   └─ TEST: Admin Panel funktioniert, Design?
+
+4. ➕ f0c107a = Image File Upload
+   └─ TEST: Partner Form mit Upload ok?
+
+5. ➕ Mobile Version (SAUBER aus Backup)
+   └─ TEST: Mobile funktioniert, Desktop NICHT kaputt?
+
+6. ➕ 1cd8b0f = Navbar "Event hochladen" Button
+   └─ TEST: Navbar gut, kein Layout-Break?
+```
+
+### Warnsignale beim Testen:
+- ❌ Description zeigt > 2 Zeilen? = DESIGN KAPUTT
+- ❌ Icons/Pills misaligned? = LAYOUT KAPUTT
+- ❌ Map zu groß/klein? = SIZE KAPUTT
+- Wenn JA: ZURÜCK zu 4124f48 + neue Analyse
+
+**Regel:** Jede neue Feature = 1 sauberer Commit, kein Touch an EventList1/FilterBar außer wenn NOTWENDIG
+
+---
+
+## 📋 Commit-by-Commit Analyse für Phase 3
+
+Siehe `/tmp/` für alle einzelnen Backups:
+- `EventList1_b511de9.tsx` - kaputte Version
+- `EventList1_cd741d1_good.tsx` - mobile version (risky)
+- `ListingsFilterBar_*.tsx` - verschiedene Versionen
+
+Für SAUBERES Mergen: Nur die FILES die sich geändert haben aus spezifischen Commits nehmen, NICHT ganze Commits cherry-picken ohne Review!
