@@ -171,7 +171,12 @@ const EventCard = ({
   const grayStars = 5 - goldStars; // z.B. 5 - 3 = 2
 
   // Check if event is already in trip planner (across all days)
-  const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === event.id);
+  // Memoize to prevent re-calculation on every render (988 events × flat() = massive loop)
+  const allPlannedEvents = useMemo(
+    () => Object.values(plannedEventsByDay).flat(),
+    [plannedEventsByDay]
+  );
+  const isInTrip = allPlannedEvents.some(pe => pe.eventId === event.id);
 
   // Handle rating submission
   const handleRating = (ratingValue: number) => {
