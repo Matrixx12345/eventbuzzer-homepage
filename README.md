@@ -49,6 +49,45 @@ Siehe Phase 3 unten wie man diese SAUBER hinzufügt ohne Design zu zerschießen.
 
 ---
 
+## 🆘 FALLBACK: Ideal State 2 (2026-02-06) ⭐ **AKTUELL EMPFOHLEN**
+
+**Desktop Event Cards Design PERFEKT wiederhergestellt + Alle Features!**
+
+```bash
+# Commit d301aa3 (2026-02-06) = IDEAL_STATE_2
+# Desktop Design wie 4124f48 + Partner Upload + Admin Features
+
+git reset --hard d301aa3
+git push origin main --force  # Nur notfalls!
+```
+
+**Backup Location:**
+- `/tmp/IDEAL_STATE_2_d301aa3/` - kompletter src/ mit IDEAL_STATE_2_INFO.md
+- Siehe: `/tmp/IDEAL_STATE_2_d301aa3/IDEAL_STATE_2_INFO.md` für Details
+
+**Was in d301aa3 funktioniert:**
+- ✅ **Desktop Event Cards PERFEKT** (vom 4124f48, descriptions 2 Zeilen, icons perfect)
+- ✅ Partner Event Upload Seite (`/partner`)
+- ✅ Admin Pending Events (Navbar integration)
+- ✅ Mobile Components (MobileBottomNav, MobileTopDetailCard, ViewModeSwitcher)
+- ✅ Filter zeigt "Stimmung" (singular, nicht "jede Stimmung")
+- ✅ Navbar mit "Event hochladen" Button
+- ✅ Footer mit "Für Veranstalter" Sektion
+- ✅ Trip Planner komplett funktional
+- ✅ Build erfolgreich, keine Errors
+
+**Unterschied zu IDEAL_STATE (4124f48):**
+- Desktop Event Cards: **IDENTISCH** (exakt gleicher Code!)
+- Zusätzlich: Partner/Admin Features + Mobile Components
+- Keine Desktop-Design Regression!
+
+**Wann verwenden:**
+- ✅ Wenn Desktop Event Cards kaputt sind
+- ✅ Wenn du alle Features + perfektes Desktop Design willst
+- ✅ Als Basis für weitere Entwicklung
+
+---
+
 ## ⚠️ CRITICAL: Supabase Client Usage
 
 **ALWAYS use the correct Supabase client:**
