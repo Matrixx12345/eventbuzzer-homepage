@@ -33,6 +33,7 @@ import CityCategoryPage from "./pages/CityCategoryPage";
 import LegalFooter from "./components/LegalFooter";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ExitIntentPopup from "./components/ExitIntentPopup";
+import PartnerUpload from "./pages/PartnerUpload";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/admin/chatbot" element={<AdminChatbot />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/partner" element={<PartnerUpload />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
