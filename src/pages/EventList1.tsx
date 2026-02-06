@@ -7,7 +7,7 @@ import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useTripPlanner, PlannedEventsByDay } from "@/contexts/TripPlannerContext";
-import { Heart, MapPin, Maximize2, Minimize2, X, Plus, Star, Briefcase } from "lucide-react";
+import { Heart, MapPin, Maximize2, Minimize2, X, Plus, Star, Briefcase, Share2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -17,7 +17,6 @@ import EventsMap from "@/components/EventsMap";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { toggleFavoriteApi } from "@/services/favorites";
-import ChatbotPopupRight from "@/components/ChatbotPopupRight";
 import { getLocationWithMajorCity } from "@/utils/swissPlaces";
 import { useEventData } from "@/hooks/useEventData";
 import { useEventFilters } from "@/hooks/useEventFilters";
@@ -30,7 +29,11 @@ import {
   CITY_COORDINATES,
 } from "@/utils/eventUtilities";
 import { EventDetailModal } from "@/components/EventDetailModal";
+import { MobileTopDetailCard } from "@/components/MobileTopDetailCard";
 import { TripPlannerModal } from "@/components/TripPlannerModal";
+import ViewModeSwitcher, { ViewMode } from "@/components/ViewModeSwitcher";
+import { useIsMobile } from "@/hooks/use-mobile";
+import ChatbotPopupRight from "@/components/ChatbotPopupRight";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -176,18 +179,20 @@ const EventCard = ({
     setUserRating(event.id, ratingValue);
     setUserRatingState(ratingValue);
     setShowRatingPopup(false);
-    toast.success(`Danke für deine Bewertung! ⭐ ${ratingValue}/5`, { duration: 2000 });
+    toast.success(`Danke für deine Bewertung! ⭐ ${ratingValue}/5`, { duration: 2000, position: "top-center" });
   };
 
   return (
     <article
       onClick={() => onEventClick(event)}
-      className="group bg-white rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg"
+      className="group bg-white rounded-2xl transition-all duration-300 overflow-hidden border border-stone-200 cursor-pointer hover:shadow-lg max-w-full"
       style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
     >
-      <div className="flex gap-4 h-[200px]">
+      {/* Mobile: Vertical layout | Desktop: Horizontal layout */}
+      <div className="w-full flex flex-col md:flex-row gap-0 md:gap-4 md:h-[200px]">
         {/* Image Section - Frame with even padding (like modal) */}
-        <div className="relative w-[308px] flex-shrink-0 h-[200px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+        {/* Mobile: Full width, 140px height | Desktop: 308px width, 200px height */}
+        <div className="relative w-full md:w-[308px] flex-shrink-0 h-[140px] md:h-[200px] p-1.5 md:p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
           <div className="relative w-full h-full overflow-hidden rounded">
             <img
               src={imageUrl}
@@ -232,15 +237,17 @@ const EventCard = ({
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 px-4 pt-4 pb-3 flex flex-col justify-between min-w-0">
-          <div className="mt-4">
+        {/* Mobile: Compact padding | Desktop: Standard padding */}
+        <div className="w-full md:flex-1 px-3 md:px-4 pt-2 md:pt-4 pb-2 md:pb-3 flex flex-col justify-between min-w-0">
+          <div className="mt-0 md:mt-4">
             {/* Title - ALWAYS 1 line only */}
-            <h3 className="text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-2 truncate leading-none font-sans">
+            {/* Mobile: Smaller text | Desktop: Normal text */}
+            <h3 className="text-base md:text-xl font-semibold text-stone-900 group-hover:text-amber-700 transition-colors mb-0.5 md:mb-2 truncate leading-tight font-sans">
               {event.title}
             </h3>
 
             {/* Location - NO PIN */}
-            <div className="text-sm text-stone-900 mb-2">
+            <div className="text-xs md:text-sm text-stone-900 mb-1 md:mb-2">
               {locationText}
 
               {/* Mini-Map Tooltip */}
@@ -266,10 +273,10 @@ const EventCard = ({
               )}
             </div>
 
-            {/* Description - always show short description with 2 line clamp */}
+            {/* Description - hidden on mobile, show on desktop */}
             {event.short_description && (
               <p
-                className="text-sm text-gray-500 leading-relaxed line-clamp-2"
+                className="hidden md:block text-sm text-gray-500 leading-relaxed line-clamp-2"
                 lang="de"
                 style={{ hyphens: 'auto', WebkitHyphens: 'auto' }}
               >
@@ -279,17 +286,16 @@ const EventCard = ({
           </div>
 
           {/* MacBook Pro Style Glassmorphism Action Pill */}
-          <div className="flex items-center justify-start pt-4">
-            <div
-              className="inline-flex items-center gap-4 px-6 py-1.5 rounded-full"
-              style={{
-                background: 'rgba(255, 255, 255, 0.25)',
-                backdropFilter: 'blur(30px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
-                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-              }}
-            >
+          <div
+            className="flex w-full md:w-auto items-center justify-around md:justify-start gap-2 md:gap-4 px-3 md:px-6 py-1.5 md:py-2 rounded-full mt-2 md:mt-4"
+            style={{
+              background: 'rgba(255, 255, 255, 0.25)',
+              backdropFilter: 'blur(30px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+            }}
+          >
               {/* Star Rating - Clickable with Popover */}
               <Popover open={showRatingPopup} onOpenChange={setShowRatingPopup}>
                 <PopoverTrigger asChild>
@@ -298,10 +304,10 @@ const EventCard = ({
                       e.stopPropagation();
                       setShowRatingPopup(true);
                     }}
-                    className="group/rating relative flex items-center gap-1.5 pl-2 pointer-events-auto"
+                    className="group/rating relative flex items-center gap-1 md:gap-1.5 px-1.5 md:pl-2 pointer-events-auto"
                   >
-                    <Star size={15} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                    <span className="text-sm font-semibold text-gray-800">
+                    <Star size={16} className="md:w-5 md:h-5 text-[#fbbf24] fill-none stroke-[1.5]" />
+                    <span className="hidden md:inline text-sm font-semibold text-gray-800">
                       {rating.toFixed(1)}
                     </span>
                     {/* Tooltip */}
@@ -354,7 +360,7 @@ const EventCard = ({
                 </PopoverContent>
               </Popover>
 
-              {/* Divider */}
+              {/* Divider - mobile & desktop */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
               {/* Favorit */}
@@ -363,11 +369,11 @@ const EventCard = ({
                   e.stopPropagation();
                   onToggleFavorite(event);
                 }}
-                className="group/heart relative p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
+                className="group/heart relative p-1 md:p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
               >
                 <Heart
                   size={16}
-                  className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
+                  className={cn("md:w-4 md:h-4", isFavorited ? "fill-red-500 text-red-500" : "text-gray-700")}
                 />
                 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
@@ -378,7 +384,7 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider */}
+              {/* Divider - mobile & desktop */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
               {/* Events in der Nähe */}
@@ -417,7 +423,7 @@ const EventCard = ({
                 }}
                 disabled={isLoadingNearby}
                 className={cn(
-                  "group/nearby relative p-1 rounded-md transition-all duration-200 hover:scale-110 pointer-events-auto",
+                  "group/nearby relative p-1 md:p-1 rounded-md transition-all duration-200 hover:scale-110 pointer-events-auto",
                   nearbyEventsFilter === event.id ? "bg-orange-100" : "hover:bg-white/30",
                   isLoadingNearby && "opacity-50 cursor-wait"
                 )}
@@ -425,6 +431,7 @@ const EventCard = ({
                 <MapPin
                   size={16}
                   className={cn(
+                    "md:w-4 md:h-4",
                     nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
                     isLoadingNearby && "animate-spin"
                   )}
@@ -438,8 +445,31 @@ const EventCard = ({
                 </div>
               </button>
 
-              {/* Divider */}
+              {/* Divider - mobile & desktop */}
               <div className="w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
+
+              {/* Share - DESKTOP ONLY (hidden on mobile) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = `${window.location.origin}/event/${event.external_id || event.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Link kopiert!", { duration: 2000, position: "top-center" });
+                }}
+                className="hidden md:flex group/share relative p-1 md:p-1 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
+              >
+                <Share2 size={16} className="md:w-4 md:h-4 text-gray-700" />
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-50 pointer-events-none">
+                  <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
+                    Link teilen
+                  </div>
+                  <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
+                </div>
+              </button>
+
+              {/* Divider - hidden on mobile */}
+              <div className="hidden md:block w-px h-4 bg-gradient-to-b from-transparent via-gray-400/40 to-transparent" />
 
               {/* Zu Trip Planner hinzufügen */}
               <button
@@ -484,12 +514,12 @@ const EventCard = ({
                   }
                 }}
                 className={cn(
-                  "group/trip-add relative p-1 pr-2 rounded-md transition-all duration-200 pointer-events-auto hover:bg-white/30",
+                  "group/trip-add relative p-1 md:p-1 md:pr-2 rounded-md transition-all duration-200 pointer-events-auto hover:bg-white/30",
                   coffeeClickFeedback && "scale-95"
                 )}
               >
                 <Briefcase size={16} className={cn(
-                  "transition-colors duration-200",
+                  "md:w-4 md:h-4 transition-colors duration-200",
                   isInTrip && "text-red-500",
                   !isInTrip && "text-gray-700",
                   coffeeClickFeedback && "opacity-70"
@@ -502,7 +532,6 @@ const EventCard = ({
                   <div className="w-2 h-2 bg-white border-r border-b border-gray-200 rotate-45 -mt-1 mx-auto" />
                 </div>
               </button>
-            </div>
           </div>
         </div>
       </div>
@@ -514,11 +543,19 @@ const EventCard = ({
 const EventList1 = () => {
   const [searchParams] = useSearchParams();
   const [mapExpanded, setMapExpanded] = useState(false);
-  const [chatbotOpen, setChatbotOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // Modal state
+  // Modal state (for normal event card clicks)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Separate modal state for map clicks (mobile only - uses MobileTopDetailCard)
+  const [mapSelectedEvent, setMapSelectedEvent] = useState<Event | null>(null);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+
+  // Chatbot state
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   // Trip Planner state from Context (shared with TripPlannerPage)
   const {
@@ -603,11 +640,6 @@ const EventList1 = () => {
 
     toggleFavorite(favoriteData);
 
-    // STEP 2: Show toast ONLY when adding to favorites
-    if (!wasFavorite) {
-      toast("Event geplant ✨", { duration: 2000 });
-    }
-
     // STEP 3: Update database favorite_count via API
     try {
       const numericId = parseInt(event.id, 10);
@@ -633,6 +665,11 @@ const EventList1 = () => {
   const closeEventModal = useCallback(() => {
     setModalOpen(false);
     setSelectedEvent(null);
+  }, []);
+
+  const closeMapModal = useCallback(() => {
+    setMapModalOpen(false);
+    setMapSelectedEvent(null);
   }, []);
 
   // Stable no-op function for TripPlannerModal onClose
@@ -993,15 +1030,24 @@ const EventList1 = () => {
   const canLoadMore = displayedEventsCount < EVENTS_PER_PAGE &&
                       (currentPage - 1) * EVENTS_PER_PAGE + displayedEventsCount < filteredEvents.length;
 
-  // Map Pin Click Handler - Auto-jump to correct page
+  // Map Pin Click Handler - Uses separate state for mobile small card
   const handleMapPinClick = useCallback((eventId: string) => {
     // Find the event from rawEvents
     const event = rawEvents.find(e => e.id === eventId);
     if (event) {
-      setSelectedEvent(event);
-      setModalOpen(true);
+      if (isMobile) {
+        // On mobile: Close large modal first, then open small top card
+        setSelectedEvent(null);
+        setModalOpen(false);
+        setMapSelectedEvent(event);
+        setMapModalOpen(true);
+      } else {
+        // On desktop: Use large modal
+        setSelectedEvent(event);
+        setModalOpen(true);
+      }
     }
-  }, [rawEvents]);
+  }, [rawEvents, isMobile]);
 
   // Move map to show planned events
   const handleMapMovement = useCallback((newEvents: Array<{ eventId: string; event: Event; duration: number }>) => {
@@ -1042,7 +1088,6 @@ const EventList1 = () => {
     if (isInTrip(event.id)) {
       // Remove from trip (remove from all days)
       removeEventFromTrip(event.id);
-      toast(`${event.title} aus der Reise entfernt`);
     } else {
       // Add to trip (context handles smart duration)
       addEventToDay(event, activeDay);
@@ -1053,8 +1098,6 @@ const EventList1 = () => {
         { eventId: event.id, event, duration: 120 }
       ];
       handleMapMovement(updatedEvents);
-
-      toast(`${event.title} zu Tag ${activeDay} hinzugefügt`);
     }
   }, [isInTrip, removeEventFromTrip, addEventToDay, activeDay, plannedEventsByDay, handleMapMovement]);
 
@@ -1114,15 +1157,35 @@ const EventList1 = () => {
             onDateChange={handleDateChange}
             onSearchChange={handleSearchChange}
           />
+
+          {/* Mobile View Mode Switcher - Only visible on mobile */}
+          {isMobile && (
+            <div className="mt-4 flex justify-center">
+              <ViewModeSwitcher
+                currentMode={viewMode}
+                onModeChange={setViewMode}
+                onMapClick={() => navigate('/events/map')}
+                onChatbotOpen={() => setChatbotOpen(true)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      <main className="container mx-auto px-3 py-6 max-w-7xl">
+      <main className="container mx-auto px-2 md:px-3 py-4 md:py-6 max-w-7xl">
         {/* Split Layout - Map hat feste Breite, Event-Liste flexibel */}
-        <div className="flex gap-8 items-start">
+        {/* Mobile: Stack layout based on viewMode | Desktop: Always split */}
+        <div className={cn(
+          "flex gap-8 items-start",
+          isMobile ? "flex-col" : "flex-row"
+        )}>
           {/* Left: Event List - Nimmt restlichen Platz */}
+          {/* Mobile: Show only when viewMode is "grid" | Desktop: Always show */}
           <div
-            className="flex-1 transition-all duration-300 min-w-0"
+            className={cn(
+              "w-full md:flex-1 transition-all duration-300 min-w-0",
+              isMobile && viewMode !== "grid" && "hidden"
+            )}
           >
             {/* SEO-optimierter Einleitungs-Text (300+ Wörter) - Hidden from UI, visible to Google */}
             <div className="sr-only">
@@ -1147,7 +1210,8 @@ const EventList1 = () => {
             </div>
 
             {/* Event List Container */}
-            <div className="space-y-3">
+            {/* Mobile: Tighter spacing | Desktop: Normal spacing */}
+            <div className="w-full space-y-2 md:space-y-3">
               {/* Subcategory Pills */}
               {filters.categoryId && subCategories.length > 0 && (
                 <div className="bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
@@ -1346,22 +1410,23 @@ const EventList1 = () => {
           </div>
 
           {/* Right: Map + Trip Planner - Fixed width */}
+          {/* Mobile: Show only when viewMode is "map" and fullscreen | Desktop: Always show at 45% width */}
           <div
-            className="flex-shrink-0 w-[45%] space-y-4 transition-all duration-300"
+            className={cn(
+              "space-y-4 transition-all duration-300",
+              isMobile ? (viewMode === "map" ? "w-full" : "hidden") : "flex-shrink-0 w-[45%]"
+            )}
           >
             {/* MAP SECTION - ALWAYS renders to load events */}
             <div
               className={cn(
                 "relative bg-white overflow-hidden transition-all duration-300 rounded-2xl border border-stone-200 shadow-sm",
-                mapExpanded ? "h-[412px]" : "h-[200px]"
+                isMobile && viewMode === "map"
+                  ? "h-[calc(100vh-280px)] min-h-[500px]"  // Mobile fullscreen map
+                  : mapExpanded ? "h-[412px]" : "h-[200px]"  // Desktop expanded/collapsed
               )}
             >
               {/* EventsMap Component */}
-              {(() => {
-                const currentDayEvents = plannedEventsByDay[activeDay] || [];
-                console.log('🗺️ EventList1 rendering EventsMap with plannedEvents for Tag', activeDay, ':', currentDayEvents.length, 'items');
-                return null;
-              })()}
               <EventsMap
                 ref={mapRef}
                 onEventsChange={handleMapEventsChange}
@@ -1373,6 +1438,7 @@ const EventList1 = () => {
                 hoveredEventId={hoveredEventId}
                 showOnlyEliteAndFavorites={false}
                 customControls={true}
+                showPopups={!isMobile}
                 // Nearby zoom feature
                 flyToLocation={flyToLocation}
                 showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
@@ -1410,8 +1476,11 @@ const EventList1 = () => {
               </button>
             </div>
 
-            {/* TRIP PLANNER SECTION - Always visible */}
-            <div className="bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm">
+            {/* TRIP PLANNER SECTION - Desktop only (hidden on mobile) */}
+            <div className={cn(
+              "bg-white overflow-visible rounded-2xl border border-stone-200 shadow-sm",
+              isMobile && "hidden"
+            )}>
               <TripPlannerModal
                 isOpen={true}
                 onClose={handleTripPlannerClose}
@@ -1425,36 +1494,39 @@ const EventList1 = () => {
                 setTotalDays={setTotalDays}
               />
             </div>
-
-
-            {/* Floating AI Wizard Button */}
-            <button
-              onClick={() => setChatbotOpen(true)}
-              className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-110 z-50 flex items-center justify-center group"
-              title="AI Assistant öffnen"
-            >
-              <style>{`
-                @keyframes float {
-                  0%, 100% { transform: translateY(0px); }
-                  50% { transform: translateY(-8px); }
-                }
-                .fab-button {
-                  animation: float 3s ease-in-out infinite;
-                }
-                .fab-glow {
-                  box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
-                }
-              `}</style>
-              <span className="text-3xl group-hover:animate-spin">✨</span>
-              {/* Glowing ring */}
-              <div className="absolute inset-0 rounded-full border-2 border-transparent bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
           </div>
         </div>
       </main>
 
-      {/* Event Detail Modal */}
-      {selectedEvent && (
+      {/* Map Event Detail Modal - Mobile only uses small top card */}
+      {mapSelectedEvent && (
+        <>
+          {/* Mobile: Small top slide-down card */}
+          <div className="md:hidden">
+            <MobileTopDetailCard
+              event={mapSelectedEvent}
+              isOpen={mapModalOpen}
+              onClose={closeMapModal}
+            />
+          </div>
+
+          {/* Desktop: Centered modal */}
+          <div className="hidden md:block">
+            <EventDetailModal
+              event={mapSelectedEvent}
+              isOpen={mapModalOpen}
+              onClose={closeMapModal}
+              plannedEventsByDay={plannedEventsByDay}
+              activeDay={activeDay}
+              onToggleTrip={handleToggleTrip}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Normal Event Card Detail Modal - Uses EventDetailModal for both mobile and desktop */}
+      {/* Only show if NOT showing map modal */}
+      {selectedEvent && !mapModalOpen && (
         <EventDetailModal
           event={selectedEvent}
           isOpen={modalOpen}
@@ -1464,6 +1536,13 @@ const EventList1 = () => {
           onToggleTrip={handleToggleTrip}
         />
       )}
+
+      {/* ChatbotPopupRight Component */}
+      <ChatbotPopupRight
+        isOpen={chatbotOpen}
+        onClose={() => setChatbotOpen(false)}
+        onOpen={() => setChatbotOpen(true)}
+      />
 
     </div>
   );
