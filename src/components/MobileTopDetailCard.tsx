@@ -461,7 +461,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
             {/* Ticket kaufen - with text (Blue) */}
             <button
               onClick={handleTicketClick}
-              className="h-10 px-4 rounded-full flex items-center justify-center gap-1.5 hover:scale-105 transition-all ml-auto"
+              className="h-10 w-10 rounded-full flex items-center justify-center hover:scale-105 transition-all ml-auto"
               style={{
                 background: 'rgba(30, 58, 138, 0.9)',
                 backdropFilter: 'blur(20px)',
@@ -469,9 +469,9 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
                 border: '1px solid rgba(59, 130, 246, 0.3)',
                 boxShadow: '0 4px 16px 0 rgba(30, 58, 138, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
               }}
+              title="Ticket kaufen"
             >
-              <ShoppingCart size={14} className="text-white" />
-              <span className="text-xs font-medium text-white">Ticket kaufen</span>
+              <ShoppingCart size={16} className="text-white" />
             </button>
           </div>
 

@@ -15,7 +15,6 @@ import Listings from "./pages/Listings";
 import EventList1 from "./pages/EventList1";
 import EventPlanner2 from "./pages/EventPlanner2";
 import TripPlanner from "./pages/TripPlanner";
-import TripPlanerNew from "./pages/TripPlanerNew";
 import TripPlannerPage from "./pages/TripPlannerPage";
 import Impressum from "./pages/Impressum";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -62,7 +61,6 @@ const App = () => (
               {/* <Route path="/events-neu" element={<ErrorBoundary><EventsNew /></ErrorBoundary>} /> */}
               <Route path="/eventplanner2" element={<ErrorBoundary><EventPlanner2 /></ErrorBoundary>} />
               <Route path="/trip-planner" element={<ErrorBoundary><TripPlanner /></ErrorBoundary>} />
-              <Route path="/trip-planer-neu" element={<ErrorBoundary><TripPlanerNew /></ErrorBoundary>} />
               <Route path="/reiseplaner" element={<ErrorBoundary><TripPlannerPage /></ErrorBoundary>} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/supabase-test" element={<SupabaseTest />} />

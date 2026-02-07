@@ -1604,7 +1604,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         {/* Custom Zoom Controls - Google Maps Style */}
         {customControls && (
           <>
-            <div className="absolute bottom-24 md:bottom-6 right-6 flex flex-col gap-2 z-50">
+            <div className="absolute top-20 md:top-24 right-4 md:right-6 flex flex-col gap-2 z-50">
               {/* Zoom In */}
               <button
                 onClick={() => {

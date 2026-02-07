@@ -216,7 +216,8 @@ const Favorites = () => {
                       )}
                     </div>
 
-                    {/* Action Pill at bottom */}
+                    {/* Action Pill at bottom - Vorerst ausgeblendet */}
+                    {/* TODO: ActionPill wieder einblenden wenn gewünscht
                     <div className="mt-4 flex justify-center">
                       <ActionPill
                         eventId={event.id}
@@ -231,6 +232,7 @@ const Favorites = () => {
                         event={event as any}
                       />
                     </div>
+                    */}
                   </div>
                 </article>
               ))}

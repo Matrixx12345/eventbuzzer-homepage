@@ -1,10 +1,23 @@
 # EventBuzzer - robots.txt
-User-agent: *
+
+# 1. Erlaube Google und Bing alles, damit du gefunden wirst
+User-agent: Googlebot
 Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# 2. Sperre KI-Crawler (die nehmen nur und geben nichts zurück)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+# 3. Sperre allgemeine, aggressive Scraper
+User-agent: *
+Disallow: /api/  # Schütze deine API-Endpunkte vor direktem Zugriff
+Disallow: /admin/
 
 # Sitemap Location
 Sitemap: https://eventbuzzer.ch/sitemap-index.xml
-
-# Disallow admin and API routes
-Disallow: /api/
-Disallow: /admin/
