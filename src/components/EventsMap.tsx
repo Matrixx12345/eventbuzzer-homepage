@@ -431,9 +431,20 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         setEventCount(mappedEvents.length);
 
         if (onEventsChange) {
-          // Include both viewport events AND elite events so parent component has access to all
-          const allEvents = [...mappedEvents, ...eliteEventsRef.current];
-          console.log(`🔄 Calling onEventsChange with ${allEvents.length} events (${mappedEvents.length} viewport + ${eliteEventsRef.current.length} elite)`);
+          // Filter Elite Events to only include those in current viewport
+          const eliteEventsInViewport = eliteEventsRef.current.filter(eliteEvent => {
+            if (!eliteEvent.latitude || !eliteEvent.longitude) return false;
+            return (
+              eliteEvent.latitude >= paddedBounds.minLat &&
+              eliteEvent.latitude <= paddedBounds.maxLat &&
+              eliteEvent.longitude >= paddedBounds.minLng &&
+              eliteEvent.longitude <= paddedBounds.maxLng
+            );
+          });
+
+          // Send viewport events + elite events that are IN viewport
+          const allEvents = [...mappedEvents, ...eliteEventsInViewport];
+          console.log(`🔄 Calling onEventsChange with ${allEvents.length} events (${mappedEvents.length} viewport + ${eliteEventsInViewport.length}/${eliteEventsRef.current.length} elite in viewport)`);
           onEventsChange(allEvents);
         } else {
           console.warn('⚠️ onEventsChange is not defined!');
@@ -1063,18 +1074,18 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
       const inner = document.createElement('div');
       inner.style.cssText = `
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
         border: 2px solid white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
-        font-weight: bold;
+        font-size: 14px;
+        font-weight: 600;
         color: white;
-        filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.4));
+        filter: drop-shadow(0 1px 3px rgba(139, 92, 246, 0.3));
         transition: transform 0.2s;
       `;
       inner.textContent = String(orderNumber);
@@ -1593,7 +1604,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         {/* Custom Zoom Controls - Google Maps Style */}
         {customControls && (
           <>
-            <div className="absolute bottom-24 right-6 flex flex-col gap-2 z-50">
+            <div className="absolute bottom-24 md:bottom-6 right-6 flex flex-col gap-2 z-50">
               {/* Zoom In */}
               <button
                 onClick={() => {

@@ -299,11 +299,11 @@ const EventList1 = () => {
     loadTaxonomy();
   }, []);
 
-  // Reset pagination when filters change
+  // Reset pagination when filters OR map viewport changes
   useEffect(() => {
     setCurrentPage(1);
     setDisplayedEventsCount(30);
-  }, [filters]);
+  }, [filters, rawEvents]);
 
   // Haversine distance calculation (used for geo-deduplication)
   const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -364,6 +364,7 @@ const EventList1 = () => {
 
   // Filter events based on selected filters (client-side filtering)
   const filteredEvents = useMemo(() => {
+    console.log('🔍 filteredEvents recomputing with', rawEvents.length, 'rawEvents');
     const startTime = performance.now();
     let result = [...rawEvents];
 
@@ -577,9 +578,12 @@ const EventList1 = () => {
 
   // Pagination: Calculate displayed events based on current page
   const displayedEvents = useMemo(() => {
+    console.log('📄 displayedEvents recomputing from', filteredEvents.length, 'filteredEvents, page', currentPage);
     const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
     const endIndex = startIndex + displayedEventsCount;
-    return filteredEvents.slice(startIndex, endIndex);
+    const result = filteredEvents.slice(startIndex, endIndex);
+    console.log('📄 displayedEvents:', result.length, 'events, indices', startIndex, '-', endIndex);
+    return result;
   }, [filteredEvents, currentPage, displayedEventsCount, EVENTS_PER_PAGE]);
 
   // Pagination calculations
@@ -852,11 +856,12 @@ const EventList1 = () => {
                   </p>
                 </div>
               ) : (
-                <>
+                <div key={`event-list-${filteredEvents.length}-${currentPage}`}>
                   {displayedEvents.map((event, index) => (
                     <div
-                      key={event.id}
+                      key={`${event.id}-${filteredEvents.length}-${index}`}
                       data-event-id={event.id}
+                      data-list-version={filteredEvents.length}
                       onMouseEnter={() => setHoveredEventId(event.id)}
                       onMouseLeave={() => setHoveredEventId(null)}
                     >
@@ -987,7 +992,7 @@ const EventList1 = () => {
                       {`${displayedEvents.length} von ${filteredEvents.length} Events`}
                     </p>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>

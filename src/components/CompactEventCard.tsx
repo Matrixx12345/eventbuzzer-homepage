@@ -21,6 +21,7 @@ interface Event {
   image_license?: string | null;
   category_sub_id?: number;
   created_at?: string;
+  start_date?: string;
   buzz_score?: number | null;
   relevance_score?: number | null;
 }
@@ -57,7 +58,8 @@ export const CompactEventCard = ({
       title,
       venue,
       location,
-      image
+      image,
+      date: event.start_date
     });
     if (wasNotFavorite) {
       sendLike(event.id);
@@ -109,41 +111,10 @@ export const CompactEventCard = ({
         {/* Venue */}
         <p className="text-sm text-stone-700 truncate">{venue}</p>
 
-        {/* Location with Mini-Map Hover Tooltip */}
-        <div
-          className="group/map relative inline-flex items-center gap-1.5 text-sm text-stone-700 cursor-help w-fit"
-          onClick={(e) => e.stopPropagation()}
-        >
+        {/* Location */}
+        <div className="inline-flex items-center gap-1.5 text-sm text-stone-700">
           <span className="text-red-600">📍</span>
-          <span className="border-b border-dotted border-stone-400 group-hover/map:text-stone-800 transition-colors">
-            {location || "Schweiz"}
-          </span>
-
-          {/* Mini-Map Tooltip */}
-          <div
-            className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-44 h-32 overflow-hidden">
-              <div className="relative w-full h-full bg-slate-50 rounded-lg overflow-hidden">
-                <img 
-                  src="/swiss-outline.svg" 
-                  className="w-full h-full object-contain opacity-30 p-2" 
-                  alt="Switzerland Map" 
-                />
-                {event.latitude && event.longitude && (
-                  <div
-                    className="absolute w-3 h-3 bg-red-600 rounded-full border-2 border-white shadow-md animate-bounce"
-                    style={{
-                      left: `${((event.longitude - 5.9) / (10.5 - 5.9)) * 100}%`,
-                      top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%`,
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-            <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
-          </div>
+          <span>{location || "Schweiz"}</span>
         </div>
 
         {/* Footer: Star Rating + Buzz + Flag */}

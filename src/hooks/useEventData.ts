@@ -34,6 +34,7 @@ export const useEventData = () => {
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
 
   const handleMapEventsChange = useCallback((newEvents: Event[]) => {
+    console.log('📋 handleMapEventsChange called with', newEvents.length, 'events');
     setRawEvents(newEvents);
     setLoading(false);
   }, []);
