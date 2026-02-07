@@ -85,7 +85,7 @@ const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
   const { toggleFavorite } = useFavorites();
 
   return (
-    <div className="w-full h-auto bg-white flex flex-col p-6 rounded-lg">
+    <div className="w-full h-auto bg-white flex flex-col p-3 xl:p-6 rounded-lg">
       {/* Header with centered title and back button */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <h2 className="text-lg font-bold text-gray-500">Favoriten</h2>
@@ -207,6 +207,14 @@ const EventSlot: React.FC<{
   onDragStart?: (index: number) => void;
   onDrop?: (targetIndex: number) => void;
   onEventClick?: (event: Event) => void;
+  // Day switcher props
+  activeDay?: number;
+  totalDays?: number;
+  eventId?: string;
+  onMoveToDay?: (eventId: string, fromDay: number, toDay: number) => void;
+  openDaySwitcher?: string | null;
+  setOpenDaySwitcher?: (id: string | null) => void;
+  daySwitcherRef?: React.RefObject<HTMLDivElement>;
 }> = ({
   timePoint,
   slotId,
@@ -222,7 +230,15 @@ const EventSlot: React.FC<{
   slotIndex = 0,
   onDragStart,
   onDrop,
-  onEventClick
+  onEventClick,
+  // Day switcher props
+  activeDay,
+  totalDays,
+  eventId,
+  onMoveToDay,
+  openDaySwitcher,
+  setOpenDaySwitcher,
+  daySwitcherRef
 }) => {
   const [showHelpPopup, setShowHelpPopup] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -241,14 +257,14 @@ const EventSlot: React.FC<{
       )}
 
       {/* Mobile: Time ABOVE, Desktop: Time LEFT with timeline */}
-      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-3 md:w-72 md:mx-auto xl:w-auto xl:mx-0">
         {/* Time Label */}
-        <div className="text-xs font-semibold text-gray-600 mb-1 md:mb-0 md:flex-shrink-0 md:w-12 md:text-right">
+        <div className="text-xs font-semibold text-gray-600 mb-1 xl:mb-0 xl:flex-shrink-0 xl:w-12 xl:text-right">
           {timePoint}
         </div>
 
-        {/* Timeline Dot - DESKTOP ONLY */}
-        <div className="hidden md:block flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
+        {/* Timeline Dot - DESKTOP ONLY (1280px+) */}
+        <div className="hidden xl:block flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
 
         {/* Event Slot - Compact on mobile */}
         <div
@@ -280,7 +296,7 @@ const EventSlot: React.FC<{
         onClick={(e) => {
           e.stopPropagation();
         }}
-        className={`p-2 rounded-lg ${event ? 'border border-gray-300 md:border-2 md:border-gray-500' : 'border border-dashed border-gray-300'} transition-all flex items-center justify-center w-full md:w-72 md:mx-auto cursor-pointer relative ${
+        className={`p-2 rounded-lg ${event ? 'border border-gray-300 md:border-2 md:border-gray-500' : 'border border-dashed border-gray-300'} transition-all flex items-center justify-center w-full cursor-pointer relative ${
           isDragOver ? 'border-blue-400 bg-blue-50' : event ? 'bg-white hover:border-gray-400 md:hover:border-gray-600' : 'hover:bg-white'
         }`}
       >
@@ -341,7 +357,7 @@ const EventSlot: React.FC<{
             </div>
 
             {/* Action Buttons - RIGHT side, stacked vertically, compact on mobile */}
-            <div className="flex flex-col items-center gap-0.5 md:gap-1 flex-shrink-0">
+            <div className="flex flex-col items-center gap-0 flex-shrink-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -363,6 +379,45 @@ const EventSlot: React.FC<{
               >
                 <ChevronUp size={14} className="md:w-4 md:h-4" />
               </button>
+
+              {/* Day Switcher - Simple Dot between arrows */}
+              {eventId && activeDay && totalDays && onMoveToDay && setOpenDaySwitcher && (
+                <div className="relative" ref={openDaySwitcher === eventId ? daySwitcherRef : null}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDaySwitcher(openDaySwitcher === eventId ? null : eventId);
+                    }}
+                    className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded transition-colors"
+                    title="Tag wechseln"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                  </button>
+
+                  {/* Dropdown */}
+                  {openDaySwitcher === eventId && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[60px]">
+                      {Array.from({ length: totalDays }, (_, i) => i + 1).map((targetDay) => (
+                        <button
+                          key={targetDay}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMoveToDay(eventId, activeDay, targetDay);
+                            setOpenDaySwitcher(null);
+                          }}
+                          className={cn(
+                            "w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors flex items-center justify-between",
+                            targetDay === activeDay && "bg-blue-50 text-blue-700 font-medium"
+                          )}
+                        >
+                          <span>Tag {targetDay}</span>
+                          {targetDay === activeDay && <span className="text-blue-600">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button
                 onClick={(e) => {
@@ -459,6 +514,10 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   const [isFlippedLocal, setIsFlippedLocal] = useState(false);
   const [qrCodeUrl, setShowQRCode] = useState<string | null>(null);
 
+  // Day switcher dropdown state
+  const [openDaySwitcher, setOpenDaySwitcher] = useState<string | null>(null);
+  const daySwitcherRef = useRef<HTMLDivElement>(null);
+
   // Get favorites context
   const { favorites, toggleFavorite } = useFavorites();
 
@@ -521,6 +580,41 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     };
     setPlannedEventsByDay(updated);
   }, [activeDay, plannedEventsByDay, setPlannedEventsByDay]);
+
+  // Move event to a different day
+  const moveEventToDay = useCallback((eventId: string, fromDay: number, toDay: number) => {
+    if (fromDay === toDay) return;
+
+    const fromDayEvents = [...(plannedEventsByDay[fromDay] || [])];
+    const eventToMove = fromDayEvents.find(pe => pe.eventId === eventId);
+
+    if (!eventToMove) return;
+
+    const updatedFromDayEvents = fromDayEvents.filter(pe => pe.eventId !== eventId);
+    const toDayEvents = [...(plannedEventsByDay[toDay] || []), eventToMove];
+
+    setPlannedEventsByDay({
+      ...plannedEventsByDay,
+      [fromDay]: updatedFromDayEvents,
+      [toDay]: toDayEvents,
+    });
+
+    toast.success(`Event zu Tag ${toDay} verschoben`);
+  }, [plannedEventsByDay, setPlannedEventsByDay]);
+
+  // Close day switcher when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (daySwitcherRef.current && !daySwitcherRef.current.contains(event.target as Node)) {
+        setOpenDaySwitcher(null);
+      }
+    };
+
+    if (openDaySwitcher) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openDaySwitcher]);
 
   // Handler to add favorited event to trip planner
   const handleAddFavoriteToTrip = useCallback((event: Event) => {
@@ -1346,8 +1440,8 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
           {/* Timeline with Time Points */}
           <div className="relative">
-            {/* Continuous Timeline Line - DESKTOP ONLY */}
-            <div className="hidden md:block absolute top-0 bottom-0 w-0.5 bg-gray-300" style={{ left: 'calc(3rem + 0.75rem + 6px)' }} />
+            {/* Continuous Timeline Line - DESKTOP ONLY (1280px+) */}
+            <div className="hidden xl:block absolute top-0 bottom-0 w-0.5 bg-gray-300" style={{ left: 'calc(3rem + 0.75rem + 6px)' }} />
 
             {/* Timeline Items - Only event slots, no spacers */}
             {visibleEventSlots.map((timePoint, eventIndex) => {
@@ -1389,6 +1483,14 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
                   onDragStart={handleDragStart}
                   onDrop={handleDrop}
                   onEventClick={(event) => setSelectedEventForModal(event)}
+                  // Day switcher props
+                  activeDay={activeDay}
+                  totalDays={totalDays}
+                  eventId={plannedEvent?.eventId}
+                  onMoveToDay={moveEventToDay}
+                  openDaySwitcher={openDaySwitcher}
+                  setOpenDaySwitcher={setOpenDaySwitcher}
+                  daySwitcherRef={daySwitcherRef}
                 />
               );
             })}
@@ -1454,7 +1556,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   if (isFlipped) {
     return (
       <>
-        <div className="w-full h-full bg-white flex flex-col p-4 rounded-lg">
+        <div className="w-full h-full bg-white flex flex-col p-3 xl:p-6 rounded-lg">
           <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-200">
             <h2 className="text-base font-bold text-gray-900">Deine Reise planen</h2>
 
@@ -1605,7 +1707,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         <div className={cn("flip-inner", isFlippedLocal && "flipped")}>
           {/* Front Side - Trip Planner */}
           <div className="flip-front">
-            <div className="w-full h-auto bg-white flex flex-col p-6 rounded-lg">
+            <div className="w-full h-auto bg-white flex flex-col p-3 xl:p-6 rounded-lg">
               <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
                 <h2 className="text-lg font-bold">Deine Reise planen</h2>
 

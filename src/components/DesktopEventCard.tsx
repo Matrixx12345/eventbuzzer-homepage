@@ -150,7 +150,7 @@ export const DesktopEventCard = ({
     >
       <div className="flex gap-4 h-[200px]">
         {/* Image Section - Frame with even padding (like modal) */}
-        <div className="relative w-[308px] flex-shrink-0 h-[200px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+        <div className="relative w-[250px] xl:w-[308px] flex-shrink-0 h-[200px] p-2 bg-white rounded-lg" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
           <div className="relative w-full h-full overflow-hidden rounded">
             <img
               src={imageUrl}

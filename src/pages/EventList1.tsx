@@ -778,8 +778,8 @@ const EventList1 = () => {
             </div>
 
             {/* Event List Container */}
-            {/* Mobile: Tighter spacing | Desktop: Normal spacing */}
-            <div className="w-full space-y-2 md:space-y-3">
+            {/* Mobile/Tablet: Tighter spacing | Desktop: Normal spacing */}
+            <div className="w-full space-y-2 lg:space-y-3">
               {/* Subcategory Pills */}
               {filters.categoryId && subCategories.length > 0 && (
                 <div className="bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
@@ -856,7 +856,7 @@ const EventList1 = () => {
                   </p>
                 </div>
               ) : (
-                <div key={`event-list-${filteredEvents.length}-${currentPage}`}>
+                <div key={`event-list-${filteredEvents.length}-${currentPage}`} className="space-y-2 lg:space-y-3">
                   {displayedEvents.map((event, index) => (
                     <div
                       key={`${event.id}-${filteredEvents.length}-${index}`}
@@ -998,11 +998,11 @@ const EventList1 = () => {
           </div>
 
           {/* Right: Map + Trip Planner - Fixed width */}
-          {/* Mobile: Show only when viewMode is "map" and fullscreen | Desktop: Always show at 45% width */}
+          {/* Mobile/Tablet: Full width when in map mode | Desktop: 35% width (1024px) / 45% width (1280px+) */}
           <div
             className={cn(
               "space-y-4 transition-all duration-300",
-              isMobile ? (viewMode === "map" ? "w-full" : "hidden") : "flex-shrink-0 w-[45%]"
+              isMobile ? (viewMode === "map" ? "w-full" : "hidden") : "flex-shrink-0 w-[38%] xl:w-[45%]"
             )}
           >
             {/* MAP SECTION - ALWAYS renders to load events */}

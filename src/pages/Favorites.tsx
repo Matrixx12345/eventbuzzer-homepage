@@ -164,9 +164,10 @@ const Favorites = () => {
                   : "Versuche einen anderen Filter, um deine gespeicherten Events zu sehen"
                 }
               </p>
+              {/* Link zur Events-Seite wenn keine Favoriten vorhanden */}
               {favorites.length === 0 && (
                 <Link
-                  to="/"
+                  to="/eventlist1"
                   className="inline-block bg-neutral-900 text-white px-8 py-3 rounded-full font-medium hover:bg-neutral-800 transition-colors"
                 >
                   Events erkunden

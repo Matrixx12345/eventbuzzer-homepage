@@ -88,7 +88,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-12">
+          <div className="hidden lg:flex items-center gap-12">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
@@ -164,7 +164,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -200,7 +200,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-navbar-foreground"
+            className="lg:hidden p-2 text-navbar-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -209,7 +209,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border/50">
+          <div className="lg:hidden py-4 border-t border-border/50">
             <div className="flex flex-col gap-4">
               {navLinks.map((link) => (
                 <Link
