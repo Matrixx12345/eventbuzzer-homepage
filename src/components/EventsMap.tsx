@@ -189,7 +189,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
   const plannedEventMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const superclusterRef = useRef<Supercluster | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activePopupRef = useRef<mapboxgl.Popup | null>(null);
   const eliteEventsRef = useRef<MapEvent[]>([]);
   const polylineSourceRef = useRef<boolean>(false);
 
@@ -432,8 +431,10 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         setEventCount(mappedEvents.length);
 
         if (onEventsChange) {
-          console.log(`🔄 Calling onEventsChange with ${mappedEvents.length} events`);
-          onEventsChange(mappedEvents);
+          // Include both viewport events AND elite events so parent component has access to all
+          const allEvents = [...mappedEvents, ...eliteEventsRef.current];
+          console.log(`🔄 Calling onEventsChange with ${allEvents.length} events (${mappedEvents.length} viewport + ${eliteEventsRef.current.length} elite)`);
+          onEventsChange(allEvents);
         } else {
           console.warn('⚠️ onEventsChange is not defined!');
         }
@@ -510,103 +511,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
   }, []);
 
   // REMOVED: debouncedLoad - replaced by handleMapMove with 800ms debounce
-
-  // Create popup HTML
-  const createPopupHTML = (event: MapEvent) => {
-    const imageUrl = event.image_url || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400";
-    const city = event.address_city || event.venue_name || "";
-    const category = getCategoryForEvent(event);
-    const categoryColor = CATEGORY_COLORS[category];
-    // Use ONLY description (not short_description) to avoid duplication - FULL length, no truncation
-    const description = event.description || "";
-
-    return `
-      <style>
-        .popup-icon-button {
-          border: none;
-          background: none;
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: transform 0.2s ease;
-        }
-        .popup-icon-button:hover {
-          transform: scale(1.15);
-        }
-      </style>
-      <div style="width: 200px; cursor: pointer;" class="event-popup" data-event-id="${event.id}">
-        <img
-          src="${imageUrl}"
-          alt="${event.title}"
-          style="width: 100%; height: 100px; object-fit: cover; border-radius: 6px 6px 0 0;"
-          onerror="this.src='https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400'"
-        />
-        <div style="padding: 8px;">
-          <div style="font-weight: 600; font-size: 14px; line-height: 1.3; color: #1a1a1a; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-            ${event.title}
-          </div>
-          ${city ? `<div style="font-size: 12px; color: #666; margin-bottom: 4px;">${city}</div>` : ""}
-          ${description ? `<div style="font-size: 11px; color: #555; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${description}</div>` : ""}
-
-          <!-- Icons Pull: Glasmorphism Container -->
-          <div style="
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            margin-top: 12px;
-            padding: 8px 4px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(30px) saturate(180%);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 16px;
-            box-shadow: 0 4px 16px rgba(31, 38, 135, 0.05);
-          ">
-            <!-- Star Icon -->
-            <button class="popup-icon-button popup-star" data-event-id="${event.id}">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5">
-                <polygon points="12 2 15.09 10.26 24 10.35 17.77 16.01 20.16 24.02 12 18.77 3.84 24.02 6.23 16.01 0 10.35 8.91 10.26 12 2"></polygon>
-              </svg>
-            </button>
-
-            <!-- Divider -->
-            <div style="width: 1px; height: 16px; background: rgba(156, 163, 175, 0.4);"></div>
-
-            <!-- Heart Icon -->
-            <button class="popup-icon-button popup-heart" data-event-id="${event.id}">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-            </button>
-
-            <!-- Divider -->
-            <div style="width: 1px; height: 16px; background: rgba(156, 163, 175, 0.4);"></div>
-
-            <!-- MapPin Icon -->
-            <button class="popup-icon-button popup-mappin" data-event-id="${event.id}">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-            </button>
-
-            <!-- Divider -->
-            <div style="width: 1px; height: 16px; background: rgba(156, 163, 175, 0.4);"></div>
-
-            <!-- Briefcase Icon -->
-            <button class="popup-icon-button popup-briefcase" data-event-id="${event.id}">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  };
+  // REMOVED: createPopupHTML - mini popups completely deleted per user request
 
   // Update markers using Supercluster
   const updateMarkers = useCallback(() => {
@@ -697,19 +602,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           }
         });
 
-        // Create popup for performance mode event
-        const popup = new mapboxgl.Popup({
-          offset: 25,
-          closeButton: true,
-          closeOnClick: false,
-          maxWidth: '220px',
-          anchor: 'top-right'
-        }).setHTML(createPopupHTML(event));
-
-        // Marker erstellen
+        // Marker erstellen (NO POPUP)
         const marker = new mapboxgl.Marker({ element: wrapper })
           .setLngLat([longitude, latitude])
-          .setPopup(popup)
           .addTo(map.current!);
 
         markersRef.current.push(marker);
@@ -779,19 +674,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           }
         });
 
-        // Create popup for planned event
-        const popup = new mapboxgl.Popup({
-          offset: 25,
-          closeButton: true,
-          closeOnClick: false,
-          maxWidth: '220px',
-          anchor: 'top-right'
-        }).setHTML(createPopupHTML(event));
-
-        // Marker erstellen
+        // Marker erstellen (NO POPUP)
         const marker = new mapboxgl.Marker({ element: wrapper })
           .setLngLat([longitude, latitude])
-          .setPopup(popup)
           .addTo(map.current!);
 
         markersRef.current.push(marker);
@@ -949,56 +834,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           }
         });
 
-        // Create popup for normal event
-        const popup = new mapboxgl.Popup({
-          offset: 25,
-          closeButton: true,
-          closeOnClick: false,
-          maxWidth: '220px',
-          className: 'event-popup', // For custom z-index styling
-          anchor: 'top-right'
-        }).setHTML(createPopupHTML(event));
-
-        // Close any active popup when opening a new one
-        popup.on('open', () => {
-          if (activePopupRef.current && activePopupRef.current !== popup) {
-            activePopupRef.current.remove();
-          }
-          activePopupRef.current = popup;
-
-          // Add click handlers to the popup
-          const popupElement = popup.getElement();
-          if (popupElement) {
-            // Use event delegation on the entire popup element
-            popupElement.addEventListener('click', (e: any) => {
-              const target = e.target as HTMLElement;
-              const clickedButton = target.closest('.popup-icon-button') as HTMLButtonElement;
-
-              if (!clickedButton) {
-                // Main popup click - open event details
-                onEventClick?.(event.id);
-                return;
-              }
-
-              // Icon button was clicked
-              e.stopPropagation();
-
-              if (clickedButton.classList.contains('popup-star')) {
-                console.log('⭐ Star clicked for event:', event.id);
-              } else if (clickedButton.classList.contains('popup-heart')) {
-                console.log('❤️ Heart clicked for event:', event.id);
-              } else if (clickedButton.classList.contains('popup-mappin')) {
-                console.log('📍 MapPin clicked for event:', event.id);
-              } else if (clickedButton.classList.contains('popup-briefcase')) {
-                console.log('🧳 Briefcase clicked for event:', event.id);
-              }
-            });
-          }
-        });
-
+        // Marker erstellen (NO POPUP)
         const marker = new mapboxgl.Marker({ element: wrapper })
           .setLngLat([longitude, latitude])
-          .setPopup(popup)
           .addTo(map.current!);
         markersRef.current.push(marker);
       }
@@ -1092,27 +930,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
             }
           });
 
-          // Create popup for elite event
-          const popup = new mapboxgl.Popup({
-            offset: 25,
-            closeButton: true,
-            closeOnClick: false,
-            maxWidth: '220px',
-            className: 'event-popup', // For custom z-index styling
-            anchor: 'top-right'
-          }).setHTML(createPopupHTML(event));
-
-          // Close any active popup when opening a new one
-          popup.on('open', () => {
-            if (activePopupRef.current && activePopupRef.current !== popup) {
-              activePopupRef.current.remove();
-            }
-            activePopupRef.current = popup;
-          });
-
+          // Marker erstellen (NO POPUP)
           const marker = new mapboxgl.Marker({ element: wrapper })
             .setLngLat([longitude, latitude])
-            .setPopup(popup)
             .addTo(map.current!);
           markersRef.current.push(marker);
 
@@ -1155,27 +975,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
             }
           });
 
-          // Create popup for favorite event
-          const popup = new mapboxgl.Popup({
-            offset: 25,
-            closeButton: true,
-            closeOnClick: false,
-            maxWidth: '220px',
-            className: 'event-popup', // For custom z-index styling
-            anchor: 'top-right'
-          }).setHTML(createPopupHTML(event));
-
-          // Close any active popup when opening a new one
-          popup.on('open', () => {
-            if (activePopupRef.current && activePopupRef.current !== popup) {
-              activePopupRef.current.remove();
-            }
-            activePopupRef.current = popup;
-          });
-
+          // Marker erstellen (NO POPUP)
           const marker = new mapboxgl.Marker({ element: wrapper })
             .setLngLat([longitude, latitude])
-            .setPopup(popup)
             .addTo(map.current!);
           markersRef.current.push(marker);
         }
@@ -1229,45 +1031,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         }
       });
 
-      // Create popup for elite event
-      const popup = new mapboxgl.Popup({
-        offset: 25,
-        closeButton: true,
-        closeOnClick: false,
-        maxWidth: '220px',
-        className: 'event-popup',
-        anchor: 'top-right'
-      }).setHTML(createPopupHTML(event));
-
-      popup.on('open', () => {
-        if (activePopupRef.current && activePopupRef.current !== popup) {
-          activePopupRef.current.remove();
-        }
-        activePopupRef.current = popup;
-
-        // Position popup at top-right of map and add click handler
-        setTimeout(() => {
-          const popupElement = popup.getElement();
-          if (popupElement && mapContainer.current) {
-            // Position at top-right of map container
-            popupElement.style.position = 'absolute';
-            popupElement.style.top = '10px';
-            popupElement.style.right = '10px';
-            popupElement.style.left = 'auto';
-            popupElement.style.bottom = 'auto';
-            popupElement.style.transform = 'none';
-
-            const clickHandler = () => {
-              onEventClick?.(event.id);
-            };
-            popupElement.addEventListener('click', clickHandler);
-          }
-        }, 0);
-      });
-
+      // Marker erstellen (NO POPUP)
       const marker = new mapboxgl.Marker({ element: wrapper })
         .setLngLat([longitude, latitude])
-        .setPopup(popup)
         .addTo(map.current!);
 
       eliteMarkersRef.current.push(marker);
@@ -1342,28 +1108,10 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         }
       });
 
-      // Create popup for planned event
-      const popup = new mapboxgl.Popup({
-        offset: 25,
-        closeButton: true,
-        closeOnClick: false,
-        maxWidth: '220px',
-        className: 'event-popup',
-        anchor: 'top-right'
-      }).setHTML(createPopupHTML(event));
-
-      // Close any active popup when opening a new one
-      popup.on('open', () => {
-        if (activePopupRef.current && activePopupRef.current !== popup) {
-          activePopupRef.current.remove();
-        }
-        activePopupRef.current = popup;
-      });
-
       console.log(`✅ Creating marker #${orderNumber} at [${longitude}, ${latitude}]`);
+      // Marker erstellen (NO POPUP)
       const marker = new mapboxgl.Marker({ element: wrapper })
-        .setLngLat([longitude, latitude])
-        .setPopup(popup);
+        .setLngLat([longitude, latitude]);
 
       // Only add to map if route is visible
       if (routeVisible) {
@@ -1460,7 +1208,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
     console.log(`✅ Markers rendered - ${eliteMarkersRef.current.length} Elite (⭐), Favorites (❤️), Normal (📸), Clusters (⭐/❤️/gray) + ${plannedEvents?.length || 0} Planned`);
     console.log(`✅ Total markers in scene: ${markersRef.current.length}`);
-  }, [onEventClick, selectedIdsSet, showOnlyEliteAndFavorites, hoveredEventId, createPopupHTML, plannedEventsMap, plannedEvents]);
+  }, [onEventClick, selectedIdsSet, showOnlyEliteAndFavorites, hoveredEventId, plannedEventsMap, plannedEvents]);
 
   // Initialize map
   useEffect(() => {
@@ -1845,7 +1593,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         {/* Custom Zoom Controls - Google Maps Style */}
         {customControls && (
           <>
-            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
+            <div className="absolute bottom-24 right-6 flex flex-col gap-2 z-50">
               {/* Zoom In */}
               <button
                 onClick={() => {
@@ -1984,19 +1732,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         )}
 
       </div>
-
-      {/* CSS to constrain Mapbox popups z-index */}
-      <style>{`
-        .mapboxgl-popup {
-          z-index: 5 !important;
-        }
-        .mapboxgl-popup-content {
-          z-index: 5 !important;
-        }
-        .event-popup {
-          z-index: 5 !important;
-        }
-      `}</style>
     </div>
   );
 }

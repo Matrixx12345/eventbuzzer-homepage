@@ -591,20 +591,26 @@ const EventList1 = () => {
 
   // Map Pin Click Handler - Uses separate state for mobile small card
   const handleMapPinClick = useCallback((eventId: string) => {
+    console.log('🎯 handleMapPinClick called!', { eventId, isMobile });
     // Find the event from rawEvents
     const event = rawEvents.find(e => e.id === eventId);
+    console.log('📍 Found event:', event ? event.title : 'NOT FOUND');
     if (event) {
       if (isMobile) {
         // On mobile: Close large modal first, then open small top card
+        console.log('📱 Mobile: Setting mapSelectedEvent and mapModalOpen');
         setSelectedEvent(null);
         setModalOpen(false);
         setMapSelectedEvent(event);
         setMapModalOpen(true);
       } else {
         // On desktop: Use large modal
+        console.log('💻 Desktop: Setting selectedEvent and modalOpen');
         setSelectedEvent(event);
         setModalOpen(true);
       }
+    } else {
+      console.log('❌ Event not found in rawEvents!');
     }
   }, [rawEvents, isMobile]);
 
@@ -1015,7 +1021,7 @@ const EventList1 = () => {
                 hoveredEventId={hoveredEventId}
                 showOnlyEliteAndFavorites={false}
                 customControls={true}
-                showPopups={!isMobile}
+                showPopups={false}
                 // Nearby zoom feature
                 flyToLocation={flyToLocation}
                 showBackButton={nearbyEventsFilter !== null && previousMapState !== null}
@@ -1075,35 +1081,30 @@ const EventList1 = () => {
         </div>
       </main>
 
-      {/* Map Event Detail Modal - Mobile only uses small top card */}
-      {mapSelectedEvent && (
-        <>
-          {/* Mobile: Small top slide-down card */}
-          <div className="md:hidden">
-            <MobileTopDetailCard
-              event={mapSelectedEvent}
-              isOpen={mapModalOpen}
-              onClose={closeMapModal}
-            />
-          </div>
+      {/* Map Event Detail Modal - Slide from top (mobile only, desktop uses separate handler) */}
+      {mapSelectedEvent && mapModalOpen && isMobile && (
+        <MobileTopDetailCard
+          event={mapSelectedEvent}
+          isOpen={mapModalOpen}
+          onClose={closeMapModal}
+        />
+      )}
 
-          {/* Desktop: Centered modal */}
-          <div className="hidden md:block">
-            <EventDetailModal
-              event={mapSelectedEvent}
-              isOpen={mapModalOpen}
-              onClose={closeMapModal}
-              plannedEventsByDay={plannedEventsByDay}
-              activeDay={activeDay}
-              onToggleTrip={handleToggleTrip}
-            />
-          </div>
-        </>
+      {/* Map Event Detail Modal - Desktop only */}
+      {mapSelectedEvent && mapModalOpen && !isMobile && (
+        <EventDetailModal
+          event={mapSelectedEvent}
+          isOpen={mapModalOpen}
+          onClose={closeMapModal}
+          plannedEventsByDay={plannedEventsByDay}
+          activeDay={activeDay}
+          onToggleTrip={handleToggleTrip}
+        />
       )}
 
       {/* Normal Event Card Detail Modal - Uses EventDetailModal for both mobile and desktop */}
       {/* Only show if NOT showing map modal */}
-      {selectedEvent && !mapModalOpen && (
+      {selectedEvent && !mapModalOpen && !mapSelectedEvent && (
         <EventDetailModal
           event={selectedEvent}
           isOpen={modalOpen}

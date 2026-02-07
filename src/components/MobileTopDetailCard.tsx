@@ -61,7 +61,9 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
   let seoSlug = 'event';
   try {
     if (event?.id) {
-      seoSlug = generateEventSlug(event);
+      const eventTitle = event.title || 'event';
+      const eventLocation = getEventLocation(event) || 'schweiz';
+      seoSlug = generateEventSlug(eventTitle, eventLocation);
     }
   } catch (err) {
     console.error('Error generating event slug:', err);
@@ -243,27 +245,15 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     }
   };
 
-  // Safety guard: don't render if no event
-  if (!event) {
+  // Safety guard: don't render if no event or not open
+  if (!event || !isOpen) {
     return null;
   }
 
   return (
-    <Drawer
-      open={isOpen}
-      onOpenChange={(open) => !open && onClose()}
-      direction="top"
-      modal={false}
-    >
-      {/* Click outside to close */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-[55] md:hidden"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
-      <CustomDrawerContent
-        className={`fixed inset-x-0 top-0 z-[60] mt-0 flex h-auto flex-col rounded-b-[16px] bg-white transition-all duration-300 md:hidden ${isExpanded ? 'max-h-[100vh]' : 'max-h-[30vh]'}`}
+      <div
+        className={`fixed inset-x-0 top-0 z-[65] mt-0 flex h-auto flex-col rounded-b-[16px] bg-white transition-all duration-300 md:hidden ${isExpanded ? 'max-h-[100vh]' : 'max-h-[30vh]'}`}
+        style={{ pointerEvents: 'auto' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -521,7 +511,6 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
             )}
           </div>
         </div>
-      </CustomDrawerContent>
-    </Drawer>
+      </div>
   );
 };
