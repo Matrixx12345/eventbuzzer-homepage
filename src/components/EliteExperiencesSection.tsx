@@ -6,6 +6,7 @@ import { supabase as cloudSupabase } from "@/integrations/supabase/client";
 import { getNearestPlace } from "@/utils/swissPlaces";
 import ActionPill from "@/components/ActionPill";
 import QuickHideButton from "@/components/QuickHideButton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CompactCardProps {
   id: string;
@@ -49,9 +50,9 @@ const CompactCard = ({
 
   return (
     <div onClick={handleClick} className="block cursor-pointer">
-      <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 grid grid-cols-[55%_45%] h-[280px]">
+      <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 flex flex-col md:grid md:grid-cols-[55%_45%] h-auto md:h-[280px]">
         {/* Image with premium treatment */}
-        <div className="relative overflow-hidden rounded-l-2xl">
+        <div className="relative overflow-hidden rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none h-[180px] md:h-full">
           <img
             src={image}
             alt={title}
@@ -78,10 +79,10 @@ const CompactCard = ({
         </div>
 
         {/* Content - am UNTEREN Rand, alles dicht beieinander */}
-        <div className="p-4 px-6 flex flex-col justify-end h-full">
+        <div className="p-3 px-4 md:p-4 md:px-6 flex flex-col justify-end h-full">
           {/* Location - subtle */}
           <div className="group/map relative inline-flex items-center mb-1">
-            <span className="text-[11px] font-medium tracking-widest text-stone-400 uppercase">{location}</span>
+            <span className="text-[10px] md:text-[11px] font-medium tracking-widest text-stone-400 uppercase">{location}</span>
 
             {latitude && longitude && (
               <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
@@ -103,10 +104,10 @@ const CompactCard = ({
           </div>
 
           {/* Title - 1 Zeile default, 2 Zeilen bei hover */}
-          <h3 className="font-serif text-xl font-semibold text-[#1a1a1a] mb-2 line-clamp-1 group-hover:line-clamp-2 leading-tight transition-all duration-200">{title}</h3>
+          <h3 className="font-serif text-lg md:text-xl font-semibold text-[#1a1a1a] mb-1 md:mb-2 line-clamp-1 group-hover:line-clamp-2 leading-tight transition-all duration-200">{title}</h3>
 
           {/* Description - 3 lines */}
-          <p className="text-stone-500 text-sm leading-relaxed line-clamp-3 mb-8">{description}</p>
+          <p className="text-stone-500 text-xs md:text-sm leading-relaxed line-clamp-2 md:line-clamp-3 mb-3 md:mb-8">{description}</p>
 
           {/* Glassmorphism ActionPill - floating effect */}
           <ActionPill
@@ -163,6 +164,8 @@ interface EliteExperiencesSectionProps {
 }
 
 const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps) => {
+  const isMobile = useIsMobile();
+
   // Puffer: Lade doppelt so viele Events wie angezeigt werden
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
@@ -371,17 +374,39 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
   const showEndCard = isLastPage && cardEvents.length < 4;
 
   return (
-    <section className="bg-transparent py-8 md:py-10">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section className="bg-transparent py-6 md:py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         {/* Title with reduced size and increased letter-spacing - clickable */}
         <Link to="/eventlist1?tags=must-see">
-          <h2 className="font-serif text-2xl mb-6 not-italic text-left tracking-wide text-foreground/80 hover:text-foreground transition-colors cursor-pointer">
+          <h2 className="font-serif text-xl md:text-2xl mb-4 md:mb-6 not-italic text-left tracking-wide text-foreground/80 hover:text-foreground transition-colors cursor-pointer">
             Die Schweizer Top Erlebnisse:
           </h2>
         </Link>
 
-        {/* 2x2 Grid Container with Chevrons */}
-        <div className="relative">
+        {/* Mobile: Vertical Stack | Desktop: 2x2 Grid Container with Chevrons */}
+        {isMobile ? (
+          /* Mobile Vertical Stack */
+          <div className="space-y-4">
+            {cardEvents.slice(0, 3).map((event) => (
+              <CompactCard
+                key={event.id}
+                {...event}
+                onClick={() => onEventClick?.(event.id)}
+                onHide={() => setHiddenIds(prev => new Set([...prev, event.externalId]))}
+              />
+            ))}
+            {/* "Alle anzeigen" Link */}
+            <Link
+              to="/eventlist1?tags=must-see"
+              className="flex items-center justify-center gap-2 py-3 text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors"
+            >
+              <span>Alle Top Erlebnisse anzeigen</span>
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        ) : (
+          /* Desktop 2x2 Grid Container with Chevrons */
+          <div className="relative">
           {/* Previous Button - zwischen Zeile 1 und 2, IMMER sichtbar */}
           {canScrollPrev && (
             <button
@@ -445,7 +470,8 @@ const EliteExperiencesSection = ({ onEventClick }: EliteExperiencesSectionProps)
               </Link>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );

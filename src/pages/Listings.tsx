@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
+import { useTravelpayoutsVerification } from "@/hooks/useTravelpayoutsVerification";
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/config/constants";
 import { EventRatingButtons } from "@/components/EventRatingButtons";
@@ -194,6 +195,7 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
 };
 
 const Listings = () => {
+  useTravelpayoutsVerification();
   const [searchParams] = useSearchParams();
 
   // Chatbot state with 1 second delay

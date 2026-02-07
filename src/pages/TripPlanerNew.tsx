@@ -14,6 +14,7 @@ import { useEventData } from "@/hooks/useEventData";
 import { useEventFilters } from "@/hooks/useEventFilters";
 import { getEventLocation, convertToUmlauts, getCategoryLabel, exportToCalendar, calculateDistance } from "@/utils/eventUtilities";
 import { toast } from "sonner";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -316,6 +317,7 @@ const TIMELINE_SECTIONS: TimelineSection[] = [
 ];
 
 const TripPlanerNew = () => {
+  useScrollToTop();
   const { favorites, toggleFavorite } = useFavorites();
   const [viewMode, setViewMode] = useState<"events" | "dayplan">("dayplan");
   const [transportMode, setTransportMode] = useState<"car" | "train">("car");

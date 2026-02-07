@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useTravelpayoutsVerification } from "@/hooks/useTravelpayoutsVerification";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,8 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
 const Profile = () => {
+  useTravelpayoutsVerification();
+  useScrollToTop();
   const { user, signOut, resetPassword, deleteAccount } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { favorites } = useFavorites();

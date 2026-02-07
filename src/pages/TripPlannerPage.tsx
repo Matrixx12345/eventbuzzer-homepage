@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTravelpayoutsVerification } from "@/hooks/useTravelpayoutsVerification";
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Plus, Trash2, ChevronUp, ChevronDown, MapPin, QrCode, FileText, Map, Briefcase } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useTripPlanner } from '@/contexts/TripPlannerContext';
 import { EventDetailModal } from '@/components/EventDetailModal';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 // Event interface
 interface Event {
@@ -89,6 +91,8 @@ const EmptyState: React.FC = () => (
 );
 
 const TripPlannerPage: React.FC = () => {
+  useTravelpayoutsVerification();
+  useScrollToTop();
   const {
     plannedEventsByDay,
     setPlannedEventsByDay,
@@ -117,24 +121,25 @@ const TripPlannerPage: React.FC = () => {
   // Move event up in order
   const handleMoveUp = useCallback((index: number) => {
     if (index === 0) return;
-    const events = [...currentDayEvents];
+    const events = [...(plannedEventsByDay[activeDay] || [])];
     [events[index - 1], events[index]] = [events[index], events[index - 1]];
     setPlannedEventsByDay({
       ...plannedEventsByDay,
       [activeDay]: events
     });
-  }, [currentDayEvents, plannedEventsByDay, activeDay, setPlannedEventsByDay]);
+  }, [plannedEventsByDay, activeDay, setPlannedEventsByDay]);
 
   // Move event down in order
   const handleMoveDown = useCallback((index: number) => {
-    if (index >= currentDayEvents.length - 1) return;
-    const events = [...currentDayEvents];
+    const dayEvents = plannedEventsByDay[activeDay] || [];
+    if (index >= dayEvents.length - 1) return;
+    const events = [...dayEvents];
     [events[index], events[index + 1]] = [events[index + 1], events[index]];
     setPlannedEventsByDay({
       ...plannedEventsByDay,
       [activeDay]: events
     });
-  }, [currentDayEvents, plannedEventsByDay, activeDay, setPlannedEventsByDay]);
+  }, [plannedEventsByDay, activeDay, setPlannedEventsByDay]);
 
   // Generate Google Maps URL with all events
   const generateGoogleMapsUrl = useCallback(() => {
@@ -822,7 +827,7 @@ const TripPlannerPage: React.FC = () => {
             <EmptyState />
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             {[1, 2, 3].map((day) => {
               const dayEvents = plannedEventsByDay[day] || [];
               return (
@@ -835,99 +840,100 @@ const TripPlannerPage: React.FC = () => {
 
                   {/* Timeline + Events OR Empty State */}
                   {dayEvents.length > 0 ? (
-                    <div className="relative pt-12">
-                      {/* Vertical Timeline Line - centered through dots */}
-                      <div className="absolute left-[66px] top-12 bottom-0 w-0.5 bg-gray-300 z-0" />
+                    <div className="relative">
+                      {/* Desktop: Timeline with dots */}
+                      <div className="hidden md:block absolute left-[66px] top-12 bottom-0 w-0.5 bg-gray-300 z-0" />
 
-                      <div className="space-y-4 relative z-10">
+                      <div className="space-y-3 md:space-y-4 md:pt-12 relative z-10">
                         {dayEvents.map((pe, index) => (
-                          <div key={pe.eventId} className="relative flex items-center gap-3 group">
-                            {/* Time Label - LEFT */}
-                            <div className="flex-shrink-0 w-12 text-right text-xs font-semibold text-gray-600">
-                              {TIME_POINTS[index] || '—'}
-                            </div>
-
-                            {/* Timeline Dot - MIDDLE - centered */}
-                            <div className="flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
-
-                            {/* Event Card - RIGHT - fixed width */}
-                            <div
-                              onClick={() => handleEventClick(pe.event)}
-                              className="p-2 rounded-lg border-2 border-gray-500 bg-white hover:border-gray-600 transition-all cursor-pointer flex items-center justify-between gap-2 w-80 flex-shrink-0"
-                            >
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                {pe.event.image_url && (
-                                  <img
-                                    src={pe.event.image_url}
-                                    alt={pe.event.title}
-                                    className="w-20 h-20 rounded-md object-cover flex-shrink-0"
-                                  />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {pe.event.title.length > 25 ? pe.event.title.substring(0, 25) : pe.event.title}
-                                  </p>
-                                  {(pe.event.location || pe.event.address_city) && (
-                                    <p className="text-xs text-gray-900 truncate">
-                                      {((pe.event.location || pe.event.address_city || '').length > 25
-                                        ? (pe.event.location || pe.event.address_city || '').substring(0, 25)
-                                        : (pe.event.location || pe.event.address_city))}
-                                    </p>
-                                  )}
-                                  {pe.duration && (
-                                    <div className="mt-1">
-                                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-white text-xs text-gray-700 font-medium border border-gray-200">
-                                        {pe.duration >= 90 ? (
-                                          pe.duration % 60 > 0 ? `${Math.floor(pe.duration / 60)}h ${pe.duration % 60} min` : `${Math.floor(pe.duration / 60)} Stunden`
-                                        ) : (
-                                          `${pe.duration} min`
-                                        )}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
+                          <div key={pe.eventId} className="relative group">
+                            {/* Mobile: Time ABOVE card, Desktop: Time LEFT */}
+                            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+                              {/* Time Label */}
+                              <div className="text-xs font-semibold text-gray-600 mb-1 md:mb-0 md:flex-shrink-0 md:w-12 md:text-right">
+                                {TIME_POINTS[index] || '—'}
                               </div>
 
-                              {/* Action Buttons - Right side */}
-                              <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeEventFromTrip(pe.eventId);
-                                  }}
-                                  className="text-gray-400 hover:text-red-500 transition-colors"
-                                  title="Entfernen"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (index > 0) {
-                                      const newEvents = [...dayEvents];
-                                      [newEvents[index - 1], newEvents[index]] = [newEvents[index], newEvents[index - 1]];
-                                      setPlannedEventsByDay({ ...plannedEventsByDay, [day]: newEvents });
-                                    }
-                                  }}
-                                  className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
-                                  title="Nach oben"
-                                >
-                                  <ChevronUp size={16} />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (index < dayEvents.length - 1) {
-                                      const newEvents = [...dayEvents];
-                                      [newEvents[index], newEvents[index + 1]] = [newEvents[index + 1], newEvents[index]];
-                                      setPlannedEventsByDay({ ...plannedEventsByDay, [day]: newEvents });
-                                    }
-                                  }}
-                                  className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
-                                  title="Nach unten"
-                                >
-                                  <ChevronDown size={16} />
-                                </button>
+                              {/* Timeline Dot - DESKTOP ONLY */}
+                              <div className="hidden md:block flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
+
+                              {/* Event Card - Compact on mobile, normal on desktop */}
+                              <div
+                                onClick={() => handleEventClick(pe.event)}
+                                className="p-2 rounded-lg border border-gray-300 md:border-2 md:border-gray-500 bg-white hover:border-gray-400 md:hover:border-gray-600 transition-all cursor-pointer flex items-center justify-between gap-2 w-full md:w-80 flex-shrink-0"
+                              >
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  {pe.event.image_url && (
+                                    <img
+                                      src={pe.event.image_url}
+                                      alt={pe.event.title}
+                                      className="w-16 h-16 md:w-20 md:h-20 rounded-md object-cover flex-shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs md:text-sm font-medium text-gray-900 truncate">
+                                      {pe.event.title}
+                                    </p>
+                                    {(pe.event.location || pe.event.address_city) && (
+                                      <p className="text-[10px] md:text-xs text-gray-600 truncate">
+                                        {pe.event.location || pe.event.address_city}
+                                      </p>
+                                    )}
+                                    {pe.duration && (
+                                      <div className="mt-0.5">
+                                        <span className="inline-block px-1.5 py-0.5 md:px-2.5 rounded-full bg-gray-50 text-[10px] md:text-xs text-gray-600 font-medium border border-gray-200">
+                                          {pe.duration >= 90 ? (
+                                            pe.duration % 60 > 0 ? `${Math.floor(pe.duration / 60)}h ${pe.duration % 60}m` : `${Math.floor(pe.duration / 60)}h`
+                                          ) : (
+                                            `${pe.duration}m`
+                                          )}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons - Right side, vertical stack */}
+                                <div className="flex flex-col items-center gap-0.5 md:gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeEventFromTrip(pe.eventId);
+                                    }}
+                                    className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                                    title="Entfernen"
+                                  >
+                                    <Trash2 size={14} className="md:w-4 md:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (index > 0) {
+                                        const newEvents = [...dayEvents];
+                                        [newEvents[index - 1], newEvents[index]] = [newEvents[index], newEvents[index - 1]];
+                                        setPlannedEventsByDay({ ...plannedEventsByDay, [day]: newEvents });
+                                      }
+                                    }}
+                                    className="p-0.5 md:p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
+                                    title="Nach oben"
+                                  >
+                                    <ChevronUp size={14} className="md:w-4 md:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (index < dayEvents.length - 1) {
+                                        const newEvents = [...dayEvents];
+                                        [newEvents[index], newEvents[index + 1]] = [newEvents[index + 1], newEvents[index]];
+                                        setPlannedEventsByDay({ ...plannedEventsByDay, [day]: newEvents });
+                                      }
+                                    }}
+                                    className="p-0.5 md:p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
+                                    title="Nach unten"
+                                  >
+                                    <ChevronDown size={14} className="md:w-4 md:h-4" />
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>

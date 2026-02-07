@@ -36,6 +36,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ChatbotPopupRight from "@/components/ChatbotPopupRight";
 import { DesktopEventCard } from "@/components/DesktopEventCard";
 import { MobileEventCard } from "@/components/MobileEventCard";
+import { CompactEventCard } from "@/components/CompactEventCard";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -723,7 +724,6 @@ const EventList1 = () => {
               <ViewModeSwitcher
                 currentMode={viewMode}
                 onModeChange={setViewMode}
-                onMapClick={() => navigate('/events/map')}
                 onChatbotOpen={() => setChatbotOpen(true)}
               />
             </div>
@@ -855,7 +855,12 @@ const EventList1 = () => {
                       onMouseEnter={() => setHoveredEventId(event.id)}
                       onMouseLeave={() => setHoveredEventId(null)}
                     >
-                      {isMobile ? (
+                      {isMobile && viewMode === "map" ? (
+                        <CompactEventCard
+                          event={event}
+                          onEventClick={openEventModal}
+                        />
+                      ) : isMobile ? (
                         <MobileEventCard
                           event={event}
                           index={index}

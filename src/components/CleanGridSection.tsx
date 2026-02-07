@@ -7,6 +7,7 @@ import { getNearestPlace } from "@/utils/swissPlaces";
 import ActionPill from "@/components/ActionPill";
 import QuickHideButton from "@/components/QuickHideButton";
 import useEmblaCarousel from "embla-carousel-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CleanGridCardProps {
   id: string;
@@ -203,18 +204,20 @@ interface CleanGridSectionProps {
   maxEvents?: number;
 }
 
-const CleanGridSection = ({ 
-  title, 
+const CleanGridSection = ({
+  title,
   tagFilter,
   filterParam,
   sourceFilter,
   onEventClick,
   maxEvents = 10
 }: CleanGridSectionProps) => {
+  const isMobile = useIsMobile();
+
   // Puffer: Lade doppelt so viele Events wie angezeigt werden
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
-  
+
   // Sichtbare Events = alle minus versteckte, dann auf maxEvents begrenzen
   const events = allEvents.filter(e => !hiddenIds.has(e.external_id)).slice(0, maxEvents);
   const [loading, setLoading] = useState(true);
@@ -410,17 +413,42 @@ const CleanGridSection = ({
   }));
 
   return (
-    <section className="py-8 md:py-10 bg-transparent">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section className="py-6 md:py-8 bg-transparent">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         {/* Title with reduced size and increased letter-spacing - clickable */}
         <Link to={filterParam ? `/eventlist1?${filterParam}` : '/eventlist1'}>
-          <h2 className="text-2xl md:text-2xl font-serif text-foreground/80 mb-6 tracking-wide hover:text-foreground transition-colors cursor-pointer">
+          <h2 className="text-xl md:text-2xl font-serif text-foreground/80 mb-4 md:mb-6 tracking-wide hover:text-foreground transition-colors cursor-pointer">
             {title}
           </h2>
         </Link>
 
-        {/* Carousel Container */}
-        <div className="relative">
+        {/* Mobile: Vertical Stack | Desktop: Carousel */}
+        {isMobile ? (
+          /* Mobile Vertical Stack */
+          <div className="space-y-4">
+            {gridEvents.slice(0, 3).map((event) => (
+              <div key={event.id} className="h-[280px]">
+                <CleanGridCard
+                  {...event}
+                  onClick={() => onEventClick?.(event.id)}
+                  onHide={() => setHiddenIds(prev => new Set([...prev, event.externalId]))}
+                />
+              </div>
+            ))}
+            {/* "Alle anzeigen" Link */}
+            {filterParam && (
+              <Link
+                to={`/eventlist1?${filterParam}`}
+                className="flex items-center justify-center gap-2 py-3 text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors"
+              >
+                <span>Alle {title.replace(':', '')} anzeigen</span>
+                <ArrowRight size={18} />
+              </Link>
+            )}
+          </div>
+        ) : (
+          /* Desktop Carousel Container */
+          <div className="relative">
           {/* Previous Button - Glassmorphism, IMMER sichtbar */}
           {canScrollPrev && (
             <button
@@ -476,7 +504,8 @@ const CleanGridSection = ({
               )}
             </div>
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );

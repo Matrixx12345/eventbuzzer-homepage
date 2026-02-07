@@ -9,7 +9,7 @@ interface FavoritesFilterBarProps {
 
 const filterOptions: { id: FilterOption; label: string }[] = [
   { id: "all", label: "Alle gespeichert" },
-  { id: "upcoming", label: "Kommend" },
+  { id: "upcoming", label: "Bald" },
   { id: "recently-added", label: "Kürzlich hinzugefügt" },
   { id: "this-weekend", label: "Dieses Wochenende" },
 ];

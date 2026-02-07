@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Drawer } from '@/components/ui/drawer';
+import { Drawer, DrawerContent as DrawerContentPrimitive } from '@/components/ui/drawer';
 import { Drawer as DrawerPrimitive } from 'vaul';
 import { X, MapPin, Heart, Star, ShoppingCart, Briefcase, CheckCircle, ChevronDown, Share2, Copy, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -57,7 +57,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
   const [showSharePopup, setShowSharePopup] = useState(false);
   const isCurrentlyInTrip = event ? isInTrip(event.id) : false;
 
-  // Generate SEO slug for share links
+  // Generate SEO slug for share links - safely handle errors
   let seoSlug = 'event';
   try {
     if (event?.id) {
@@ -68,7 +68,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     seoSlug = event?.id ? String(event.id) : 'event';
   }
 
-  // Handle swipe gestures
+  // Handle swipe gestures for expand/collapse
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientY);
   };
@@ -78,15 +78,19 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     const touchEnd = e.changedTouches[0].clientY;
     const diff = touchStart - touchEnd;
 
+    // Swipe up = expand (difference > 50px)
     if (diff > 50 && !isExpanded) {
       setIsExpanded(true);
-    } else if (diff < -50 && isExpanded) {
+    }
+    // Swipe down = collapse (difference < -50px)
+    else if (diff < -50 && isExpanded) {
       setIsExpanded(false);
     }
 
     setTouchStart(0);
   };
 
+  // Load user's existing rating
   useEffect(() => {
     try {
       if (!isOpen || !event?.id) return;
@@ -97,12 +101,14 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     }
   }, [isOpen, event?.id]);
 
+  // Reset expanded state when popup closes
   useEffect(() => {
     if (!isOpen) {
       setIsExpanded(false);
     }
   }, [isOpen]);
 
+  // Handle rating submission
   const handleRating = (rating: number) => {
     try {
       if (!event?.id) return;
@@ -145,6 +151,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     }
   };
 
+  // Copy link to clipboard
   const copyToClipboard = async () => {
     try {
       if (!seoSlug) {
@@ -164,6 +171,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     }
   };
 
+  // WhatsApp share
   const shareViaWhatsApp = () => {
     try {
       if (!event) return;
@@ -176,6 +184,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     }
   };
 
+  // Email share
   const shareViaEmail = () => {
     try {
       if (!event) return;
@@ -186,6 +195,28 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     } catch (err) {
       console.error('Error in shareViaEmail:', err);
       toast.error('Fehler beim Teilen');
+    }
+  };
+
+  const handleShareClick = async () => {
+    try {
+      if (!event?.external_id) return;
+      const shareUrl = `${window.location.origin}/events/${event.external_id}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: event?.title || 'Event',
+            text: event?.short_description || event?.title || 'Event',
+            url: shareUrl
+          });
+        } catch (err) {
+          console.log('Share cancelled');
+        }
+      } else {
+        navigator.clipboard.writeText(shareUrl);
+      }
+    } catch (err) {
+      console.error('Error in handleShareClick:', err);
     }
   };
 
@@ -202,6 +233,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
   const handleDetailClick = () => {
     try {
       if (!event) return;
+      // Expand popup to full height and update URL for SEO
       setIsExpanded(true);
       if (event?.external_id) {
         window.history.replaceState(null, '', `/event/${event.external_id}`);
@@ -211,6 +243,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
     }
   };
 
+  // Safety guard: don't render if no event
   if (!event) {
     return null;
   }
@@ -222,6 +255,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
       direction="top"
       modal={false}
     >
+      {/* Click outside to close */}
       {isOpen && (
         <div
           className="fixed inset-0 z-[55] md:hidden"
@@ -233,11 +267,14 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Swipe Handle Indicator */}
         <div className="flex justify-center pt-2 pb-1">
           <div className="w-12 h-1 bg-gray-300 rounded-full" />
         </div>
 
+        {/* Scrollable Content */}
         <div className="overflow-y-auto px-3 pb-2">
+          {/* Image with overlaid close button */}
           {event?.image_url && (
             <div className="relative">
               <img
@@ -249,6 +286,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
                   img.style.display = 'none';
                 }}
               />
+              {/* Close Button - overlaid on image */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -261,17 +299,21 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
             </div>
           )}
 
+          {/* Title - Full when expanded */}
           <h2 className={`font-bold text-gray-900 mb-1.5 transition-all duration-300 ${isExpanded ? 'text-lg leading-tight' : 'text-sm line-clamp-1'}`}>
             {event?.title || 'Event'}
           </h2>
 
+          {/* Description - Full when expanded */}
           {event?.short_description && (
             <p className={`text-gray-700 mb-2 transition-all duration-300 ${isExpanded ? 'text-sm leading-relaxed' : 'text-xs leading-tight line-clamp-1'}`}>
               {event.short_description}
             </p>
           )}
 
+          {/* Action Icons Pills - One Row */}
           <div className="flex items-center gap-1.5 justify-start mb-2 flex-wrap">
+            {/* Star - Buzz Score with Rating */}
             <Popover open={showRatingPopup} onOpenChange={setShowRatingPopup}>
               <PopoverTrigger asChild>
                 <button
@@ -327,6 +369,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
               </PopoverContent>
             </Popover>
 
+            {/* Heart - Favorite */}
             <button
               onClick={handleFavoriteClick}
               className="h-10 px-3 rounded-full flex items-center justify-center hover:scale-105 transition-all"
@@ -347,6 +390,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
               />
             </button>
 
+            {/* Share Button with Popup */}
             <Popover open={showSharePopup} onOpenChange={setShowSharePopup}>
               <PopoverTrigger asChild>
                 <button
@@ -403,6 +447,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
               </PopoverContent>
             </Popover>
 
+            {/* Briefcase - Trip Planner */}
             <button
               onClick={handleTripPlannerClick}
               className="h-10 px-3 rounded-full flex items-center justify-center hover:scale-105 transition-all"
@@ -423,6 +468,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
               />
             </button>
 
+            {/* Ticket kaufen - with text (Blue) */}
             <button
               onClick={handleTicketClick}
               className="h-10 px-4 rounded-full flex items-center justify-center gap-1.5 hover:scale-105 transition-all ml-auto"
@@ -439,7 +485,9 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
             </button>
           </div>
 
+          {/* Location and Detail/Collapse - Same Row */}
           <div className="flex items-center justify-between pb-1">
+            {/* Location - Left */}
             <div className="flex items-center gap-1 text-xs text-gray-600">
               <MapPin size={14} />
               <span className={isExpanded ? '' : 'line-clamp-1'}>
@@ -454,6 +502,7 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
               </span>
             </div>
 
+            {/* Detail or Collapse - Right */}
             {!isExpanded ? (
               <button
                 onClick={handleDetailClick}

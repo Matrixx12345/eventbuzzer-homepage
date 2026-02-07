@@ -13,6 +13,7 @@ import EventDetail from "./pages/EventDetail";
 import Favorites from "./pages/Favorites";
 import Listings from "./pages/Listings";
 import EventList1 from "./pages/EventList1";
+import EventMapPage from "./pages/EventMapPage";
 import EventPlanner2 from "./pages/EventPlanner2";
 import TripPlanner from "./pages/TripPlanner";
 import TripPlanerNew from "./pages/TripPlanerNew";
@@ -33,7 +34,7 @@ import CityCategoryPage from "./pages/CityCategoryPage";
 import LegalFooter from "./components/LegalFooter";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ExitIntentPopup from "./components/ExitIntentPopup";
-import PartnerUpload from "./pages/PartnerUpload";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/listings" element={<ErrorBoundary><Listings /></ErrorBoundary>} />
               <Route path="/eventlist1" element={<ErrorBoundary><EventList1 /></ErrorBoundary>} />
+              <Route path="/events/map" element={<ErrorBoundary><EventMapPage /></ErrorBoundary>} />
               {/* <Route path="/events-neu" element={<ErrorBoundary><EventsNew /></ErrorBoundary>} /> */}
               <Route path="/eventplanner2" element={<ErrorBoundary><EventPlanner2 /></ErrorBoundary>} />
               <Route path="/trip-planner" element={<ErrorBoundary><TripPlanner /></ErrorBoundary>} />
@@ -72,11 +74,11 @@ const App = () => (
               <Route path="/admin/chatbot" element={<AdminChatbot />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/partner" element={<PartnerUpload />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
             <LegalFooter />
+            <MobileBottomNav />
           </BrowserRouter>
         </TooltipProvider>
           </TripPlannerProvider>

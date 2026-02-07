@@ -229,7 +229,7 @@ const EventSlot: React.FC<{
   const [showDurationTooltip, setShowDurationTooltip] = useState(false);
 
   return (
-    <div className="relative flex items-center gap-3 mb-6 group">
+    <div className="relative group mb-4 md:mb-6">
       {/* Backdrop to close popups when clicking outside */}
       {showHelpPopup && (
         <div
@@ -240,16 +240,18 @@ const EventSlot: React.FC<{
         />
       )}
 
-      {/* Time Label - LEFT */}
-      <div className="flex-shrink-0 w-12 text-right text-xs font-semibold text-gray-600">
-        {timePoint}
-      </div>
+      {/* Mobile: Time ABOVE, Desktop: Time LEFT with timeline */}
+      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+        {/* Time Label */}
+        <div className="text-xs font-semibold text-gray-600 mb-1 md:mb-0 md:flex-shrink-0 md:w-12 md:text-right">
+          {timePoint}
+        </div>
 
-      {/* Timeline Dot - MIDDLE, centered vertically */}
-      <div className="flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
+        {/* Timeline Dot - DESKTOP ONLY */}
+        <div className="hidden md:block flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
 
-      {/* Event Slot - RIGHT, centered */}
-      <div
+        {/* Event Slot - Compact on mobile */}
+        <div
         draggable={event ? true : false}
         onDragStart={(e) => {
           if (event && onDragStart) {
@@ -278,8 +280,8 @@ const EventSlot: React.FC<{
         onClick={(e) => {
           e.stopPropagation();
         }}
-        className={`p-2 rounded-lg border-2 ${event ? 'border-solid' : 'border-dashed'} transition-all min-h-12 flex items-center justify-center w-72 mx-auto cursor-pointer relative ${
-          isDragOver ? 'border-blue-400 bg-blue-50' : event ? 'border-gray-500 bg-white hover:border-gray-500' : 'border-gray-300 hover:bg-white'
+        className={`p-2 rounded-lg ${event ? 'border border-gray-300 md:border-2 md:border-gray-500' : 'border border-dashed border-gray-300'} transition-all flex items-center justify-center w-full md:w-72 md:mx-auto cursor-pointer relative ${
+          isDragOver ? 'border-blue-400 bg-blue-50' : event ? 'bg-white hover:border-gray-400 md:hover:border-gray-600' : 'hover:bg-white'
         }`}
       >
         {event ? (
@@ -297,29 +299,29 @@ const EventSlot: React.FC<{
                 <img
                   src={event.image_url}
                   alt={event.title}
-                  className="w-20 h-20 rounded-md object-cover flex-shrink-0"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-md object-cover flex-shrink-0"
                 />
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate text-left">
+                <p className="text-xs md:text-sm font-medium text-gray-900 truncate text-left">
                   {event.title}
                 </p>
                 {(event.location || event.address_city) && (
-                  <p className="text-xs text-gray-900 truncate text-left">
+                  <p className="text-[10px] md:text-xs text-gray-600 truncate text-left">
                     {event.location || event.address_city}
                   </p>
                 )}
                 {duration && (
-                  <div className="relative mt-2">
+                  <div className="relative mt-0.5 md:mt-2">
                     <button
-                      className="block px-2.5 py-0.5 rounded-full bg-white text-xs text-gray-700 font-medium cursor-help hover:bg-gray-50 transition-all border border-gray-200 mt-1"
+                      className="block px-1.5 py-0.5 md:px-2.5 rounded-full bg-gray-50 text-[10px] md:text-xs text-gray-600 font-medium cursor-help hover:bg-gray-100 transition-all border border-gray-200"
                       onMouseEnter={() => setShowDurationTooltip(true)}
                       onMouseLeave={() => setShowDurationTooltip(false)}
                     >
                       {duration >= 90 ? (
-                        duration % 60 > 0 ? `${Math.floor(duration / 60)}h ${duration % 60} min` : `${Math.floor(duration / 60)} Stunden`
+                        duration % 60 > 0 ? `${Math.floor(duration / 60)}h ${duration % 60}m` : `${Math.floor(duration / 60)}h`
                       ) : (
-                        `${duration} min`
+                        `${duration}m`
                       )}
                     </button>
 
@@ -338,17 +340,17 @@ const EventSlot: React.FC<{
               </div>
             </div>
 
-            {/* Action Buttons - RIGHT side, stacked vertically */}
-            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            {/* Action Buttons - RIGHT side, stacked vertically, compact on mobile */}
+            <div className="flex flex-col items-center gap-0.5 md:gap-1 flex-shrink-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemove();
                 }}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
                 title="Event entfernen"
               >
-                <X size={16} />
+                <X size={14} className="md:w-4 md:h-4" />
               </button>
 
               <button
@@ -356,10 +358,10 @@ const EventSlot: React.FC<{
                   e.stopPropagation();
                   if (onMoveUp) onMoveUp();
                 }}
-                className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
+                className="p-0.5 md:p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
                 title="Nach oben verschieben"
               >
-                <ChevronUp size={16} />
+                <ChevronUp size={14} className="md:w-4 md:h-4" />
               </button>
 
               <button
@@ -367,10 +369,10 @@ const EventSlot: React.FC<{
                   e.stopPropagation();
                   if (onMoveDown) onMoveDown();
                 }}
-                className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
+                className="p-0.5 md:p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
                 title="Nach unten verschieben"
               >
-                <ChevronDown size={16} />
+                <ChevronDown size={14} className="md:w-4 md:h-4" />
               </button>
             </div>
           </div>
@@ -422,6 +424,7 @@ const EventSlot: React.FC<{
 
       </div>
     </div>
+  </div>
   );
 };
 
@@ -470,7 +473,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       return;
     }
 
-    const newDayEvents = [...currentDayEvents];
+    const newDayEvents = [...(plannedEventsByDay[activeDay] || [])];
     const draggedEvent = newDayEvents[draggedIndex];
 
     // Remove from old position
@@ -484,39 +487,40 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
     };
     setPlannedEventsByDay(updated);
     setDraggedIndex(null);
-  }, [draggedIndex, currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
+  }, [draggedIndex, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   // Reorder handlers
   const handleMoveEventUp = useCallback((index: number) => {
     if (index <= 0) return;
-    const newDayEvents = [...currentDayEvents];
+    const newDayEvents = [...(plannedEventsByDay[activeDay] || [])];
     [newDayEvents[index], newDayEvents[index - 1]] = [newDayEvents[index - 1], newDayEvents[index]];
     const updated = {
       ...plannedEventsByDay,
       [activeDay]: newDayEvents
     };
     setPlannedEventsByDay(updated);
-  }, [currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
+  }, [activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   const handleMoveEventDown = useCallback((index: number) => {
-    if (index >= currentDayEvents.length - 1) return;
-    const newDayEvents = [...currentDayEvents];
+    const dayEvents = plannedEventsByDay[activeDay] || [];
+    if (index >= dayEvents.length - 1) return;
+    const newDayEvents = [...dayEvents];
     [newDayEvents[index], newDayEvents[index + 1]] = [newDayEvents[index + 1], newDayEvents[index]];
     const updated = {
       ...plannedEventsByDay,
       [activeDay]: newDayEvents
     };
     setPlannedEventsByDay(updated);
-  }, [currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
+  }, [activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   const handleRemoveEvent = useCallback((slotIndex: number) => {
-    const newDayEvents = currentDayEvents.filter((_, i) => i !== slotIndex);
+    const newDayEvents = (plannedEventsByDay[activeDay] || []).filter((_, i) => i !== slotIndex);
     const updated = {
       ...plannedEventsByDay,
       [activeDay]: newDayEvents
     };
     setPlannedEventsByDay(updated);
-  }, [currentDayEvents, activeDay, plannedEventsByDay, setPlannedEventsByDay]);
+  }, [activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   // Handler to add favorited event to trip planner
   const handleAddFavoriteToTrip = useCallback((event: Event) => {
@@ -528,7 +532,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
       const updated = {
         ...plannedEventsByDay,
-        [activeDay]: [...currentDayEvents, {
+        [activeDay]: [...(plannedEventsByDay[activeDay] || []), {
           eventId: event.id,
           event: event,
           duration: defaultDuration
@@ -537,7 +541,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       setPlannedEventsByDay(updated);
       toast.success(`${event.title} zu Tag ${activeDay} hinzugefügt`);
     }
-  }, [plannedEventsByDay, activeDay, currentDayEvents, setPlannedEventsByDay]);
+  }, [plannedEventsByDay, activeDay, setPlannedEventsByDay]);
 
   // Helper to get location name with proper fallbacks
   const getLocationName = (event: Event): string => {
@@ -1342,8 +1346,8 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
           {/* Timeline with Time Points */}
           <div className="relative">
-            {/* Continuous Timeline Line - centered at dot position */}
-            <div className="absolute top-0 bottom-0 w-0.5 bg-gray-300" style={{ left: 'calc(3rem + 0.75rem + 6px)' }} />
+            {/* Continuous Timeline Line - DESKTOP ONLY */}
+            <div className="hidden md:block absolute top-0 bottom-0 w-0.5 bg-gray-300" style={{ left: 'calc(3rem + 0.75rem + 6px)' }} />
 
             {/* Timeline Items - Only event slots, no spacers */}
             {visibleEventSlots.map((timePoint, eventIndex) => {

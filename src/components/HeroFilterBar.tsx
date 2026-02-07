@@ -28,20 +28,22 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 
-// Kategorien mit Icons
-const categories = [
-  { id: null, slug: null, name: "Alle Kategorien", icon: LayoutGrid },
-  { id: 1, slug: "musik-party", name: "Musik & Party", icon: Music },
-  { id: 2, slug: "kunst-kultur", name: "Kunst & Kultur", icon: Palette },
-  { id: 3, slug: "kulinarik-genuss", name: "Kulinarik & Genuss", icon: UtensilsCrossed },
-  { id: 4, slug: "natur-ausfluege", name: "Natur & Ausflüge", icon: Sparkles },
-  { id: 5, slug: "maerkte-stadtfeste", name: "Märkte & Stadtfeste", icon: Gift },
-];
+// Icon mapping helper
+const getCategoryIcon = (slug: string | null) => {
+  if (!slug) return LayoutGrid;
+  if (slug === "musik-party") return Music;
+  if (slug === "kunst-kultur") return Palette;
+  if (slug === "kulinarik-genuss") return UtensilsCrossed;
+  if (slug === "natur-ausfluege") return Sparkles;
+  if (slug === "maerkte-stadtfeste") return Gift;
+  return LayoutGrid;
+};
 
 // Stimmungen mit Icons
 const moods = [
-  { id: null, slug: null, name: "Jede Stimmung", icon: Smile },
+  { id: null, slug: null, name: "Stimmung", icon: Smile },
   { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
   { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
   { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
@@ -54,12 +56,12 @@ const moods = [
   { id: "natur", slug: "natur", name: "Natur", icon: Mountain },
 ];
 
-// Zeit-Quick-Pills
+// Zeit-Quick-Pills (IDs müssen mit EventList1 FilterLogic matchen!)
 const timePills = [
-  { id: "now", label: "Jetzt" },
-  { id: "tomorrow", label: "Morgen" },
-  { id: "thisWeek", label: "Wochenende" },
-  { id: "thisMonth", label: "Dieser Monat" },
+  { id: "heute", label: "Heute" },
+  { id: "diese-woche", label: "Diese Woche" },
+  { id: "dieses-wochenende", label: "Wochenende" },
+  { id: "dieser-monat", label: "Dieser Monat" },
 ];
 
 // City suggestions for autocomplete
@@ -67,7 +69,12 @@ const citySuggestions = swissPlaces.slice(0, 50).map(p => p.name);
 
 const HeroFilterBar = () => {
   const navigate = useNavigate();
-  
+
+  // Load categories from Supabase
+  const [categories, setCategories] = useState<Array<{ id: number | null; slug: string | null; name: string; icon: any }>>([
+    { id: null, slug: null, name: "Alle Kategorien", icon: LayoutGrid }
+  ]);
+
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
   const [selectedMood, setSelectedMood] = useState(moods[0]);
@@ -120,11 +127,39 @@ const HeroFilterBar = () => {
     setDateOpen(false);
   };
 
+  // Load categories from Supabase
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data, error } = await supabase
+        .from("taxonomy")
+        .select("id, slug, name, type, display_order")
+        .eq("type", "main")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) {
+        console.error("Error loading categories:", error);
+        return;
+      }
+
+      if (data) {
+        const loadedCategories = data.map((cat: any) => ({
+          id: cat.id,
+          slug: cat.slug,
+          name: cat.name,
+          icon: getCategoryIcon(cat.slug),
+        }));
+        setCategories([{ id: null, slug: null, name: "Alle Kategorien", icon: LayoutGrid }, ...loadedCategories]);
+      }
+    };
+    loadCategories();
+  }, []);
+
   // Close city suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        citySuggestionsRef.current && 
+        citySuggestionsRef.current &&
         !citySuggestionsRef.current.contains(e.target as Node) &&
         cityInputRef.current &&
         !cityInputRef.current.contains(e.target as Node)
@@ -224,7 +259,7 @@ const HeroFilterBar = () => {
                 <button className="flex-1 lg:flex-none lg:min-w-[150px] px-4 py-2.5 rounded-xl lg:rounded-full bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
                   <div className="flex items-center gap-2">
                     <selectedMood.icon size={16} className="text-foreground/60" />
-                    <span className="truncate">{selectedMood.name}</span>
+                    <span className="truncate hidden sm:inline">{selectedMood.name}</span>
                   </div>
                   <ChevronDown size={14} className={cn("transition-transform", moodOpen && "rotate-180")} />
                 </button>
@@ -331,9 +366,9 @@ const HeroFilterBar = () => {
                 <ChevronDown size={14} className={cn("transition-transform", dateOpen && "rotate-180")} />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white border shadow-xl rounded-xl z-50" align="start">
-              <div className="p-3 border-b">
-                <div className="flex flex-wrap gap-2">
+            <PopoverContent className="w-auto max-h-[70vh] overflow-y-auto p-0 bg-white border shadow-xl rounded-xl z-50 md:max-h-none md:overflow-y-visible" align="center" side="bottom" sideOffset={8} avoidCollisions={false}>
+              <div className="p-4 border-b flex justify-center">
+                <div className="grid grid-cols-2 gap-2">
                   {timePills.map((pill) => (
                     <button
                       key={pill.id}
@@ -342,12 +377,12 @@ const HeroFilterBar = () => {
                         setDateOpen(false);
                       }}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2",
+                        "px-4 py-2.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap",
                         selectedTimePill === pill.id
-                          ? "bg-blue-900 text-white border-blue-900"
-                          : pill.id === "now"
-                          ? "bg-amber-400 text-gray-900 border-amber-400 hover:bg-amber-500"
-                          : "bg-gray-100 text-foreground/70 border-gray-100 hover:bg-gray-200"
+                          ? "bg-blue-900 text-white shadow-md hover:bg-blue-950"
+                          : pill.id === "heute"
+                          ? "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
                       )}
                     >
                       {pill.label}
@@ -355,13 +390,15 @@ const HeroFilterBar = () => {
                   ))}
                 </div>
               </div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                locale={de}
-                className="p-3 pointer-events-auto"
-              />
+              <div className="flex justify-center p-3">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  locale={de}
+                  className="pointer-events-auto"
+                />
+              </div>
             </PopoverContent>
           </Popover>
 

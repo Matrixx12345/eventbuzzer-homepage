@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { externalSupabase as supabase } from '@/integrations/supabase/externalClient';
 
 export interface FilterState {
   category: string | null;
@@ -12,37 +13,80 @@ export interface FilterState {
   search: string;
 }
 
-// Category slug to ID mapping
-const categorySlugToId: Record<string, number> = {
-  "musik-party": 1,
-  "kunst-kultur": 2,
-  "kulinarik-genuss": 3,
-  "natur-ausfluege": 4,
-  "maerkte-stadtfeste": 5,
-};
-
 export const useEventFilters = () => {
   const [searchParams] = useSearchParams();
 
-  // Read URL parameters
-  const urlCategory = searchParams.get('category');
-  const urlMood = searchParams.get('quickFilter') || searchParams.get('tags');
-  const urlCity = searchParams.get('city') || "";
-  const urlRadius = searchParams.get('radius');
-  const urlTime = searchParams.get('time');
-  const urlDate = searchParams.get('date');
-  const urlSearch = searchParams.get('source') || searchParams.get('search') || "";
+  // Dynamic category slug to ID mapping (loaded from Supabase)
+  const [categorySlugToId, setCategorySlugToId] = useState<Record<string, number>>({});
 
-  const [filters, setFilters] = useState<FilterState>({
-    category: urlCategory || null,
-    categoryId: urlCategory ? categorySlugToId[urlCategory] || null : null,
-    mood: urlMood || null,
-    city: urlCity,
-    radius: urlRadius ? parseInt(urlRadius, 10) : 25,
-    time: urlTime || null,
-    date: urlDate ? new Date(urlDate) : undefined,
-    search: urlSearch,
+  // Initialize filters from URL parameters on mount
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const urlCategory = searchParams.get('category');
+    const urlMood = searchParams.get('quickFilter') || searchParams.get('tags');
+    const urlCity = searchParams.get('city') || "";
+    const urlRadius = searchParams.get('radius');
+    const urlTime = searchParams.get('time');
+    const urlDate = searchParams.get('date');
+    const urlSearch = searchParams.get('source') || searchParams.get('search') || "";
+
+    return {
+      category: urlCategory || null,
+      categoryId: null, // Will be set once categories are loaded
+      mood: urlMood || null,
+      city: urlCity,
+      radius: urlRadius ? parseInt(urlRadius, 10) : 25,
+      time: urlTime || null,
+      date: urlDate ? new Date(urlDate) : undefined,
+      search: urlSearch,
+    };
   });
+
+  // Load categories from Supabase to build slug-to-ID mapping
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data, error } = await supabase
+        .from("taxonomy")
+        .select("id, slug")
+        .eq("type", "main")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading categories for filters:", error);
+        return;
+      }
+
+      if (data) {
+        const mapping: Record<string, number> = {};
+        data.forEach((cat: any) => {
+          mapping[cat.slug] = cat.id;
+        });
+        setCategorySlugToId(mapping);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Update filters when URL parameters OR categorySlugToId mapping changes
+  useEffect(() => {
+    const urlCategory = searchParams.get('category');
+    const urlMood = searchParams.get('quickFilter') || searchParams.get('tags');
+    const urlCity = searchParams.get('city') || "";
+    const urlRadius = searchParams.get('radius');
+    const urlTime = searchParams.get('time');
+    const urlDate = searchParams.get('date');
+    const urlSearch = searchParams.get('source') || searchParams.get('search') || "";
+
+    setFilters({
+      category: urlCategory || null,
+      categoryId: urlCategory ? categorySlugToId[urlCategory] || null : null,
+      mood: urlMood || null,
+      city: urlCity,
+      radius: urlRadius ? parseInt(urlRadius, 10) : 25,
+      time: urlTime || null,
+      date: urlDate ? new Date(urlDate) : undefined,
+      search: urlSearch,
+    });
+  }, [searchParams, categorySlugToId]);
 
   const handleCategoryChange = useCallback((categoryId: number | null, categorySlug: string | null) => {
     setFilters(prev => ({ ...prev, categoryId, category: categorySlug }));

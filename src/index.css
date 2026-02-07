@@ -180,6 +180,16 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Mobile bottom navigation padding - ensures content isn't hidden behind bottom nav */
+  .mobile-bottom-nav-padding {
+    @apply pb-20 md:pb-0;
+  }
+
+  /* Safe area inset support for iOS notch/home indicator */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* Map Elite Badge */

@@ -10,6 +10,8 @@ import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { getCategoryLabel, getEventLocation, generateSlug } from "@/utils/eventUtilities";
 import { Loader2 } from "lucide-react";
 import { EventDetailModal } from "@/components/EventDetailModal";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { useTravelpayoutsVerification } from "@/hooks/useTravelpayoutsVerification";
 
 /**
  * CompactEventCard for Category Pages
@@ -136,6 +138,8 @@ const CompactEventCard = ({
  * Shows all events of a category across Switzerland
  */
 const CategoryPage = () => {
+  useTravelpayoutsVerification();
+  useScrollToTop();
   const { slug } = useParams<{ slug: string }>();
   const category = getCategoryBySlug(slug || "");
 

@@ -126,15 +126,15 @@ export const ActionPill = ({
       data-action-pill
       className={cn(
         "flex items-center justify-between rounded-full w-full",
-        variant === 'dark' ? "px-6 py-2.5" : "px-6 py-2",
+        variant === 'dark' ? "px-3 md:px-6 py-2 md:py-2.5" : "px-3 md:px-6 py-1.5 md:py-2",
         className
       )}
       style={pillStyles}
     >
       {/* Star Rating */}
-      <div className="flex items-center gap-1.5" style={iconShadow}>
-        <Star size={16} className="text-[#fbbf24] stroke-[1.5]" />
-        <span className={cn("text-sm font-semibold", textColor)}>
+      <div className="flex items-center gap-1 md:gap-1.5" style={iconShadow}>
+        <Star size={15} className="text-[#fbbf24] stroke-[1.5] md:w-4 md:h-4" />
+        <span className={cn("text-xs md:text-sm font-semibold", textColor)}>
           {rating}
         </span>
       </div>
@@ -145,12 +145,15 @@ export const ActionPill = ({
       {/* Favorit */}
       <button
         onClick={handleFavoriteClick}
-        className="group/heart relative p-1 hover:scale-110 transition-all duration-200"
+        className="group/heart relative p-0.5 md:p-1 hover:scale-110 transition-all duration-200 min-w-[32px] min-h-[32px] flex items-center justify-center"
         style={iconShadow}
       >
         <Heart
-          size={18}
-          className={isCurrentlyFavorite ? "fill-red-500 text-red-500" : iconColor}
+          size={17}
+          className={cn(
+            "md:w-[18px] md:h-[18px]",
+            isCurrentlyFavorite ? "fill-red-500 text-red-500" : iconColor
+          )}
         />
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/heart:block z-50 pointer-events-none">
@@ -162,15 +165,20 @@ export const ActionPill = ({
       </button>
 
       {/* Divider */}
-      <div className={cn("w-px h-4", variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent")} />
+      <div className={cn(
+        "w-px h-4",
+        variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent"
+      )} />
 
-      {/* Share */}
+      {/* Share - hide on mobile for light variant (white cards) */}
       <button
         onClick={handleShareClick}
-        className="group/share relative p-1 hover:scale-110 transition-all duration-200"
+        className={cn(
+          "group/share relative p-0.5 md:p-1 hover:scale-110 transition-all duration-200 min-w-[32px] min-h-[32px] flex items-center justify-center"
+        )}
         style={iconShadow}
       >
-        <Share2 size={18} className={iconColor} />
+        <Share2 size={17} className={cn("md:w-[18px] md:h-[18px]", iconColor)} />
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-50 pointer-events-none">
           <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
@@ -180,19 +188,22 @@ export const ActionPill = ({
         </div>
       </button>
 
-      {/* Divider */}
-      <div className={cn("w-px h-4", variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent")} />
+      {/* Divider - hide on mobile for light variant */}
+      <div className={cn(
+        "w-px h-4",
+        variant === 'dark' ? "bg-gradient-to-b from-transparent via-white/40 to-transparent" : "bg-gradient-to-b from-transparent via-gray-400/40 to-transparent"
+      )} />
 
       {/* Trip Planner */}
       <button
         onClick={handleTripPlannerClick}
-        className="group/trip relative p-1 hover:scale-110 transition-all duration-200"
+        className="group/trip relative p-0.5 md:p-1 hover:scale-110 transition-all duration-200 min-w-[32px] min-h-[32px] flex items-center justify-center"
         style={iconShadow}
       >
         <Briefcase
-          size={18}
+          size={17}
           className={cn(
-            "transition-colors duration-200",
+            "md:w-[18px] md:h-[18px] transition-colors duration-200",
             isCurrentlyInTrip ? "text-red-500" : iconColor
           )}
         />

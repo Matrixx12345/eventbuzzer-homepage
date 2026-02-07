@@ -10,8 +10,10 @@ import { useEventModal } from "@/hooks/useEventModal";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 const Index = () => {
+  useScrollToTop();
   const { selectedEventId, isOpen: modalOpen, openEvent: openEventModal, closeEvent: closeEventModal, swapEvent } = useEventModal();
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 

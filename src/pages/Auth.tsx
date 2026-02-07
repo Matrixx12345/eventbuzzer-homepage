@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 const emailSchema = z.string().email("Bitte gib eine gültige E-Mail-Adresse ein");
 const passwordSchema = z.string().min(6, "Passwort muss mindestens 6 Zeichen haben");
 
 const Auth = () => {
+  useScrollToTop();
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
