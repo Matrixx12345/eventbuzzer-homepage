@@ -4,7 +4,6 @@ import ListingsFilterBar from "@/components/ListingsFilterBar";
 import { EventDetailModal } from "@/components/EventDetailModal";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { 
   Heart, 
   MapPin, 
@@ -408,7 +407,6 @@ const ChatbotExpanded = ({ onClose }: { onClose: () => void }) => {
 };
 
 const EventPlanner2 = () => {
-  useScrollToTop();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatbotExpanded, setChatbotExpanded] = useState(false);

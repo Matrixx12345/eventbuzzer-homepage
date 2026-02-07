@@ -16,6 +16,78 @@ Server läuft auf: http://localhost:8081
 
 ---
 
+## 🆘 FALLBACK: Ideal State (2026-02-04)
+
+**Falls die Website komplett kaputt ist und nichts geht**, zurück zu diesem stabilen Stand:
+
+```bash
+# Commit 4124f48 (2026-02-04) = IDEAL_STATE
+# Alle neuen Features funktionieren, Design perfekt, keine Bugs
+
+git reset --hard 4124f48
+git push origin main --force  # Nur notfalls!
+```
+
+**Backup Location:**
+- `/tmp/IDEAL_STATE_4124f48/` - kompletter src/ + supabase/ + config
+
+**Was in 4124f48 funktioniert:**
+- ✅ EventList1 Design (descriptions 2 Zeilen, icons perfekt positioniert)
+- ✅ Map Größe korrekt (h-412px expanded, h-200px collapsed)
+- ✅ Alle Filter + Kategorien
+- ✅ EventDetail Modal
+- ✅ Trip Planner Context
+- ✅ Favorites
+
+**Was NICHT in 4124f48 (noch nicht hinzugefügt):**
+- ❌ Mobile Version (MobileTopDetailCard, ViewModeSwitcher)
+- ❌ AdminPendingEvents Page
+- ❌ PartnerUpload Form
+- ❌ MobileBottomNav
+
+Siehe Phase 3 unten wie man diese SAUBER hinzufügt ohne Design zu zerschießen.
+
+---
+
+## 🆘 FALLBACK: Ideal State 2 (2026-02-06) ⭐ **AKTUELL EMPFOHLEN**
+
+**Desktop Event Cards Design PERFEKT wiederhergestellt + Alle Features!**
+
+```bash
+# Commit d301aa3 (2026-02-06) = IDEAL_STATE_2
+# Desktop Design wie 4124f48 + Partner Upload + Admin Features
+
+git reset --hard d301aa3
+git push origin main --force  # Nur notfalls!
+```
+
+**Backup Location:**
+- `/tmp/IDEAL_STATE_2_d301aa3/` - kompletter src/ mit IDEAL_STATE_2_INFO.md
+- Siehe: `/tmp/IDEAL_STATE_2_d301aa3/IDEAL_STATE_2_INFO.md` für Details
+
+**Was in d301aa3 funktioniert:**
+- ✅ **Desktop Event Cards PERFEKT** (vom 4124f48, descriptions 2 Zeilen, icons perfect)
+- ✅ Partner Event Upload Seite (`/partner`)
+- ✅ Admin Pending Events (Navbar integration)
+- ✅ Mobile Components (MobileBottomNav, MobileTopDetailCard, ViewModeSwitcher)
+- ✅ Filter zeigt "Stimmung" (singular, nicht "jede Stimmung")
+- ✅ Navbar mit "Event hochladen" Button
+- ✅ Footer mit "Für Veranstalter" Sektion
+- ✅ Trip Planner komplett funktional
+- ✅ Build erfolgreich, keine Errors
+
+**Unterschied zu IDEAL_STATE (4124f48):**
+- Desktop Event Cards: **IDENTISCH** (exakt gleicher Code!)
+- Zusätzlich: Partner/Admin Features + Mobile Components
+- Keine Desktop-Design Regression!
+
+**Wann verwenden:**
+- ✅ Wenn Desktop Event Cards kaputt sind
+- ✅ Wenn du alle Features + perfektes Desktop Design willst
+- ✅ Als Basis für weitere Entwicklung
+
+---
+
 ## ⚠️ CRITICAL: Supabase Client Usage
 
 **ALWAYS use the correct Supabase client:**
@@ -332,81 +404,6 @@ git commit -m "Update sitemaps with SEO-friendly slugs"
    VITE_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
    ```
 3. Rebuild: `npm run build`
-
-## 📱 Mobile-First Optimierung (Feb 4, 2026)
-
-✅ **Phase 1 Implementiert:**
-
-### 1. **Bottom Navigation Bar**
-- Komponente: `src/components/MobileBottomNav.tsx`
-- Fixed am unteren Bildschirm (nur auf Mobile < 768px)
-- 4 Hauptnavigation: Home, Events, Favoriten, Reiseplaner
-- Touch-optimiert: Min 48x48px Touch-Targets
-- Badge-Counts für Favoriten & Reiseplaner
-- Active-State Highlighting
-- Safe-Area support für iOS Notch/Home Indicator
-
-**Änderungen:**
-- `src/App.tsx` - MobileBottomNav global eingebunden
-- `src/components/Navbar.tsx` - Mobile nur Logo + User-Button (kein Hamburger-Menu mehr)
-- `src/index.css` - Utility-Klassen für mobile-bottom-nav-padding + safe-area-inset
-
-### 2. **View Mode Switcher (Grid/Map/Match)**
-- Komponente: `src/components/ViewModeSwitcher.tsx`
-- Drei Ansichtsmodi für EventList1:
-  - **Grid** - Klassische Listenansicht (Default)
-  - **Map** - Vollbild-Kartenansicht
-  - **Match** - Swipe-Modus (Tinder-Style, TODO)
-- Nur auf Mobile sichtbar (< 768px)
-- Touch-freundliche Buttons mit Icons
-
-### 3. **EventList1 Mobile Layout**
-- Split-Layout (Desktop) → Stack-Layout (Mobile)
-- **Grid-Modus (Mobile)**: Nur Event-Liste, Map ausgeblendet
-- **Map-Modus (Mobile)**: Nur fullscreen Map (h-[calc(100vh-280px)])
-- Desktop: Behält Split-Layout (45% Map rechts, Event-Liste links)
-- Trip Planner auf Mobile komplett ausgeblendet
-
-### 4. **Event Cards - Responsive Layout**
-- **Desktop**: Horizontal (Bild links 308px, Content rechts)
-- **Mobile**: Vertikal (Bild oben volle Breite 240px, Content unten)
-- Touch-optimierte Action Pills (Favoriten, Rating, Nearby, Trip)
-- Responsive Schriftgrößen und Abstände
-
-### 5. **Mobile Padding & Safe Areas**
-- `LegalFooter` - mobile-bottom-nav-padding Klasse
-- CSS Utility `.mobile-bottom-nav-padding` - pb-20 auf Mobile, pb-0 auf Desktop
-- iOS Safe Area Inset Support für Notch/Home Indicator
-
-**Dateien geändert:**
-```
-src/components/
-├── MobileBottomNav.tsx          [NEU] Bottom Navigation
-├── ViewModeSwitcher.tsx          [NEU] View Mode Toggle
-├── Navbar.tsx                    [GEÄNDERT] Mobile-Version vereinfacht
-└── LegalFooter.tsx               [GEÄNDERT] Mobile Padding
-
-src/pages/
-└── EventList1.tsx                [GEÄNDERT] Mobile Stack-Layout + View Modes
-
-src/App.tsx                       [GEÄNDERT] MobileBottomNav eingebunden
-src/index.css                     [GEÄNDERT] Mobile Utilities
-```
-
-**TODO - Phase 2:**
-- [ ] EventDetailModal zu Bottom Sheet (Drawer) auf Mobile
-- [ ] Swipe Gestures für Trip Planner Day-Navigation
-- [ ] Match/Swipe-Modus implementieren (Tinder-Style)
-- [ ] Performance-Optimierungen für Mobile Data
-- [ ] Image Loading Optimierung (Progressive JPEGs, WebP)
-
-**Testing:**
-```bash
-# Mobile testen via Browser DevTools
-npm run dev
-# Chrome: Cmd+Opt+I → Device Toolbar (Cmd+Shift+M)
-# Viewport: iPhone 14 Pro (393x852) oder Galaxy S20 (360x800)
-```
 
 ## 🚀 Deployment (Vercel)
 
@@ -752,3 +749,94 @@ Wenn du auf den **Supabase Pro Plan** upgradest, aktiviere diese Security-Featur
 Siehe Checkliste unten im Chat → "GOOGLE SEARCH CONSOLE CHECKLISTE"
 
 **Letzte Aktualisierung:** Februar 4, 2026
+
+---
+
+## 🔍 PHASE 2: Design-Breaking Commits Forensik (4124f48 → HEAD)
+
+### ❌ BREAKS DESIGN - NICHT HINZUFÜGEN:
+Diese Commits zerschießen das Layout/Design von EventList1 + ListingsFilterBar:
+
+1. **be27038** (2026-02-06) - "Fix build error - remove unused useTravelpayoutsVerification imports"
+   - ❌ Entfernte Trip Planner Logic aus EventList1.tsx
+   - ❌ Entfernte Rating System
+   - ❌ Design wurde NICHT dabei kaputt, aber zu viele Funktionen weg
+
+2. **b511de9** (2026-02-05) - "Add Travelpayouts verification to all pages via hook"
+   - ❌ Brach EventList1 Layout massiv
+   - ❌ FilterBar beschädigt
+   - ❌ NICHT NEHMEN
+
+3. **cd741d1** bis **55f861c** (2026-02-05) - Mobile Version "Implement mobile-first event detail popup"
+   - ⚠️ Mobile-Änderungen waren okay
+   - ❌ ABER führten zu Desktop-Layout Breaks
+   - ❌ Kombiniert mit anderen Commits = Design-Katastrophe
+
+### ✅ SAFE - KÖNNEN HINZUGEFÜGT WERDEN:
+Diese Commits sind für NEUE FEATURES und brechen nichts:
+
+1. **90c124b** - "Add Partner Event Upload form - Phase 1 implementation"
+   - ✅ Neue Seite `/partner`
+   - ✅ Kein Touch an EventList1 oder Filterbar
+   - ✅ SAFE
+
+2. **89af8d6** - "Add admin approval system for partner events - Phase 2"
+   - ✅ Neue Seite `/admin/pending-events`
+   - ✅ AdminPendingEvents Component
+   - ✅ Kein Desktop Layout Touch
+   - ✅ SAFE
+
+3. **465271a** - "Add 'Hosten' to mobile bottom navigation"
+   - ✅ Neue MobileBottomNav Component
+   - ✅ Rein mobile-spezifisch
+   - ✅ SAFE (wenn sauber implementiert)
+
+4. **f0c107a** - "Add image file upload to partner event form"
+   - ✅ Partnership mit Partner Upload
+   - ✅ Nur Form-Feature
+   - ✅ SAFE
+
+---
+
+## 🚀 PHASE 3: Surgical Re-Add der Features
+
+### Schritt-für-Schritt Roadmap (TESTET NACH JEDEM):
+
+```
+1. ✅ 4124f48 = Baseline (IDEAL STATE)
+   └─ TEST: EventList Design perfekt
+
+2. ➕ 90c124b = PartnerUpload Page
+   └─ TEST: Seite funktioniert, Design noch ok?
+
+3. ➕ 89af8d6 = AdminPendingEvents Page
+   └─ TEST: Admin Panel funktioniert, Design?
+
+4. ➕ f0c107a = Image File Upload
+   └─ TEST: Partner Form mit Upload ok?
+
+5. ➕ Mobile Version (SAUBER aus Backup)
+   └─ TEST: Mobile funktioniert, Desktop NICHT kaputt?
+
+6. ➕ 1cd8b0f = Navbar "Event hochladen" Button
+   └─ TEST: Navbar gut, kein Layout-Break?
+```
+
+### Warnsignale beim Testen:
+- ❌ Description zeigt > 2 Zeilen? = DESIGN KAPUTT
+- ❌ Icons/Pills misaligned? = LAYOUT KAPUTT
+- ❌ Map zu groß/klein? = SIZE KAPUTT
+- Wenn JA: ZURÜCK zu 4124f48 + neue Analyse
+
+**Regel:** Jede neue Feature = 1 sauberer Commit, kein Touch an EventList1/FilterBar außer wenn NOTWENDIG
+
+---
+
+## 📋 Commit-by-Commit Analyse für Phase 3
+
+Siehe `/tmp/` für alle einzelnen Backups:
+- `EventList1_b511de9.tsx` - kaputte Version
+- `EventList1_cd741d1_good.tsx` - mobile version (risky)
+- `ListingsFilterBar_*.tsx` - verschiedene Versionen
+
+Für SAUBERES Mergen: Nur die FILES die sich geändert haben aus spezifischen Commits nehmen, NICHT ganze Commits cherry-picken ohne Review!

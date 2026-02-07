@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { Loader2 } from "lucide-react";
 import { MapEvent, CategoryType, CATEGORY_COLORS, CATEGORY_FILTERS } from "@/types/map";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 // Mapbox public token
 mapboxgl.accessToken = "pk.eyJ1IjoibWF0cml4eDEyMyIsImEiOiJjbWp6eXUwOTAwZTk4M2ZzaTkycTg4eGs1In0.fThJ64zR4-7gi-ONMtglfQ";
@@ -35,7 +34,6 @@ interface EventsMapProps {
   onSearchThisArea?: () => void;
   totalEventsCount?: number;
   categoryId?: number | null;  // NEW: Filter by category (important for Märkte!)
-  showPopups?: boolean;  // Show popups on markers (disable on mobile to prevent double modals)
   // Nearby zoom feature
   flyToLocation?: { lng: number; lat: number; zoom: number } | null;
   showBackButton?: boolean;
@@ -170,7 +168,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       onSearchThisArea,
       totalEventsCount = 0,
       categoryId = null,
-      showPopups = true,
       // Nearby zoom feature
       flyToLocation = null,
       showBackButton = false,
@@ -180,7 +177,10 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
     },
     ref
   ) => {
-  const isMobile = useIsMobile();
+  // DEBUG: Log what selectedEventIds we're receiving
+  console.log('🎯 EventsMap received selectedEventIds:', selectedEventIds);
+  console.log('📍 EventsMap received plannedEvents:', plannedEvents?.length || 0, 'items');
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -475,8 +475,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
             short_description: e.short_description,
             venue_name: e.venue_name,
             address_city: e.address_city,
-            address_street: e.address_street,
-            address_zip: e.address_zip,
             location: e.location,
             image_url: e.image_url,
             start_date: e.start_date,
@@ -493,9 +491,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
             tags: Array.isArray(e.tags) ? e.tags : [],
             buzz_boost: 100, // Always 100 for Elite Events
             source: e.source,
-            ticket_url: e.ticket_url,
-            url: e.url,
-            gallery_urls: e.gallery_urls,
           }))
           .filter((e: MapEvent) => e.latitude && e.longitude);
 
@@ -713,14 +708,10 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
         // Marker erstellen
         const marker = new mapboxgl.Marker({ element: wrapper })
-          .setLngLat([longitude, latitude]);
+          .setLngLat([longitude, latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
 
-        // Only show popups on desktop (not mobile)
-        if (showPopups) {
-          marker.setPopup(popup);
-        }
-
-        marker.addTo(map.current!);
         markersRef.current.push(marker);
       });
 
@@ -799,14 +790,10 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
         // Marker erstellen
         const marker = new mapboxgl.Marker({ element: wrapper })
-          .setLngLat([longitude, latitude]);
+          .setLngLat([longitude, latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
 
-        // Only show popups on desktop (not mobile)
-        if (showPopups) {
-          marker.setPopup(popup);
-        }
-
-        marker.addTo(map.current!);
         markersRef.current.push(marker);
       });
 
@@ -855,7 +842,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         inner.style.cssText = `
           width: 20px;
           height: 20px;
-          background: ${isMobile ? '#1E40AF' : '#5f6368'};
+          background: #5f6368;
           border: 3px solid ${hasHovered ? '#ef4444' : 'white'};
           border-radius: 50%;
           box-shadow: ${hasHovered ? '0 0 0 2px #ef4444' : '0 2px 6px rgba(0,0,0,0.3)'};
@@ -910,7 +897,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
             width: ${isHovered ? '28px' : '20px'};
             height: ${isHovered ? '28px' : '20px'};
             border-radius: 50%;
-            background: ${isMobile ? '#1E40AF' : '#5f6368'};
+            background: #5f6368;
             border: 3px solid ${isHovered ? '#ef4444' : 'white'};
             box-shadow: ${isHovered ? '0 0 0 2px #ef4444, 0 4px 12px rgba(239,68,68,0.6)' : '0 2px 6px rgba(0,0,0,0.3)'};
             cursor: pointer;
@@ -1010,14 +997,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         });
 
         const marker = new mapboxgl.Marker({ element: wrapper })
-          .setLngLat([longitude, latitude]);
-
-        // Only show popups on desktop (not mobile)
-        if (showPopups) {
-          marker.setPopup(popup);
-        }
-
-        marker.addTo(map.current!);
+          .setLngLat([longitude, latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
         markersRef.current.push(marker);
       }
     });
@@ -1129,14 +1111,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           });
 
           const marker = new mapboxgl.Marker({ element: wrapper })
-            .setLngLat([longitude, latitude]);
-
-          // Only show popups on desktop (not mobile)
-          if (showPopups) {
-            marker.setPopup(popup);
-          }
-
-          marker.addTo(map.current!);
+            .setLngLat([longitude, latitude])
+            .setPopup(popup)
+            .addTo(map.current!);
           markersRef.current.push(marker);
 
         } else if (isFavorite) {
@@ -1197,14 +1174,9 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           });
 
           const marker = new mapboxgl.Marker({ element: wrapper })
-            .setLngLat([longitude, latitude]);
-
-          // Only show popups on desktop (not mobile)
-          if (showPopups) {
-            marker.setPopup(popup);
-          }
-
-          marker.addTo(map.current!);
+            .setLngLat([longitude, latitude])
+            .setPopup(popup)
+            .addTo(map.current!);
           markersRef.current.push(marker);
         }
       }
@@ -1294,14 +1266,10 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       });
 
       const marker = new mapboxgl.Marker({ element: wrapper })
-        .setLngLat([longitude, latitude]);
+        .setLngLat([longitude, latitude])
+        .setPopup(popup)
+        .addTo(map.current!);
 
-      // Only show popups on desktop (not mobile)
-      if (showPopups) {
-        marker.setPopup(popup);
-      }
-
-      marker.addTo(map.current!);
       eliteMarkersRef.current.push(marker);
     });
 
@@ -1329,15 +1297,15 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
       const inner = document.createElement('div');
       inner.style.cssText = `
-        width: 24px;
-        height: 24px;
+        width: 40px;
+        height: 40px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: 2px solid white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 16px;
         font-weight: bold;
         color: white;
         filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.4));
@@ -1394,12 +1362,8 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
       console.log(`✅ Creating marker #${orderNumber} at [${longitude}, ${latitude}]`);
       const marker = new mapboxgl.Marker({ element: wrapper })
-        .setLngLat([longitude, latitude]);
-
-      // Only show popups on desktop (not mobile)
-      if (showPopups) {
-        marker.setPopup(popup);
-      }
+        .setLngLat([longitude, latitude])
+        .setPopup(popup);
 
       // Only add to map if route is visible
       if (routeVisible) {
@@ -1666,13 +1630,14 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
     }
 
     // Create Supercluster instance with Google Maps style clustering
-    // Mobile: Moderate clustering (radius 50, maxZoom 11) = balanced visibility
-    // Desktop: More clustering (radius 60, maxZoom 12) = cleaner at low zoom
+    // radius: 60 = larger radius for fewer, more consolidated clusters
+    // maxZoom: 12 = clusters disappear at zoom 12, event images appear earlier
+    // minPoints: 5 = need more events to form a cluster (less cluttered)
     const cluster = new Supercluster({
-      radius: isMobile ? 50 : 60,
-      maxZoom: isMobile ? 11 : 12,
+      radius: 60,
+      maxZoom: 12,
       minZoom: 0,
-      minPoints: isMobile ? 3 : 5,
+      minPoints: 5,
       map: (props: any) => ({
         category: props.category,
         categoryCounts: { [props.category]: 1 },
@@ -1880,7 +1845,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
         {/* Custom Zoom Controls - Google Maps Style */}
         {customControls && (
           <>
-            <div className="absolute bottom-24 md:bottom-6 right-6 flex flex-col gap-2 z-[70]">
+            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
               {/* Zoom In */}
               <button
                 onClick={() => {
@@ -1909,7 +1874,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
             </div>
 
             {/* 3D Controls - Left side */}
-            <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-[70]">
+            <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-50">
               {/* 3D Toggle */}
               <button
                 onClick={() => {

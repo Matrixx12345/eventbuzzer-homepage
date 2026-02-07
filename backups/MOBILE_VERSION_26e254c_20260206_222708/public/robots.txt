@@ -1,0 +1,10 @@
+# EventBuzzer - robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap Location
+Sitemap: https://eventbuzzer.ch/sitemap-index.xml
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /admin/

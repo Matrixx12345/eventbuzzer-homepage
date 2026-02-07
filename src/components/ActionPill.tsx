@@ -126,15 +126,15 @@ export const ActionPill = ({
       data-action-pill
       className={cn(
         "flex items-center justify-between rounded-full w-full",
-        variant === 'dark' ? "px-3 md:px-6 py-2 md:py-2.5" : "px-3 md:px-6 py-1.5 md:py-2",
+        variant === 'dark' ? "px-6 md:px-6 py-3 md:py-2.5" : "px-6 md:px-6 py-3 md:py-2",
         className
       )}
       style={pillStyles}
     >
       {/* Star Rating */}
-      <div className="flex items-center gap-1 md:gap-1.5" style={iconShadow}>
-        <Star size={15} className="text-[#fbbf24] stroke-[1.5] md:w-4 md:h-4" />
-        <span className={cn("text-xs md:text-sm font-semibold", textColor)}>
+      <div className="flex items-center gap-1.5 md:gap-1.5" style={iconShadow}>
+        <Star size={18} className="text-[#fbbf24] stroke-[1.5] md:w-4 md:h-4" />
+        <span className={cn("text-sm md:text-sm font-semibold", textColor)}>
           {rating}
         </span>
       </div>
@@ -149,7 +149,7 @@ export const ActionPill = ({
         style={iconShadow}
       >
         <Heart
-          size={17}
+          size={20}
           className={cn(
             "md:w-[18px] md:h-[18px]",
             isCurrentlyFavorite ? "fill-red-500 text-red-500" : iconColor
@@ -178,7 +178,7 @@ export const ActionPill = ({
         )}
         style={iconShadow}
       >
-        <Share2 size={17} className={cn("md:w-[18px] md:h-[18px]", iconColor)} />
+        <Share2 size={20} className={cn("md:w-[18px] md:h-[18px]", iconColor)} />
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/share:block z-50 pointer-events-none">
           <div className="bg-white text-gray-800 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-gray-200">
@@ -201,7 +201,7 @@ export const ActionPill = ({
         style={iconShadow}
       >
         <Briefcase
-          size={17}
+          size={20}
           className={cn(
             "md:w-[18px] md:h-[18px] transition-colors duration-200",
             isCurrentlyInTrip ? "text-red-500" : iconColor

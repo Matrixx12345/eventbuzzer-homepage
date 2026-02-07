@@ -217,9 +217,9 @@ export const MobileEventCard = ({
           </div>
 
           {/* Glassmorphism Action Pill - Mobile version */}
-          <div className="flex items-center justify-start pt-3">
+          <div className="flex items-center justify-center pt-3">
             <div
-              className="inline-flex items-center gap-3 px-4 py-1 rounded-full"
+              className="inline-flex items-center justify-between gap-4 px-6 py-2.5 rounded-full w-full"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
                 backdropFilter: 'blur(30px) saturate(180%)',
@@ -238,8 +238,8 @@ export const MobileEventCard = ({
                     }}
                     className="group/rating relative flex items-center gap-1 pl-1 pointer-events-auto"
                   >
-                    <Star size={14} className="text-[#fbbf24] fill-none stroke-[1.5]" />
-                    <span className="text-xs font-semibold text-gray-800">
+                    <Star size={18} className="text-[#fbbf24] fill-none stroke-[1.5]" />
+                    <span className="text-sm font-semibold text-gray-800">
                       {rating.toFixed(1)}
                     </span>
                   </button>
@@ -297,7 +297,7 @@ export const MobileEventCard = ({
                 className="group/heart relative p-0.5 hover:scale-110 hover:bg-white/30 rounded-md transition-all duration-200 pointer-events-auto"
               >
                 <Heart
-                  size={14}
+                  size={20}
                   className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"}
                 />
               </button>
@@ -344,7 +344,7 @@ export const MobileEventCard = ({
                 )}
               >
                 <MapPin
-                  size={14}
+                  size={20}
                   className={cn(
                     nearbyEventsFilter === event.id ? "text-orange-600" : "text-gray-700",
                     isLoadingNearby && "animate-spin"
@@ -397,7 +397,7 @@ export const MobileEventCard = ({
                   coffeeClickFeedback && "scale-95"
                 )}
               >
-                <Briefcase size={14} className={cn(
+                <Briefcase size={20} className={cn(
                   "transition-colors duration-200",
                   isInTrip && "text-red-500",
                   !isInTrip && "text-gray-700",

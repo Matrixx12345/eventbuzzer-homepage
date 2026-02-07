@@ -10,7 +10,6 @@ import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { getCategoryLabel, getEventLocation, generateSlug } from "@/utils/eventUtilities";
 import { Loader2 } from "lucide-react";
 import { EventDetailModal } from "@/components/EventDetailModal";
-import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 /**
  * CompactEventCard for City Category Pages
@@ -138,7 +137,6 @@ const CompactEventCard = ({
  * Perfect for local SEO (e.g., "Museen in Zürich")
  */
 const CityCategoryPage = () => {
-  useScrollToTop();
   const { city, categorySlug } = useParams<{ city: string; categorySlug: string }>();
   const category = getCategoryBySlug(categorySlug || "");
 

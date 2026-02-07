@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useTravelpayoutsVerification } from "@/hooks/useTravelpayoutsVerification";
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Plus, Trash2, ChevronUp, ChevronDown, MapPin, QrCode, FileText, Map, Briefcase } from 'lucide-react';
@@ -91,7 +90,6 @@ const EmptyState: React.FC = () => (
 );
 
 const TripPlannerPage: React.FC = () => {
-  useTravelpayoutsVerification();
   useScrollToTop();
   const {
     plannedEventsByDay,

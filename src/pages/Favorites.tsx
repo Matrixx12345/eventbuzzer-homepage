@@ -10,7 +10,6 @@ import { EventDetailModal } from "@/components/EventDetailModal";
 import { ActionPill } from "@/components/ActionPill";
 import heroImage from "@/assets/hero-mountains.jpg";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
-import { useTravelpayoutsVerification } from "@/hooks/useTravelpayoutsVerification";
 
 // Helper to format tag names for display
 const formatTagName = (tag: string): string => {
@@ -48,7 +47,6 @@ const favoriteToEvent = (favorite: FavoriteEvent) => ({
 });
 
 const Favorites = () => {
-  useTravelpayoutsVerification();
   useScrollToTop();
   const { favorites } = useFavorites();
   const [activeFilter, setActiveFilter] = useState<FilterOption>("all");

@@ -36,7 +36,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ChatbotPopupRight from "@/components/ChatbotPopupRight";
 import { DesktopEventCard } from "@/components/DesktopEventCard";
 import { MobileEventCard } from "@/components/MobileEventCard";
-import { CompactEventCard } from "@/components/CompactEventCard";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -855,12 +854,7 @@ const EventList1 = () => {
                       onMouseEnter={() => setHoveredEventId(event.id)}
                       onMouseLeave={() => setHoveredEventId(null)}
                     >
-                      {isMobile && viewMode === "map" ? (
-                        <CompactEventCard
-                          event={event}
-                          onEventClick={openEventModal}
-                        />
-                      ) : isMobile ? (
+                      {isMobile ? (
                         <MobileEventCard
                           event={event}
                           index={index}

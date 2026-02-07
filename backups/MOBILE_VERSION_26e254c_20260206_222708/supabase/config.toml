@@ -1,0 +1,40 @@
+project_id = "phlhbbjeqabjhkkyennz"
+
+[functions.cleanup-events]
+verify_jwt = false
+
+[functions.get-external-events]
+verify_jwt = false
+
+[functions.get-ticketmaster-events]
+verify_jwt = false
+
+[functions.generate-event-summaries]
+verify_jwt = false
+
+[functions.sync-ticketmaster-events]
+verify_jwt = false
+
+[functions.generate-ai-descriptions]
+verify_jwt = false
+
+[functions.upload-assets]
+verify_jwt = false
+
+[functions.tm-import]
+verify_jwt = false
+
+[functions.myswitzerland-import]
+verify_jwt = false
+
+[functions.get-event-ratings]
+verify_jwt = false
+
+[functions.track-event-buzz]
+verify_jwt = false
+
+[functions.chat-assistant]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = true

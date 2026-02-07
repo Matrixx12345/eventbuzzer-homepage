@@ -3,9 +3,9 @@ import { CATEGORIES } from "@/config/categories";
 
 const LegalFooter = () => {
   return (
-    <footer className="w-full py-12 mt-auto border-t border-stone-200 bg-stone-50 mobile-bottom-nav-padding">
+    <footer className="w-full py-12 mt-auto border-t border-stone-200 bg-stone-50">
       <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
           {/* Kategorien Sektion */}
           <div className="md:col-span-3">
             <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">
@@ -21,6 +21,27 @@ const LegalFooter = () => {
                   {category.label}
                 </Link>
               ))}
+            </div>
+          </div>
+
+          {/* Für Veranstalter */}
+          <div>
+            <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">
+              Für Veranstalter
+            </h3>
+            <div className="flex flex-col gap-2">
+              <Link
+                to="/partner"
+                className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
+              >
+                Event kostenlos listen
+              </Link>
+              <Link
+                to="/partner"
+                className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
+              >
+                Partner-Programm
+              </Link>
             </div>
           </div>
 
