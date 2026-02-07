@@ -41,18 +41,16 @@ const getCategoryIcon = (slug: string | null) => {
   return LayoutGrid;
 };
 
-// VORERST AUSGEBLENDET - Mood Pills deaktiviert
-// TODO: Wieder einblenden wenn gewünscht
 const moods = [
-  // { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
-  // { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
-  // { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
-  // { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
-  // { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
-  // { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
-  // { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
-  // { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
-  // { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
+  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
+  { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
+  { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
+  { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
+  { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
+  { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
+  { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
+  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
+  { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
 ];
 
 const timePills = [

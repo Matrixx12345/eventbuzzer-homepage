@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Search, Loader2, Flame, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +21,23 @@ interface EventWithBoost {
   currentBoost?: number;
 }
 
+// Admin emails allowed to access admin pages
+const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
+
 export default function AdminBuzzBoost() {
+  const { user } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+
   const [events, setEvents] = useState<EventWithBoost[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<EventWithBoost[]>([]);
   const [overrides, setOverrides] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
   const [saving, setSaving] = useState<string | null>(null);
 
   // Lade Events und bestehende Overrides

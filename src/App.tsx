@@ -24,6 +24,7 @@ import AdminRatings from "./pages/AdminRatings";
 import AdminSpeedTagging from "./pages/AdminSpeedTagging";
 import AdminBuzzBoost from "./pages/AdminBuzzBoost";
 import AdminChatbot from "./pages/AdminChatbot";
+import AdminHoneypot from "./pages/AdminHoneypot";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -34,6 +35,7 @@ import GoogleAnalytics from "./components/GoogleAnalytics";
 import ExitIntentPopup from "./components/ExitIntentPopup";
 import PartnerUpload from "./pages/PartnerUpload";
 import MobileBottomNav from "./components/MobileBottomNav";
+import Honeypot from "./pages/Honeypot";
 
 const queryClient = new QueryClient();
 
@@ -69,9 +71,20 @@ const App = () => (
               <Route path="/admin/speed-tagging" element={<AdminSpeedTagging />} />
               <Route path="/admin/buzz-boost" element={<AdminBuzzBoost />} />
               <Route path="/admin/chatbot" element={<AdminChatbot />} />
+              <Route path="/admin/honeypot" element={<AdminHoneypot />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/partner" element={<PartnerUpload />} />
+
+              {/* HONEYPOT ROUTES 🍯 - Fallen für böse Bots */}
+              {/* Diese Routen sind in robots.txt verboten */}
+              {/* Brave Bots (Google, Bing) besuchen sie NICHT */}
+              {/* Böse Bots ignorieren robots.txt → werden geloggt! */}
+              <Route path="/honeypot" element={<Honeypot />} />
+              <Route path="/secret-admin" element={<Honeypot />} />
+              <Route path="/wp-admin/*" element={<Honeypot />} />
+              <Route path="/hidden-data" element={<Honeypot />} />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

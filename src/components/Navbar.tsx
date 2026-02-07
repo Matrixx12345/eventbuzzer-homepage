@@ -71,6 +71,7 @@ const Navbar = () => {
     { label: "Trip-Planer", href: "/trip-planner" },
     { label: "Trip-Planer Neu", href: "/trip-planer-neu" },
     { label: "Supabase Test", href: "/supabase-test" },
+    { label: "Honeypot", href: "/admin/honeypot" },
   ];
 
   const handleSignOut = async () => {

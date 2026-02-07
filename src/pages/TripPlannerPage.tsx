@@ -847,9 +847,9 @@ const TripPlannerPage: React.FC = () => {
 
       <Navbar />
 
-      <main className="mx-auto px-[15px] py-8">
+      <main className="mx-auto px-2 xl:px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Mein Reiseplaner</h1>
           <p className="text-gray-500">
             {totalEventCount === 0
@@ -864,7 +864,7 @@ const TripPlannerPage: React.FC = () => {
             <EmptyState />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start max-w-6xl mx-auto">
             {[1, 2, 3].map((day) => {
               const dayEvents = plannedEventsByDay[day] || [];
               return (
@@ -877,34 +877,28 @@ const TripPlannerPage: React.FC = () => {
 
                   {/* Timeline + Events OR Empty State */}
                   {dayEvents.length > 0 ? (
-                    <div className="relative">
-                      {/* Desktop: Timeline with dots - ONLY at 1280px+ */}
-                      <div className="hidden xl:block absolute left-[66px] top-12 bottom-0 w-0.5 bg-gray-300 z-0" />
-
-                      <div className="space-y-3 md:space-y-4 md:pt-12 relative z-10">
+                    <div className="relative pt-[15px]">
+                      <div className="space-y-3 md:space-y-4 relative z-10">
                         {dayEvents.map((pe, index) => (
                           <div key={pe.eventId} className="relative group">
-                            {/* Mobile: Time ABOVE card, Desktop: Time LEFT */}
-                            <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-3 md:w-[240px] md:mx-auto xl:w-auto xl:mx-0">
+                            {/* Time ABOVE card at all breakpoints */}
+                            <div className="flex flex-col gap-1 md:w-[240px] md:mx-auto lg:w-auto lg:mx-0">
                               {/* Time Label */}
-                              <div className="text-xs font-semibold text-gray-600 mb-1 xl:mb-0 xl:flex-shrink-0 xl:w-12 xl:text-right">
+                              <div className="text-xs font-semibold text-gray-600 mb-1">
                                 {TIME_POINTS[index] || '—'}
                               </div>
 
-                              {/* Timeline Dot - DESKTOP ONLY (1280px+) */}
-                              <div className="hidden xl:block flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
-
-                              {/* Event Card - VERTICAL at 1024px (photo top, text bottom), HORIZONTAL at 1280px+ (image left, text right) */}
+                              {/* Event Card - VERTICAL at all breakpoints, centered */}
                               <div
                                 onClick={() => handleEventClick(pe.event)}
-                                className="p-2 rounded-lg border border-gray-300 md:border-2 md:border-gray-500 bg-white hover:border-gray-400 md:hover:border-gray-600 transition-all cursor-pointer flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2 w-full xl:w-80 flex-shrink-0"
+                                className="p-2 rounded-lg border border-gray-300 md:border-2 md:border-gray-500 bg-white hover:border-gray-400 md:hover:border-gray-600 transition-all cursor-pointer flex flex-col gap-2 w-full flex-shrink-0"
                               >
-                                <div className="flex flex-col xl:flex-row xl:items-center gap-2 flex-1 min-w-0">
+                                <div className="flex flex-col gap-2 flex-1 min-w-0">
                                   {pe.event.image_url && (
                                     <img
                                       src={pe.event.image_url}
                                       alt={pe.event.title}
-                                      className="w-full aspect-[3/1] xl:w-20 xl:h-20 xl:aspect-auto rounded-md object-cover flex-shrink-0"
+                                      className="w-full aspect-[3/1] rounded-md object-cover flex-shrink-0"
                                     />
                                   )}
                                   <div className="flex-1 min-w-0">
@@ -920,7 +914,7 @@ const TripPlannerPage: React.FC = () => {
                                 </div>
 
                                 {/* Duration + Action Buttons in same row */}
-                                <div className="flex flex-row xl:flex-col items-center gap-0.5 xl:gap-0 flex-shrink-0">
+                                <div className="flex flex-row items-center gap-0.5 flex-shrink-0">
                                   {/* Duration Badge */}
                                   {pe.duration && (
                                     <span className="inline-block px-1.5 py-0.5 md:px-2.5 rounded-full bg-gray-50 text-[10px] md:text-xs text-gray-600 font-medium border border-gray-200">

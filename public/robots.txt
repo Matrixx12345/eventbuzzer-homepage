@@ -19,5 +19,11 @@ User-agent: *
 Disallow: /api/  # Schütze deine API-Endpunkte vor direktem Zugriff
 Disallow: /admin/
 
+# 4. HONEYPOT - Fallen für böse Bots (bitte NICHT besuchen!)
+Disallow: /honeypot
+Disallow: /secret-admin
+Disallow: /wp-admin/
+Disallow: /hidden-data
+
 # Sitemap Location
 Sitemap: https://eventbuzzer.ch/sitemap-index.xml

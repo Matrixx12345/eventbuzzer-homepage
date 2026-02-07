@@ -895,6 +895,75 @@ Konfiguration:
 - ✅ Google & Bing: Alles erlaubt
 - ❌ KI-Crawler gesperrt: GPTBot, CCBot
 - ❌ API & Admin Routen geschützt
+- 🍯 **Honeypot Fallen aktiv** (siehe unten)
+
+---
+
+### 🍯 Honeypot System (Bot-Falle)
+
+**Was ist ein Honeypot?**
+Ein Honeypot ist eine **Falle für böse Bots**. Wir erstellen Seiten die in robots.txt **verboten** sind:
+- Brave Bots (Google, Bing) respektieren robots.txt → besuchen die Seiten NICHT ✅
+- Böse Bots ignorieren robots.txt → besuchen die Seiten TROTZDEM ❌
+- **Wir loggen jeden Besuch** → erwischt! 🎯
+
+**Honeypot Routen:**
+- `/honeypot` - Hauptfalle
+- `/secret-admin` - Fake Admin Login
+- `/wp-admin/` - WordPress Admin Falle (viele Bots suchen danach)
+- `/hidden-data` - Fake versteckte Daten
+
+**Technische Details:**
+- **Seite:** `/src/pages/Honeypot.tsx` - Sieht aus wie Admin Login
+- **Logging:** Supabase Table `honeypot_logs`
+- **Migration:** `/supabase/migrations/20260207_create_honeypot_logs.sql`
+- **Routen:** `/src/App.tsx` Zeile 77-84
+
+**Was wird geloggt:**
+```typescript
+{
+  user_agent: string,      // Bot Identität
+  ip_address: string,      // IP (via Vercel)
+  referrer: string,        // Woher kam der Bot?
+  honeypot_path: string,   // Welche Falle?
+  bot_type: 'good' | 'bad' | 'unknown',
+  visited_at: timestamp
+}
+```
+
+**Honeypot Logs ansehen:**
+
+**Option 1: Admin Dashboard (empfohlen)** 📊
+- **URL:** `/admin/honeypot`
+- **Features:**
+  - Live Statistiken (Gesamt, Heute, Diese Woche, Böse Bots)
+  - Filterable Logs Tabelle
+  - Bot Type Badges (Böse/Gut/Unbekannt)
+  - Auto-Refresh Funktion
+  - Schönes UI im Admin-Design
+
+**Option 2: SQL (Supabase Dashboard)**
+```sql
+-- Alle Logs
+SELECT * FROM honeypot_logs ORDER BY visited_at DESC;
+
+-- Nur böse Bots
+SELECT * FROM honeypot_logs WHERE bot_type = 'bad';
+
+-- Statistik nach User-Agent
+SELECT user_agent, COUNT(*) as visits
+FROM honeypot_logs
+GROUP BY user_agent
+ORDER BY visits DESC;
+```
+
+**WICHTIG:**
+- ⚠️ **NIEMALS** Honeypot Seiten in normaler Navigation verlinken!
+- ⚠️ **NIEMALS** auf Social Media teilen
+- ⚠️ Nur via robots.txt "verbieten" aber die Seite existiert trotzdem
+- ✅ Bots die dort landen sind definitiv böse (ignorieren robots.txt)
+
+---
 
 ### Favoriten-Seite "Events erkunden" Link
 

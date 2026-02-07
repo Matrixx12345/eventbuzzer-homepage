@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ThumbsUp, ThumbsDown, AlertTriangle, Loader2, Trash2, Tag } from "lucide-react";
 import {
   Table,
@@ -42,12 +43,23 @@ const FILTER_OPTIONS = [
   { key: "inappropriate", label: "Inappropriate" },
 ];
 
+// Admin emails allowed to access admin pages
+const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
+
 export default function AdminRatings() {
+  const { user } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+
   const [ratings, setRatings] = useState<EventRating[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [editingEvent, setEditingEvent] = useState<EventRating | null>(null);
+
+  // Redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
   const [editedTags, setEditedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);

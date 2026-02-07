@@ -1,11 +1,22 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft } from "lucide-react";
 import ChatbotPopup from "@/components/ChatbotPopup";
 import { useChatbot } from "@/hooks/useChatbot";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Admin emails allowed to access admin pages
+const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
 
 const AdminChatbot = () => {
+  const { user } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
   const { isOpen, closeChatbot, openChatbot } = useChatbot();
+
+  // Redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-8">

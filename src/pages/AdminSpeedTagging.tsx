@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Typen definieren
 interface Event {
@@ -28,10 +30,21 @@ interface TagItem {
   icon: string | null;
 }
 
+// Admin emails allowed to access admin pages
+const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
+
 export default function SpeedTagging() {
+  const { user } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+
   const [events, setEvents] = useState<Event[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [taxonomy, setTaxonomy] = useState<TaxonomyItem[]>([]);
+
+  // Redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
   const [availableTags, setAvailableTags] = useState<TagItem[]>([]);
   const [loading, setLoading] = useState(true);
 

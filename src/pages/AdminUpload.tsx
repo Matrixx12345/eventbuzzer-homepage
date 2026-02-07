@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { uploadAllAssetsToStorage } from "@/utils/uploadAssetsToStorage";
+import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle, XCircle, Upload, Loader2, Heart, ThumbsDown, BarChart3, Trash2, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,7 +44,13 @@ const FILTER_OPTIONS = [
   { key: "inappropriate", label: "Inappropriate" },
 ];
 
+// Admin emails allowed to access admin pages
+const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
+
 const AdminUpload = () => {
+  const { user } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, filename: "" });
   const [results, setResults] = useState<{ success: string[]; failed: string[] } | null>(null);
@@ -51,6 +58,11 @@ const AdminUpload = () => {
   // Ratings state
   const [ratings, setRatings] = useState<EventRating[]>([]);
   const [loadingRatings, setLoadingRatings] = useState(true);
+
+  // Redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
   const [ratingsError, setRatingsError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
   
