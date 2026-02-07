@@ -780,7 +780,8 @@ const EventList1 = () => {
             {/* Event List Container */}
             {/* Mobile/Tablet: Tighter spacing | Desktop: Normal spacing */}
             <div className="w-full space-y-2 lg:space-y-3">
-              {/* Subcategory Pills */}
+              {/* Subcategory Pills - VORERST AUSGEBLENDET */}
+              {/* TODO: Wieder einblenden wenn gewünscht
               {filters.categoryId && subCategories.length > 0 && (
                 <div className="bg-[#F4F7FA] py-3 -mx-2 px-2 overflow-x-auto">
                   <div className="flex gap-2 min-w-max">
@@ -812,6 +813,7 @@ const EventList1 = () => {
                   </div>
                 </div>
               )}
+              */}
 
               {/* Active Filter Badge */}
               {nearbyEventsFilter && (

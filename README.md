@@ -907,3 +907,19 @@ Konfiguration:
 - Browser Cache löschen
 - Hard Reload (Cmd+Shift+R auf Mac, Ctrl+Shift+R auf Windows)
 - Oder warten bis neue Version deployed ist
+
+---
+
+## 📍 Subkategorie Pills Location
+
+**Was sind Subkategorie Pills?**
+- Horizontal scrollbare Pill-Leiste in EventList1
+- Erscheint NACH Kategorie-Auswahl
+- Beispiel: "Musik & Party" → Pills wie "Konzert", "DJ Set", "Festival"
+
+**Location:** `/src/pages/EventList1.tsx` Zeile 783-814
+
+**Status:** ✅ AUSGEBLENDET (vorerst nicht benötigt)
+
+**Wie reaktivieren:** Kommentare `{/*` und `*/}` entfernen
+
