@@ -253,7 +253,9 @@ const HeroFilterBar = () => {
               </PopoverContent>
             </Popover>
 
-            {/* Stimmung Dropdown */}
+            {/* Stimmung Dropdown - VORERST AUSGEBLENDET */}
+            {/* TODO: Wieder einblenden wenn gewünscht */}
+            {/*
             <Popover open={moodOpen} onOpenChange={setMoodOpen}>
               <PopoverTrigger asChild>
                 <button className="flex-1 lg:flex-none lg:min-w-[150px] px-4 py-2.5 rounded-xl lg:rounded-full bg-white/90 border border-white/60 hover:bg-white transition-all flex items-center justify-between gap-2 text-sm font-medium text-foreground/80">
@@ -289,6 +291,7 @@ const HeroFilterBar = () => {
                 ))}
               </PopoverContent>
             </Popover>
+            */}
           </div>
 
           {/* Divider - Desktop only */}

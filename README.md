@@ -840,3 +840,70 @@ Siehe `/tmp/` für alle einzelnen Backups:
 - `ListingsFilterBar_*.tsx` - verschiedene Versionen
 
 Für SAUBERES Mergen: Nur die FILES die sich geändert haben aus spezifischen Commits nehmen, NICHT ganze Commits cherry-picken ohne Review!
+
+---
+
+## 📍 Component Locations & Deaktivierte Features
+
+### ActionPill (Glassmorphism Buttons)
+
+**Was ist die ActionPill?**
+- Glassmorphism UI-Element mit Star Rating, Favorit, Share, Trip Planner Buttons
+- Component: `/src/components/ActionPill.tsx`
+
+**Aktuell deaktiviert auf:**
+
+#### Favoriten-Seite (`/src/pages/Favorites.tsx`)
+- **Location:** Zeile 219-235 (auskommentiert)
+- **Grund:** Vorerst ausgeblendet
+- **Wie reaktivieren:** Kommentare entfernen um `<ActionPill />` wieder zu aktivieren
+
+```tsx
+{/* Action Pill at bottom - Vorerst ausgeblendet */}
+{/* TODO: ActionPill wieder einblenden wenn gewünscht ... */}
+```
+
+### Stimmungs-Pills (Mood Filter)
+
+**Was sind Stimmungs-Pills?**
+- Filter für Geburtstag, Mistwetter, Must-See, Top Stars, Foto-Spots, Romantik, Familie, Nightlife, Wellness
+- Zeigen sich als Dropdown wenn "Stimmung" Button geklickt wird
+
+**Aktuell deaktiviert in:**
+
+#### HeroFilterBar (`/src/components/HeroFilterBar.tsx`)
+- **Location:** Zeile 256-291 (auskommentiert)
+- **Grund:** Vorerst ausgeblendet - nicht benötigt
+- **Wie reaktivieren:** `{/*` und `*/}` Kommentare entfernen
+
+#### ListingsFilterBar (`/src/components/ListingsFilterBar.tsx`)
+- **Location:** Zeile 43-53 (Array auskommentiert)
+- **Grund:** Mood Pills deaktiviert
+- **Wie reaktivieren:** Array-Kommentare entfernen, Elemente wieder aktivieren
+
+### Event Detail Seite
+
+**Keine Subkategorie Pills vorhanden** - nur Breadcrumb Navigation
+- Breadcrumb zeigt: Events > Stadt > Kategorie > Event Titel
+- Location: `/src/pages/EventDetail.tsx` Zeile 970-986
+
+### Robots.txt Konfiguration
+
+**Location:** `/public/robots.txt`
+
+Konfiguration:
+- ✅ Google & Bing: Alles erlaubt
+- ❌ KI-Crawler gesperrt: GPTBot, CCBot
+- ❌ API & Admin Routen geschützt
+
+### Favoriten-Seite "Events erkunden" Link
+
+**Aktueller Status:** ✅ Korrekt
+- **Location:** `/src/pages/Favorites.tsx` Zeile 169-174
+- **Link Ziel:** `/eventlist1` (Event-Seite)
+- **Wird angezeigt:** Nur wenn `favorites.length === 0`
+
+**Hinweis:** Wenn der Link auf deployed Version zur Startseite führt statt zur Event-Seite:
+- Browser Cache löschen
+- Hard Reload (Cmd+Shift+R auf Mac, Ctrl+Shift+R auf Windows)
+- Oder warten bis neue Version deployed ist
