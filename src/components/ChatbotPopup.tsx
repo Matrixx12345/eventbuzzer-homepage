@@ -435,7 +435,7 @@ const ChatbotPopup = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPopupPr
       {!isOpen && (
         <button
           onClick={onOpen}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] w-8 h-20 flex items-center justify-center bg-white shadow-xl rounded-l-xl border border-r-0 border-gray-300 hover:bg-gray-50 hover:w-10 transition-all duration-200"
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-[70] w-8 h-20 flex items-center justify-center bg-white shadow-xl rounded-l-xl border border-r-0 border-gray-300 hover:bg-gray-50 hover:w-10 transition-all duration-200"
         >
           <ChevronLeft className="h-7 w-7 text-gray-600" />
         </button>

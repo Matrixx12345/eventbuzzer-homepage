@@ -96,13 +96,21 @@ const Navbar = () => {
                 className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative"
               >
                 {link.label}
-                {link.label === "Favoriten" && favorites.length > 0 && (
-                  <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {link.label === "Favoriten" && (
+                  <span className={`absolute -top-2 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
+                    favorites.length === 0
+                      ? 'text-gray-500 border border-gray-400/30 font-normal'
+                      : 'bg-red-500 text-white shadow-md font-bold'
+                  }`}>
                     {favorites.length}
                   </span>
                 )}
-                {link.label === "Reiseplaner" && totalEventCount > 0 && (
-                  <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {link.label === "Reiseplaner" && (
+                  <span className={`absolute -top-2 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
+                    totalEventCount === 0
+                      ? 'text-gray-500 border border-gray-400/30 font-normal'
+                      : 'bg-red-500 text-white shadow-md font-bold'
+                  }`}>
                     {totalEventCount}
                   </span>
                 )}
@@ -211,13 +219,21 @@ const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
-                  {link.label === "Favoriten" && favorites.length > 0 && (
-                    <span className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {link.label === "Favoriten" && (
+                    <span className={`absolute -top-1 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
+                      favorites.length === 0
+                        ? 'text-gray-500 border border-gray-400/30 font-normal'
+                        : 'bg-red-500 text-white shadow-md font-bold'
+                    }`}>
                       {favorites.length}
                     </span>
                   )}
-                  {link.label === "Reiseplaner" && totalEventCount > 0 && (
-                    <span className="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {link.label === "Reiseplaner" && (
+                    <span className={`absolute -top-1 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
+                      totalEventCount === 0
+                        ? 'text-gray-500 border border-gray-400/30 font-normal'
+                        : 'bg-red-500 text-white shadow-md font-bold'
+                    }`}>
                       {totalEventCount}
                     </span>
                   )}

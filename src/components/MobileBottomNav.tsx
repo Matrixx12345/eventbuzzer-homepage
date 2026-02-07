@@ -26,13 +26,13 @@ const MobileBottomNav = () => {
       label: "Favoriten",
       icon: Heart,
       href: "/favorites",
-      badge: favorites.length > 0 ? favorites.length : null,
+      badge: favorites.length,
     },
     {
       label: "Planer",
       icon: Map,
       href: "/reiseplaner",
-      badge: totalEventCount > 0 ? totalEventCount : null,
+      badge: totalEventCount,
     },
   ];
 
@@ -71,7 +71,11 @@ const MobileBottomNav = () => {
                   strokeWidth={active ? 2.5 : 2}
                 />
                 {item.badge !== null && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  <span className={`absolute -top-2 -right-2 text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 ${
+                    item.badge === 0
+                      ? 'text-gray-500 border border-gray-400/30 font-normal'
+                      : 'bg-red-500 text-white shadow-md font-bold'
+                  }`}>
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 )}
