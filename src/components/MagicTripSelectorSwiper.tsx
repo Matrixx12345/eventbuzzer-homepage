@@ -225,29 +225,27 @@ export default function MagicTripSelectorSwiper({
 
   // Handle Add to Trip (Briefcase)
   const handleAddToTrip = useCallback(() => {
-    const event = availableEvents[currentIndex];
-    if (!event) return;
+    if (!currentEvent) return;
 
-    onEventSelected(event);
-    setAddedToTripIds(prev => new Set(prev).add(event.id));
-    toast.success(`✅ ${event.title} zu Tag ${activeDay} hinzugefügt!`);
-    setCurrentIndex((prev) => prev + 1);
-  }, [currentIndex, availableEvents, onEventSelected, activeDay]);
+    onEventSelected(currentEvent);
+    setAddedToTripIds(prev => new Set(prev).add(currentEvent.id));
+    toast.success(`✅ ${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
+    handleNext();
+  }, [currentEvent, onEventSelected, activeDay, handleNext]);
 
   // Handle Toggle Favorite (Heart)
   const handleToggleFavorite = useCallback(async () => {
-    const event = availableEvents[currentIndex];
-    if (!event) return;
+    if (!currentEvent) return;
 
-    const isFavorited = favoritedEventIds.has(event.id);
+    const isFavorited = favoritedEventIds.has(currentEvent.id);
 
     // Optimistic update
     setFavoritedEventIds(prev => {
       const updated = new Set(prev);
       if (isFavorited) {
-        updated.delete(event.id);
+        updated.delete(currentEvent.id);
       } else {
-        updated.add(event.id);
+        updated.add(currentEvent.id);
       }
       return updated;
     });
@@ -261,9 +259,9 @@ export default function MagicTripSelectorSwiper({
         setFavoritedEventIds(prev => {
           const updated = new Set(prev);
           if (isFavorited) {
-            updated.add(event.id);
+            updated.add(currentEvent.id);
           } else {
-            updated.delete(event.id);
+            updated.delete(currentEvent.id);
           }
           return updated;
         });
@@ -277,7 +275,7 @@ export default function MagicTripSelectorSwiper({
             .from('favorites')
             .delete()
             .eq('user_id', user.id)
-            .eq('event_id', event.id);
+            .eq('event_id', currentEvent.id);
 
           if (error) {
             console.warn("Favorites table warning:", error.message);
@@ -295,7 +293,7 @@ export default function MagicTripSelectorSwiper({
             .from('favorites')
             .insert({
               user_id: user.id,
-              event_id: event.id,
+              event_id: currentEvent.id,
             });
 
           if (error) {
@@ -312,14 +310,13 @@ export default function MagicTripSelectorSwiper({
       console.warn('Error toggling favorite:', error);
       // Don't show error toast - just silently update local state
     }
-  }, [currentIndex, availableEvents, favoritedEventIds]);
+  }, [currentEvent, favoritedEventIds]);
 
   // Handle Nearby Filter (MapPin)
   const handleNearbyFilter = useCallback(() => {
-    const event = availableEvents[currentIndex];
-    if (!event) return;
+    if (!currentEvent) return;
 
-    if (nearbyFilterActive && nearbyFilterEventId === event.id) {
+    if (nearbyFilterActive && nearbyFilterEventId === currentEvent.id) {
       // Deactivate filter
       setNearbyFilterActive(false);
       setNearbyFilterEventId(null);
@@ -328,11 +325,11 @@ export default function MagicTripSelectorSwiper({
     } else {
       // Activate filter
       setNearbyFilterActive(true);
-      setNearbyFilterEventId(event.id);
+      setNearbyFilterEventId(currentEvent.id);
       setCurrentIndex(0); // Reset to start of filtered list
       toast.success("Zeige Events in der Nähe");
     }
-  }, [currentIndex, availableEvents, nearbyFilterActive, nearbyFilterEventId]);
+  }, [currentEvent, nearbyFilterActive, nearbyFilterEventId]);
 
   // Reset state when closed
   useEffect(() => {
