@@ -225,27 +225,29 @@ export default function MagicTripSelectorSwiper({
 
   // Handle Add to Trip (Briefcase)
   const handleAddToTrip = useCallback(() => {
-    if (!currentEvent) return;
+    const event = availableEvents[currentIndex];
+    if (!event) return;
 
-    onEventSelected(currentEvent);
-    setAddedToTripIds(prev => new Set(prev).add(currentEvent.id));
-    toast.success(`✅ ${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
-    handleNext();
-  }, [currentEvent, onEventSelected, activeDay, handleNext]);
+    onEventSelected(event);
+    setAddedToTripIds(prev => new Set(prev).add(event.id));
+    toast.success(`✅ ${event.title} zu Tag ${activeDay} hinzugefügt!`);
+    setCurrentIndex((prev) => prev + 1);
+  }, [currentIndex, availableEvents, onEventSelected, activeDay]);
 
   // Handle Toggle Favorite (Heart)
   const handleToggleFavorite = useCallback(async () => {
-    if (!currentEvent) return;
+    const event = availableEvents[currentIndex];
+    if (!event) return;
 
-    const isFavorited = favoritedEventIds.has(currentEvent.id);
+    const isFavorited = favoritedEventIds.has(event.id);
 
     // Optimistic update
     setFavoritedEventIds(prev => {
       const updated = new Set(prev);
       if (isFavorited) {
-        updated.delete(currentEvent.id);
+        updated.delete(event.id);
       } else {
-        updated.add(currentEvent.id);
+        updated.add(event.id);
       }
       return updated;
     });
@@ -259,9 +261,9 @@ export default function MagicTripSelectorSwiper({
         setFavoritedEventIds(prev => {
           const updated = new Set(prev);
           if (isFavorited) {
-            updated.add(currentEvent.id);
+            updated.add(event.id);
           } else {
-            updated.delete(currentEvent.id);
+            updated.delete(event.id);
           }
           return updated;
         });
@@ -275,7 +277,7 @@ export default function MagicTripSelectorSwiper({
             .from('favorites')
             .delete()
             .eq('user_id', user.id)
-            .eq('event_id', currentEvent.id);
+            .eq('event_id', event.id);
 
           if (error) {
             console.warn("Favorites table warning:", error.message);
@@ -293,7 +295,7 @@ export default function MagicTripSelectorSwiper({
             .from('favorites')
             .insert({
               user_id: user.id,
-              event_id: currentEvent.id,
+              event_id: event.id,
             });
 
           if (error) {
@@ -310,13 +312,14 @@ export default function MagicTripSelectorSwiper({
       console.warn('Error toggling favorite:', error);
       // Don't show error toast - just silently update local state
     }
-  }, [currentEvent, favoritedEventIds]);
+  }, [currentIndex, availableEvents, favoritedEventIds]);
 
   // Handle Nearby Filter (MapPin)
   const handleNearbyFilter = useCallback(() => {
-    if (!currentEvent) return;
+    const event = availableEvents[currentIndex];
+    if (!event) return;
 
-    if (nearbyFilterActive && nearbyFilterEventId === currentEvent.id) {
+    if (nearbyFilterActive && nearbyFilterEventId === event.id) {
       // Deactivate filter
       setNearbyFilterActive(false);
       setNearbyFilterEventId(null);
@@ -325,11 +328,11 @@ export default function MagicTripSelectorSwiper({
     } else {
       // Activate filter
       setNearbyFilterActive(true);
-      setNearbyFilterEventId(currentEvent.id);
+      setNearbyFilterEventId(event.id);
       setCurrentIndex(0); // Reset to start of filtered list
       toast.success("Zeige Events in der Nähe");
     }
-  }, [currentEvent, nearbyFilterActive, nearbyFilterEventId]);
+  }, [currentIndex, availableEvents, nearbyFilterActive, nearbyFilterEventId]);
 
   // Reset state when closed
   useEffect(() => {
@@ -560,14 +563,14 @@ export default function MagicTripSelectorSwiper({
               {/* Title - Clickable to expand */}
               <h2
                 onClick={() => setExpandedText('title')}
-                className="text-2xl md:text-3xl lg:text-lg xl:text-3xl font-semibold lg:font-medium xl:font-semibold text-white mb-4 lg:mb-1.5 xl:mb-4 leading-tight line-clamp-1 cursor-pointer hover:text-white/80 transition-colors duration-200"
+                className="text-2xl md:text-3xl lg:text-lg xl:text-3xl font-semibold lg:font-medium xl:font-semibold text-white mb-3 lg:mb-1 xl:mb-3 leading-tight line-clamp-1 cursor-pointer hover:text-white/80 transition-colors duration-200"
               >
                 {currentEvent.title}
               </h2>
 
               {/* Location - Own Line */}
               {currentEvent.latitude && currentEvent.longitude && (
-                <div className="mb-5 lg:mb-1.5 xl:mb-5 text-white/50">
+                <div className="mb-2.5 lg:mb-0.5 xl:mb-2.5 text-white/50">
                   <span className="text-sm md:text-base lg:text-xs xl:text-base font-normal tracking-wide line-clamp-1">
                     {getLocationWithMajorCity(
                       currentEvent.latitude,
@@ -581,7 +584,7 @@ export default function MagicTripSelectorSwiper({
               {/* Description - Clickable to expand */}
               <p
                 onClick={() => setExpandedText('description')}
-                className="text-white/60 text-sm md:text-base lg:text-xs xl:text-base leading-relaxed lg:leading-snug xl:leading-relaxed line-clamp-3 lg:line-clamp-2 xl:line-clamp-3 cursor-pointer hover:text-white/70 transition-colors duration-200 font-light tracking-wide"
+                className="text-white/60 text-sm md:text-base lg:text-xs xl:text-base leading-relaxed lg:leading-snug xl:leading-relaxed line-clamp-2 cursor-pointer hover:text-white/70 transition-colors duration-200 font-light tracking-wide"
               >
                 {currentEvent.short_description ||
                   currentEvent.description ||
