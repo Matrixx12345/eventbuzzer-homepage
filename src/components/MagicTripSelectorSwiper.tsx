@@ -604,12 +604,13 @@ export default function MagicTripSelectorSwiper({
                 <div className="flex-1 flex items-center justify-center ml-[-80px]">
                   {/* 3 Action Buttons - Visuell zentriert */}
                   <div className="flex items-center gap-4 md:gap-6">
-                {/* MapPin - Nearby Filter (Blue) */}
+                {/* MapPin - Nearby Filter (Blue) - TEMPORARILY DISABLED FOR TESTING */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleNearbyFilter();
+                    // handleNearbyFilter(); // DISABLED FOR PERFORMANCE TESTING
+                    toast.info("Nearby-Filter vorübergehend deaktiviert");
                     e.currentTarget.blur();
                   }}
                   className={`group/nearby relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
@@ -617,7 +618,7 @@ export default function MagicTripSelectorSwiper({
                       ? 'bg-blue-500/20 border-[3px] border-blue-400 hover:bg-blue-500/30'
                       : 'bg-blue-500/20 border border-blue-400/50 hover:bg-blue-500/30'
                   }`}
-                  title="In der Nähe suchen"
+                  title="In der Nähe suchen (vorübergehend deaktiviert)"
                 >
                   <MapPin
                     size={22}
