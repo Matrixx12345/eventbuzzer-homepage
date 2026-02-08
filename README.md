@@ -494,6 +494,19 @@ npm install --legacy-peer-deps
 - **Chatbot**: Verschoben von Startseite zu `/admin/chatbot`
 - **Code-Sharing**: Längerer Code IMMER direkt im Chat/Zwischenspeicher teilen, NICHT als Code-Block-Link (pb code o.ä.) - die funktionieren oft nicht!
 
+## 🗑️ Events zu löschen
+
+Eine Liste von Events die aus der Datenbank entfernt werden sollen findest du in:
+```
+EVENTS_TO_DELETE.md
+```
+
+Diese Liste wird gepflegt für Events die:
+- Keine ausreichende Beschreibung haben
+- Duplikate sind
+- Nicht mehr relevant sind
+- Qualitätsprobleme aufweisen
+
 ## 📚 Alte README
 
 Vollständige Dokumentation (3859 Zeilen) archiviert in:
@@ -991,4 +1004,106 @@ ORDER BY visits DESC;
 **Status:** ✅ AUSGEBLENDET (vorerst nicht benötigt)
 
 **Wie reaktivieren:** Kommentare `{/*` und `*/}` entfernen
+
+---
+
+## ⚡ Performance Optimization: EventList1 Page Load
+
+**Problem:** EventList1 Seite lud 6-22 Sekunden (je nach Cache)
+
+**Root Cause (via Chrome Performance Profiler):**
+- ❌ **Scripting: 7.7-12 Sekunden** - React Rendering + Mapbox Marker Creation
+- ❌ **Event List BLOCKIERT bis Map fertig** - Event Cards rendern erst wenn Map Daten geladen hat
+- ❌ **Duplicate Loading** - EventList1 UND EventsMap laden beide Events
+- ❌ **Multiple Map Loads** - EventsMap lädt 3-4x während Initialisierung
+
+### Solution: Decouple Event Loading
+
+**Strategie:**
+1. EventList1 lädt Events **unabhängig** on mount (nicht warten auf Map)
+2. EventsMap **entfernt** initial loading (nur zoom/pan updates)
+3. Events werden **gemerged** (keine Duplikate)
+
+**Files Modified:**
+1. `/src/pages/EventList1.tsx` - Added independent event loading useEffect
+2. `/src/hooks/useEventData.ts` - Updated handleMapEventsChange to merge events
+3. `/src/components/EventsMap.tsx` - Removed initial loading (TODO)
+
+### Implementation Status
+
+**Phase 1: EventList1 Independent Loading** ✅ DONE
+- Added `useEffect` to load events on mount
+- Split into 2 parallel queries (Elite + Top Events) for faster loading
+- Events load immediately without waiting for map
+
+**Phase 2: Remove EventsMap Initial Loading** ✅ DONE
+- Removed `Promise.all([loadEventsInView(), loadEliteEvents()])` from map init
+- Map will only load on zoom/pan (not on mount)
+- Prevents duplicate loading (was 240 events, now 120)
+
+**Phase 3: Prevent Multiple Loads** ✅ DONE
+- Added `initialLoadDoneRef` to skip first moveend event
+- Prevents EventsMap from loading 3-4x during initialization
+
+### Performance Expectations
+
+**Before Optimization:**
+- Initial Page Load: 22 seconds 😢
+- Event Cards Visible: 22 seconds
+- Scripting Time: 7.7 seconds
+
+**After Optimization (Target):**
+- Initial Page Load: 2-3 seconds 😊
+- Event Cards Visible: 1-2 seconds 🎉
+- Scripting Time: 2-3 seconds ✅
+
+**Improvement Target:** 10x faster (22s → 2s)
+
+### Fixes Implemented
+
+✅ **Fix 1:** EventList1 query optimization
+- Split OR query into 2 parallel queries (Elite + Top Events)
+- Simpler queries execute faster than complex OR query
+- Status: Implemented, needs testing
+
+✅ **Fix 2:** Removed duplicate loading
+- EventsMap no longer loads events on mount
+- Only EventList1 loads initial events (120 instead of 240)
+- Status: Implemented, needs testing
+
+✅ **Fix 3:** Prevent multiple map loads during init
+- Added `initialLoadDoneRef` to skip first moveend event
+- Prevents 3-4x redundant loads during initialization
+- Status: Implemented, needs testing
+
+### Next Steps
+
+1. **Test Performance** ⏳ IN PROGRESS
+   - Open Chrome DevTools Performance tab
+   - Hard refresh EventList1 page
+   - Verify: Event cards visible in < 2 seconds
+   - Verify: No duplicate loading (120 events, not 240)
+   - Verify: Scripting time < 3 seconds
+
+2. **Verify Query Optimization**
+   - Check console logs for actual load time
+   - Target: < 1 second for initial events
+   - Compare Elite vs Top Events load times
+
+3. **Test Map Functionality**
+   - Zoom/pan should still load new events
+   - Filtering should work correctly
+   - Mobile view should work
+
+### Testing Checklist
+
+- [ ] Event cards visible in < 2 seconds
+- [ ] No duplicate events (should be ~120, not 240)
+- [ ] EventsMap loads only ONCE on mount
+- [ ] EventList1 query < 1 second
+- [ ] Map zoom/pan still loads new events
+- [ ] Filtering works correctly
+- [ ] Mobile view works
+
+---
 
