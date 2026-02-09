@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { X, MapPin, Heart, ChevronRight, ChevronLeft, Briefcase } from "lucide-react";
+import { X, MapPin, Heart, ChevronRight, ChevronLeft, Briefcase, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { haversineDistance } from "@/utils/geoHelpers";
@@ -41,6 +41,79 @@ export default function MagicTripSelectorSwiper({
   activeDay,
   onEventSelected,
 }: MagicTripSelectorSwiperProps) {
+  // Day/Night theme based on current hour
+  const isDayTime = useMemo(() => {
+    const hour = new Date().getHours();
+    return hour >= 6 && hour < 18;
+  }, []);
+
+  // Theme colors
+  const t = useMemo(() => isDayTime ? {
+    // Day theme
+    bg: 'bg-white',
+    bgOverlay: 'bg-white/95',
+    card: 'bg-white',
+    cardBorder: 'border-gray-200',
+    cardShadow: '0 0 60px 15px rgba(0, 0, 0, 0.08), 0 0 120px 30px rgba(0, 0, 0, 0.03)',
+    text: 'text-gray-900',
+    textHover: 'hover:text-gray-700',
+    textSecondary: 'text-gray-600',
+    textTertiary: 'text-gray-500',
+    textDesc: 'text-gray-600',
+    textDescHover: 'hover:text-gray-700',
+    gradientPhoto: 'bg-gradient-to-t from-white via-white/60 to-transparent',
+    gradientBottom: 'bg-gradient-to-t from-white via-white to-transparent',
+    chevron: 'bg-white/50 hover:bg-white/70',
+    closeBtn: 'bg-white/60 hover:bg-white/80',
+    iconColor: 'text-gray-900',
+    spinner: 'border-gray-900',
+    tooltip: 'bg-white/95 border-gray-200 text-gray-900',
+    starBg: 'text-gray-900',
+    actionBgBlue: 'bg-transparent',
+    actionBgRed: 'bg-transparent',
+    actionBgGreen: 'bg-transparent',
+    actionBgBlueHover: 'hover:bg-gray-100',
+    actionBgRedHover: 'hover:bg-gray-100',
+    actionBgGreenHover: 'hover:bg-gray-100',
+    modalCard: 'bg-white border-gray-200',
+    modalText: 'text-gray-900',
+    modalTextSecondary: 'text-gray-700',
+    modalBtn: 'bg-gray-900 text-white hover:bg-gray-800',
+    endBtn: 'bg-gray-200 hover:bg-gray-300 text-gray-900',
+  } : {
+    // Night theme (current)
+    bg: 'bg-black',
+    bgOverlay: 'bg-black/80',
+    card: 'bg-black',
+    cardBorder: 'border-white/8',
+    cardShadow: '0 0 60px 25px rgba(255, 255, 255, 0.08), 0 0 120px 50px rgba(255, 255, 255, 0.03)',
+    text: 'text-white',
+    textHover: 'hover:text-white/80',
+    textSecondary: 'text-white/50',
+    textTertiary: 'text-white/50',
+    textDesc: 'text-white/60',
+    textDescHover: 'hover:text-white/70',
+    gradientPhoto: 'bg-gradient-to-t from-black via-black/60 to-transparent',
+    gradientBottom: 'bg-gradient-to-t from-black via-black to-transparent',
+    chevron: 'bg-black/30 hover:bg-black/50',
+    closeBtn: 'bg-black/50 hover:bg-black/70',
+    iconColor: 'text-white',
+    spinner: 'border-white',
+    tooltip: 'bg-black/80 border-white/20 text-white',
+    starBg: 'text-white/70',
+    actionBgBlue: 'bg-blue-500/25 border-blue-500/50',
+    actionBgRed: 'bg-red-500/25 border-red-500/50',
+    actionBgGreen: 'bg-green-500/25 border-green-500/50',
+    actionBgBlueHover: 'hover:bg-blue-500/35',
+    actionBgRedHover: 'hover:bg-red-500/35',
+    actionBgGreenHover: 'hover:bg-green-500/35',
+    modalCard: 'bg-black border-white/20',
+    modalText: 'text-white',
+    modalTextSecondary: 'text-white/90',
+    modalBtn: 'bg-white text-black hover:bg-gray-100',
+    endBtn: 'bg-stone-700 hover:bg-stone-600 text-white',
+  }, [isDayTime]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,8 +259,7 @@ export default function MagicTripSelectorSwiper({
     onEventSelected(currentEvent);
     setAddedToTripIds(prev => new Set(prev).add(currentEvent.id));
     toast.success(`✅ ${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
-    handleNext();
-  }, [currentEvent, onEventSelected, activeDay, handleNext]);
+  }, [currentEvent, onEventSelected, activeDay]);
 
   // Handle Toggle Favorite (Heart)
   const handleToggleFavorite = useCallback(async () => {
@@ -288,7 +360,6 @@ export default function MagicTripSelectorSwiper({
 
       // Calculate distances for all events
       const eventsWithDistance = allEvents
-        .filter(e => e.id !== currentEvent.id) // Exclude the current event itself
         .map(event => {
           const dist = haversineDistance(
             currentEvent.latitude!,
@@ -407,25 +478,25 @@ export default function MagicTripSelectorSwiper({
   const noMoreEvents = currentIndex >= availableEvents.length;
 
   return (
-    <div className="fixed inset-0 bg-black z-[110] flex items-center justify-center p-4 md:p-8">
+    <div className={`fixed inset-0 ${t.bg} z-[110] flex items-center justify-center p-4 md:p-8`}>
       {/* Expanded Text Modal */}
       {expandedText && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[120] flex items-center justify-center p-6 cursor-pointer"
+          className={`fixed inset-0 ${t.bgOverlay} backdrop-blur-sm z-[120] flex items-center justify-center p-6 cursor-pointer`}
           onClick={() => setExpandedText(null)}
         >
           <div
-            className="bg-black border border-white/20 rounded-2xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl cursor-default"
+            className={`${t.modalCard} rounded-2xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl cursor-default`}
             onClick={(e) => e.stopPropagation()}
           >
             {expandedText === 'title' && (
               <div>
-                <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
+                <h2 className={`text-5xl font-bold ${t.modalText} mb-6 leading-tight`}>
                   {currentEvent?.title}
                 </h2>
                 <button
                   onClick={() => setExpandedText(null)}
-                  className="mt-8 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                  className={`mt-8 px-6 py-3 ${t.modalBtn} font-semibold rounded-lg transition-colors`}
                 >
                   Schließen
                 </button>
@@ -433,12 +504,12 @@ export default function MagicTripSelectorSwiper({
             )}
             {expandedText === 'description' && (
               <div>
-                <p className="text-2xl text-white/90 leading-relaxed">
+                <p className={`text-2xl ${t.modalTextSecondary} leading-relaxed`}>
                   {currentEvent?.short_description || currentEvent?.description || "Keine Beschreibung verfügbar"}
                 </p>
                 <button
                   onClick={() => setExpandedText(null)}
-                  className="mt-8 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                  className={`mt-8 px-6 py-3 ${t.modalBtn} font-semibold rounded-lg transition-colors`}
                 >
                   Schließen
                 </button>
@@ -451,15 +522,15 @@ export default function MagicTripSelectorSwiper({
       <div className="w-full h-full max-w-sm md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl flex items-center justify-center">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4"></div>
-            <p className="text-white text-lg">Events werden geladen...</p>
+            <div className={`animate-spin rounded-full h-16 w-16 border-b-2 ${t.spinner} mb-4`}></div>
+            <p className={`${t.text} text-lg`}>Events werden geladen...</p>
           </div>
         ) : noMoreEvents ? (
-          <div className="flex flex-col items-center justify-center h-full text-white">
+          <div className={`flex flex-col items-center justify-center h-full ${t.text}`}>
             <p className="text-2xl font-bold mb-3">
               {nearbyFilterActive ? "Keine Events in der Nähe" : "Keine weiteren Events verfügbar"}
             </p>
-            <p className="text-white/70 mb-8 text-center">
+            <p className={`${t.textSecondary} mb-8 text-center`}>
               {nearbyFilterActive ? "Deaktiviere den Filter, um mehr Events zu sehen" : "Du hast alle passenden Events gesehen!"}
             </p>
             {nearbyFilterActive && (
@@ -477,16 +548,16 @@ export default function MagicTripSelectorSwiper({
             )}
             <button
               onClick={onClose}
-              className="mt-4 px-8 py-3 bg-stone-700 hover:bg-stone-600 text-white font-semibold rounded-xl transition-colors"
+              className={`mt-4 px-8 py-3 ${t.endBtn} font-semibold rounded-xl transition-colors`}
             >
               Schließen
             </button>
           </div>
         ) : currentEvent ? (
           <div
-            className="relative w-full max-h-[88vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/8"
+            className={`relative w-full max-h-[88vh] ${t.card} rounded-3xl overflow-hidden shadow-2xl border-[1.5px] ${isDayTime ? 'border-gray-300' : t.cardBorder}`}
             style={{
-              boxShadow: '0 0 60px 25px rgba(255, 255, 255, 0.08), 0 0 120px 50px rgba(255, 255, 255, 0.03)'
+              boxShadow: t.cardShadow
             }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -496,20 +567,20 @@ export default function MagicTripSelectorSwiper({
             <button
               onClick={handlePrevious}
               disabled={currentIndex === 0}
-              className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 bg-black/30 hover:bg-black/50 disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-md rounded-full flex items-center justify-center transition-all"
+              className={`absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 ${t.chevron} disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-md rounded-full flex items-center justify-center transition-all`}
               aria-label="Previous event"
             >
-              <ChevronLeft size={32} className="text-white" strokeWidth={2.5} />
+              <ChevronLeft size={32} className={t.iconColor} strokeWidth={2.5} />
             </button>
 
             {/* Right Chevron - Go Forward */}
             <button
               onClick={handleNext}
               disabled={noMoreEvents}
-              className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 bg-black/30 hover:bg-black/50 disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-md rounded-full flex items-center justify-center transition-all"
+              className={`absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 ${t.chevron} disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-md rounded-full flex items-center justify-center transition-all`}
               aria-label="Next event"
             >
-              <ChevronRight size={32} className="text-white" strokeWidth={2.5} />
+              <ChevronRight size={32} className={t.iconColor} strokeWidth={2.5} />
             </button>
 
             {/* Photo Area - Top ~60% */}
@@ -535,13 +606,21 @@ export default function MagicTripSelectorSwiper({
                     {currentEvent.tags.slice(0, 4).map((tag: string, index: number) => (
                       <span
                         key={index}
-                        className="bg-white/80 backdrop-blur-md text-gray-800 text-[11px] md:text-[13px] font-bold px-3 py-1.5 rounded whitespace-nowrap shadow-lg"
+                        className={`backdrop-blur-md text-[11px] md:text-[13px] font-bold px-3 py-1.5 rounded whitespace-nowrap shadow-lg ${
+                          isDayTime
+                            ? 'bg-white/70 text-gray-900'
+                            : 'bg-white/15 text-white'
+                        }`}
                       >
                         {tag.charAt(0).toUpperCase() + tag.slice(1)}
                       </span>
                     ))}
                     {currentEvent.tags.length > 4 && (
-                      <span className="bg-white/80 backdrop-blur-md text-gray-800 text-[11px] md:text-[13px] font-bold px-3 py-1.5 rounded shadow-lg">
+                      <span className={`backdrop-blur-md text-[11px] md:text-[13px] font-bold px-3 py-1.5 rounded shadow-lg ${
+                        isDayTime
+                          ? 'bg-white/70 text-gray-900'
+                          : 'bg-white/15 text-white'
+                      }`}>
                         +{currentEvent.tags.length - 4}
                       </span>
                     )}
@@ -552,30 +631,38 @@ export default function MagicTripSelectorSwiper({
               {/* Close Button - Top Right */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 md:top-6 md:right-6 w-11 h-11 bg-black/50 hover:bg-black/70 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
+                className={`absolute top-4 right-4 md:top-6 md:right-6 w-11 h-11 ${t.closeBtn} backdrop-blur-md rounded-full flex items-center justify-center transition-colors`}
                 aria-label="Close"
               >
-                <X size={22} className="text-white" strokeWidth={2.5} />
+                <X size={22} className={t.iconColor} strokeWidth={2.5} />
               </button>
 
-              {/* Gradient overlay at bottom of photo */}
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/60 to-transparent" />
+              {/* No gradient overlay - removed weichfilter effect */}
             </div>
 
             {/* Text Content Area - Middle */}
             <div className="relative px-6 md:px-8 pt-6 lg:pt-3 xl:pt-6 pb-40 lg:pb-32 xl:pb-40 overflow-y-auto">
               {/* Title - Clickable to expand */}
-              <h2
-                onClick={() => setExpandedText('title')}
-                className="text-2xl md:text-3xl lg:text-lg xl:text-3xl font-semibold lg:font-medium xl:font-semibold text-white mb-3 lg:mb-1 xl:mb-3 leading-tight line-clamp-1 cursor-pointer hover:text-white/80 transition-colors duration-200"
-              >
-                {currentEvent.title}
-              </h2>
+              <div className="relative">
+                <h2
+                  onClick={() => setExpandedText('title')}
+                  className={`text-2xl md:text-3xl lg:text-lg xl:text-3xl font-semibold lg:font-medium xl:font-semibold ${t.text} mb-3 lg:mb-1 xl:mb-3 leading-tight line-clamp-1 cursor-pointer ${t.textHover} transition-colors duration-200 pr-16`}
+                >
+                  {currentEvent.title}
+                </h2>
+                {/* Star Rating - Absolut rechts vom Titel */}
+                {currentEvent.buzz_score !== undefined && (
+                  <div className={`absolute top-0 right-0 ${t.starBg} bg-transparent backdrop-blur-md px-3 md:px-4 rounded-full font-bold text-sm md:text-base flex items-center gap-2 w-fit h-10 md:h-12`}>
+                    <Star size={24} strokeWidth={2.5} className="text-[#fbbf24] fill-none" />
+                    <span className="whitespace-nowrap">{(currentEvent.buzz_score / 20).toFixed(1)}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Location - Own Line */}
               {currentEvent.latitude && currentEvent.longitude && (
-                <div className="mb-2.5 lg:mb-0.5 xl:mb-2.5 text-white/50">
-                  <span className="text-sm md:text-base lg:text-xs xl:text-base font-normal tracking-wide line-clamp-1">
+                <div className={`mb-2.5 lg:mb-0.5 xl:mb-2.5 ${t.textSecondary}`}>
+                  <span className="text-sm md:text-base lg:text-xs xl:text-base font-semibold tracking-wide line-clamp-1">
                     {getLocationWithMajorCity(
                       currentEvent.latitude,
                       currentEvent.longitude,
@@ -588,7 +675,7 @@ export default function MagicTripSelectorSwiper({
               {/* Description - Clickable to expand */}
               <p
                 onClick={() => setExpandedText('description')}
-                className="text-white/60 text-sm md:text-base lg:text-xs xl:text-base leading-relaxed lg:leading-snug xl:leading-relaxed line-clamp-2 cursor-pointer hover:text-white/70 transition-colors duration-200 font-light tracking-wide"
+                className={`${t.textDesc} text-sm md:text-base lg:text-xs xl:text-base leading-relaxed lg:leading-snug xl:leading-relaxed line-clamp-2 cursor-pointer ${t.textDescHover} transition-colors duration-200 font-medium tracking-wide`}
               >
                 {currentEvent.short_description ||
                   currentEvent.description ||
@@ -597,20 +684,10 @@ export default function MagicTripSelectorSwiper({
             </div>
 
             {/* Action Buttons - Fixed Bottom */}
-            <div className="absolute bottom-0 left-0 right-0 px-6 md:px-8 py-7 bg-gradient-to-t from-black via-black to-transparent">
-              <div className="flex items-center">
-                {/* Star Rating - Ganz links */}
-                {currentEvent.buzz_score !== undefined && (
-                  <div className="bg-white/5 border border-white/10 backdrop-blur-md text-white/70 px-3 md:px-4 py-2 md:py-2.5 rounded-full font-bold text-xs md:text-sm shadow-lg hover:bg-white/10 transition-all flex items-center gap-1.5 w-fit h-14 md:h-16 flex-shrink-0">
-                    <span className="text-lg md:text-xl">⭐</span>
-                    <span>{(currentEvent.buzz_score / 20).toFixed(1)}</span>
-                  </div>
-                )}
-
-                {/* Spacer - für Links-Verschiebung der zentrierten Buttons */}
-                <div className="flex-1 flex items-center justify-center ml-[-80px]">
-                  {/* 3 Action Buttons - Visuell zentriert */}
-                  <div className="flex items-center gap-4 md:gap-6">
+            <div className={`absolute bottom-0 left-0 right-0 px-6 md:px-8 py-7 ${t.gradientBottom}`}>
+              <div className="flex items-center justify-center">
+                {/* 3 Action Buttons - Visuell zentriert */}
+                <div className="flex items-center gap-5 md:gap-7">
                 {/* MapPin - Nearby Filter (Blue) */}
                 <button
                   onClick={(e) => {
@@ -619,21 +696,21 @@ export default function MagicTripSelectorSwiper({
                     handleNearbyFilter();
                     e.currentTarget.blur();
                   }}
-                  className={`group/nearby relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
+                  className={`group/nearby relative w-16 h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
                     nearbyFilterActive && nearbyFilterEventId === currentEvent.id
-                      ? 'bg-blue-500/20 border-[3px] border-blue-400 hover:bg-blue-500/30'
-                      : 'bg-blue-500/20 border border-blue-400/50 hover:bg-blue-500/30'
+                      ? `${t.actionBgBlue} border-2 ${isDayTime ? 'border-blue-500' : 'border-blue-500'} ${t.actionBgBlueHover}`
+                      : `${t.actionBgBlue} border-[1.5px] ${isDayTime ? 'border-blue-500' : 'border-blue-500/50'} ${t.actionBgBlueHover}`
                   }`}
                   title="In der Nähe suchen"
                 >
                   <MapPin
-                    size={22}
-                    className="text-blue-300 transition-colors duration-300"
-                    strokeWidth={nearbyFilterActive && nearbyFilterEventId === currentEvent.id ? 2.5 : 1.5}
+                    size={30}
+                    className={`${isDayTime ? 'text-blue-600' : 'text-blue-400'} transition-colors duration-300`}
+                    strokeWidth={2.5}
                   />
                   {/* Tooltip */}
-                  <div className="absolute bottom-full mb-3 hidden md:group-hover/nearby:block pointer-events-none">
-                    <div className="bg-black/80 border border-white/20 text-white text-xs font-light px-3 py-2 rounded-md whitespace-nowrap backdrop-blur-sm">
+                  <div className="absolute bottom-full mb-3 opacity-0 md:group-hover/nearby:opacity-100 transition-opacity duration-150 pointer-events-none">
+                    <div className={`${t.tooltip} text-xs font-light px-3 py-2 rounded-md whitespace-nowrap backdrop-blur-sm border`}>
                       {nearbyFilterActive && nearbyFilterEventId === currentEvent.id
                         ? "Filter aufheben"
                         : "In der Nähe suchen"}
@@ -649,25 +726,25 @@ export default function MagicTripSelectorSwiper({
                     handleToggleFavorite();
                     e.currentTarget.blur();
                   }}
-                  className={`group/heart relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
+                  className={`group/heart relative w-16 h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
                     favoritedEventIds.has(currentEvent.id)
-                      ? 'bg-red-500/15 border-[3px] border-red-400 hover:bg-red-500/25'
-                      : 'bg-red-500/15 border border-red-400/40 hover:bg-red-500/25'
+                      ? `${t.actionBgRed} border-2 ${isDayTime ? 'border-red-500' : 'border-red-500'} ${t.actionBgRedHover}`
+                      : `${t.actionBgRed} border-[1.5px] ${isDayTime ? 'border-red-500' : 'border-red-500/50'} ${t.actionBgRedHover}`
                   }`}
                   title="Favorit"
                 >
                   <Heart
-                    size={22}
+                    size={30}
                     className={`transition-colors duration-300 ${
                       favoritedEventIds.has(currentEvent.id)
-                        ? 'text-red-300 fill-red-300'
-                        : 'text-red-300'
+                        ? `${isDayTime ? 'text-red-600' : 'text-red-400'} fill-current`
+                        : `${isDayTime ? 'text-red-600' : 'text-red-400'}`
                     }`}
-                    strokeWidth={favoritedEventIds.has(currentEvent.id) ? 2.5 : 1.5}
+                    strokeWidth={2.5}
                   />
                   {/* Tooltip */}
-                  <div className="absolute bottom-full mb-3 hidden md:group-hover/heart:block pointer-events-none">
-                    <div className="bg-black/80 border border-white/20 text-white text-xs font-light px-3 py-2 rounded-md whitespace-nowrap backdrop-blur-sm">
+                  <div className="absolute bottom-full mb-3 opacity-0 md:group-hover/heart:opacity-100 transition-opacity duration-150 pointer-events-none">
+                    <div className={`${t.tooltip} text-xs font-light px-3 py-2 rounded-md whitespace-nowrap backdrop-blur-sm border`}>
                       {favoritedEventIds.has(currentEvent.id)
                         ? "Aus Favoriten entfernen"
                         : "Zu Favoriten hinzufügen"}
@@ -683,33 +760,32 @@ export default function MagicTripSelectorSwiper({
                     handleAddToTrip();
                     e.currentTarget.blur();
                   }}
-                  className={`group/trip relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
+                  className={`group/trip relative w-16 h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
                     addedToTripIds.has(currentEvent.id)
-                      ? 'bg-green-500/20 border-[3px] border-green-400 hover:bg-green-500/30'
-                      : 'bg-green-500/20 border border-green-400/50 hover:bg-green-500/30'
+                      ? `${t.actionBgGreen} border-2 ${isDayTime ? 'border-green-500' : 'border-green-500'} ${t.actionBgGreenHover}`
+                      : `${t.actionBgGreen} border-[1.5px] ${isDayTime ? 'border-green-500' : 'border-green-500/50'} ${t.actionBgGreenHover}`
                   }`}
                   title="Zur Reise hinzufügen"
                 >
                   <Briefcase
-                    size={22}
-                    className="text-green-300 transition-colors duration-300"
-                    strokeWidth={addedToTripIds.has(currentEvent.id) ? 2.5 : 1.5}
+                    size={30}
+                    className={`${isDayTime ? 'text-green-600' : 'text-green-400'} transition-colors duration-300`}
+                    strokeWidth={2.5}
                   />
                   {/* Tooltip */}
-                  <div className="absolute bottom-full mb-3 hidden md:group-hover/trip:block pointer-events-none">
-                    <div className="bg-black/80 border border-white/20 text-white text-xs font-light px-3 py-2 rounded-md whitespace-nowrap backdrop-blur-sm">
+                  <div className="absolute bottom-full mb-3 opacity-0 md:group-hover/trip:opacity-100 transition-opacity duration-150 pointer-events-none">
+                    <div className={`${t.tooltip} text-xs font-light px-3 py-2 rounded-md whitespace-nowrap backdrop-blur-sm border`}>
                       Zur Reise hinzufügen
                     </div>
                   </div>
                 </button>
                   </div>
-                </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <p className="text-white text-lg">Keine Events verfügbar</p>
+            <p className={`${t.text} text-lg`}>Keine Events verfügbar</p>
           </div>
         )}
       </div>

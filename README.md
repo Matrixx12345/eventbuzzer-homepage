@@ -856,6 +856,76 @@ Für SAUBERES Mergen: Nur die FILES die sich geändert haben aus spezifischen Co
 
 ---
 
+## 🎯 Magic Trip Selector Swiper - Complete Implementation (Feb 8, 2026)
+
+### ✅ Sortierung implementiert:
+
+**Swiper zeigt Events in dieser Reihenfolge:**
+1. **MUST-SEE Events ZUERST** - Events mit `tags.includes('must-see')`
+2. **Dann nach buzz_score (manuell)** - Höchste Scores zuerst
+3. **Nearby Filter** - Zusätzlich nach Distance gewichtet (60% Score, 40% Distance)
+
+**Was wurde gefixt:**
+- ❌ **NICHT** buzz_boost === 100 (das ist ein Multiplikator, nicht Elite-Marker)
+- ✅ **JA** tags.includes('must-see') - echtes MUST-SEE Tag aus `events.tags`
+- ✅ **JA** buzz_score - manuelle Bewertung (nicht automatisch aus Engagement)
+- ✅ **JA** favorite_count/Sternenbewertung - Favoriten erhöhen separate Bewertung (event_ratings)
+
+**Betroffene Dateien:**
+- `src/components/MagicTripSelectorSwiper.tsx` - Sortierung in loadInitialEvents() (Zeilen 130-141)
+- `src/components/MagicTripSelectorSwiper.tsx` - Nearby-Filter Sortierung (Zeilen 152-168)
+- `src/components/MagicTripSelectorSwiper.tsx` - MUST-SEE Badge (Zeile 469)
+
+---
+
+### ✅ Event-Filtering implementiert:
+
+**1. Unwanted Events ausgeblendet:**
+- "disc golf" → komplett rausgefiltert
+- "meringues" → komplett rausgefiltert
+- "von tisch zu tisch" → komplett rausgefiltert
+- Filterung case-insensitive nach exaktem Titel
+
+**2. Weihnachts-Events saisonal filtern:**
+- **Events mit "weihnacht", "noël", oder "noel" im Titel** sind NUR im Nov-Dez sichtbar
+- **In anderen Monaten (Jan-Okt)** werden diese Events komplett ausgeblendet
+- Filterung via `start_date` Monat + Title-Check
+- **Grund:** Verhindert, dass Weihnachtsveranstaltungen (z.B. "Weihnachtsrundgang St. Gallen") im Februar oder Sommer angezeigt werden
+
+**Filterung Code Lage:**
+- `src/components/MagicTripSelectorSwiper.tsx` Zeilen 104-128 (loadInitialEvents)
+- Filter läuft NACH dem API-Fetch, BEVOR Sortierung
+
+---
+
+### ✅ UI/UX Verbesserungen:
+
+**1. Multi-Tags Design (oben links im Foto):**
+- Zeige erste **4 Tags** direkt an
+- Wenn mehr Tags: "+X" Pill für Rest (z.B. "+3")
+- Größer gemacht (70% größer: text-[11px] md:text-[13px])
+- Design: weiß/80% transparent, glassmorphism mit backdrop-blur
+
+**2. Star Rating - Social Proof (unten links bei Icons):**
+- ⭐ mit buzz_score / 20 = 0-5 Sterne
+- Längliche Pill-Form (rounded-full)
+- Transparent wie andere Action-Icons (bg-white/10, border-white/20)
+- Positioniert NEBEN den 3 Action-Buttons (MapPin, Heart, Briefcase)
+- Hover-Effekt: bg-white/15
+
+**3. Sternenbewertung = buzz_score:**
+- buzz_score ist manuelle Bewertung (0-100)
+- Wird als Sterne angezeigt (buzz_score / 20)
+- Beispiel: buzz_score 80 = ⭐4.0
+
+**Component Layout (bottom section):**
+```
+[⭐ 4.5] [🔵 Nearby] [❤️ Favorite] [💼 Trip]
+```
+- Stern links, dann die 3 Action-Buttons
+
+---
+
 ## 📍 Component Locations & Deaktivierte Features
 
 ### ActionPill (Glassmorphism Buttons)

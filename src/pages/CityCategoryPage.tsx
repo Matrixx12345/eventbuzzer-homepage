@@ -292,8 +292,39 @@ const CityCategoryPage = () => {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <div>
+              {/* SEO-Friendly Fallback Content - Google sees this immediately */}
+              <div className="mb-12 pb-8 border-b border-stone-200">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                  Wir suchen die besten {category.label.toLowerCase()} für dich heraus...
+                </h2>
+                <p className="text-gray-600 max-w-3xl mb-4">
+                  {pageDescription}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Lade gerade {category.label} in {cityName || city}. Das kann eine Sekunde dauern...
+                </p>
+              </div>
+
+              {/* Loading Skeleton Grid - Shows structure to Google */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-md border border-stone-200 h-[420px] animate-pulse">
+                    <div className="h-[220px] bg-gradient-to-r from-stone-200 to-stone-100" />
+                    <div className="p-5 px-6 space-y-3">
+                      <div className="h-4 bg-stone-200 rounded w-1/4" />
+                      <div className="h-6 bg-stone-200 rounded w-3/4" />
+                      <div className="h-4 bg-stone-100 rounded w-full" />
+                      <div className="h-4 bg-stone-100 rounded w-5/6" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Centered Loader */}
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+              </div>
             </div>
           ) : error ? (
             <div className="text-center py-20">

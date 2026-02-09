@@ -10,7 +10,15 @@ Diese Liste enthält Events die aus der Datenbank entfernt werden sollen.
 - **Kategorie:** Sport
 - **Grund:** Sportevent ohne spezifische Beschreibung oder zusätzliche Informationen. Keine relevanten Details für User.
 - **Status:** ⏳ Zu löschen
-- **Datum hinzugefügt:** 2026-02-08
+- **Datum hinzugefügt:** 2026-02-06
+
+### 2. Malen wie Paul Klee
+- **Event Name:** Malen wie Paul Klee
+- **Beschreibung:** Ein kreativer Workshop kombiniert m... (abgeschnitten)
+- **Kategorie:** Workshop/Kultur
+- **Grund:** Unvollständiger Titel und Beschreibung. Event-Informationen abgeschnitten und nicht aussagekräftig.
+- **Status:** ⏳ Zu löschen
+- **Datum hinzugefügt:** 2026-02-06
 
 ---
 
@@ -36,4 +44,4 @@ _Noch keine Events gelöscht._
 
 ---
 
-**Letzte Aktualisierung:** 2026-02-08
+**Letzte Aktualisierung:** 2026-02-06
