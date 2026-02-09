@@ -49,6 +49,7 @@ export default function MagicTripSelectorSwiper({
   // Nearby filter state
   const [nearbyFilterActive, setNearbyFilterActive] = useState(false);
   const [nearbyFilterEventId, setNearbyFilterEventId] = useState<string | null>(null);
+  const [cachedNearbyEvents, setCachedNearbyEvents] = useState<Event[]>([]);
 
   // Favorites state
   const [favoritedEventIds, setFavoritedEventIds] = useState<Set<string>>(new Set());
@@ -155,58 +156,13 @@ export default function MagicTripSelectorSwiper({
     loadInitialEvents();
   }, [isOpen]);
 
-  // Get available events (filtered by nearby if active)
+  // Get available events (use cached nearby events if filter is active)
   const availableEvents = useMemo(() => {
-    if (!nearbyFilterActive || !nearbyFilterEventId) {
-      return allEvents;
+    if (nearbyFilterActive && cachedNearbyEvents.length > 0) {
+      return cachedNearbyEvents;
     }
-
-    const filterEvent = allEvents.find(e => e.id === nearbyFilterEventId);
-    if (!filterEvent || !filterEvent.latitude || !filterEvent.longitude) {
-      return allEvents;
-    }
-
-    // Calculate distances
-    const eventsWithDistance = allEvents
-      .filter(e => e.id !== filterEvent.id) // Exclude the filter event itself
-      .map(event => {
-        const dist = haversineDistance(
-          filterEvent.latitude!,
-          filterEvent.longitude!,
-          event.latitude || 0,
-          event.longitude || 0
-        );
-        return { event, distance: dist };
-      });
-
-    // Try 10km radius first
-    let nearbyEvents = eventsWithDistance.filter(item => item.distance <= 10);
-
-    // If less than 10 events, expand to 30km
-    if (nearbyEvents.length < 10) {
-      nearbyEvents = eventsWithDistance.filter(item => item.distance <= 30);
-    }
-
-    // Sort by MUST-SEE first, then by score + distance
-    nearbyEvents.sort((a, b) => {
-      // MUST-SEE events first (tag-based)
-      const aIsMustSee = a.event.tags?.includes('must-see') ? 1 : 0;
-      const bIsMustSee = b.event.tags?.includes('must-see') ? 1 : 0;
-      if (aIsMustSee !== bIsMustSee) return bIsMustSee - aIsMustSee;
-
-      // Then by score + distance
-      const scoreA = a.event.buzz_score || 0;
-      const scoreB = b.event.buzz_score || 0;
-
-      // Normalize: score weight 60%, distance weight 40%
-      const weightedA = (scoreA * 0.6) - (a.distance * 0.4);
-      const weightedB = (scoreB * 0.6) - (b.distance * 0.4);
-
-      return weightedB - weightedA;
-    });
-
-    return nearbyEvents.map(item => item.event);
-  }, [allEvents, nearbyFilterActive, nearbyFilterEventId]);
+    return allEvents;
+  }, [allEvents, nearbyFilterActive, cachedNearbyEvents]);
 
   // Get current event
   const currentEvent = availableEvents[currentIndex];
@@ -320,16 +276,65 @@ export default function MagicTripSelectorSwiper({
       // Deactivate filter
       setNearbyFilterActive(false);
       setNearbyFilterEventId(null);
+      setCachedNearbyEvents([]);
       setCurrentIndex(0); // Reset to start
       toast.info("Nearby-Filter deaktiviert");
     } else {
-      // Activate filter
+      // Activate filter - Calculate nearby events ONCE and cache them
+      if (!currentEvent.latitude || !currentEvent.longitude) {
+        toast.error("Event hat keine GPS-Koordinaten");
+        return;
+      }
+
+      // Calculate distances for all events
+      const eventsWithDistance = allEvents
+        .filter(e => e.id !== currentEvent.id) // Exclude the current event itself
+        .map(event => {
+          const dist = haversineDistance(
+            currentEvent.latitude!,
+            currentEvent.longitude!,
+            event.latitude || 0,
+            event.longitude || 0
+          );
+          return { event, distance: dist };
+        });
+
+      // Try 10km radius first
+      let nearbyEvents = eventsWithDistance.filter(item => item.distance <= 10);
+
+      // If less than 10 events, expand to 30km
+      if (nearbyEvents.length < 10) {
+        nearbyEvents = eventsWithDistance.filter(item => item.distance <= 30);
+      }
+
+      // Sort by MUST-SEE first, then by score + distance
+      nearbyEvents.sort((a, b) => {
+        // MUST-SEE events first (tag-based)
+        const aIsMustSee = a.event.tags?.includes('must-see') ? 1 : 0;
+        const bIsMustSee = b.event.tags?.includes('must-see') ? 1 : 0;
+        if (aIsMustSee !== bIsMustSee) return bIsMustSee - aIsMustSee;
+
+        // Then by score + distance
+        const scoreA = a.event.buzz_score || 0;
+        const scoreB = b.event.buzz_score || 0;
+
+        // Normalize: score weight 60%, distance weight 40%
+        const weightedA = (scoreA * 0.6) - (a.distance * 0.4);
+        const weightedB = (scoreB * 0.6) - (b.distance * 0.4);
+
+        return weightedB - weightedA;
+      });
+
+      // Cache the calculated nearby events
+      const cachedEvents = nearbyEvents.map(item => item.event);
+      setCachedNearbyEvents(cachedEvents);
+
       setNearbyFilterActive(true);
       setNearbyFilterEventId(currentEvent.id);
       setCurrentIndex(0); // Reset to start of filtered list
-      toast.success("Zeige Events in der Nähe");
+      toast.success(`Zeige ${cachedEvents.length} Events in der Nähe`);
     }
-  }, [currentEvent, nearbyFilterActive, nearbyFilterEventId]);
+  }, [currentEvent, nearbyFilterActive, nearbyFilterEventId, allEvents]);
 
   // Reset state when closed
   useEffect(() => {
@@ -338,6 +343,7 @@ export default function MagicTripSelectorSwiper({
       setAllEvents([]);
       setNearbyFilterActive(false);
       setNearbyFilterEventId(null);
+      setCachedNearbyEvents([]);
       setFavoritedEventIds(new Set());
       setAddedToTripIds(new Set());
     }
@@ -461,6 +467,7 @@ export default function MagicTripSelectorSwiper({
                 onClick={() => {
                   setNearbyFilterActive(false);
                   setNearbyFilterEventId(null);
+                  setCachedNearbyEvents([]);
                   setCurrentIndex(0);
                 }}
                 className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg"
@@ -604,13 +611,12 @@ export default function MagicTripSelectorSwiper({
                 <div className="flex-1 flex items-center justify-center ml-[-80px]">
                   {/* 3 Action Buttons - Visuell zentriert */}
                   <div className="flex items-center gap-4 md:gap-6">
-                {/* MapPin - Nearby Filter (Blue) - TEMPORARILY DISABLED FOR TESTING */}
+                {/* MapPin - Nearby Filter (Blue) */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    // handleNearbyFilter(); // DISABLED FOR PERFORMANCE TESTING
-                    toast.info("Nearby-Filter vorübergehend deaktiviert");
+                    handleNearbyFilter();
                     e.currentTarget.blur();
                   }}
                   className={`group/nearby relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none ${
@@ -618,7 +624,7 @@ export default function MagicTripSelectorSwiper({
                       ? 'bg-blue-500/20 border-[3px] border-blue-400 hover:bg-blue-500/30'
                       : 'bg-blue-500/20 border border-blue-400/50 hover:bg-blue-500/30'
                   }`}
-                  title="In der Nähe suchen (vorübergehend deaktiviert)"
+                  title="In der Nähe suchen"
                 >
                   <MapPin
                     size={22}
