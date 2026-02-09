@@ -62,7 +62,8 @@ export const MobileTopDetailCard: React.FC<MobileTopDetailCardProps> = ({
   try {
     if (event?.id) {
       const eventTitle = event.title || 'event';
-      const eventLocation = getEventLocation(event) || 'schweiz';
+      // MUST match sitemap generation: address_city || location
+      const eventLocation = event.address_city || event.location || 'schweiz';
       seoSlug = generateEventSlug(eventTitle, eventLocation);
     }
   } catch (err) {

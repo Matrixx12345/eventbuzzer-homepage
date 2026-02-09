@@ -203,9 +203,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     .flat()
     .some(pe => pe.eventId === event.id);
 
-  // Generate SEO-friendly slug for URLs
-  const eventLocation = getEventLocation(event);
-  const seoSlug = generateEventSlug(event.title, eventLocation);
+  // Generate SEO-friendly slug for URLs - MUST match sitemap generation exactly!
+  // Sitemap uses: address_city || location (NO smart filtering!)
+  const seoSlug = generateEventSlug(event.title, event.address_city || event.location || '');
 
   // Calculate display score with user rating boost
   const baseScore = (event.buzz_score || event.relevance_score || 75) / 20;

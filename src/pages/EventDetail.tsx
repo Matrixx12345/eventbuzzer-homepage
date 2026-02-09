@@ -917,7 +917,9 @@ const EventDetail = () => {
     });
   }, [nearbyEvents]);
 
-  if (loading) {
+  // Show loading spinner while slug mapping is loading OR while fetching event
+  const isResolving = isDynamicEvent && !slugMapping;
+  if (loading || isResolving) {
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
@@ -1247,8 +1249,8 @@ const EventDetail = () => {
             >
               <CarouselContent className="-ml-6">
                 {nearbyEventsWithDistance.map((evt) => {
-                  const eventLocation = evt.address_city || getEventLocation(evt);
-                  const seoSlug = generateEventSlug(evt.title, eventLocation);
+                  // MUST match sitemap generation: address_city || location
+                  const seoSlug = generateEventSlug(evt.title, evt.address_city || evt.location || '');
                   return (
                     <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
                       <SimilarEventCard
@@ -1256,7 +1258,7 @@ const EventDetail = () => {
                         image={evt.image_url || weekendJazz}
                         title={evt.title}
                         description={evt.short_description}
-                        location={eventLocation}
+                        location={evt.address_city || evt.location || ''}
                         distance={evt.distanceText}
                         onSwap={swapToEvent}
                       />

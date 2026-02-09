@@ -5,8 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useTripPlanner } from "@/contexts/TripPlannerContext";
-import { Badge } from "@/components/ui/badge";
-import { externalSupabase } from "@/integrations/supabase/externalClient";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,42 +17,11 @@ const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
   const { user, signOut } = useAuth();
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
   const { favorites } = useFavorites();
   const { totalEventCount } = useTripPlanner();
   const navigate = useNavigate();
-
-  // Load pending events count for admins only
-  useEffect(() => {
-    if (!isAdmin) {
-      setPendingCount(0);
-      return;
-    }
-
-    const loadPendingCount = async () => {
-      try {
-        const { count, error } = await externalSupabase
-          .from("events")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending")
-          .eq("source", "partner");
-
-        if (!error) {
-          setPendingCount(count || 0);
-        }
-      } catch (err) {
-        console.error("Error loading pending count:", err);
-      }
-    };
-
-    loadPendingCount();
-
-    // Poll every 60 seconds for updates
-    const interval = setInterval(loadPendingCount, 60000);
-    return () => clearInterval(interval);
-  }, [isAdmin]);
 
   const navLinks = [
     { label: "Startseite", href: "/" },
@@ -66,10 +33,6 @@ const Navbar = () => {
   const adminLinks = [
     { label: "Dashboard", href: "/admin/ratings" },
     { label: "Tagging", href: "/admin/speed-tagging" },
-    { label: "Alle Events", href: "/listings" },
-    { label: "Events Neu", href: "/events-neu" },
-    { label: "Trip-Planer", href: "/trip-planner" },
-    { label: "Trip-Planer Neu", href: "/trip-planer-neu" },
     { label: "Supabase Test", href: "/supabase-test" },
     { label: "Honeypot", href: "/admin/honeypot" },
   ];
@@ -125,33 +88,9 @@ const Navbar = () => {
                   <button className="text-sm font-medium text-navbar-foreground/20 hover:text-navbar-foreground/40 transition-colors flex items-center gap-1 relative">
                     <Settings size={14} />
                     <span>Admin</span>
-                    {pendingCount > 0 && (
-                      <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {pendingCount}
-                      </span>
-                    )}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="bg-popover">
-                  {/* Pending Events Link - Top Priority */}
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/pending-events"
-                      className="cursor-pointer flex items-center justify-between"
-                    >
-                      <span>Pending Events</span>
-                      {pendingCount > 0 && (
-                        <Badge variant="destructive" className="ml-2">
-                          {pendingCount}
-                        </Badge>
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
-
-                  {/* Divider */}
-                  <div className="my-1 h-px bg-border"></div>
-
-                  {/* Other Admin Links */}
                   {adminLinks.map((link) => (
                     <DropdownMenuItem key={link.label} asChild>
                       <Link to={link.href} className="cursor-pointer">
@@ -254,18 +193,6 @@ const Navbar = () => {
                   </Link>
                   {isAdmin && (
                     <>
-                      <Link
-                        to="/admin/pending-events"
-                        className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors block py-1 flex items-center justify-between"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <span>Pending Events</span>
-                        {pendingCount > 0 && (
-                          <Badge variant="destructive" className="ml-2 text-xs">
-                            {pendingCount}
-                          </Badge>
-                        )}
-                      </Link>
                       {adminLinks.map((link) => (
                         <Link
                           key={link.label}

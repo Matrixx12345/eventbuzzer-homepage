@@ -6,6 +6,15 @@ import { getNearestPlace } from "./swissPlaces";
 
 export const convertToUmlauts = (text: string | null | undefined): string => {
   if (!text) return "";
+  // First decode HTML entities
+  let result = text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ');
   const replacements: [string, string][] = [
     ["fuer", "für"], ["Fuer", "Für"],
     ["ueber", "über"], ["Ueber", "Über"],
@@ -66,7 +75,6 @@ export const convertToUmlauts = (text: string | null | undefined): string => {
     ["eroeffnet", "eröffnet"], ["Eroeffnet", "Eröffnet"],
     ["waehrend", "während"], ["Waehrend", "Während"],
   ];
-  let result = text;
   for (const [from, to] of replacements) {
     result = result.split(from).join(to);
   }

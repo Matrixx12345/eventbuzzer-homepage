@@ -29,6 +29,7 @@ import {
   CITY_COORDINATES,
 } from "@/utils/eventUtilities";
 import { EventDetailModal } from "@/components/EventDetailModal";
+import EventListSwiper from "@/components/EventListSwiper";
 import { MobileTopDetailCard } from "@/components/MobileTopDetailCard";
 import { TripPlannerModal } from "@/components/TripPlannerModal";
 import ViewModeSwitcher, { ViewMode } from "@/components/ViewModeSwitcher";
@@ -105,9 +106,10 @@ const EventList1 = () => {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // Modal state (for normal event card clicks)
+  // Modal state (for normal event card clicks - now uses swiper)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [swiperStartIndex, setSwiperStartIndex] = useState(0);
 
   // Separate modal state for map clicks (mobile only - uses MobileTopDetailCard)
   const [mapSelectedEvent, setMapSelectedEvent] = useState<Event | null>(null);
@@ -220,6 +222,14 @@ const EventList1 = () => {
     setSelectedEvent(event);
     setModalOpen(true);
   }, []);
+
+  // Compute swiper start index when selectedEvent or filteredEvents change
+  useEffect(() => {
+    if (selectedEvent && modalOpen) {
+      const idx = filteredEvents.findIndex(e => e.id === selectedEvent.id);
+      setSwiperStartIndex(idx >= 0 ? idx : 0);
+    }
+  }, [selectedEvent, modalOpen]);
 
   const closeEventModal = useCallback(() => {
     setModalOpen(false);
@@ -370,6 +380,16 @@ const EventList1 = () => {
 
     // CRITICAL: Deduplicate ALL events first (geo-dedup: title + distance < 1km)
     result = deduplicateWithGeo(result);
+
+    // Christmas filter: Only show Weihnachts-Events in November & December
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+    if (currentMonth < 11) {
+      result = result.filter(event => {
+        const t = (event.title || '').toLowerCase();
+        const isChristmas = t.includes('weihnacht') || t.includes('noël') || t.includes('noel');
+        return !isChristmas;
+      });
+    }
 
     // Nearby Events Filter - OVERRIDE all other filters
     if (nearbyEventsFilter) {
@@ -1131,16 +1151,18 @@ const EventList1 = () => {
         />
       )}
 
-      {/* Normal Event Card Detail Modal - Uses EventDetailModal for both mobile and desktop */}
+      {/* Event Swiper - Opens when event card is clicked (replaces old EventDetailModal) */}
       {/* Only show if NOT showing map modal */}
       {selectedEvent && !mapModalOpen && !mapSelectedEvent && (
-        <EventDetailModal
-          event={selectedEvent}
+        <EventListSwiper
           isOpen={modalOpen}
           onClose={closeEventModal}
-          plannedEventsByDay={plannedEventsByDay}
-          activeDay={activeDay}
-          onToggleTrip={handleToggleTrip}
+          events={filteredEvents}
+          startIndex={swiperStartIndex}
+          onNearbyFilter={(eventId) => {
+            closeEventModal();
+            setNearbyEventsFilter(eventId);
+          }}
         />
       )}
 

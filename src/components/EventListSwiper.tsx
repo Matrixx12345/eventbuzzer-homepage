@@ -1,43 +1,52 @@
 /**
- * Magic Trip Selector Swiper
- * Interactive swiper for discovering and selecting events
- * Redesigned: Card stack effect, blurred background, compact action bar
+ * EventListSwiper - Swiper-style event viewer for the EventList page
+ * Based on MagicTripSelectorSwiper design (card stack, blurred bg, compact action bar)
+ * Instead of loading its own events, it receives events from the parent EventList.
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { haversineDistance } from "@/utils/geoHelpers";
 import { getLocationWithMajorCity } from "@/utils/swissPlaces";
 import { generateEventSlug, getEventLocation } from "@/utils/eventUtilities";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useTripPlanner } from "@/contexts/TripPlannerContext";
 
 interface Event {
   id: string;
+  external_id?: string;
   title: string;
   image_url?: string;
   short_description?: string;
   description?: string;
   venue_name?: string;
   address_city?: string;
+  location?: string;
   latitude?: number;
   longitude?: number;
   start_date?: string;
+  end_date?: string;
   category_main_id?: number;
   tags?: string[];
   price_from?: number;
+  price_to?: number;
   buzz_score?: number;
   buzz_boost?: number | string;
+  relevance_score?: number;
+  favorite_count?: number;
+  url?: string;
+  ticket_url?: string;
+  gallery_urls?: string[];
   ticket_link?: string;
-  external_id?: string;
-  location?: string;
 }
 
-interface MagicTripSelectorSwiperProps {
+interface EventListSwiperProps {
   isOpen: boolean;
   onClose: () => void;
-  activeDay: number;
-  onEventSelected: (event: Event) => void;
+  events: Event[];
+  startIndex: number;
+  onNearbyFilter?: (eventId: string) => void;
 }
 
 // Decode HTML entities in text from database
@@ -75,28 +84,18 @@ const formatDistance = (distKm: number) => {
   return `${Math.round(distKm)} km`;
 };
 
-export default function MagicTripSelectorSwiper({
+export default function EventListSwiper({
   isOpen,
   onClose,
-  activeDay,
-  onEventSelected,
-}: MagicTripSelectorSwiperProps) {
+  events,
+  startIndex,
+  onNearbyFilter,
+}: EventListSwiperProps) {
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [allEvents, setAllEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-
-  // Nearby filter state
-  const [nearbyFilterActive, setNearbyFilterActive] = useState(false);
-  const [nearbyFilterEventId, setNearbyFilterEventId] = useState<string | null>(null);
-  const [cachedNearbyEvents, setCachedNearbyEvents] = useState<Event[]>([]);
-
-  // Favorites state
-  const [favoritedEventIds, setFavoritedEventIds] = useState<Set<string>>(new Set());
-
-  // Added to trip state
-  const [addedToTripIds, setAddedToTripIds] = useState<Set<string>>(new Set());
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { addEventToDay, activeDay, isInTrip } = useTripPlanner();
 
   // Touch handling for swipe
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -106,6 +105,11 @@ export default function MagicTripSelectorSwiper({
   const [showMenu, setShowMenu] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [textExpanded, setTextExpanded] = useState(false);
+
+  // Sync startIndex when it changes (new event clicked)
+  useEffect(() => {
+    setCurrentIndex(startIndex);
+  }, [startIndex]);
 
   // Load user location
   useEffect(() => {
@@ -124,69 +128,8 @@ export default function MagicTripSelectorSwiper({
     }
   }, [isOpen]);
 
-  // Load initial events
-  useEffect(() => {
-    async function loadInitialEvents() {
-      if (!isOpen) return;
-
-      setLoading(true);
-
-      try {
-        const response = await supabase.functions.invoke("get-external-events", {
-          body: {
-            limit: 1500,
-            offset: 0,
-            filters: {},
-          },
-        });
-
-        if (!response.data || !response.data.events) {
-          throw new Error("No events returned");
-        }
-
-        const dateBoundCategories = [1, 4, 7, 9, 13, 14];
-        const excludedTitles = ['disc golf', 'meringues', 'von tisch zu tisch'];
-
-        let events = (response.data.events as Event[]).filter((e) => {
-          if (!e.latitude || !e.longitude || !e.start_date) return false;
-          if (dateBoundCategories.includes(e.category_main_id || 0)) return false;
-          if (excludedTitles.some(title => e.title?.toLowerCase() === title.toLowerCase())) return false;
-
-          const eventDate = new Date(e.start_date);
-          const month = eventDate.getMonth() + 1;
-          const titleLower = e.title?.toLowerCase() || '';
-          const isChristmasEvent = titleLower.includes('weihnacht') || titleLower.includes('noël') || titleLower.includes('noel');
-          if (isChristmasEvent && (month < 11 || month > 12)) return false;
-
-          return true;
-        });
-
-        events.sort((a, b) => {
-          const aIsMustSee = a.tags?.includes('must-see') ? 1 : 0;
-          const bIsMustSee = b.tags?.includes('must-see') ? 1 : 0;
-          if (aIsMustSee !== bIsMustSee) return bIsMustSee - aIsMustSee;
-          return (b.buzz_score || 0) - (a.buzz_score || 0);
-        });
-
-        setAllEvents(events);
-      } catch (error) {
-        console.error("Error loading events:", error);
-        toast.error("Fehler beim Laden der Events");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadInitialEvents();
-  }, [isOpen]);
-
-  // Get available events
-  const availableEvents = useMemo(() => {
-    if (nearbyFilterActive && cachedNearbyEvents.length > 0) return cachedNearbyEvents;
-    return allEvents;
-  }, [allEvents, nearbyFilterActive, cachedNearbyEvents]);
-
-  const currentEvent = availableEvents[currentIndex];
+  const currentEvent = events[currentIndex];
+  const noMoreEvents = currentIndex >= events.length;
 
   // Calculate distance to current event
   const currentDistance = useMemo(() => {
@@ -199,11 +142,11 @@ export default function MagicTripSelectorSwiper({
   const remainingTagCount = (currentEvent?.tags?.length || 0) - 1;
 
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => prev + 1);
+    setCurrentIndex((prev) => Math.min(prev + 1, events.length));
     setTextExpanded(false);
     setShowMenu(false);
     setShowShareMenu(false);
-  }, []);
+  }, [events.length]);
 
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
@@ -214,110 +157,50 @@ export default function MagicTripSelectorSwiper({
     }
   }, [currentIndex]);
 
-  const handleAddToTrip = useCallback(() => {
+  const handleToggleFavorite = useCallback(() => {
     if (!currentEvent) return;
-    onEventSelected(currentEvent);
-    setAddedToTripIds(prev => new Set(prev).add(currentEvent.id));
-    toast.success(`${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
-  }, [currentEvent, onEventSelected, activeDay]);
+    const wasFavorite = isFavorite(currentEvent.id);
 
-  const handleToggleFavorite = useCallback(async () => {
-    if (!currentEvent) return;
-    const isFavorited = favoritedEventIds.has(currentEvent.id);
-
-    setFavoritedEventIds(prev => {
-      const updated = new Set(prev);
-      if (isFavorited) updated.delete(currentEvent.id);
-      else updated.add(currentEvent.id);
-      return updated;
+    toggleFavorite({
+      id: currentEvent.id,
+      slug: currentEvent.id,
+      title: currentEvent.title,
+      venue: currentEvent.venue_name || "",
+      image: currentEvent.image_url || "",
+      location: currentEvent.address_city || currentEvent.location || "",
+      date: currentEvent.start_date ? new Date(currentEvent.start_date).toLocaleDateString('de-CH') : "",
+      short_description: currentEvent.short_description || "",
+      description: currentEvent.description || "",
+      tags: currentEvent.tags || [],
+      image_url: currentEvent.image_url || "",
+      venue_name: currentEvent.venue_name || "",
+      address_city: currentEvent.address_city || "",
+      start_date: currentEvent.start_date || "",
+      end_date: currentEvent.end_date || "",
+      price_from: currentEvent.price_from,
+      external_id: currentEvent.external_id || currentEvent.id,
+      ticket_url: currentEvent.ticket_url || "",
+      url: currentEvent.url || "",
+      buzz_score: currentEvent.buzz_score || currentEvent.relevance_score,
     });
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Bitte melde dich an, um Favoriten zu speichern");
-        setFavoritedEventIds(prev => {
-          const updated = new Set(prev);
-          if (isFavorited) updated.add(currentEvent.id);
-          else updated.delete(currentEvent.id);
-          return updated;
-        });
-        return;
-      }
-
-      if (isFavorited) {
-        try {
-          await (supabase as any).from('favorites').delete().eq('user_id', user.id).eq('event_id', currentEvent.id);
-          toast.success("Aus Favoriten entfernt");
-        } catch (err) {
-          console.warn("Could not remove from favorites:", err);
-        }
-      } else {
-        try {
-          await (supabase as any).from('favorites').insert({ user_id: user.id, event_id: currentEvent.id });
-          toast.success("Zu Favoriten hinzugefügt");
-        } catch (err) {
-          console.warn("Could not add to favorites:", err);
-        }
-      }
-    } catch (error) {
-      console.warn('Error toggling favorite:', error);
+    if (!wasFavorite) {
+      toast.success("Event geplant", { duration: 2000, position: "top-left" });
     }
-  }, [currentEvent, favoritedEventIds]);
+  }, [currentEvent, isFavorite, toggleFavorite]);
 
-  const handleNearbyFilter = useCallback(() => {
+  const handleAddToTrip = useCallback(() => {
     if (!currentEvent) return;
-
-    if (nearbyFilterActive && nearbyFilterEventId === currentEvent.id) {
-      setNearbyFilterActive(false);
-      setNearbyFilterEventId(null);
-      setCachedNearbyEvents([]);
-      setCurrentIndex(0);
-      toast.info("Nearby-Filter deaktiviert");
-    } else {
-      if (!currentEvent.latitude || !currentEvent.longitude) {
-        toast.error("Event hat keine GPS-Koordinaten");
-        return;
-      }
-
-      const eventsWithDistance = allEvents.map(event => ({
-        event,
-        distance: haversineDistance(currentEvent.latitude!, currentEvent.longitude!, event.latitude || 0, event.longitude || 0),
-      }));
-
-      let nearbyEvents = eventsWithDistance.filter(item => item.distance <= 10);
-      if (nearbyEvents.length < 10) {
-        nearbyEvents = eventsWithDistance.filter(item => item.distance <= 30);
-      }
-
-      nearbyEvents.sort((a, b) => {
-        const aIsMustSee = a.event.tags?.includes('must-see') ? 1 : 0;
-        const bIsMustSee = b.event.tags?.includes('must-see') ? 1 : 0;
-        if (aIsMustSee !== bIsMustSee) return bIsMustSee - aIsMustSee;
-        const weightedA = ((a.event.buzz_score || 0) * 0.6) - (a.distance * 0.4);
-        const weightedB = ((b.event.buzz_score || 0) * 0.6) - (b.distance * 0.4);
-        return weightedB - weightedA;
-      });
-
-      const cachedEvents = nearbyEvents.map(item => item.event);
-      setCachedNearbyEvents(cachedEvents);
-      setNearbyFilterActive(true);
-      setNearbyFilterEventId(currentEvent.id);
-      setCurrentIndex(0);
-      toast.success(`Zeige ${cachedEvents.length} Events in der Nähe`);
-    }
-  }, [currentEvent, nearbyFilterActive, nearbyFilterEventId, allEvents]);
+    addEventToDay(currentEvent as any, activeDay);
+    toast.success(`${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
+  }, [currentEvent, addEventToDay, activeDay]);
 
   // Reset state when closed
   useEffect(() => {
     if (!isOpen) {
-      setCurrentIndex(0);
-      setAllEvents([]);
-      setNearbyFilterActive(false);
-      setNearbyFilterEventId(null);
-      setCachedNearbyEvents([]);
-      setFavoritedEventIds(new Set());
-      setAddedToTripIds(new Set());
+      setShowMenu(false);
+      setShowShareMenu(false);
+      setTextExpanded(false);
     }
   }, [isOpen]);
 
@@ -346,16 +229,14 @@ export default function MagicTripSelectorSwiper({
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = touchEnd.y - touchStart.y;
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX < 0) handleNext(); // Swipe left → next
-      else handlePrevious(); // Swipe right → previous
+      if (deltaX < 0) handleNext();
+      else handlePrevious();
     }
     setTouchStart(null);
     setTouchEnd(null);
   };
 
   if (!isOpen) return null;
-
-  const noMoreEvents = currentIndex >= availableEvents.length;
 
   // Location string - only city, no venue name (venue often = title for MySwitzerland)
   const locationStr = currentEvent?.latitude && currentEvent?.longitude
@@ -390,6 +271,9 @@ export default function MagicTripSelectorSwiper({
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
     setShowShareMenu(false);
   };
+
+  const isFavorited = currentEvent ? isFavorite(currentEvent.id) : false;
+  const eventInTrip = currentEvent ? isInTrip(currentEvent.id) : false;
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8">
@@ -446,32 +330,10 @@ export default function MagicTripSelectorSwiper({
 
       {/* Main Content */}
       <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px] flex items-center justify-center">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p className="text-white text-lg font-medium">Events werden geladen...</p>
-          </div>
-        ) : noMoreEvents ? (
+        {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
-            <p className="text-2xl font-bold mb-3">
-              {nearbyFilterActive ? "Keine Events in der Nähe" : "Keine weiteren Events"}
-            </p>
-            <p className="text-white/60 mb-8">
-              {nearbyFilterActive ? "Deaktiviere den Filter, um mehr zu sehen" : "Du hast alle Events gesehen!"}
-            </p>
-            {nearbyFilterActive && (
-              <button
-                onClick={() => {
-                  setNearbyFilterActive(false);
-                  setNearbyFilterEventId(null);
-                  setCachedNearbyEvents([]);
-                  setCurrentIndex(0);
-                }}
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg mb-3"
-              >
-                Filter aufheben
-              </button>
-            )}
+            <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
+            <p className="text-white/60 mb-8">Du hast alle Events gesehen!</p>
             <button
               onClick={onClose}
               className="px-8 py-3 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl transition-colors"
@@ -482,10 +344,10 @@ export default function MagicTripSelectorSwiper({
         ) : currentEvent ? (
           <div className="relative w-full mb-12">
             {/* Card Stack Effect - visible below main card */}
-            {availableEvents[currentIndex + 2] && (
+            {events[currentIndex + 2] && (
               <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
             )}
-            {availableEvents[currentIndex + 1] && (
+            {events[currentIndex + 1] && (
               <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
             )}
 
@@ -560,18 +422,19 @@ export default function MagicTripSelectorSwiper({
                           In Detailseite öffnen
                         </a>
                         {/* Nearby filter */}
-                        <button
-                          onClick={() => {
-                            setShowMenu(false);
-                            handleNearbyFilter();
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors ${
-                            nearbyFilterActive ? 'text-blue-600' : 'text-gray-800'
-                          }`}
-                        >
-                          <MapPin size={16} className={nearbyFilterActive ? 'text-blue-500' : 'text-gray-500'} />
-                          Events in der Nähe
-                        </button>
+                        {onNearbyFilter && (
+                          <button
+                            onClick={() => {
+                              setShowMenu(false);
+                              onClose();
+                              onNearbyFilter(currentEvent.id);
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-800 transition-colors"
+                          >
+                            <MapPin size={16} className="text-gray-500" />
+                            Events in der Nähe
+                          </button>
+                        )}
                         {/* Share */}
                         <button
                           onClick={() => {
@@ -604,7 +467,6 @@ export default function MagicTripSelectorSwiper({
                 {/* Description - expandable with "mehr..." */}
                 {(() => {
                   const desc = decodeHtml(currentEvent.description || "Entdecke dieses spannende Event in der Schweiz.");
-                  // Check if text would overflow 2 lines (rough estimate: ~80-100 chars per line at this size)
                   const wouldOverflow = desc.length > 160;
                   return (
                     <>
@@ -635,10 +497,10 @@ export default function MagicTripSelectorSwiper({
               {/* Bottom Action Bar */}
               <div className="px-5 pb-5 pt-5">
                 <div className="flex items-stretch gap-2.5">
-                  {/* Ticket Button - always visible */}
-                  {currentEvent.ticket_link ? (
+                  {/* Ticket Button */}
+                  {(currentEvent.ticket_url || currentEvent.url) ? (
                     <a
-                      href={currentEvent.ticket_link}
+                      href={currentEvent.ticket_url || currentEvent.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -668,7 +530,7 @@ export default function MagicTripSelectorSwiper({
                       handleToggleFavorite();
                     }}
                     className={`w-12 border rounded-xl flex items-center justify-center transition-colors ${
-                      favoritedEventIds.has(currentEvent.id)
+                      isFavorited
                         ? 'border-red-300 bg-red-50 hover:bg-red-100'
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
@@ -677,7 +539,7 @@ export default function MagicTripSelectorSwiper({
                     <Heart
                       size={22}
                       className={`transition-colors ${
-                        favoritedEventIds.has(currentEvent.id)
+                        isFavorited
                           ? 'text-red-500 fill-current'
                           : 'text-gray-500'
                       }`}
@@ -706,7 +568,7 @@ export default function MagicTripSelectorSwiper({
                       handleAddToTrip();
                     }}
                     className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
-                      addedToTripIds.has(currentEvent.id)
+                      eventInTrip
                         ? 'bg-green-600 text-white hover:bg-green-700'
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
