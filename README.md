@@ -16,6 +16,66 @@ Server läuft auf: http://localhost:8081
 
 ---
 
+## 🔍 SEO Fixes & Sitemap Generation (2026-02-09)
+
+### Problem: 340 "Soft 404" Errors in Google Search Console
+
+**Root Cause:** `/events/{city}/{category}` pages used Client-Side Rendering (CSR). Google crawlers only saw a loading spinner, marking pages as Soft 404s (HTTP 200 but no meaningful content).
+
+**Solution Implemented:**
+
+1. **SEO-Friendly Loading State** (`src/pages/CityCategoryPage.tsx`)
+   - Added visible heading, description, and skeleton grid during data load
+   - Google sees meaningful content immediately (not just spinner)
+   - File: `src/pages/CityCategoryPage.tsx` lines 294-328
+
+2. **Dynamic Sitemap Generator** (`scripts/generate-sitemap.js`)
+   - Auto-generates `public/sitemap.xml` after every build
+   - Fetches all 1000+ events from Supabase
+   - Creates 129 total URLs:
+     - 4 static pages (home, eventlist, favorites, trip-planner)
+     - 125 dynamic city/category combinations
+   - **3-Tier Priority System:**
+     - **Tier 1 (0.9 priority):** Top 10 cities × Top 6 categories = 12 high-value URLs
+     - **Tier 2 (0.8 priority):** Either top city OR top category
+     - **Tier 3 (0.6 priority):** Other city/category combinations
+   - Top cities: zurich, geneva, basel, lausanne, bern, lucerne, winterthur, st-gallen, lugano, biel
+   - Top categories: must-see, natur, kulinarik, sport, festival, familie
+
+3. **Build Integration**
+   - Sitemap auto-runs: `npm run build && node scripts/generate-sitemap.js`
+   - Manual run: `npm run generate-sitemap`
+   - Storage: `/Users/jj/Development/eventbuzzer-homepage/public/sitemap.xml`
+
+### Files Modified
+- ✅ `src/pages/CityCategoryPage.tsx` - SEO-friendly loading fallback
+- ✅ `scripts/generate-sitemap.js` - New sitemap generator (IMPORTANT: stores in /public, NOT desktop)
+- ✅ `package.json` - Added build scripts + sharp/svgo for image optimization
+- ✅ `.env` - Added VITE_SUPABASE_ANON_KEY (copy of PUBLISHABLE_KEY for Node.js scripts)
+
+### Expected Results
+- **2-3 weeks:** Google crawls all 129 URLs from sitemap
+- **4 weeks:** 340 Soft 404 errors should disappear
+- **Long-term:** 3000 events properly indexed (not just top results)
+
+### Next Steps (User Action Required)
+1. Submit sitemap to Google Search Console:
+   ```
+   https://search.google.com/search-console
+   → Sitemaps section
+   → Add new sitemap: https://eventbuzzer.ch/sitemap.xml
+   ```
+2. Request re-indexing in GSC:
+   ```
+   → Request indexing
+   → Paste: https://eventbuzzer.ch/events/{city}/{category}
+   ```
+3. Monitor progress:
+   - Check GSC "Coverage" tab weekly
+   - Soft 404 count should decrease over time
+
+---
+
 ## 🆘 FALLBACK: Ideal State (2026-02-04)
 
 **Falls die Website komplett kaputt ist und nichts geht**, zurück zu diesem stabilen Stand:
