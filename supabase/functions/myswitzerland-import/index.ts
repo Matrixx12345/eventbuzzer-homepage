@@ -9,6 +9,15 @@ const corsHeaders = {
 // MySwitzerland OpenData API
 const API_BASE_URL = "https://opendata.myswitzerland.io/v1";
 
+// BLOCKLIST - Events die NICHT importiert werden dürfen
+const BLOCKED_EVENT_TITLES = [
+  'malen wie paul klee',
+  'meringues selber machen',
+  'wenn schafe geschieden werden',
+  'von tisch zu tisch',
+  'disc golf',  // bereits gefiltert im Frontend
+];
+
 // Hilfsfunktion: HTML-Tags entfernen
 const stripHtml = (html: string) => {
   return html ? html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim() : '';
@@ -233,7 +242,14 @@ serve(async (req) => {
       const itemType = item._type;
       const title = item.name || item.title || "Unbekannt";
       const externalId = `mys_${item.id || item.identifier}`;
-      
+
+      // BLOCKLIST CHECK - Skip events on blocklist
+      const titleLower = title.toLowerCase();
+      if (BLOCKED_EVENT_TITLES.some(blocked => titleLower.includes(blocked))) {
+        console.log(`⏭️  Skipped BLOCKED event: "${title}"`);
+        continue;
+      }
+
       // Debug: Log item structure für erstes Item
       if (totalProcessed === 0) {
         console.log("Sample item structure:", JSON.stringify(item, null, 2).substring(0, 2000));

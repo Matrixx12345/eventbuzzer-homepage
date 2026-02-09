@@ -8,6 +8,15 @@ const corsHeaders = {
 
 const TM_API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 
+// BLOCKLIST - Events die NICHT importiert werden dürfen
+const BLOCKED_EVENT_TITLES = [
+  'malen wie paul klee',
+  'meringues selber machen',
+  'wenn schafe geschieden werden',
+  'von tisch zu tisch',
+  'disc golf',  // bereits gefiltert im Frontend
+];
+
 // MAPPINGS & KEYWORDS - exact matches to taxonomy table
 // ERWEITERT: Alle bekannten Ticketmaster Genres
 const SUB_CATEGORY_MAPPING: Record<string, string> = {
@@ -276,6 +285,14 @@ serve(async (req) => {
     for (const event of events) {
       const title = event.name;
       const tmId = event.id;
+
+      // BLOCKLIST CHECK - Skip events on blocklist
+      const titleLower = title.toLowerCase();
+      if (BLOCKED_EVENT_TITLES.some(blocked => titleLower.includes(blocked))) {
+        console.log(`⏭️  Skipped BLOCKED event: "${title}"`);
+        continue;
+      }
+
       const venueBasic = event._embedded?.venues?.[0];
       const venueId = venueBasic?.id;
       const lat = venueBasic?.location?.latitude ? parseFloat(venueBasic.location.latitude) : null;
@@ -283,7 +300,7 @@ serve(async (req) => {
       const segmentName = event.classifications?.[0]?.segment?.name;
       const genreName = event.classifications?.[0]?.genre?.name;
       const ticketLink = event.url;
-      
+
       // -- A. ADRESSE NACHLADEN --
       let addressData = { street: "", city: "", zip: "", country: "" };
       if (venueId) {

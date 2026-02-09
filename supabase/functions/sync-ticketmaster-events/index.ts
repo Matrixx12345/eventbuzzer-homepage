@@ -6,6 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// BLOCKLIST - Events die NICHT importiert werden dürfen
+const BLOCKED_EVENT_TITLES = [
+  'malen wie paul klee',
+  'meringues selber machen',
+  'wenn schafe geschieden werden',
+  'von tisch zu tisch',
+  'disc golf',  // bereits gefiltert im Frontend
+];
+
 // Helper function to fetch venue details from Ticketmaster
 async function fetchVenueDetails(venueId: string, apiKey: string): Promise<{
   street: string | null;
@@ -122,6 +131,14 @@ serve(async (req) => {
     const eventsToInsert = [];
     
     for (const event of ticketmasterEvents) {
+      // BLOCKLIST CHECK - Skip events on blocklist
+      const title = event.name || "Unnamed Event";
+      const titleLower = title.toLowerCase();
+      if (BLOCKED_EVENT_TITLES.some(blocked => titleLower.includes(blocked))) {
+        console.log(`⏭️  Skipped BLOCKED event: "${title}"`);
+        continue;
+      }
+
       // Extract venue ID from _embedded
       const venue = event._embedded?.venues?.[0];
       const venueId = venue?.id;
