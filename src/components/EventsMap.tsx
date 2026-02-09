@@ -293,7 +293,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
   const plannedEventsMap = useMemo(() => {
     const map = new Map<string, number>();
     console.log('📍 Creating plannedEventsMap from:', plannedEvents?.length || 0, 'events');
-    plannedEvents?.forEach((item, index) => {
+    plannedEvents?.filter(Boolean).forEach((item, index) => {
       map.set(item.eventId, index + 1);
       console.log(`  - ${item.eventId} => #${index + 1}`);
     });
@@ -623,7 +623,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
       // Render planned events (numbered pins) in performance mode
       console.log('🔢 Performance Mode - Planned Events:', plannedEvents?.length || 0);
-      plannedEvents?.forEach((plannedEvent) => {
+      plannedEvents?.filter(Boolean).forEach((plannedEvent) => {
         const event = plannedEvent.event;
         const orderNumber = plannedEventsMap.get(plannedEvent.eventId);
         console.log(`🔢 Planned Event: ${event.title}, Order: ${orderNumber}, Lat: ${event.latitude}, Lng: ${event.longitude}`);
@@ -1056,7 +1056,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
     // ========================================
     console.log('🔢 PHASE 4 - Planned Events:', plannedEvents?.length || 0);
     plannedEventMarkersRef.current = [];
-    plannedEvents?.forEach((plannedEvent) => {
+    plannedEvents?.filter(Boolean).forEach((plannedEvent) => {
       const event = plannedEvent.event;
       const orderNumber = plannedEventsMap.get(plannedEvent.eventId);
 
@@ -1141,7 +1141,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       console.log('🛣️ PHASE 5 - Creating route polyline for', plannedEvents.length, 'events');
 
       // Sort planned events by order number to ensure correct line path
-      const sortedPlannedEvents = [...plannedEvents].sort((a, b) => {
+      const sortedPlannedEvents = [...plannedEvents].filter(Boolean).sort((a, b) => {
         const orderA = plannedEventsMap.get(a.eventId) || 0;
         const orderB = plannedEventsMap.get(b.eventId) || 0;
         return orderA - orderB;

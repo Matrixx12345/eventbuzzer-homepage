@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect, memo } from 'react';
-import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode, ArrowLeft } from 'lucide-react';
+import { X, Plus, Sparkles, Briefcase, ChevronUp, ChevronDown, Trash2, Heart, MapPin, QrCode, ArrowLeft, Zap, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -64,7 +64,7 @@ const FILTER_OPTIONS = [
 ];
 
 // Timeline slots mit Zeitpunkten
-const TIME_POINTS = ['Morgens', 'Morgens', 'Mittags', 'Mittags', 'Abends', 'Abends', 'Abends'];
+const TIME_POINTS = ['Morgens', 'Mittags', 'Abends', 'Morgens', 'Mittags', 'Abends', 'Abends'];
 
 // Helper: Detect if event is museum
 const isMuseumEvent = (event: Event): boolean => {
@@ -117,7 +117,7 @@ const FavoritesBackSide: React.FC<FavoritesBackSideProps> = ({
         ) : (
           <div className="space-y-3">
             {favorites.map((favorite) => {
-              const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === favorite.id);
+              const isInTrip = Object.values(plannedEventsByDay).flat().filter(Boolean).filter(Boolean).some(pe => pe.eventId === favorite.id);
               return (
                 <div
                   key={favorite.id}
@@ -694,87 +694,74 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         return;
       }
 
-      // NEW: Find 3 events within 20km radius (iterate through potential anchors)
-      const shuffled = [...goodEvents].sort(() => Math.random() - 0.5);
-      let nearbyEvents: Event[] = [];
+      // Categorize events into 3 slots
+      const getSlotType = (e: Event): 'museum' | 'natur' | 'highlight' => {
+        const titleLower = e.title.toLowerCase();
+        if (titleLower.includes('museum') || titleLower.includes('galerie') || titleLower.includes('gallery') || titleLower.includes('kunsthaus')) return 'museum';
+        if (titleLower.includes('berg') || titleLower.includes('see') || titleLower.includes('natur') ||
+            titleLower.includes('aussicht') || titleLower.includes('panorama') || titleLower.includes('turm') ||
+            titleLower.includes('wanderung') || titleLower.includes('wasserfall') || titleLower.includes('schlucht') ||
+            titleLower.includes('foto') || titleLower.includes('photo') ||
+            e.category_main_id === 3) return 'natur';
+        return 'highlight';
+      };
 
-      // Try each event as potential anchor until we find a region with 3+ events
-      for (const anchorEvent of shuffled) {
-        // Find all events within 20km of this anchor
-        const nearbyWithin20km = goodEvents.filter(e => {
-          if (e.id === anchorEvent.id) return false;
-          const distance = haversineDistance(
-            anchorEvent.latitude!, anchorEvent.longitude!,
-            e.latitude!, e.longitude!
-          );
-          return distance <= 20;
-        });
+      // Sort candidates by buzz_score descending
+      const sortedEvents = [...goodEvents].sort((a, b) => (b.buzz_score || 0) - (a.buzz_score || 0));
 
-        // Need at least 2 more events for a total of 3
-        if (nearbyWithin20km.length >= 2) {
-          nearbyEvents = [anchorEvent];
+      // Pick one museum (random from top museums)
+      const museums = sortedEvents.filter(e => getSlotType(e) === 'museum');
+      const topMuseums = museums.slice(0, Math.min(10, museums.length));
+      const museum = topMuseums.length > 0 ? topMuseums[Math.floor(Math.random() * topMuseums.length)] : null;
 
-          // Group nearby events by TYPE (not just category) for better diversity
-          const getEventType = (e: Event): string => {
-            const titleLower = e.title.toLowerCase();
-            if (titleLower.includes('museum') || titleLower.includes('galerie')) return 'museum';
-            if (titleLower.includes('berg') || titleLower.includes('see') || titleLower.includes('natur') || e.category_main_id === 3) return 'natur';
-            if (titleLower.includes('aussicht') || titleLower.includes('panorama') || titleLower.includes('turm')) return 'aussicht';
-            return 'stadt'; // Stadt/Kultur/Restaurant
-          };
+      // Pick one natur/ausflug/fotospot (random from top)
+      const naturEvents = sortedEvents.filter(e => getSlotType(e) === 'natur');
+      const topNatur = naturEvents.slice(0, Math.min(10, naturEvents.length));
+      const natur = topNatur.length > 0 ? topNatur[Math.floor(Math.random() * topNatur.length)] : null;
 
-          const eventsByType: Record<string, Event[]> = {};
-          nearbyWithin20km.forEach(e => {
-            const type = getEventType(e);
-            if (!eventsByType[type]) eventsByType[type] = [];
-            eventsByType[type].push(e);
-          });
+      // Pick one must-see or highest ranking (prefer must-see tag, else highest buzz_score)
+      // NEVER pick another museum or natur for this slot
+      const mustSees = sortedEvents.filter(e =>
+        e.tags?.includes('must-see') &&
+        e.id !== museum?.id && e.id !== natur?.id &&
+        getSlotType(e) !== 'museum' && getSlotType(e) !== 'natur'
+      );
+      const highRanked = sortedEvents.filter(e =>
+        e.id !== museum?.id && e.id !== natur?.id &&
+        getSlotType(e) !== 'museum' && getSlotType(e) !== 'natur'
+      );
+      const highlight = mustSees.length > 0
+        ? mustSees[Math.floor(Math.random() * Math.min(5, mustSees.length))]
+        : highRanked[0] || null;
 
-          const anchorType = getEventType(anchorEvent);
-          const usedTypes = new Set([anchorType]);
+      const nearbyEvents = [museum, natur, highlight].filter(Boolean) as Event[];
 
-          // Prefer: Museum/Stadt -> Natur -> Aussicht (balanced mix)
-          const preferredOrder = ['museum', 'natur', 'aussicht', 'stadt'];
-
-          for (const type of preferredOrder) {
-            if (nearbyEvents.length >= 3) break;
-            if (usedTypes.has(type)) continue;
-            if (!eventsByType[type] || eventsByType[type].length === 0) continue;
-
-            const typeEvents = eventsByType[type];
-            const randomEvent = typeEvents[Math.floor(Math.random() * typeEvents.length)];
-            nearbyEvents.push(randomEvent);
-            usedTypes.add(type);
-          }
-
-          // If still not 3, add any remaining nearby events
-          if (nearbyEvents.length < 3) {
-            const remaining = nearbyWithin20km.filter(e => !nearbyEvents.includes(e));
-            while (nearbyEvents.length < 3 && remaining.length > 0) {
-              const randomIndex = Math.floor(Math.random() * remaining.length);
-              nearbyEvents.push(remaining[randomIndex]);
-              remaining.splice(randomIndex, 1);
-            }
-          }
-
-          break; // Found a valid region with 3 events!
+      if (nearbyEvents.length < 3) {
+        // Fill remaining slots with highest ranked events not already selected
+        const usedIds = new Set(nearbyEvents.map(e => e.id));
+        const remaining = sortedEvents.filter(e => !usedIds.has(e.id));
+        while (nearbyEvents.length < 3 && remaining.length > 0) {
+          nearbyEvents.push(remaining.shift()!);
         }
       }
 
       if (nearbyEvents.length < 3) {
-        toast.error('Nicht genug Events im 20km Radius gefunden');
+        toast.error('Nicht genug Events gefunden');
         setIsLoadingBlitz(false);
         return;
       }
 
       // REPLACE events (not append) - always start fresh
-      const newEvents = nearbyEvents.map(event => {
+      // Distribute across Morgens/Mittags/Abends
+      const timeSlots = ['09:00', '13:00', '19:00'];
+      const newEvents = nearbyEvents.slice(0, 3).map((event, i) => {
         const isMuseum = isMuseumEvent(event);
         const defaultDuration = isMuseum ? 150 : 120;
         return {
           eventId: event.id,
           event: event,
-          duration: defaultDuration
+          duration: defaultDuration,
+          startTime: timeSlots[i]
         };
       });
 
@@ -852,7 +839,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   // Handler to add favorited event to trip planner
   const handleAddFavoriteToTrip = useCallback((event: Event) => {
     // Check all days
-    const isInTrip = Object.values(plannedEventsByDay).flat().some(pe => pe.eventId === event.id);
+    const isInTrip = Object.values(plannedEventsByDay).flat().filter(Boolean).some(pe => pe.eventId === event.id);
     if (!isInTrip) {
       const isMuseum = isMuseumEvent(event);
       const defaultDuration = isMuseum ? 150 : 120;
@@ -883,7 +870,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
   // Handler to generate Google Maps URL
   const generateGoogleMapsUrl = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const allEvents = Object.values(plannedEventsByDay || {}).flat().filter(Boolean);
     const validEvents = allEvents.filter(pe => pe && pe.event);
 
     // Extract coordinates from planned events
@@ -933,7 +920,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
   // Handler to export route to Google Maps
   const handleExportToGoogleMaps = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const allEvents = Object.values(plannedEventsByDay || {}).flat().filter(Boolean);
     const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
@@ -978,7 +965,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
   // Handler to show QR code or open maps
   const handleShowQRCode = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const allEvents = Object.values(plannedEventsByDay || {}).flat().filter(Boolean);
     const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
@@ -1006,7 +993,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
   // Handler to export trip as PDF with QR code and timeline layout
   const handleExportPDF = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const allEvents = Object.values(plannedEventsByDay || {}).flat().filter(Boolean);
     const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {
@@ -1660,15 +1647,24 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
         {/* Timeline Section */}
         <div className="pr-4 mb-6">
-          {/* AI Suggestion Button */}
-          <button
-            onClick={() => setChoiceModalOpen(true)}
-            disabled={isLoadingBlitz}
-            className="w-full mb-8 py-3 px-4 rounded-lg bg-slate-700 hover:bg-slate-800 disabled:bg-slate-500 disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Sparkles size={18} />
-            {isLoadingBlitz ? 'Laden...' : 'KI-Vorschläge laden'}
-          </button>
+          {/* AI Suggestion Buttons */}
+          <div className="flex gap-2 mb-8">
+            <button
+              onClick={handleBlitzPlan}
+              disabled={isLoadingBlitz}
+              className="flex-1 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 disabled:bg-blue-700 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <Zap size={16} />
+              {isLoadingBlitz ? 'Laden...' : 'KI-Vorschläge'}
+            </button>
+            <button
+              onClick={() => setSwiperModalOpen(true)}
+              className="flex-1 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <Layers size={16} />
+              Swipe Events
+            </button>
+          </div>
 
           {/* Timeline with Time Points */}
           <div className="relative">
@@ -1677,10 +1673,15 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             {visibleEventSlots.map((timePoint, eventIndex) => {
               const plannedEvent = currentDayEvents[eventIndex];
 
+              // Use startTime for label if available
+              const effectiveTimePoint = plannedEvent?.startTime
+                ? (parseInt(plannedEvent.startTime.split(':')[0]) < 12 ? 'Morgens' : parseInt(plannedEvent.startTime.split(':')[0]) < 17 ? 'Mittags' : 'Abends')
+                : timePoint;
+
               return (
                 <EventSlot
                   key={`slot-${eventIndex}`}
-                  timePoint={timePoint}
+                  timePoint={effectiveTimePoint}
                   slotId={`time-${eventIndex}`}
                   event={plannedEvent?.event || null}
                   duration={plannedEvent?.duration}
@@ -1868,7 +1869,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           plannedEventsByDay={plannedEventsByDay}
           activeDay={activeDay}
           onToggleTrip={(event, day = activeDay) => {
-            const allEventsFlat = Object.values(plannedEventsByDay).flat();
+            const allEventsFlat = Object.values(plannedEventsByDay).flat().filter(Boolean);
             const isInTrip = allEventsFlat.some(pe => pe.eventId === event.id);
             if (isInTrip) {
               const updated = { ...plannedEventsByDay };
@@ -2042,7 +2043,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         plannedEventsByDay={plannedEventsByDay}
         activeDay={activeDay}
         onToggleTrip={(event, day = activeDay) => {
-          const allEventsFlat = Object.values(plannedEventsByDay).flat();
+          const allEventsFlat = Object.values(plannedEventsByDay).flat().filter(Boolean);
           const isInTrip = allEventsFlat.some(pe => pe.eventId === event.id);
           if (isInTrip) {
             const updated = { ...plannedEventsByDay };

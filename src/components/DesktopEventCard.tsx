@@ -129,7 +129,7 @@ export const DesktopEventCard = ({
   // Check if event is already in trip planner (across all days)
   // Memoize to prevent re-calculation on every render (988 events × flat() = massive loop)
   const allPlannedEvents = useMemo(
-    () => Object.values(plannedEventsByDay).flat(),
+    () => Object.values(plannedEventsByDay).flat().filter(Boolean),
     [plannedEventsByDay]
   );
   const isInTrip = allPlannedEvents.some(pe => pe.eventId === event.id);
@@ -418,7 +418,7 @@ export const DesktopEventCard = ({
                     setPlannedEventsByDay(updated);
 
                     // For map movement, flatten all events
-                    const allEvents = Object.values(updated).flat();
+                    const allEvents = Object.values(updated).flat().filter(Boolean);
                     handleMapMovement(allEvents);
 
                     toast(`${event.title} zu Tag ${activeDay} hinzugefügt`);

@@ -180,7 +180,7 @@ const TripPlannerPage: React.FC = () => {
 
   // Generate Google Maps URL with all events
   const generateGoogleMapsUrl = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay).flat();
+    const allEvents = Object.values(plannedEventsByDay).flat().filter(Boolean);
     const validEvents = allEvents.filter(pe => pe?.event?.latitude && pe?.event?.longitude);
 
     if (validEvents.length < 2) return '';
@@ -200,7 +200,7 @@ const TripPlannerPage: React.FC = () => {
 
   // Export to Google Maps
   const handleExportToGoogleMaps = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay).flat();
+    const allEvents = Object.values(plannedEventsByDay).flat().filter(Boolean);
     if (allEvents.length < 2) {
       toast.error('Mindestens 2 Events für Route erforderlich');
       return;
@@ -224,7 +224,7 @@ const TripPlannerPage: React.FC = () => {
 
   // Export PDF with TripPlannerModal design
   const handleExportPDF = useCallback(() => {
-    const allEvents = Object.values(plannedEventsByDay || {}).flat();
+    const allEvents = Object.values(plannedEventsByDay || {}).flat().filter(Boolean);
     const validEvents = allEvents.filter(pe => pe && pe.event);
 
     if (validEvents.length < 2) {

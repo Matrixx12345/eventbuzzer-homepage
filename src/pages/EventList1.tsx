@@ -652,6 +652,27 @@ const EventList1 = () => {
     }
   }, []);
 
+  // Zoom map to Blitz-Plan events (30km radius)
+  const handleZoomToBlitzEvents = useCallback((events: Event[]) => {
+    if (events.length === 0) return;
+
+    const eventsWithCoords = events.filter(e => e.latitude && e.longitude);
+    if (eventsWithCoords.length === 0) return;
+
+    // Calculate center point of all events
+    const lngs = eventsWithCoords.map(e => e.longitude!);
+    const lats = eventsWithCoords.map(e => e.latitude!);
+    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+
+    // Set flyToLocation to trigger map zoom (zoom level 9.5 = ~40km radius)
+    setFlyToLocation({
+      lng: centerLng,
+      lat: centerLat,
+      zoom: 9.5
+    });
+  }, []);
+
   // Toggle event in trip planner (for EventDetailModal)
   const handleToggleTrip = useCallback((event: Event) => {
     if (isInTrip(event.id)) {
@@ -663,7 +684,7 @@ const EventList1 = () => {
 
       // For map movement, flatten all events (after state update)
       const updatedEvents = [
-        ...Object.values(plannedEventsByDay).flat(),
+        ...Object.values(plannedEventsByDay).flat().filter(Boolean),
         { eventId: event.id, event, duration: 120 }
       ];
       handleMapMovement(updatedEvents);
@@ -1082,6 +1103,7 @@ const EventList1 = () => {
                 setActiveDay={setActiveDay}
                 totalDays={totalDays}
                 setTotalDays={setTotalDays}
+                onMapZoomToEvents={handleZoomToBlitzEvents}
               />
             </div>
           </div>

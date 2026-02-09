@@ -61,7 +61,12 @@ export const TripPlannerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (stored) {
         const parsed: StoredTripData = JSON.parse(stored);
         if (parsed.plannedEventsByDay && typeof parsed.plannedEventsByDay === 'object') {
-          setPlannedEventsByDay(parsed.plannedEventsByDay);
+          // Clean out any null/undefined values (from previous sparse array bug)
+          const cleaned: PlannedEventsByDay = {};
+          Object.entries(parsed.plannedEventsByDay).forEach(([key, events]) => {
+            cleaned[Number(key)] = (events as any[]).filter(Boolean);
+          });
+          setPlannedEventsByDay(cleaned);
         }
         if (typeof parsed.activeDay === 'number') {
           setActiveDay(parsed.activeDay);
@@ -91,13 +96,13 @@ export const TripPlannerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Calculate total event count across all days
   const totalEventCount = useMemo(() => {
-    return Object.values(plannedEventsByDay).reduce((sum, events) => sum + events.length, 0);
+    return Object.values(plannedEventsByDay).reduce((sum, events) => sum + events.filter(Boolean).length, 0);
   }, [plannedEventsByDay]);
 
   // Check if an event is already in any day
   const isInTrip = useCallback((eventId: string): boolean => {
     return Object.values(plannedEventsByDay).some(events =>
-      events.some(pe => pe.eventId === eventId)
+      events.filter(Boolean).some(pe => pe.eventId === eventId)
     );
   }, [plannedEventsByDay]);
 
@@ -134,7 +139,7 @@ export const TripPlannerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const updated = { ...prev };
       Object.keys(updated).forEach(dayKey => {
         const day = Number(dayKey);
-        updated[day] = updated[day].filter(pe => pe.eventId !== eventId);
+        updated[day] = updated[day].filter(Boolean).filter(pe => pe.eventId !== eventId);
       });
       return updated;
     });
