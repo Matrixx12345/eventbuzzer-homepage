@@ -4,6 +4,10 @@ import { cn } from '@/lib/utils';
 import { EventDetailModal } from './EventDetailModal';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { toast } from 'sonner';
+import MagicTripSelectorChoiceModal from './MagicTripSelectorChoiceModal';
+import MagicTripSelectorSwiper from './MagicTripSelectorSwiper';
+import { supabase } from '@/integrations/supabase/client';
+import { findNearbyEvents, haversineDistance } from '@/utils/geoHelpers';
 
 interface Event {
   id: string;
@@ -12,7 +16,7 @@ interface Event {
   location?: string;
   address_city?: string;
   external_id?: string;
-  category_main_id?: string;
+  category_main_id?: number;
   latitude?: number;
   longitude?: number;
   short_description?: string;
@@ -25,6 +29,7 @@ interface Event {
   ticket_url?: string;
   url?: string;
   buzz_score?: number;
+  buzz_boost?: number | string;
 }
 
 // Multi-day Trip Planner - events organized by day
@@ -47,6 +52,8 @@ interface TripPlannerModalProps {
   setActiveDay?: (day: number) => void;
   totalDays?: number;
   setTotalDays?: (days: number) => void;
+  // Map zoom callback
+  onMapZoomToEvents?: (events: Event[]) => void;
 }
 
 // Filter pills oben
@@ -57,7 +64,7 @@ const FILTER_OPTIONS = [
 ];
 
 // Timeline slots mit Zeitpunkten
-const TIME_POINTS = ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '20:00'];
+const TIME_POINTS = ['Morgens', 'Morgens', 'Mittags', 'Mittags', 'Abends', 'Abends', 'Abends'];
 
 // Helper: Detect if event is museum
 const isMuseumEvent = (event: Event): boolean => {
@@ -256,15 +263,12 @@ const EventSlot: React.FC<{
         />
       )}
 
-      {/* Mobile: Time ABOVE, Desktop: Time LEFT with timeline */}
-      <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-3 md:w-72 md:mx-auto xl:w-auto xl:mx-0">
+      {/* Time Label - Always ABOVE card */}
+      <div className="flex flex-col gap-1 md:w-72 md:mx-auto lg:w-auto lg:mx-0">
         {/* Time Label */}
-        <div className="text-xs font-semibold text-gray-600 mb-1 xl:mb-0 xl:flex-shrink-0 xl:w-12 xl:text-right">
+        <div className="text-xs font-semibold text-gray-600 mb-1">
           {timePoint}
         </div>
-
-        {/* Timeline Dot - DESKTOP ONLY (1280px+) */}
-        <div className="hidden xl:block flex-shrink-0 w-3 h-3 rounded-full bg-gray-400 z-10 self-center" style={{ marginLeft: '1.25px' }} />
 
         {/* Event Slot - Compact on mobile */}
         <div
@@ -296,14 +300,14 @@ const EventSlot: React.FC<{
         onClick={(e) => {
           e.stopPropagation();
         }}
-        className={`p-2 rounded-lg ${event ? 'border border-gray-300 md:border-2 md:border-gray-500' : 'border border-dashed border-gray-300'} transition-all flex items-center justify-center w-full cursor-pointer relative ${
+        className={`p-2 lg:!p-0 lg:h-24 rounded-lg ${event ? 'border border-gray-300 md:border-2 md:border-gray-500 lg:border lg:border-gray-200' : 'border border-dashed border-gray-300'} transition-all flex lg:items-stretch lg:justify-start items-center justify-center w-full cursor-pointer relative ${
           isDragOver ? 'border-blue-400 bg-blue-50' : event ? 'bg-white hover:border-gray-400 md:hover:border-gray-600' : 'hover:bg-white'
         }`}
       >
         {event ? (
-          <div className="w-full flex items-center justify-between gap-2">
+          <div className="w-full flex items-center justify-between gap-2 lg:gap-0 lg:relative">
             <div
-              className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity lg:gap-0"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onEventClick) {
@@ -312,23 +316,52 @@ const EventSlot: React.FC<{
               }}
             >
               {event.image_url && (
-                <img
-                  src={event.image_url}
-                  alt={event.title}
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-md object-cover flex-shrink-0"
-                />
+                <div className="w-16 h-16 md:w-20 md:h-20 lg:w-1/2 lg:h-24 flex-shrink-0 lg:p-2 lg:bg-white lg:rounded-lg lg:relative" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+                  <img
+                    src={event.image_url}
+                    alt={event.title}
+                    className="w-full h-full rounded-md lg:rounded object-cover"
+                  />
+
+                  {/* Duration Badge - Desktop Only (in image, top-left) */}
+                  {duration && (
+                    <div className="hidden lg:block absolute top-1 left-1 z-10">
+                      <div
+                        className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded cursor-help"
+                        onMouseEnter={() => setShowDurationTooltip(true)}
+                        onMouseLeave={() => setShowDurationTooltip(false)}
+                      >
+                        {duration >= 90 ? (
+                          duration % 60 > 0 ? `${Math.floor(duration / 60)}h ${duration % 60}m` : `${Math.floor(duration / 60)}h`
+                        ) : (
+                          `${duration}m`
+                        )}
+                      </div>
+                      {showDurationTooltip && (
+                        <div className="absolute top-full left-0 mt-2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap z-50">
+                          geschätzte Dauer: {duration >= 90 ? (
+                            duration % 60 > 0 ? `${Math.floor(duration / 60)}h ${duration % 60} min` : `${Math.floor(duration / 60)} Stunden`
+                          ) : (
+                            `${duration} min`
+                          )}
+                          <div className="absolute bottom-full left-2 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-xs md:text-sm font-medium text-gray-900 truncate text-left">
+              <div className="flex-1 min-w-0 lg:w-1/2 lg:flex lg:flex-col lg:justify-between lg:p-4 lg:pr-12">
+                <p className="text-xs md:text-sm lg:text-base font-medium text-gray-900 truncate lg:line-clamp-2 text-left">
                   {event.title}
                 </p>
                 {(event.location || event.address_city) && (
-                  <p className="text-[10px] md:text-xs text-gray-600 truncate text-left">
+                  <p className="text-[10px] md:text-xs lg:text-sm text-gray-600 truncate lg:truncate-none text-left">
                     {event.location || event.address_city}
                   </p>
                 )}
                 {duration && (
-                  <div className="relative mt-0.5 md:mt-2">
+                  <div className="relative mt-0.5 md:mt-2 lg:hidden">
                     <button
                       className="block px-1.5 py-0.5 md:px-2.5 rounded-full bg-gray-50 text-[10px] md:text-xs text-gray-600 font-medium cursor-help hover:bg-gray-100 transition-all border border-gray-200"
                       onMouseEnter={() => setShowDurationTooltip(true)}
@@ -356,8 +389,8 @@ const EventSlot: React.FC<{
               </div>
             </div>
 
-            {/* Action Buttons - RIGHT side, stacked vertically, compact on mobile */}
-            <div className="flex flex-col items-center gap-0 flex-shrink-0">
+            {/* Action Buttons - RIGHT side, stacked vertically, compact on mobile, absolute positioned on desktop */}
+            <div className="flex flex-col items-center gap-0 flex-shrink-0 lg:absolute lg:top-1 lg:right-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -495,6 +528,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   setActiveDay,
   totalDays = 2,
   setTotalDays,
+  onMapZoomToEvents,
 }) => {
   // Use props if provided, otherwise use local state
   const [localPlannedEventsByDay, setLocalPlannedEventsByDay] = useState<PlannedEventsByDay>({ 1: [], 2: [] });
@@ -517,6 +551,11 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   // Day switcher dropdown state
   const [openDaySwitcher, setOpenDaySwitcher] = useState<string | null>(null);
   const daySwitcherRef = useRef<HTMLDivElement>(null);
+
+  // Magic Trip Selector state
+  const [choiceModalOpen, setChoiceModalOpen] = useState(false);
+  const [swiperModalOpen, setSwiperModalOpen] = useState(false);
+  const [isLoadingBlitz, setIsLoadingBlitz] = useState(false);
 
   // Get favorites context
   const { favorites, toggleFavorite } = useFavorites();
@@ -601,6 +640,200 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
 
     toast.success(`Event zu Tag ${toDay} verschoben`);
   }, [plannedEventsByDay, setPlannedEventsByDay]);
+
+  // Blitz-Plan: Load 3 nearby events automatically
+  const handleBlitzPlan = useCallback(async () => {
+    setIsLoadingBlitz(true);
+    setChoiceModalOpen(false);
+
+    // Save old events for undo
+    const oldEvents = [...(plannedEventsByDay[activeDay] || [])];
+    const hasExistingEvents = oldEvents.length > 0;
+
+    try {
+      // Load all events from Supabase
+      const response = await supabase.functions.invoke("get-external-events", {
+        body: {
+          limit: 1500,
+          offset: 0,
+          filters: {} // No geo bounds = all events
+        }
+      });
+
+      if (!response.data || !response.data.events) {
+        throw new Error('No events returned');
+      }
+
+      const allEvents = response.data.events as Event[];
+
+      // Filter ONLY permanent attractions (museums, sightseeing, restaurants, wellness)
+      // NO concerts, festivals, or one-time events!
+      const permanentCategories = [2, 3, 7, 11]; // Wellness, Natur, Kultur, Sightseeing
+      const permanentKeywords = ['museum', 'galerie', 'restaurant', 'spa', 'wellness', 'berg', 'see', 'kirche', 'schloss', 'aussicht', 'panorama'];
+
+      const goodEvents = allEvents.filter(e => {
+        if (!e.latitude || !e.longitude) return false;
+        if (!e.image_url) return false; // Must have image
+        if ((e.buzz_score || 0) < 70) return false; // Only top quality
+
+        // Check if it's a permanent attraction
+        const titleLower = e.title.toLowerCase();
+        const isPermanent = permanentKeywords.some(keyword => titleLower.includes(keyword)) ||
+                           (e.category_main_id && permanentCategories.includes(e.category_main_id));
+
+        // Exclude concerts and festivals
+        const isConcert = titleLower.includes('konzert') || titleLower.includes('concert') ||
+                         titleLower.includes('festival') || titleLower.includes('live');
+
+        return isPermanent && !isConcert;
+      });
+
+      if (goodEvents.length < 3) {
+        toast.error('Nicht genug Events gefunden');
+        setIsLoadingBlitz(false);
+        return;
+      }
+
+      // NEW: Find 3 events within 20km radius (iterate through potential anchors)
+      const shuffled = [...goodEvents].sort(() => Math.random() - 0.5);
+      let nearbyEvents: Event[] = [];
+
+      // Try each event as potential anchor until we find a region with 3+ events
+      for (const anchorEvent of shuffled) {
+        // Find all events within 20km of this anchor
+        const nearbyWithin20km = goodEvents.filter(e => {
+          if (e.id === anchorEvent.id) return false;
+          const distance = haversineDistance(
+            anchorEvent.latitude!, anchorEvent.longitude!,
+            e.latitude!, e.longitude!
+          );
+          return distance <= 20;
+        });
+
+        // Need at least 2 more events for a total of 3
+        if (nearbyWithin20km.length >= 2) {
+          nearbyEvents = [anchorEvent];
+
+          // Group nearby events by TYPE (not just category) for better diversity
+          const getEventType = (e: Event): string => {
+            const titleLower = e.title.toLowerCase();
+            if (titleLower.includes('museum') || titleLower.includes('galerie')) return 'museum';
+            if (titleLower.includes('berg') || titleLower.includes('see') || titleLower.includes('natur') || e.category_main_id === 3) return 'natur';
+            if (titleLower.includes('aussicht') || titleLower.includes('panorama') || titleLower.includes('turm')) return 'aussicht';
+            return 'stadt'; // Stadt/Kultur/Restaurant
+          };
+
+          const eventsByType: Record<string, Event[]> = {};
+          nearbyWithin20km.forEach(e => {
+            const type = getEventType(e);
+            if (!eventsByType[type]) eventsByType[type] = [];
+            eventsByType[type].push(e);
+          });
+
+          const anchorType = getEventType(anchorEvent);
+          const usedTypes = new Set([anchorType]);
+
+          // Prefer: Museum/Stadt -> Natur -> Aussicht (balanced mix)
+          const preferredOrder = ['museum', 'natur', 'aussicht', 'stadt'];
+
+          for (const type of preferredOrder) {
+            if (nearbyEvents.length >= 3) break;
+            if (usedTypes.has(type)) continue;
+            if (!eventsByType[type] || eventsByType[type].length === 0) continue;
+
+            const typeEvents = eventsByType[type];
+            const randomEvent = typeEvents[Math.floor(Math.random() * typeEvents.length)];
+            nearbyEvents.push(randomEvent);
+            usedTypes.add(type);
+          }
+
+          // If still not 3, add any remaining nearby events
+          if (nearbyEvents.length < 3) {
+            const remaining = nearbyWithin20km.filter(e => !nearbyEvents.includes(e));
+            while (nearbyEvents.length < 3 && remaining.length > 0) {
+              const randomIndex = Math.floor(Math.random() * remaining.length);
+              nearbyEvents.push(remaining[randomIndex]);
+              remaining.splice(randomIndex, 1);
+            }
+          }
+
+          break; // Found a valid region with 3 events!
+        }
+      }
+
+      if (nearbyEvents.length < 3) {
+        toast.error('Nicht genug Events im 20km Radius gefunden');
+        setIsLoadingBlitz(false);
+        return;
+      }
+
+      // REPLACE events (not append) - always start fresh
+      const newEvents = nearbyEvents.map(event => {
+        const isMuseum = isMuseumEvent(event);
+        const defaultDuration = isMuseum ? 150 : 120;
+        return {
+          eventId: event.id,
+          event: event,
+          duration: defaultDuration
+        };
+      });
+
+      // Update state with new events (replace old ones)
+      const updatedPlannedEvents = {
+        ...plannedEventsByDay,
+        [activeDay]: newEvents
+      };
+      setPlannedEventsByDay(updatedPlannedEvents);
+
+      // Show toast with undo option
+      const toastMessage = hasExistingEvents
+        ? `🔄 ${oldEvents.length} Events ersetzt durch 3 neue!`
+        : '✅ 3 Events wurden hinzugefügt!';
+
+      toast.success(toastMessage, {
+        duration: 15000, // 15 seconds
+        action: hasExistingEvents ? {
+          label: 'Rückgängig',
+          onClick: () => {
+            // Restore old events
+            const restoredState = {
+              ...plannedEventsByDay,
+              [activeDay]: oldEvents
+            };
+            setPlannedEventsByDay(restoredState);
+            toast.success(`✅ ${oldEvents.length} Events wiederhergestellt!`);
+          }
+        } : undefined
+      });
+
+      // Zoom map to loaded events (30km radius)
+      if (onMapZoomToEvents) {
+        onMapZoomToEvents(nearbyEvents);
+      }
+    } catch (error) {
+      console.error('Blitz-Plan error:', error);
+      toast.error('Fehler beim Laden der Events');
+    } finally {
+      setIsLoadingBlitz(false);
+    }
+  }, [activeDay, plannedEventsByDay, setPlannedEventsByDay, onMapZoomToEvents]);
+
+  // Handle event selected from swiper
+  const handleEventSelected = useCallback((event: Event) => {
+    const isMuseum = isMuseumEvent(event);
+    const defaultDuration = isMuseum ? 150 : 120;
+
+    const currentEvents = plannedEventsByDay[activeDay] || [];
+    const updated = {
+      ...plannedEventsByDay,
+      [activeDay]: [...currentEvents, {
+        eventId: event.id,
+        event: event,
+        duration: defaultDuration
+      }]
+    };
+    setPlannedEventsByDay(updated);
+  }, [activeDay, plannedEventsByDay, setPlannedEventsByDay]);
 
   // Close day switcher when clicking outside
   useEffect(() => {
@@ -1429,19 +1662,16 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         <div className="pr-4 mb-6">
           {/* AI Suggestion Button */}
           <button
-            onClick={() => {
-              alert('KI-Vorschläge laden (Feature noch nicht implementiert)');
-            }}
-            className="w-full mb-8 py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-900 text-white font-medium transition-colors flex items-center justify-center gap-2"
+            onClick={() => setChoiceModalOpen(true)}
+            disabled={isLoadingBlitz}
+            className="w-full mb-8 py-3 px-4 rounded-lg bg-slate-700 hover:bg-slate-800 disabled:bg-slate-500 disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
           >
             <Sparkles size={18} />
-            KI-Vorschläge laden
+            {isLoadingBlitz ? 'Laden...' : 'KI-Vorschläge laden'}
           </button>
 
           {/* Timeline with Time Points */}
           <div className="relative">
-            {/* Continuous Timeline Line - DESKTOP ONLY (1280px+) */}
-            <div className="hidden xl:block absolute top-0 bottom-0 w-0.5 bg-gray-300" style={{ left: 'calc(3rem + 0.75rem + 6px)' }} />
 
             {/* Timeline Items - Only event slots, no spacers */}
             {visibleEventSlots.map((timePoint, eventIndex) => {
@@ -1898,6 +2128,25 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           </div>
         </div>
       )}
+
+      {/* Magic Trip Selector Choice Modal */}
+      <MagicTripSelectorChoiceModal
+        isOpen={choiceModalOpen}
+        onClose={() => setChoiceModalOpen(false)}
+        onSelectBlitzPlan={handleBlitzPlan}
+        onSelectEntdeckerModus={() => {
+          setChoiceModalOpen(false);
+          setSwiperModalOpen(true);
+        }}
+      />
+
+      {/* Magic Trip Selector Swiper */}
+      <MagicTripSelectorSwiper
+        isOpen={swiperModalOpen}
+        onClose={() => setSwiperModalOpen(false)}
+        activeDay={activeDay}
+        onEventSelected={handleEventSelected}
+      />
     </>
   );
 };
