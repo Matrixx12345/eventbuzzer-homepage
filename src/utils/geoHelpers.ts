@@ -139,3 +139,95 @@ export function getVibePills(event: {
 
   return pills.slice(0, 3); // Max 3 pills
 }
+
+/**
+ * Swiss city coordinates for filters
+ */
+export const SWISS_CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+  "Zürich": { lat: 47.3769, lng: 8.5417 },
+  "Basel": { lat: 47.5596, lng: 7.5886 },
+  "Bern": { lat: 46.9480, lng: 7.4474 },
+  "Genf": { lat: 46.2044, lng: 6.1432 },
+  "Luzern": { lat: 47.0502, lng: 8.3093 },
+  "Lausanne": { lat: 46.5197, lng: 6.6323 },
+  "St. Gallen": { lat: 47.4245, lng: 9.3767 },
+  "Winterthur": { lat: 47.5000, lng: 8.7240 },
+  "Lugano": { lat: 46.0037, lng: 8.9511 },
+  "Biel": { lat: 47.1368, lng: 7.2468 },
+  "St. Moritz": { lat: 46.4989, lng: 9.8355 },
+  "Zermatt": { lat: 46.0207, lng: 7.7491 },
+  "Interlaken": { lat: 46.6863, lng: 7.8632 },
+  "Davos": { lat: 46.8029, lng: 9.8363 },
+  "Grindelwald": { lat: 46.6244, lng: 8.0411 },
+};
+
+/**
+ * Calculate perpendicular distance from a point to a line segment (A to B)
+ * Used for Route A→B corridor filtering
+ * @param pointLat Event latitude
+ * @param pointLng Event longitude
+ * @param lat1 Route start latitude
+ * @param lng1 Route start longitude
+ * @param lat2 Route end latitude
+ * @param lng2 Route end longitude
+ * @returns Distance in kilometers from point to line
+ */
+export function distanceToLine(
+  pointLat: number,
+  pointLng: number,
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  // Convert to radians
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const p = { lat: toRad(pointLat), lng: toRad(pointLng) };
+  const a = { lat: toRad(lat1), lng: toRad(lng1) };
+  const b = { lat: toRad(lat2), lng: toRad(lng2) };
+
+  // Calculate cross-track distance
+  const R = 6371; // Earth radius in km
+
+  // Distance from A to point
+  const distAP = haversineDistance(lat1, lng1, pointLat, pointLng);
+
+  // Distance from A to B
+  const distAB = haversineDistance(lat1, lng1, lat2, lng2);
+
+  // If route is basically a point, return distance to that point
+  if (distAB < 0.001) return distAP;
+
+  // Bearing from A to B
+  const dLng = b.lng - a.lng;
+  const y = Math.sin(dLng) * Math.cos(b.lat);
+  const x = Math.cos(a.lat) * Math.sin(b.lat) -
+            Math.sin(a.lat) * Math.cos(b.lat) * Math.cos(dLng);
+  const bearingAB = Math.atan2(y, x);
+
+  // Bearing from A to point
+  const dLngP = p.lng - a.lng;
+  const yP = Math.sin(dLngP) * Math.cos(p.lat);
+  const xP = Math.cos(a.lat) * Math.sin(p.lat) -
+             Math.sin(a.lat) * Math.cos(p.lat) * Math.cos(dLngP);
+  const bearingAP = Math.atan2(yP, xP);
+
+  // Cross-track distance
+  const crossTrack = Math.asin(
+    Math.sin(distAP / R) * Math.sin(bearingAP - bearingAB)
+  ) * R;
+
+  // Along-track distance (how far along the route the perpendicular point is)
+  const alongTrack = Math.acos(
+    Math.cos(distAP / R) / Math.cos(crossTrack / R)
+  ) * R;
+
+  // If perpendicular point is beyond the route segment, use endpoint distance
+  if (alongTrack < 0) {
+    return distAP; // Before point A
+  } else if (alongTrack > distAB) {
+    return haversineDistance(lat2, lng2, pointLat, pointLng); // After point B
+  }
+
+  return Math.abs(crossTrack);
+}

@@ -423,14 +423,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
               {/* Compact Details */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-                {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
+                {event.external_id?.startsWith('tm_') && event.start_date && (
                   <div className="flex items-center gap-1">
                     <Calendar size={14} className="text-gray-600" />
                     <span>
-                      {event.tags && event.tags.includes('ganzjährig')
-                        ? 'Ganzjährig'
-                        : new Date(event.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' })
-                      }
+                      {new Date(event.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' })}
                     </span>
                   </div>
                 )}
@@ -858,14 +855,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
           {/* Compact Details - nur die wichtigsten Infos */}
           <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600 pt-1 md:pt-2">
-            {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
+            {event.external_id?.startsWith('tm_') && event.start_date && (
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} className="text-gray-600" />
                 <span>
-                  {event.tags && event.tags.includes('ganzjährig')
-                    ? 'Ganzjährig'
-                    : new Date(event.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' })
-                  }
+                  {new Date(event.start_date).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' })}
                 </span>
               </div>
             )}

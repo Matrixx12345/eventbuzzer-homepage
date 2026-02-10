@@ -174,15 +174,10 @@ export const ExpandableEventCard: React.FC<ExpandableEventCardProps> = ({ event,
 
           {/* Date & Rating */}
           <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
-            {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
+            {event.external_id?.startsWith('tm_') && event.start_date && (
               <div className="flex items-center gap-1">
                 <Clock size={14} />
-                <span>
-                  {event.tags && event.tags.includes('ganzjährig')
-                    ? 'Ganzjährig'
-                    : new Date(event.start_date).toLocaleDateString('de-DE')
-                  }
-                </span>
+                <span>{new Date(event.start_date).toLocaleDateString('de-DE')}</span>
               </div>
             )}
             {event.rating && (
@@ -294,18 +289,15 @@ export const ExpandableEventCard: React.FC<ExpandableEventCardProps> = ({ event,
 
           {/* Event Details Grid */}
           <div className="grid grid-cols-2 gap-4 py-4 border-b border-gray-200">
-            {(event.start_date || (event.tags && event.tags.includes('ganzjährig'))) && (
+            {event.external_id?.startsWith('tm_') && event.start_date && (
               <div>
                 <span className="text-xs font-medium text-gray-500">Datum</span>
                 <p className="text-sm text-gray-900">
-                  {event.tags && event.tags.includes('ganzjährig')
-                    ? 'Ganzjährig'
-                    : new Date(event.start_date).toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      })
-                  }
+                  {new Date(event.start_date).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
                 </p>
               </div>
             )}

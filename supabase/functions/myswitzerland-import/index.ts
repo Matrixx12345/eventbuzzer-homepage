@@ -18,9 +18,21 @@ const BLOCKED_EVENT_TITLES = [
   'disc golf',  // bereits gefiltert im Frontend
 ];
 
-// Hilfsfunktion: HTML-Tags entfernen
+// Hilfsfunktion: HTML-Tags und Entities entfernen
 const stripHtml = (html: string) => {
-  return html ? html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim() : '';
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num)))
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 // Schweizer Städte mit Koordinaten für Reverse-Geocoding
@@ -247,6 +259,14 @@ serve(async (req) => {
       const titleLower = title.toLowerCase();
       if (BLOCKED_EVENT_TITLES.some(blocked => titleLower.includes(blocked))) {
         console.log(`⏭️  Skipped BLOCKED event: "${title}"`);
+        continue;
+      }
+
+      // CHRISTMAS FILTER - Only import Weihnachts-Events in Nov/Dec
+      const currentMonth = new Date().getMonth() + 1;
+      const isChristmasEvent = titleLower.includes('weihnacht') || titleLower.includes('noël') || titleLower.includes('noel');
+      if (isChristmasEvent && currentMonth < 11) {
+        console.log(`⏭️  Skipped CHRISTMAS event (not season): "${title}"`);
         continue;
       }
 
@@ -603,6 +623,115 @@ Stil: Einladend, Quiet Luxury. Keine Emojis. Nur das JSON, keine Erklärungen.`;
       
       console.log(`Ticket link for "${title}":`, ticketLink || "NONE");
 
+      // Helper: Classify event type (permanent, seasonal, recurring)
+      const classifyEventType = (item: any, itemType: string, title: string) => {
+        const titleLower = title.toLowerCase();
+        const categoryText = Array.isArray(item.categories)
+          ? item.categories.map((c: any) => typeof c === 'string' ? c : c.name || '').join(" ").toLowerCase()
+          : '';
+
+        // Permanent attractions (museums, castles, landmarks)
+        const permanentKeywords = [
+          'museum', 'schloss', 'castle', 'kirche', 'church',
+          'galerie', 'gallery', 'kathedrale', 'cathedral',
+          'denkmal', 'monument', 'aquarium', 'zoo', 'tierpark',
+          'festung', 'fortress', 'rathaus', 'town hall'
+        ];
+
+        if (permanentKeywords.some(kw => titleLower.includes(kw) || categoryText.includes(kw))) {
+          return {
+            type: 'permanent',
+            pattern: null,
+            months: [1,2,3,4,5,6,7,8,9,10,11,12]
+          };
+        }
+
+        // Winter seasonal attractions (Nov-Mar)
+        const winterKeywords = [
+          'ski', 'snowboard', 'langlauf', 'schneeschuh',
+          'schlitten', 'wintersport', 'skipiste', 'winterwandern'
+        ];
+        if (winterKeywords.some(kw => titleLower.includes(kw))) {
+          return {
+            type: 'seasonal',
+            pattern: 'seasonal',
+            months: [11, 12, 1, 2, 3]
+          };
+        }
+
+        // Summer seasonal attractions (May-Sep)
+        const summerKeywords = [
+          'sommerbahn', 'sommerrodelbahn', 'seilbahn sommer',
+          'freibad', 'strandbad', 'sommerskigebiet'
+        ];
+        if (summerKeywords.some(kw => titleLower.includes(kw))) {
+          return {
+            type: 'seasonal',
+            pattern: 'seasonal',
+            months: [5, 6, 7, 8, 9]
+          };
+        }
+
+        // Weekly recurring events
+        const weeklyKeywords = [
+          'wochenmarkt', 'weekly market', 'jeden montag',
+          'jeden dienstag', 'jeden mittwoch', 'jeden donnerstag',
+          'jeden freitag', 'jeden samstag', 'jeden sonntag'
+        ];
+        if (weeklyKeywords.some(kw => titleLower.includes(kw) || categoryText.includes(kw))) {
+          return {
+            type: 'recurring',
+            pattern: 'weekly',
+            months: [1,2,3,4,5,6,7,8,9,10,11,12]
+          };
+        }
+
+        // Default: permanent (safer than storing dates)
+        return {
+          type: 'permanent',
+          pattern: null,
+          months: [1,2,3,4,5,6,7,8,9,10,11,12]
+        };
+      };
+
+      // NEW: Classify event type to mark as permanent/recurring
+      const eventClass = classifyEventType(item, itemType, title);
+      const isRecurring = eventClass.pattern !== null;
+      const recurringPattern = eventClass.pattern;
+      const availableMonths = eventClass.months;
+
+      // CRITICAL: MySwitzerland events have NULL dates (prevents SEO damage)
+      const startDate: string | null = null;
+      const endDate: string | null = null;
+
+      // Optional: Calculate next occurrence for seasonal events
+      let nextOccurrenceStart: string | null = null;
+      let nextOccurrenceEnd: string | null = null;
+
+      if (eventClass.pattern === 'seasonal' && eventClass.months.length > 0) {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const nextMonth = eventClass.months.find(m => m >= currentMonth) || eventClass.months[0];
+        const year = nextMonth >= currentMonth ? now.getFullYear() : now.getFullYear() + 1;
+
+        nextOccurrenceStart = new Date(year, nextMonth - 1, 1).toISOString();
+        const lastMonth = eventClass.months[eventClass.months.length - 1];
+        nextOccurrenceEnd = new Date(year, lastMonth, 0).toISOString();
+      }
+
+      // Check: Ist das Event admin-verifiziert? Wenn ja, SKIP!
+      const { data: existingEvent } = await supabase
+        .from("events")
+        .select("id, admin_verified")
+        .eq("external_id", externalId)
+        .maybeSingle();
+
+      if (existingEvent?.admin_verified === true) {
+        console.log(`⏭️ Skipping admin-verified event: ${title}`);
+        savedCount++;
+        continue;
+      }
+
       // Event speichern
       const { data: savedEvent, error } = await supabase
         .from("events")
@@ -621,13 +750,24 @@ Stil: Einladend, Quiet Luxury. Keine Emojis. Nur das JSON, keine Erklärungen.`;
           longitude: lng,
           image_url: imageUrl,
           gallery_urls: galleryUrls.length > 0 ? galleryUrls : null,
-          start_date: item.startDate || null,
-          end_date: item.endDate || null,
+
+          // CRITICAL: MySwitzerland events have NULL dates (prevents SEO damage)
+          start_date: null,
+          end_date: null,
+
+          // NEW: Recurring event fields
+          is_recurring: isRecurring,
+          recurring_pattern: recurringPattern,
+          available_months: availableMonths,
+          next_occurrence_start: nextOccurrenceStart,
+          next_occurrence_end: nextOccurrenceEnd,
+
           ticket_link: ticketLink,
           category_main_id: mainCatId,
           category_sub_id: subCatId,
           price_from: priceFrom,
-          price_label: priceLabel
+          price_label: priceLabel,
+          source: 'myswitzerland'
         }, { onConflict: 'external_id' })
         .select()
         .maybeSingle();
