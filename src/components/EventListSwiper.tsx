@@ -7,11 +7,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { haversineDistance } from "@/utils/geoHelpers";
+import { haversineDistance, SWISS_CITY_COORDS, distanceToLine } from "@/utils/geoHelpers";
 import { getLocationWithMajorCity } from "@/utils/swissPlaces";
 import { generateEventSlug, getEventLocation } from "@/utils/eventUtilities";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useTripPlanner } from "@/contexts/TripPlannerContext";
+import SwiperSidebar, { FilterCriteria } from "@/components/SwiperSidebar";
 
 interface Event {
   id: string;
@@ -95,7 +96,7 @@ export default function EventListSwiper({
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { addEventToDay, activeDay, isInTrip } = useTripPlanner();
+  const { addEventToDay, removeEventFromTrip, activeDay, isInTrip } = useTripPlanner();
 
   // Touch handling for swipe
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -105,6 +106,60 @@ export default function EventListSwiper({
   const [showMenu, setShowMenu] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [textExpanded, setTextExpanded] = useState(false);
+
+  // Filter state
+  const [activeFilter, setActiveFilter] = useState<FilterCriteria>({ type: "none" });
+
+  // Filtered events based on active filter
+  const filteredEvents = useMemo(() => {
+    if (activeFilter.type === "none") return events;
+
+    return events.filter(event => {
+      if (!event.latitude || !event.longitude) return false;
+
+      switch (activeFilter.type) {
+        case "city": {
+          if (!activeFilter.city || !activeFilter.radius) return false;
+          const cityCoords = SWISS_CITY_COORDS[activeFilter.city];
+          if (!cityCoords) return false;
+          const distance = haversineDistance(
+            cityCoords.lat,
+            cityCoords.lng,
+            event.latitude,
+            event.longitude
+          );
+          return distance <= activeFilter.radius;
+        }
+
+        case "route": {
+          if (!activeFilter.routeA || !activeFilter.routeB || !activeFilter.corridorWidth) return false;
+          const coordsA = SWISS_CITY_COORDS[activeFilter.routeA];
+          const coordsB = SWISS_CITY_COORDS[activeFilter.routeB];
+          if (!coordsA || !coordsB) return false;
+          const distance = distanceToLine(
+            event.latitude,
+            event.longitude,
+            coordsA.lat,
+            coordsA.lng,
+            coordsB.lat,
+            coordsB.lng
+          );
+          return distance <= activeFilter.corridorWidth;
+        }
+
+        case "category": {
+          if (!activeFilter.categoryId) return false;
+          return event.category_main_id === activeFilter.categoryId;
+        }
+
+        default:
+          return true;
+      }
+    });
+  }, [events, activeFilter]);
+
+  // Use filtered events instead of all events
+  const displayEvents = filteredEvents.length > 0 ? filteredEvents : events;
 
   // Sync startIndex when it changes (new event clicked)
   useEffect(() => {
@@ -128,8 +183,8 @@ export default function EventListSwiper({
     }
   }, [isOpen]);
 
-  const currentEvent = events[currentIndex];
-  const noMoreEvents = currentIndex >= events.length;
+  const currentEvent = displayEvents[currentIndex];
+  const noMoreEvents = currentIndex >= displayEvents.length;
 
   // Calculate distance to current event
   const currentDistance = useMemo(() => {
@@ -142,11 +197,11 @@ export default function EventListSwiper({
   const remainingTagCount = (currentEvent?.tags?.length || 0) - 1;
 
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => Math.min(prev + 1, events.length));
+    setCurrentIndex((prev) => Math.min(prev + 1, displayEvents.length));
     setTextExpanded(false);
     setShowMenu(false);
     setShowShareMenu(false);
-  }, [events.length]);
+  }, [displayEvents.length]);
 
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
@@ -184,16 +239,45 @@ export default function EventListSwiper({
       buzz_score: currentEvent.buzz_score || currentEvent.relevance_score,
     });
 
-    if (!wasFavorite) {
-      toast.success("Event geplant", { duration: 2000, position: "top-left" });
+    if (wasFavorite) {
+      toast.success("Von Favoriten entfernt", { duration: 2000, position: "top-left" });
+    } else {
+      toast.success("Zu Favoriten hinzugefügt", { duration: 2000, position: "top-left" });
     }
-  }, [currentEvent, isFavorite, toggleFavorite]);
+  }, [currentEvent]);
 
   const handleAddToTrip = useCallback(() => {
     if (!currentEvent) return;
-    addEventToDay(currentEvent as any, activeDay);
-    toast.success(`${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
-  }, [currentEvent, addEventToDay, activeDay]);
+
+    const inTrip = isInTrip(currentEvent.id);
+    if (inTrip) {
+      removeEventFromTrip(currentEvent.id);
+      toast.success("Aus Tag entfernt", { duration: 2000, position: "top-left" });
+    } else {
+      addEventToDay(currentEvent as any, activeDay);
+      toast.success("Zu Tag hinzugefügt", { duration: 2000, position: "top-left" });
+    }
+  }, [currentEvent, addEventToDay, removeEventFromTrip, isInTrip, activeDay]);
+
+  const handleEventClick = useCallback((eventId: string) => {
+    const index = displayEvents.findIndex(e => e.id === eventId);
+    if (index >= 0) {
+      setCurrentIndex(index);
+      setTextExpanded(false);
+      setShowMenu(false);
+      setShowShareMenu(false);
+    }
+  }, [displayEvents]);
+
+  const handleFilterApply = useCallback((criteria: FilterCriteria) => {
+    setActiveFilter(criteria);
+    setCurrentIndex(0); // Reset to first event when filter changes
+    if (criteria.type !== "none") {
+      toast.success("Filter angewendet", { duration: 2000, position: "top-center" });
+    } else {
+      toast.info("Filter zurückgesetzt", { duration: 2000, position: "top-center" });
+    }
+  }, []);
 
   // Reset state when closed
   useEffect(() => {
@@ -285,7 +369,7 @@ export default function EventListSwiper({
             alt=""
             className="w-full h-full object-cover scale-110"
           />
-          <div className="absolute inset-0 backdrop-blur-3xl bg-black/40" />
+          <div className="absolute inset-0 backdrop-blur-xl bg-black/40" />
         </div>
       )}
       {!currentEvent?.image_url && <div className="absolute inset-0 bg-stone-800" />}
@@ -328,8 +412,10 @@ export default function EventListSwiper({
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px] flex items-center justify-center">
+      {/* Main Content + Sidebar */}
+      <div className="flex items-start w-full h-full">
+      <div className="flex-1 flex items-start justify-start pt-[10vh] pl-[20vw]">
+      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
         {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
             <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
@@ -391,12 +477,18 @@ export default function EventListSwiper({
                     </div>
                   )}
 
-                  {/* Distance Pill - Top Right */}
+                  {/* Distance Pill - Top Right (5px weiter links) */}
                   {currentDistance !== null && (
-                    <span className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
-                      <MapPin size={17} className="text-red-500" />
-                      {formatDistance(currentDistance)}
-                    </span>
+                    <div className="absolute top-4 right-9 group">
+                      <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
+                        <MapPin size={17} className="text-red-500" />
+                        {formatDistance(currentDistance)}
+                      </span>
+                      {/* Tooltip */}
+                      <div className="absolute invisible group-hover:visible bg-gray-900 text-white text-xs rounded-lg px-3 py-1.5 -bottom-10 right-0 whitespace-nowrap shadow-lg z-10">
+                        📍 Entfernung von deinem Standort
+                      </div>
+                    </div>
                   )}
 
                   {/* 3-Dot Menu - Bottom Left of Photo */}
@@ -569,11 +661,11 @@ export default function EventListSwiper({
                     }}
                     className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
                       eventInTrip
-                        ? 'bg-green-600 text-white hover:bg-green-700'
+                        ? 'bg-blue-900 text-white hover:bg-blue-800'
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
                   >
-                    + IN DEN TAG EINPLANEN
+                    {eventInTrip ? '− AUS TAG ENTFERNEN' : '+ IN DEN TAG EINPLANEN'}
                   </button>
                 </div>
               </div>
@@ -584,6 +676,18 @@ export default function EventListSwiper({
             <p className="text-white text-lg">Keine Events verfügbar</p>
           </div>
         )}
+      </div>
+
+      </div>
+
+      {/* Sidebar - Desktop only, 100% height, right edge, 25% width (1/4 screen) */}
+      <div className="hidden lg:flex w-[25vw] flex-shrink-0 h-screen fixed right-0 top-0">
+        <SwiperSidebar
+          currentEvent={currentEvent}
+          onEventClick={handleEventClick}
+          onFilterApply={handleFilterApply}
+        />
+      </div>
       </div>
     </div>
   );

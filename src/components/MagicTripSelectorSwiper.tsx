@@ -8,9 +8,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { haversineDistance } from "@/utils/geoHelpers";
+import { haversineDistance, SWISS_CITY_COORDS, distanceToLine } from "@/utils/geoHelpers";
 import { getLocationWithMajorCity } from "@/utils/swissPlaces";
 import { generateEventSlug, getEventLocation } from "@/utils/eventUtilities";
+import SwiperSidebar, { FilterCriteria } from "@/components/SwiperSidebar";
 
 interface Event {
   id: string;
@@ -107,6 +108,61 @@ export default function MagicTripSelectorSwiper({
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [textExpanded, setTextExpanded] = useState(false);
 
+  // Filter state
+  const [activeFilter, setActiveFilter] = useState<FilterCriteria>({ type: "none" });
+
+  // Filtered events based on active filter
+  const filteredEvents = useMemo(() => {
+    const sourceEvents = nearbyFilterActive ? cachedNearbyEvents : allEvents;
+    if (activeFilter.type === "none") return sourceEvents;
+
+    return sourceEvents.filter(event => {
+      if (!event.latitude || !event.longitude) return false;
+
+      switch (activeFilter.type) {
+        case "city": {
+          if (!activeFilter.city || !activeFilter.radius) return false;
+          const cityCoords = SWISS_CITY_COORDS[activeFilter.city];
+          if (!cityCoords) return false;
+          const distance = haversineDistance(
+            cityCoords.lat,
+            cityCoords.lng,
+            event.latitude,
+            event.longitude
+          );
+          return distance <= activeFilter.radius;
+        }
+
+        case "route": {
+          if (!activeFilter.routeA || !activeFilter.routeB || !activeFilter.corridorWidth) return false;
+          const coordsA = SWISS_CITY_COORDS[activeFilter.routeA];
+          const coordsB = SWISS_CITY_COORDS[activeFilter.routeB];
+          if (!coordsA || !coordsB) return false;
+          const distance = distanceToLine(
+            event.latitude,
+            event.longitude,
+            coordsA.lat,
+            coordsA.lng,
+            coordsB.lat,
+            coordsB.lng
+          );
+          return distance <= activeFilter.corridorWidth;
+        }
+
+        case "category": {
+          if (!activeFilter.categoryId) return false;
+          return event.category_main_id === activeFilter.categoryId;
+        }
+
+        default:
+          return true;
+      }
+    });
+  }, [allEvents, cachedNearbyEvents, nearbyFilterActive, activeFilter]);
+
+  // Use filtered events
+  const availableEvents = filteredEvents.length > 0 ? filteredEvents : (nearbyFilterActive ? cachedNearbyEvents : allEvents);
+
   // Load user location
   useEffect(() => {
     if (isOpen) {
@@ -180,12 +236,6 @@ export default function MagicTripSelectorSwiper({
     loadInitialEvents();
   }, [isOpen]);
 
-  // Get available events
-  const availableEvents = useMemo(() => {
-    if (nearbyFilterActive && cachedNearbyEvents.length > 0) return cachedNearbyEvents;
-    return allEvents;
-  }, [allEvents, nearbyFilterActive, cachedNearbyEvents]);
-
   const currentEvent = availableEvents[currentIndex];
 
   // Calculate distance to current event
@@ -216,18 +266,30 @@ export default function MagicTripSelectorSwiper({
 
   const handleAddToTrip = useCallback(() => {
     if (!currentEvent) return;
-    onEventSelected(currentEvent);
-    setAddedToTripIds(prev => new Set(prev).add(currentEvent.id));
-    toast.success(`${currentEvent.title} zu Tag ${activeDay} hinzugefügt!`);
+
+    setAddedToTripIds(prev => {
+      const updated = new Set(prev);
+      const wasAdded = updated.has(currentEvent.id);
+
+      if (wasAdded) {
+        updated.delete(currentEvent.id);
+        toast.success("Aus Tag entfernt", { duration: 2000, position: "top-left" });
+      } else {
+        updated.add(currentEvent.id);
+        onEventSelected(currentEvent);
+        toast.success("Zu Tag hinzugefügt", { duration: 2000, position: "top-left" });
+      }
+      return updated;
+    });
   }, [currentEvent, onEventSelected, activeDay]);
 
   const handleToggleFavorite = useCallback(async () => {
     if (!currentEvent) return;
-    const isFavorited = favoritedEventIds.has(currentEvent.id);
 
     setFavoritedEventIds(prev => {
       const updated = new Set(prev);
-      if (isFavorited) updated.delete(currentEvent.id);
+      const wasFavorited = prev.has(currentEvent.id);
+      if (wasFavorited) updated.delete(currentEvent.id);
       else updated.add(currentEvent.id);
       return updated;
     });
@@ -238,12 +300,16 @@ export default function MagicTripSelectorSwiper({
         toast.error("Bitte melde dich an, um Favoriten zu speichern");
         setFavoritedEventIds(prev => {
           const updated = new Set(prev);
-          if (isFavorited) updated.add(currentEvent.id);
+          const wasFavorited = prev.has(currentEvent.id);
+          if (wasFavorited) updated.add(currentEvent.id);
           else updated.delete(currentEvent.id);
           return updated;
         });
         return;
       }
+
+      const { data } = await supabase.from('favorites').select('*').eq('user_id', user.id).eq('event_id', currentEvent.id);
+      const isFavorited = (data?.length ?? 0) > 0;
 
       if (isFavorited) {
         try {
@@ -263,7 +329,7 @@ export default function MagicTripSelectorSwiper({
     } catch (error) {
       console.warn('Error toggling favorite:', error);
     }
-  }, [currentEvent, favoritedEventIds]);
+  }, [currentEvent]);
 
   const handleNearbyFilter = useCallback(() => {
     if (!currentEvent) return;
@@ -307,6 +373,26 @@ export default function MagicTripSelectorSwiper({
       toast.success(`Zeige ${cachedEvents.length} Events in der Nähe`);
     }
   }, [currentEvent, nearbyFilterActive, nearbyFilterEventId, allEvents]);
+
+  const handleEventClick = useCallback((eventId: string) => {
+    const index = availableEvents.findIndex(e => e.id === eventId);
+    if (index >= 0) {
+      setCurrentIndex(index);
+      setTextExpanded(false);
+      setShowMenu(false);
+      setShowShareMenu(false);
+    }
+  }, [availableEvents]);
+
+  const handleFilterApply = useCallback((criteria: FilterCriteria) => {
+    setActiveFilter(criteria);
+    setCurrentIndex(0); // Reset to first event when filter changes
+    if (criteria.type !== "none") {
+      toast.success("Filter angewendet", { duration: 2000, position: "top-center" });
+    } else {
+      toast.info("Filter zurückgesetzt", { duration: 2000, position: "top-center" });
+    }
+  }, []);
 
   // Reset state when closed
   useEffect(() => {
@@ -401,7 +487,7 @@ export default function MagicTripSelectorSwiper({
             alt=""
             className="w-full h-full object-cover scale-110"
           />
-          <div className="absolute inset-0 backdrop-blur-3xl bg-black/40" />
+          <div className="absolute inset-0 backdrop-blur-xl bg-black/40" />
         </div>
       )}
       {!currentEvent?.image_url && <div className="absolute inset-0 bg-stone-800" />}
@@ -444,8 +530,10 @@ export default function MagicTripSelectorSwiper({
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px] flex items-center justify-center">
+      {/* Main Content + Sidebar */}
+      <div className="flex items-start w-full h-full">
+      <div className="flex-1 flex items-start justify-start pt-[10vh] pl-[20vw]">
+      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
@@ -529,12 +617,18 @@ export default function MagicTripSelectorSwiper({
                     </div>
                   )}
 
-                  {/* Distance Pill - Top Right */}
+                  {/* Distance Pill - Top Right (5px weiter links) */}
                   {currentDistance !== null && (
-                    <span className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
-                      <MapPin size={17} className="text-red-500" />
-                      {formatDistance(currentDistance)}
-                    </span>
+                    <div className="absolute top-4 right-9 group">
+                      <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
+                        <MapPin size={17} className="text-red-500" />
+                        {formatDistance(currentDistance)}
+                      </span>
+                      {/* Tooltip */}
+                      <div className="absolute invisible group-hover:visible bg-gray-900 text-white text-xs rounded-lg px-3 py-1.5 -bottom-10 right-0 whitespace-nowrap shadow-lg z-10">
+                        📍 Entfernung von deinem Standort
+                      </div>
+                    </div>
                   )}
 
                   {/* 3-Dot Menu - Bottom Left of Photo */}
@@ -707,11 +801,11 @@ export default function MagicTripSelectorSwiper({
                     }}
                     className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
                       addedToTripIds.has(currentEvent.id)
-                        ? 'bg-green-600 text-white hover:bg-green-700'
+                        ? 'bg-blue-900 text-white hover:bg-blue-800'
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
                   >
-                    + IN DEN TAG EINPLANEN
+                    {addedToTripIds.has(currentEvent.id) ? '− AUS TAG ENTFERNEN' : '+ IN DEN TAG EINPLANEN'}
                   </button>
                 </div>
               </div>
@@ -722,6 +816,18 @@ export default function MagicTripSelectorSwiper({
             <p className="text-white text-lg">Keine Events verfügbar</p>
           </div>
         )}
+      </div>
+
+      </div>
+
+      {/* Sidebar - Desktop only, 100% height, right edge, 25% width (1/4 screen) */}
+      <div className="hidden lg:flex w-[25vw] flex-shrink-0 h-screen fixed right-0 top-0">
+        <SwiperSidebar
+          currentEvent={currentEvent}
+          onEventClick={handleEventClick}
+          onFilterApply={handleFilterApply}
+        />
+      </div>
       </div>
     </div>
   );
