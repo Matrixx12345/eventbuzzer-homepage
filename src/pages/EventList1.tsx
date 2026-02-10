@@ -102,7 +102,7 @@ const setUserRating = (eventId: string, rating: number) => {
 
 const EventList1 = () => {
   const [searchParams] = useSearchParams();
-  const [mapExpanded, setMapExpanded] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(true);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
