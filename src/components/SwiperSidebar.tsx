@@ -3,6 +3,7 @@ import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { memo, useState, useEffect, useMemo } from "react";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
+import { getLocationWithMajorCity } from "@/utils/swissPlaces";
 
 interface SwiperSidebarEvent {
   id: string;
@@ -10,6 +11,9 @@ interface SwiperSidebarEvent {
   image_url?: string;
   latitude?: number;
   longitude?: number;
+  address_city?: string;
+  location?: string;
+  short_description?: string;
 }
 
 export interface FilterCriteria {
@@ -56,7 +60,7 @@ const SwissMap = memo(({ latitude, longitude }: { latitude?: number; longitude?:
   }, [latitude, longitude]);
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden">
+    <div className="relative w-full rounded overflow-hidden">
       <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
         <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.3" />
 
@@ -114,9 +118,6 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
   const { plannedEventsByDay, activeDay, removeEventFromTrip } = useTripPlanner();
   const { favorites, toggleFavorite } = useFavorites();
 
-  const [showAllPlanned, setShowAllPlanned] = useState(false);
-  const [showAllFavorites, setShowAllFavorites] = useState(false);
-
   // Filter State - Accordion toggles
   const [showCity, setShowCity] = useState(false);
   const [showRoute, setShowRoute] = useState(false);
@@ -133,8 +134,6 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
   const [citySearch, setCitySearch] = useState<string>("");
 
   const dayEvents = plannedEventsByDay[activeDay] || [];
-  const displayedPlanned = showAllPlanned ? dayEvents : dayEvents.slice(0, 2);
-  const displayedFavorites = showAllFavorites ? favorites : favorites.slice(0, 2);
 
   // Load categories from DB
   useEffect(() => {
@@ -431,60 +430,51 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
       <div className="px-6 pb-5">
         <h3 className="text-base font-bold text-gray-900 mb-3">Tagesplaner</h3>
         {dayEvents.length > 0 ? (
-          <>
-            <div className="flex flex-col gap-2">
-              {displayedPlanned.map((planned) => (
-                <div
-                  key={planned.eventId}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
-                  onClick={() => onEventClick?.(planned.eventId)}
-                >
-                  <div className="flex items-start">
-                    <div className="bg-white p-2.5 rounded-l-lg shadow-sm flex-shrink-0">
-                      <img
-                        src={planned.event.image_url || "/placeholder.svg"}
-                        alt={planned.event.title}
-                        className="w-20 h-16 rounded object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-start px-3 py-2 pr-10 flex-1 min-w-0">
-                      <span className="text-sm text-gray-800 font-semibold leading-tight truncate">
-                        {planned.event.title}
-                      </span>
-                      <span className="text-xs text-gray-600 mt-1 truncate">
-                        {planned.event.address_city || planned.event.location || 'Schweiz'}
-                      </span>
-                      {planned.event.external_id?.startsWith('tm_') && planned.event.start_date && (
-                        <span className="text-xs text-gray-500 mt-0.5">
-                          {new Date(planned.event.start_date).toLocaleDateString('de-CH', {
-                            day: 'numeric',
-                            month: 'short'
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeEventFromTrip(planned.eventId);
-                    }}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-all p-1 opacity-0 group-hover:opacity-100"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {dayEvents.length > 2 && (
-              <button
-                onClick={() => setShowAllPlanned(!showAllPlanned)}
-                className="mt-2 text-sm text-gray-600 hover:text-gray-700 font-medium"
+          <div className="flex flex-col gap-2">
+            {dayEvents.map((planned) => (
+              <div
+                key={planned.eventId}
+                className="bg-white rounded shadow-md hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
+                onClick={() => onEventClick?.(planned.eventId)}
               >
-                {showAllPlanned ? "Weniger anzeigen" : `Alle ${dayEvents.length} anzeigen`}
-              </button>
-            )}
-          </>
+                <div className="flex items-start">
+                  <div className="bg-gray-100 p-2.5 rounded-l shadow-sm flex-shrink-0">
+                    <img
+                      src={planned.event.image_url || "/placeholder.svg"}
+                      alt={planned.event.title}
+                      className="w-20 h-16 rounded object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-start px-3 py-2 pr-10 flex-1 min-w-0">
+                    <span className="text-sm text-gray-800 font-semibold leading-tight truncate">
+                      {planned.event.title}
+                    </span>
+                    <span className="text-xs text-gray-600 mt-1 truncate">
+                      {getLocationWithMajorCity(
+                        planned.event.address_city || planned.event.location,
+                        planned.event.latitude,
+                        planned.event.longitude
+                      )}
+                    </span>
+                    {planned.event.short_description && (
+                      <span className="text-xs text-gray-500 mt-0.5 truncate">
+                        {planned.event.short_description}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeEventFromTrip(planned.eventId);
+                  }}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-all p-1 opacity-0 group-hover:opacity-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
         ) : (
           <p className="text-sm text-gray-400 italic">Noch keine Events geplant</p>
         )}
@@ -497,60 +487,51 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
       <div className="px-6 pb-5">
         <h3 className="text-base font-bold text-gray-900 mb-3">Favoriten</h3>
         {favorites.length > 0 ? (
-          <>
-            <div className="flex flex-col gap-2">
-              {displayedFavorites.map((fav) => (
-                <div
-                  key={fav.id}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
-                  onClick={() => onEventClick?.(fav.id)}
-                >
-                  <div className="flex items-start">
-                    <div className="bg-white p-2.5 rounded-l-lg shadow-sm flex-shrink-0">
-                      <img
-                        src={fav.image || fav.image_url || "/placeholder.svg"}
-                        alt={fav.title}
-                        className="w-20 h-16 rounded object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-start px-3 py-2 pr-10 flex-1 min-w-0">
-                      <span className="text-sm text-gray-800 font-semibold leading-tight truncate">
-                        {fav.title}
-                      </span>
-                      <span className="text-xs text-gray-600 mt-1 truncate">
-                        {fav.address_city || fav.location || 'Schweiz'}
-                      </span>
-                      {fav.external_id?.startsWith('tm_') && fav.start_date && (
-                        <span className="text-xs text-gray-500 mt-0.5">
-                          {new Date(fav.start_date).toLocaleDateString('de-CH', {
-                            day: 'numeric',
-                            month: 'short'
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(fav);
-                    }}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-all p-1 opacity-0 group-hover:opacity-100"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {favorites.length > 2 && (
-              <button
-                onClick={() => setShowAllFavorites(!showAllFavorites)}
-                className="mt-2 text-sm text-gray-600 hover:text-gray-700 font-medium"
+          <div className="flex flex-col gap-2">
+            {favorites.map((fav) => (
+              <div
+                key={fav.id}
+                className="bg-white rounded shadow-md hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
+                onClick={() => onEventClick?.(fav.id)}
               >
-                {showAllFavorites ? "Weniger anzeigen" : `Alle ${favorites.length} anzeigen`}
-              </button>
-            )}
-          </>
+                <div className="flex items-start">
+                  <div className="bg-gray-100 p-2.5 rounded-l shadow-sm flex-shrink-0">
+                    <img
+                      src={fav.image || fav.image_url || "/placeholder.svg"}
+                      alt={fav.title}
+                      className="w-20 h-16 rounded object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-start px-3 py-2 pr-10 flex-1 min-w-0">
+                    <span className="text-sm text-gray-800 font-semibold leading-tight truncate">
+                      {fav.title}
+                    </span>
+                    <span className="text-xs text-gray-600 mt-1 truncate">
+                      {getLocationWithMajorCity(
+                        fav.address_city || fav.location,
+                        fav.latitude,
+                        fav.longitude
+                      )}
+                    </span>
+                    {fav.short_description && (
+                      <span className="text-xs text-gray-500 mt-0.5 truncate">
+                        {fav.short_description}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(fav);
+                  }}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-all p-1 opacity-0 group-hover:opacity-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
         ) : (
           <p className="text-sm text-gray-400 italic">Noch keine Favoriten</p>
         )}
