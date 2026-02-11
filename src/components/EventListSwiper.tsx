@@ -481,28 +481,28 @@ export default function EventListSwiper({
               )}
             </div>
 
-            {/* Main Card - Mobile: fullscreen black bg + image, Desktop: rounded card */}
+            {/* Main Card - Mobile: white card with scroll, Desktop: rounded card */}
             <div
-              className="w-full h-full bg-black lg:bg-white lg:h-auto lg:rounded-3xl lg:shadow-2xl overflow-hidden relative"
+              className="w-full h-full bg-white lg:h-auto lg:rounded-3xl lg:shadow-2xl overflow-y-auto lg:overflow-visible"
               style={{ zIndex: 3 }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* Close Button - Top Right - Always visible */}
+              {/* Close Button - Top Right - Fixed position */}
               <button
                 onClick={onClose}
-                className="absolute top-3 right-3 lg:top-2 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-black/60 lg:bg-white/70 hover:bg-black/80 lg:hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg"
+                className="fixed lg:absolute top-3 right-3 lg:top-2 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-white/90 lg:bg-white/70 hover:bg-white lg:hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg border border-gray-200"
                 aria-label="Close"
               >
-                <X size={22} className="text-white lg:text-gray-700" strokeWidth={2.5} />
+                <X size={22} className="text-gray-700" strokeWidth={2.5} />
               </button>
 
               {/* Zurück Button - Below Close Button (only if previousIndex exists) */}
               {previousIndex !== null && (
                 <button
                   onClick={handleGoBack}
-                  className="absolute top-14 lg:top-14 right-3 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-blue-500/80 hover:bg-blue-600/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg"
+                  className="fixed lg:absolute top-14 right-3 lg:top-14 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-blue-500/90 hover:bg-blue-600 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg"
                   aria-label="Zurück zur vorherigen Position"
                   title="Zurück zur vorherigen Position"
                 >
@@ -510,9 +510,9 @@ export default function EventListSwiper({
                 </button>
               )}
 
-              {/* Photo - Mobile: fullscreen background, Desktop: framed */}
-              <div className="absolute inset-0 lg:relative lg:p-3 lg:pb-0">
-                <div className="relative w-full h-full lg:h-auto lg:rounded-2xl overflow-hidden lg:aspect-[4/3]">
+              {/* Photo Section - Mobile: no padding, Desktop: padded with frame */}
+              <div className="lg:p-3 lg:pb-0">
+                <div className="relative w-full aspect-[4/3] lg:rounded-2xl overflow-hidden">
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
                     alt={currentEvent.title}
@@ -522,11 +522,11 @@ export default function EventListSwiper({
                   {/* Tag Pill - Top Left (1 tag + count) */}
                   {firstTag && (
                     <div className="absolute top-3 left-3 lg:top-4 lg:left-4 flex items-center gap-2 z-20">
-                      <span className="bg-black/60 lg:bg-white/80 backdrop-blur-sm text-white lg:text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg">
+                      <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg">
                         {firstTag.charAt(0).toUpperCase() + firstTag.slice(1)}
                       </span>
                       {remainingTagCount > 0 && (
-                        <span className="bg-black/60 lg:bg-white/80 backdrop-blur-sm text-white lg:text-gray-800 text-xs lg:text-sm font-semibold px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-lg lg:rounded-xl shadow-lg">
+                        <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs lg:text-sm font-semibold px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-lg lg:rounded-xl shadow-lg">
                           +{remainingTagCount}
                         </span>
                       )}
@@ -535,9 +535,9 @@ export default function EventListSwiper({
 
                   {/* Distance Pill - Top Right */}
                   {currentDistance !== null && (
-                    <div className="absolute top-3 right-14 lg:top-4 lg:right-14 group z-20">
-                      <span className="bg-black/60 lg:bg-white/80 backdrop-blur-sm text-white lg:text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg flex items-center gap-1.5">
-                        <MapPin size={16} className="text-red-400 lg:text-red-500" />
+                    <div className="absolute top-3 right-3 lg:top-4 lg:right-4 group z-20">
+                      <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg flex items-center gap-1.5">
+                        <MapPin size={16} className="text-red-500" />
                         {formatDistance(currentDistance)}
                       </span>
                     </div>
@@ -596,30 +596,30 @@ export default function EventListSwiper({
                 </div>
               </div>
 
-              {/* Text Content - Mobile: absolute bottom overlay with gradient, Desktop: normal flow */}
-              <div className={`absolute lg:relative bottom-[80px] lg:bottom-auto left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent lg:bg-transparent px-5 pt-12 lg:pt-4 pb-4 lg:pb-2 ${textExpanded ? 'min-h-[200px]' : 'h-[200px]'} lg:h-auto lg:min-h-0`}>
-                {/* Title - Mobile: white text */}
-                <h2 className="text-xl md:text-2xl font-bold text-white lg:text-gray-900 uppercase tracking-tight line-clamp-1">
+              {/* Text Content - Normal flow below image */}
+              <div className={`px-4 lg:px-5 pt-4 lg:pt-4 pb-2 ${textExpanded ? 'min-h-[140px]' : 'h-[140px]'}`}>
+                {/* Title */}
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
                   {decodeHtml(currentEvent.title)}
                 </h2>
 
-                {/* Date | Location - Mobile: white text */}
-                <p className="text-sm text-white/80 lg:text-gray-500 mt-1 line-clamp-1">
+                {/* Date | Location */}
+                <p className="text-sm text-gray-500 mt-1 line-clamp-1">
                   {infoLine || '\u00A0'}
                 </p>
 
-                {/* Description - expandable with "mehr..." - Mobile: white text */}
+                {/* Description - expandable with "mehr..." */}
                 {(() => {
                   const desc = decodeHtml(currentEvent.description || "Entdecke dieses spannende Event in der Schweiz.");
                   const wouldOverflow = desc.length > 160;
                   return (
                     <>
-                      <p className={`text-sm text-white/90 lg:text-gray-600 mt-2 leading-relaxed ${textExpanded ? '' : 'line-clamp-2'}`}>
+                      <p className={`text-sm text-gray-600 mt-2 leading-relaxed ${textExpanded ? '' : 'line-clamp-2'}`}>
                         {desc}
                         {!textExpanded && wouldOverflow && (
                           <span
                             onClick={() => setTextExpanded(true)}
-                            className="text-white/60 lg:text-gray-400 underline cursor-pointer ml-1"
+                            className="text-gray-400 underline cursor-pointer ml-1"
                           >
                             mehr...
                           </span>
@@ -628,7 +628,7 @@ export default function EventListSwiper({
                       {textExpanded && wouldOverflow && (
                         <span
                           onClick={() => setTextExpanded(false)}
-                          className="text-white/60 lg:text-gray-400 underline cursor-pointer text-sm mt-1 inline-block"
+                          className="text-gray-400 underline cursor-pointer text-sm mt-1 inline-block"
                         >
                           weniger
                         </span>
@@ -638,8 +638,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-              {/* Bottom Action Bar - Mobile: compact fixed bar, Desktop: normal flow */}
-              <div className="absolute lg:relative bottom-0 left-0 right-0 px-3 py-2.5 lg:px-5 lg:pb-5 lg:pt-5 bg-white/95 lg:bg-white backdrop-blur-md lg:backdrop-blur-none border-t lg:border-t-0 border-gray-200/50">
+              {/* Bottom Action Bar - Fixed at bottom on mobile, normal flow on desktop */}
+              <div className="sticky lg:relative bottom-0 left-0 right-0 px-4 py-3 lg:px-5 lg:pb-5 lg:pt-5 bg-white border-t border-gray-200">
                 <div className="flex items-center gap-2 lg:gap-2.5">
                   {/* Ticket Button - Compact on mobile */}
                   {(currentEvent.ticket_url || currentEvent.url) ? (
