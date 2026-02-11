@@ -37,6 +37,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ChatbotPopupRight from "@/components/ChatbotPopupRight";
 import { DesktopEventCard } from "@/components/DesktopEventCard";
 import { MobileEventCard } from "@/components/MobileEventCard";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 // Placeholder images
 import eventAbbey from "@/assets/event-abbey.jpg";
@@ -1198,6 +1199,9 @@ const EventList1 = () => {
         onClose={() => setChatbotOpen(false)}
         onOpen={() => setChatbotOpen(true)}
       />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
 
     </div>
   );

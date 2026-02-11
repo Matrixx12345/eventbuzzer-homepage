@@ -11,6 +11,7 @@ import { EventDetailModal } from "@/components/EventDetailModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { externalSupabase as supabase } from "@/integrations/supabase/externalClient";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 const Index = () => {
   useScrollToTop();
@@ -120,6 +121,9 @@ const Index = () => {
           variant="solid"
         />
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 };
