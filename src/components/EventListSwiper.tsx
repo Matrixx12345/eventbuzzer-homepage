@@ -729,8 +729,6 @@ export default function EventListSwiper({
         )}
       </div>
 
-      </div>
-
       {/* Sidebar - Desktop only, 100% height, right edge, 25% width (1/4 screen) */}
       <div className="hidden lg:flex w-[25vw] flex-shrink-0 h-screen fixed right-0 top-0">
         <SwiperSidebar
@@ -738,7 +736,6 @@ export default function EventListSwiper({
           onEventClick={handleEventClick}
           onFilterApply={handleFilterApply}
         />
-      </div>
       </div>
     </div>
   );
