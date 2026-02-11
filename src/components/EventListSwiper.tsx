@@ -452,9 +452,9 @@ export default function EventListSwiper({
         </div>
       )}
 
-      {/* Mobile: Centered | Desktop: Left-aligned with padding */}
-      <div className="flex items-center lg:items-start justify-center lg:justify-start w-full h-full p-4 lg:pt-[10vh] lg:pl-[20vw] lg:p-4">
-        <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
+      {/* Mobile: Fullscreen swiper | Desktop: Positioned card */}
+      <div className="w-full h-full lg:flex lg:items-start lg:justify-start lg:pt-[10vh] lg:pl-[20vw] lg:p-4">
+        <div className="w-full h-full lg:relative lg:w-auto lg:h-auto lg:max-w-[420px] xl:max-w-[460px] 2xl:max-w-[500px]">
         {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
             <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
@@ -467,18 +467,20 @@ export default function EventListSwiper({
             </button>
           </div>
         ) : currentEvent ? (
-          <div className="relative w-full mb-12">
-            {/* Card Stack Effect - visible below main card */}
-            {events[currentIndex + 2] && (
-              <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
-            )}
-            {events[currentIndex + 1] && (
-              <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
-            )}
+          <div className="w-full h-full lg:relative lg:w-auto lg:h-auto lg:mb-12">
+            {/* Card Stack Effect - Desktop only */}
+            <div className="hidden lg:block">
+              {events[currentIndex + 2] && (
+                <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
+              )}
+              {events[currentIndex + 1] && (
+                <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
+              )}
+            </div>
 
-            {/* Main Card */}
+            {/* Main Card - Mobile: fullscreen | Desktop: rounded card */}
             <div
-              className="relative bg-white rounded-3xl shadow-2xl overflow-hidden"
+              className="w-full h-full bg-white lg:relative lg:rounded-3xl lg:shadow-2xl overflow-hidden"
               style={{ zIndex: 3 }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -505,9 +507,9 @@ export default function EventListSwiper({
                 </button>
               )}
 
-              {/* Photo with Frame */}
-              <div className="p-3 pb-0">
-                <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
+              {/* Photo - Mobile: fullscreen | Desktop: framed */}
+              <div className="h-full lg:h-auto lg:p-3 lg:pb-0">
+                <div className="relative h-full lg:h-auto lg:rounded-2xl overflow-hidden lg:aspect-[4/3]">
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
                     alt={currentEvent.title}
@@ -727,6 +729,7 @@ export default function EventListSwiper({
             <p className="text-white text-lg">Keine Events verfügbar</p>
           </div>
         )}
+        </div>
       </div>
 
       {/* Sidebar - Desktop only, 100% height, right edge, 25% width (1/4 screen) */}
