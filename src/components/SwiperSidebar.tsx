@@ -438,23 +438,30 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
                 onClick={() => onEventClick?.(planned.eventId)}
               >
                 <div className="flex items-start">
-                  <div className="bg-gray-100 p-2.5 rounded-l shadow-sm flex-shrink-0">
+                  <div className="bg-white p-2.5 rounded-md shadow-md border border-gray-200 flex-shrink-0">
                     <img
                       src={planned.event.image_url || "/placeholder.svg"}
                       alt={planned.event.title}
                       className="w-20 h-16 rounded object-cover"
                     />
                   </div>
-                  <div className="flex flex-col justify-start px-3 py-2 pr-10 flex-1 min-w-0">
-                    <span className="text-sm text-gray-800 font-semibold leading-tight truncate">
+                  <div className="flex flex-col justify-start px-3 pt-3 pb-2 pr-10 flex-1 min-w-0">
+                    <span className="text-sm text-gray-800 font-semibold leading-tight truncate mb-1.5">
                       {planned.event.title}
                     </span>
-                    <span className="text-xs text-gray-600 mt-1 truncate">
-                      {getLocationWithMajorCity(
-                        planned.event.address_city || planned.event.location,
-                        planned.event.latitude,
-                        planned.event.longitude
-                      )}
+                    <span className="text-xs text-gray-700 truncate">
+                      {planned.event.latitude && planned.event.longitude
+                        ? (() => {
+                            const loc = getLocationWithMajorCity(
+                              planned.event.latitude,
+                              planned.event.longitude,
+                              planned.event.address_city || planned.event.location
+                            );
+                            // Only show if it contains "km" (distance info)
+                            return loc.includes('km') ? loc : `In ${loc}`;
+                          })()
+                        : planned.event.address_city || planned.event.location || 'Schweiz'
+                      }
                     </span>
                     {planned.event.short_description && (
                       <span className="text-xs text-gray-500 mt-0.5 truncate">
@@ -495,23 +502,30 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
                 onClick={() => onEventClick?.(fav.id)}
               >
                 <div className="flex items-start">
-                  <div className="bg-gray-100 p-2.5 rounded-l shadow-sm flex-shrink-0">
+                  <div className="bg-white p-2.5 rounded-md shadow-md border border-gray-200 flex-shrink-0">
                     <img
                       src={fav.image || fav.image_url || "/placeholder.svg"}
                       alt={fav.title}
                       className="w-20 h-16 rounded object-cover"
                     />
                   </div>
-                  <div className="flex flex-col justify-start px-3 py-2 pr-10 flex-1 min-w-0">
-                    <span className="text-sm text-gray-800 font-semibold leading-tight truncate">
+                  <div className="flex flex-col justify-start px-3 pt-3 pb-2 pr-10 flex-1 min-w-0">
+                    <span className="text-sm text-gray-800 font-semibold leading-tight truncate mb-1.5">
                       {fav.title}
                     </span>
-                    <span className="text-xs text-gray-600 mt-1 truncate">
-                      {getLocationWithMajorCity(
-                        fav.address_city || fav.location,
-                        fav.latitude,
-                        fav.longitude
-                      )}
+                    <span className="text-xs text-gray-700 truncate">
+                      {fav.latitude && fav.longitude
+                        ? (() => {
+                            const loc = getLocationWithMajorCity(
+                              fav.latitude,
+                              fav.longitude,
+                              fav.address_city || fav.location
+                            );
+                            // Only show if it contains "km" (distance info)
+                            return loc.includes('km') ? loc : `In ${loc}`;
+                          })()
+                        : fav.address_city || fav.location || 'Schweiz'
+                      }
                     </span>
                     {fav.short_description && (
                       <span className="text-xs text-gray-500 mt-0.5 truncate">
