@@ -398,22 +398,7 @@ export default function EventListSwiper({
   const eventInTrip = currentEvent ? isInTrip(currentEvent.id) : false;
 
   return (
-    <div className="fixed inset-0 z-[110]">
-      {/* Desktop: Blurred Background + Centered Layout */}
-      <div className="hidden lg:flex items-center justify-center p-4 xl:p-8 w-full h-full">
-        {/* Blurred Background Image */}
-        {currentEvent?.image_url && (
-          <div className="absolute inset-0 overflow-hidden">
-            <img
-              src={currentEvent.image_url}
-              alt=""
-              className="w-full h-full object-cover scale-110"
-            />
-            <div className="absolute inset-0 backdrop-blur-xl bg-black/40" />
-          </div>
-        )}
-        {!currentEvent?.image_url && <div className="absolute inset-0 bg-stone-800" />}
-      </div>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8">
 
       {/* Share Menu Overlay */}
       {showShareMenu && (
@@ -453,11 +438,10 @@ export default function EventListSwiper({
         </div>
       )}
 
-      {/* Main Content Wrapper */}
-      <div className="absolute inset-0 lg:relative lg:flex lg:items-start lg:w-full lg:h-full">
-      {/* Desktop: Left-aligned with padding */}
-      <div className="absolute inset-0 lg:flex-1 lg:flex lg:items-start lg:justify-start lg:pt-[10vh] lg:pl-[20vw]">
-      <div className="w-full h-full lg:h-auto lg:max-w-[420px] xl:max-w-[460px] 2xl:max-w-[500px] lg:mb-12">
+      {/* Main Content + Sidebar */}
+      <div className="flex items-start w-full h-full">
+      <div className="flex-1 flex items-start justify-start pt-[10vh] pl-[20vw]">
+      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
         {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
             <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
@@ -470,29 +454,27 @@ export default function EventListSwiper({
             </button>
           </div>
         ) : currentEvent ? (
-          <div className="w-full h-full lg:h-auto lg:relative">
-            {/* Card Stack Effect - Desktop only */}
-            <div className="hidden lg:block">
-              {events[currentIndex + 2] && (
-                <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
-              )}
-              {events[currentIndex + 1] && (
-                <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
-              )}
-            </div>
+          <div className="relative w-full mb-12">
+            {/* Card Stack Effect - visible below main card */}
+            {events[currentIndex + 2] && (
+              <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
+            )}
+            {events[currentIndex + 1] && (
+              <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
+            )}
 
-            {/* Main Card - Mobile: white card with scroll, Desktop: rounded card */}
+            {/* Main Card */}
             <div
-              className="w-full h-full bg-white lg:h-auto lg:rounded-3xl lg:shadow-2xl overflow-y-auto lg:overflow-visible"
+              className="relative bg-white rounded-3xl shadow-2xl overflow-hidden"
               style={{ zIndex: 3 }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* Close Button - Top Right - Fixed position */}
+              {/* Close Button - Top Right */}
               <button
                 onClick={onClose}
-                className="fixed lg:absolute top-3 right-3 lg:top-2 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-white/90 lg:bg-white/70 hover:bg-white lg:hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg border border-gray-200"
+                className="absolute top-2 right-2 z-20 w-11 h-11 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
                 aria-label="Close"
               >
                 <X size={22} className="text-gray-700" strokeWidth={2.5} />
@@ -502,7 +484,7 @@ export default function EventListSwiper({
               {previousIndex !== null && (
                 <button
                   onClick={handleGoBack}
-                  className="fixed lg:absolute top-14 right-3 lg:top-14 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-blue-500/90 hover:bg-blue-600 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg"
+                  className="absolute top-14 right-2 z-20 w-11 h-11 bg-blue-500/80 hover:bg-blue-600/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
                   aria-label="Zurück zur vorherigen Position"
                   title="Zurück zur vorherigen Position"
                 >
@@ -510,9 +492,9 @@ export default function EventListSwiper({
                 </button>
               )}
 
-              {/* Photo Section - Mobile: no padding, Desktop: padded with frame */}
-              <div className="lg:p-3 lg:pb-0">
-                <div className="relative w-full aspect-[4/3] lg:rounded-2xl overflow-hidden">
+              {/* Photo with Frame */}
+              <div className="p-3 pb-0">
+                <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
                     alt={currentEvent.title}
@@ -521,25 +503,29 @@ export default function EventListSwiper({
 
                   {/* Tag Pill - Top Left (1 tag + count) */}
                   {firstTag && (
-                    <div className="absolute top-3 left-3 lg:top-4 lg:left-4 flex items-center gap-2 z-20">
-                      <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg">
+                    <div className="absolute top-4 left-4 flex items-center gap-2">
+                      <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm">
                         {firstTag.charAt(0).toUpperCase() + firstTag.slice(1)}
                       </span>
                       {remainingTagCount > 0 && (
-                        <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs lg:text-sm font-semibold px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-lg lg:rounded-xl shadow-lg">
+                        <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-3 py-2 rounded-xl shadow-sm">
                           +{remainingTagCount}
                         </span>
                       )}
                     </div>
                   )}
 
-                  {/* Distance Pill - Top Right */}
+                  {/* Distance Pill - Top Right (5px weiter links) */}
                   {currentDistance !== null && (
-                    <div className="absolute top-3 right-3 lg:top-4 lg:right-4 group z-20">
-                      <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg flex items-center gap-1.5">
-                        <MapPin size={16} className="text-red-500" />
+                    <div className="absolute top-4 right-9 group">
+                      <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
+                        <MapPin size={17} className="text-red-500" />
                         {formatDistance(currentDistance)}
                       </span>
+                      {/* Tooltip */}
+                      <div className="absolute invisible group-hover:visible bg-gray-900 text-white text-xs rounded-lg px-3 py-1.5 -bottom-10 right-0 whitespace-nowrap shadow-lg z-10">
+                        📍 Entfernung von deinem Standort
+                      </div>
                     </div>
                   )}
 
@@ -596,8 +582,8 @@ export default function EventListSwiper({
                 </div>
               </div>
 
-              {/* Text Content - Normal flow below image */}
-              <div className={`px-4 lg:px-5 pt-4 lg:pt-4 pb-2 ${textExpanded ? 'min-h-[140px]' : 'h-[140px]'}`}>
+              {/* Text Content - expandable */}
+              <div className={`px-5 pt-4 pb-2 ${textExpanded ? 'min-h-[120px]' : 'h-[120px]'}`}>
                 {/* Title */}
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
                   {decodeHtml(currentEvent.title)}
@@ -638,20 +624,20 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-              {/* Bottom Action Bar - Fixed at bottom on mobile, normal flow on desktop */}
-              <div className="sticky lg:relative bottom-0 left-0 right-0 px-4 py-3 lg:px-5 lg:pb-5 lg:pt-5 bg-white border-t border-gray-200">
-                <div className="flex items-center gap-2 lg:gap-2.5">
-                  {/* Ticket Button - Compact on mobile */}
+              {/* Bottom Action Bar */}
+              <div className="px-5 pb-5 pt-5">
+                <div className="flex items-stretch gap-2.5">
+                  {/* Ticket Button */}
                   {(currentEvent.ticket_url || currentEvent.url) ? (
                     <a
                       href={currentEvent.ticket_url || currentEvent.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 lg:gap-2 px-3 py-2 lg:px-4 lg:py-3 border border-gray-200 rounded-lg lg:rounded-xl text-sm lg:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Ticket size={20} className="text-red-500" />
-                      <span className="hidden sm:inline">Ticket</span>
+                      <Ticket size={21} className="text-red-500" />
+                      Ticket
                     </a>
                   ) : (
                     <button
@@ -659,21 +645,21 @@ export default function EventListSwiper({
                         const query = encodeURIComponent(`${currentEvent.title} Tickets Schweiz`);
                         window.open(`https://www.google.com/search?q=${query}`, '_blank');
                       }}
-                      className="flex items-center gap-1.5 lg:gap-2 px-3 py-2 lg:px-4 lg:py-3 border border-gray-200 rounded-lg lg:rounded-xl text-sm lg:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <Ticket size={20} className="text-red-500" />
-                      <span className="hidden sm:inline">Ticket</span>
+                      <Ticket size={21} className="text-red-500" />
+                      Ticket
                     </button>
                   )}
 
-                  {/* Heart - Favorite - Compact */}
+                  {/* Heart - Favorite */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleToggleFavorite();
                     }}
-                    className={`w-9 h-9 lg:w-12 lg:h-12 border rounded-lg lg:rounded-xl flex items-center justify-center transition-colors ${
+                    className={`w-12 border rounded-xl flex items-center justify-center transition-colors ${
                       isFavorited
                         ? 'border-red-300 bg-red-50 hover:bg-red-100'
                         : 'border-gray-200 hover:bg-gray-50'
@@ -681,7 +667,7 @@ export default function EventListSwiper({
                     title="Favorit"
                   >
                     <Heart
-                      size={20}
+                      size={22}
                       className={`transition-colors ${
                         isFavorited
                           ? 'text-red-500 fill-current'
@@ -691,34 +677,33 @@ export default function EventListSwiper({
                     />
                   </button>
 
-                  {/* Next Chevron - Hidden on small mobile */}
+                  {/* Next Chevron */}
                   <button
                     onClick={handleNext}
                     disabled={noMoreEvents}
-                    className="hidden sm:flex w-9 h-9 lg:w-12 lg:h-12 border border-gray-200 rounded-lg lg:rounded-xl items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="w-12 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Nächstes Event"
                   >
-                    <ChevronRight size={20} className="text-gray-600" strokeWidth={2} />
+                    <ChevronRight size={22} className="text-gray-600" strokeWidth={2} />
                   </button>
 
                   {/* Spacer */}
                   <div className="flex-1" />
 
-                  {/* Add to Trip - Compact on mobile */}
+                  {/* Add to Trip - Black Button */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleAddToTrip();
                     }}
-                    className={`flex items-center gap-1.5 lg:gap-2 px-3 py-2 lg:px-5 lg:py-3 rounded-lg lg:rounded-xl text-xs lg:text-sm font-semibold transition-colors whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
                       eventInTrip
                         ? 'bg-blue-900 text-white hover:bg-blue-800'
                         : 'bg-gray-900 text-white hover:bg-gray-800'
                     }`}
                   >
-                    <span className="sm:hidden">{eventInTrip ? '− ENTFERNEN' : '+ PLANEN'}</span>
-                    <span className="hidden sm:inline">{eventInTrip ? '− AUS TAG ENTFERNEN' : '+ IN DEN TAG EINPLANEN'}</span>
+                    {eventInTrip ? '− AUS TAG ENTFERNEN' : '+ IN DEN TAG EINPLANEN'}
                   </button>
                 </div>
               </div>
