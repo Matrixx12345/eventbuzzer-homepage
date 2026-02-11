@@ -315,7 +315,7 @@ const Chatbot = ({
       setTimeout(() => {
         handleClose();
         const queryString = params.toString();
-        navigate(`/listings${queryString ? `?${queryString}` : ''}`);
+        navigate(`/eventlist1${queryString ? `?${queryString}` : ''}`);
       }, 800);
     }, 300);
   };

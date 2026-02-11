@@ -76,7 +76,7 @@ export default function SpeedTagging() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentEvent, selectedMainCat, selectedSubCat, selectedTags]);
+  }, []);
 
   useEffect(() => {
     if (currentEvent) {
@@ -171,10 +171,12 @@ export default function SpeedTagging() {
   }
 
   function toggleTag(tagName: string) {
-    const newTags = new Set(selectedTags);
-    if (newTags.has(tagName)) newTags.delete(tagName);
-    else newTags.add(tagName);
-    setSelectedTags(newTags);
+    setSelectedTags(prevTags => {
+      const newTags = new Set(prevTags);
+      if (newTags.has(tagName)) newTags.delete(tagName);
+      else newTags.add(tagName);
+      return newTags;
+    });
   }
 
   const mainCategories = taxonomy.filter((t) => t.type === "main");

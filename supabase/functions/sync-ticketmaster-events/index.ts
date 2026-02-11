@@ -139,6 +139,24 @@ serve(async (req) => {
         continue;
       }
 
+      // PAST DATE CHECK - Never import events with past dates
+      const eventStartDate = event.dates?.start?.dateTime || event.dates?.start?.localDate;
+      if (eventStartDate) {
+        const eventDate = new Date(eventStartDate);
+        if (eventDate < new Date()) {
+          console.log(`⏭️  Skipped PAST event: "${title}" (${eventStartDate})`);
+          continue;
+        }
+      }
+
+      // CHRISTMAS FILTER - Only import Weihnachts-Events in Nov/Dec
+      const currentMonth = new Date().getMonth() + 1;
+      const isChristmasEvent = titleLower.includes('weihnacht') || titleLower.includes('noël') || titleLower.includes('noel');
+      if (isChristmasEvent && currentMonth < 11) {
+        console.log(`⏭️  Skipped CHRISTMAS event (not season): "${title}"`);
+        continue;
+      }
+
       // Extract venue ID from _embedded
       const venue = event._embedded?.venues?.[0];
       const venueId = venue?.id;
@@ -213,10 +231,24 @@ serve(async (req) => {
 
     console.log("Step 3: Inserting events into database...");
 
+    // Filter out admin-verified events
+    console.log("Filtering out admin-verified events...");
+    const externalIds = eventsToInsert.map(e => e.external_id);
+    const { data: adminVerified } = await externalSupabase
+      .from('events')
+      .select('external_id, admin_verified')
+      .in('external_id', externalIds)
+      .eq('admin_verified', true);
+
+    const adminVerifiedIds = new Set(adminVerified?.map(e => e.external_id) || []);
+    const filteredEvents = eventsToInsert.filter(e => !adminVerifiedIds.has(e.external_id));
+
+    console.log(`Skipping ${adminVerifiedIds.size} admin-verified events. Inserting ${filteredEvents.length} events.`);
+
     // Insert events - use upsert to handle duplicates (based on external_id)
     const { data: insertedData, error: insertError } = await externalSupabase
       .from('events')
-      .upsert(eventsToInsert, { onConflict: 'external_id', ignoreDuplicates: true })
+      .upsert(filteredEvents, { onConflict: 'external_id', ignoreDuplicates: true })
       .select();
 
     if (insertError) {

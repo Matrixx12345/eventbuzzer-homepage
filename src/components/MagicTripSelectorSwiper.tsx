@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail } from "lucide-react";
+import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { haversineDistance, SWISS_CITY_COORDS, distanceToLine } from "@/utils/geoHelpers";
@@ -111,57 +111,68 @@ export default function MagicTripSelectorSwiper({
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterCriteria>({ type: "none" });
 
-  // Filtered events based on active filter
+  // "Zurück" navigation state
+  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+
+  // Filtered events based on active filter (supports combining geographic + category)
   const filteredEvents = useMemo(() => {
     const sourceEvents = nearbyFilterActive ? cachedNearbyEvents : allEvents;
     if (activeFilter.type === "none") return sourceEvents;
 
     return sourceEvents.filter(event => {
-      if (!event.latitude || !event.longitude) return false;
-
-      switch (activeFilter.type) {
-        case "city": {
-          if (!activeFilter.city || !activeFilter.radius) return false;
-          const cityCoords = SWISS_CITY_COORDS[activeFilter.city];
-          if (!cityCoords) return false;
-          const distance = haversineDistance(
-            cityCoords.lat,
-            cityCoords.lng,
-            event.latitude,
-            event.longitude
-          );
-          return distance <= activeFilter.radius;
-        }
-
-        case "route": {
-          if (!activeFilter.routeA || !activeFilter.routeB || !activeFilter.corridorWidth) return false;
-          const coordsA = SWISS_CITY_COORDS[activeFilter.routeA];
-          const coordsB = SWISS_CITY_COORDS[activeFilter.routeB];
-          if (!coordsA || !coordsB) return false;
-          const distance = distanceToLine(
-            event.latitude,
-            event.longitude,
-            coordsA.lat,
-            coordsA.lng,
-            coordsB.lat,
-            coordsB.lng
-          );
-          return distance <= activeFilter.corridorWidth;
-        }
-
-        case "category": {
-          if (!activeFilter.categoryId) return false;
-          return event.category_main_id === activeFilter.categoryId;
-        }
-
-        default:
-          return true;
+      // Geographic filters require coordinates
+      let passesGeographicFilter = true;
+      if (activeFilter.type === "city" || activeFilter.type === "route") {
+        if (!event.latitude || !event.longitude) return false;
       }
+
+      // Apply geographic filter (city OR route)
+      if (activeFilter.type === "city") {
+        if (!activeFilter.city || !activeFilter.radius) return false;
+        const cityCoords = SWISS_CITY_COORDS[activeFilter.city];
+        if (!cityCoords) return false;
+        const distance = haversineDistance(
+          cityCoords.lat,
+          cityCoords.lng,
+          event.latitude!,
+          event.longitude!
+        );
+        passesGeographicFilter = distance <= activeFilter.radius;
+      } else if (activeFilter.type === "route") {
+        if (!activeFilter.routeA || !activeFilter.routeB || !activeFilter.corridorWidth) return false;
+        const coordsA = SWISS_CITY_COORDS[activeFilter.routeA];
+        const coordsB = SWISS_CITY_COORDS[activeFilter.routeB];
+        if (!coordsA || !coordsB) return false;
+        const distance = distanceToLine(
+          event.latitude!,
+          event.longitude!,
+          coordsA.lat,
+          coordsA.lng,
+          coordsB.lat,
+          coordsB.lng
+        );
+        passesGeographicFilter = distance <= activeFilter.corridorWidth;
+        if (passesGeographicFilter) {
+          console.log(`✓ Event "${event.title}" at (${event.latitude?.toFixed(4)}, ${event.longitude?.toFixed(4)}) ` +
+                      `is within corridor: ${distance.toFixed(2)} km ≤ ${activeFilter.corridorWidth} km`);
+        }
+      }
+
+      // Apply category filter (can be combined with geographic filter)
+      let passesCategoryFilter = true;
+      if (activeFilter.categoryId) {
+        passesCategoryFilter = event.category_main_id === activeFilter.categoryId;
+      }
+
+      // Event must pass BOTH filters
+      return passesGeographicFilter && passesCategoryFilter;
     });
   }, [allEvents, cachedNearbyEvents, nearbyFilterActive, activeFilter]);
 
-  // Use filtered events
-  const availableEvents = filteredEvents.length > 0 ? filteredEvents : (nearbyFilterActive ? cachedNearbyEvents : allEvents);
+  // Use filtered events (no fallback when filter is active)
+  const availableEvents = activeFilter.type !== "none"
+    ? filteredEvents
+    : (nearbyFilterActive ? cachedNearbyEvents : allEvents);
 
   // Load user location
   useEffect(() => {
@@ -377,12 +388,25 @@ export default function MagicTripSelectorSwiper({
   const handleEventClick = useCallback((eventId: string) => {
     const index = availableEvents.findIndex(e => e.id === eventId);
     if (index >= 0) {
+      // Save current position before jumping
+      setPreviousIndex(currentIndex);
       setCurrentIndex(index);
       setTextExpanded(false);
       setShowMenu(false);
       setShowShareMenu(false);
     }
-  }, [availableEvents]);
+  }, [availableEvents, currentIndex]);
+
+  const handleGoBack = useCallback(() => {
+    if (previousIndex !== null) {
+      setCurrentIndex(previousIndex);
+      setPreviousIndex(null);
+      setTextExpanded(false);
+      setShowMenu(false);
+      setShowShareMenu(false);
+      toast.info("Zurück zur vorherigen Position", { duration: 2000, position: "top-center" });
+    }
+  }, [previousIndex]);
 
   const handleFilterApply = useCallback((criteria: FilterCriteria) => {
     setActiveFilter(criteria);
@@ -593,6 +617,18 @@ export default function MagicTripSelectorSwiper({
               >
                 <X size={22} className="text-gray-700" strokeWidth={2.5} />
               </button>
+
+              {/* Zurück Button - Below Close Button (only if previousIndex exists) */}
+              {previousIndex !== null && (
+                <button
+                  onClick={handleGoBack}
+                  className="absolute top-14 right-2 z-20 w-11 h-11 bg-blue-500/80 hover:bg-blue-600/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+                  aria-label="Zurück zur vorherigen Position"
+                  title="Zurück zur vorherigen Position"
+                >
+                  <Undo2 size={20} className="text-white" strokeWidth={2.5} />
+                </button>
+              )}
 
               {/* Photo with Frame */}
               <div className="p-3 pb-0">

@@ -36,11 +36,6 @@ const AdminHoneypot = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'bad' | 'good'>('all');
 
-  // Redirect if not admin
-  if (!isAdmin) {
-    return <Navigate to="/auth" replace />;
-  }
-
   // Fetch logs
   const fetchLogs = async () => {
     try {
@@ -135,6 +130,11 @@ const AdminHoneypot = () => {
     if (ua.length <= maxLength) return ua;
     return ua.substring(0, maxLength) + '...';
   };
+
+  // Redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1314,41 +1314,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           });
         }
 
-        // 3D Buildings (always, even on mobile - low GPU impact)
-        const layers = map.current.getStyle().layers;
-        const labelLayerId = layers.find(
-          (layer) => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
-        )?.id;
-
-        map.current.addLayer(
-          {
-            id: '3d-buildings',
-            source: 'composite',
-            'source-layer': 'building',
-            filter: ['==', 'extrude', 'true'],
-            type: 'fill-extrusion',
-            minzoom: 11,
-            paint: {
-              'fill-extrusion-color': '#B0A090',  // Match Switzerland border
-              'fill-extrusion-height': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                11, 0,
-                11.5, ['get', 'height']
-              ],
-              'fill-extrusion-base': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                11, 0,
-                11.5, ['get', 'min_height']
-              ],
-              'fill-extrusion-opacity': 0.6
-            }
-          },
-          labelLayerId
-        );
       }
 
       setMapReady(true);
@@ -1632,86 +1597,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
               </button>
             </div>
 
-            {/* 3D Controls - Left side */}
-            <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-50">
-              {/* 3D Toggle */}
-              <button
-                onClick={() => {
-                  if (!map.current) return;
-                  const newMode = !is3DMode;
-                  setIs3DMode(newMode);
-
-                  map.current.easeTo({
-                    pitch: newMode ? 60 : 0,
-                    bearing: 0,
-                    duration: 1000
-                  });
-                }}
-                className={`w-10 h-10 ${is3DMode ? 'bg-primary text-white' : 'bg-white text-gray-700'} hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300 transition-colors`}
-                title={is3DMode ? "2D Ansicht" : "3D Ansicht"}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </button>
-
-              {/* Pitch Controls - only in 3D mode */}
-              {is3DMode && (
-                <>
-                  {/* Increase Pitch */}
-                  <button
-                    onClick={() => {
-                      if (map.current) {
-                        const newPitch = Math.min((map.current.getPitch() || 0) + 15, 85);
-                        map.current.easeTo({ pitch: newPitch, duration: 300 });
-                      }
-                    }}
-                    className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300"
-                    title="Mehr Neigung"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-
-                  {/* Decrease Pitch */}
-                  <button
-                    onClick={() => {
-                      if (map.current) {
-                        const newPitch = Math.max((map.current.getPitch() || 0) - 15, 0);
-                        map.current.easeTo({ pitch: newPitch, duration: 300 });
-                      }
-                    }}
-                    className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300"
-                    title="Weniger Neigung"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {/* Compass - Reset to North */}
-                  <button
-                    onClick={() => {
-                      if (map.current) {
-                        map.current.easeTo({ bearing: 0, duration: 500 });
-                      }
-                    }}
-                    className="w-10 h-10 bg-white hover:bg-gray-50 rounded-lg shadow-md flex items-center justify-center border border-gray-300"
-                    title="Norden ausrichten"
-                  >
-                    <svg
-                      className="w-5 h-5 transition-transform"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                      style={{ transform: `rotate(${currentBearing}deg)` }}
-                    >
-                      <path d="M12 2L8 10h8L12 2zM12 22l4-8H8l4 8z" />
-                    </svg>
-                  </button>
-                </>
-              )}
-            </div>
           </>
         )}
 
@@ -1733,14 +1618,6 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
           </button>
         )}
 
-        {/* Event Count - Unten links KLEIN */}
-        {eventCount > 0 && (
-          <div className="absolute bottom-2 left-2 z-10">
-            <div className="bg-white/70 backdrop-blur-sm rounded px-2 py-0.5 text-[9px] text-gray-500 font-medium shadow-sm border border-gray-200/50">
-              {eventCount} Events
-            </div>
-          </div>
-        )}
 
       </div>
     </div>

@@ -316,7 +316,7 @@ const EventSlot: React.FC<{
               }}
             >
               {event.image_url && (
-                <div className="w-16 h-16 md:w-20 md:h-20 lg:w-1/2 lg:h-24 flex-shrink-0 lg:p-2 lg:bg-white lg:rounded-lg lg:relative" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
+                <div className="w-11 h-16 md:w-14 md:h-20 lg:w-1/2 lg:h-24 flex-shrink-0 lg:p-2 lg:bg-white lg:rounded-lg lg:relative" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
                   <img
                     src={event.image_url}
                     alt={event.title}

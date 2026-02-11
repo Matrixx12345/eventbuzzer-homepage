@@ -653,6 +653,34 @@ Backup-Versionen des EventDetailModal werden hier gespeichert, falls ein Design-
 
 - **EventDetailModal-rectangular-2026-01-28.tsx** - Vorheriges Design mit rechteckigen Buttons + Text-Labels ("Speichern", "Kalender", "Teilen"). Heller Hover mit `bg-gray-50`, `border-gray-200`.
 
+## 🃏 EventListSwiper - Swiper-Card für EventList (2026-02-09)
+
+**Ersetzt das alte EventDetailModal** auf der EventList-Seite durch eine Swiper-Karte im selben Design wie der MagicTripSelectorSwiper.
+
+### Dateien
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/components/EventListSwiper.tsx` | Neue Swiper-Komponente (basiert auf MagicTripSelectorSwiper) |
+| `src/components/MagicTripSelectorSwiper.tsx` | Original-Swiper im Trip Planner |
+| `src/components/EventDetailModal.tsx` | Altes Popup-Modal (bleibt erhalten für Map-Klicks) |
+| `src/pages/EventList1.tsx` | Integration - EventListSwiper statt EventDetailModal |
+
+### Features
+- Blurred Event-Bild als Hintergrund
+- Weiße Karte mit Foto-Rahmen, Kartenstapel-Effekt (2-3 Karten dahinter)
+- Swipe-Navigation (Pfeiltasten, Touch, Chevron-Button)
+- Startet beim angeklickten Event, dann weiterswipen durch alle filteredEvents
+- Bottom Action Bar: Ticket, Heart (Favorit), Chevron (Next), "MEHR DETAILS" Link
+- Distance-Pill (GPS), Tag-Pills, Datum | Ort Info-Zeile
+
+### Altes EventDetailModal
+- **Datei:** `src/components/EventDetailModal.tsx` (923 Zeilen)
+- **Features:** Dialog/Drawer, Rating, Share, Favorites, Trip Planner, Ticket, Drag-to-move
+- **Status:** Bleibt erhalten (wird von Map-Modal-Ansicht genutzt, Zeile 1123-1132 in EventList1.tsx)
+
+---
+
 ## ⭐ User Rating System
 
 **Konzept:** User können Events mit 1-5 Sternen bewerten. Die Bewertung beeinflusst den angezeigten Score.

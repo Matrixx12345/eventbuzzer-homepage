@@ -293,7 +293,7 @@ const ChatbotPopupRight = ({ isOpen, onClose, onOpen, onFilterApply }: ChatbotPo
       setTimeout(() => {
         onClose();
         const queryString = params.toString();
-        navigate(`/listings${queryString ? `?${queryString}` : ''}`);
+        navigate(`/eventlist1${queryString ? `?${queryString}` : ''}`);
       }, 800);
     }, 300);
   };

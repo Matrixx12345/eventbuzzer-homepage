@@ -180,54 +180,81 @@ export function distanceToLine(
   lat2: number,
   lng2: number
 ): number {
-  // Convert to radians
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const p = { lat: toRad(pointLat), lng: toRad(pointLng) };
-  const a = { lat: toRad(lat1), lng: toRad(lng1) };
-  const b = { lat: toRad(lat2), lng: toRad(lng2) };
-
-  // Calculate cross-track distance
-  const R = 6371; // Earth radius in km
-
   // Distance from A to point
   const distAP = haversineDistance(lat1, lng1, pointLat, pointLng);
 
   // Distance from A to B
   const distAB = haversineDistance(lat1, lng1, lat2, lng2);
 
+  // Distance from B to point
+  const distBP = haversineDistance(lat2, lng2, pointLat, pointLng);
+
   // If route is basically a point, return distance to that point
-  if (distAB < 0.001) return distAP;
+  if (distAB < 0.001) {
+    console.log(`[distanceToLine] Route is a point, distance: ${distAP.toFixed(2)} km`);
+    return distAP;
+  }
+
+  // Convert to radians
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
 
   // Bearing from A to B
-  const dLng = b.lng - a.lng;
-  const y = Math.sin(dLng) * Math.cos(b.lat);
-  const x = Math.cos(a.lat) * Math.sin(b.lat) -
-            Math.sin(a.lat) * Math.cos(b.lat) * Math.cos(dLng);
+  const dLng = toRad(lng2) - toRad(lng1);
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
+  const y = Math.sin(dLng) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+            Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
   const bearingAB = Math.atan2(y, x);
 
   // Bearing from A to point
-  const dLngP = p.lng - a.lng;
-  const yP = Math.sin(dLngP) * Math.cos(p.lat);
-  const xP = Math.cos(a.lat) * Math.sin(p.lat) -
-             Math.sin(a.lat) * Math.cos(p.lat) * Math.cos(dLngP);
+  const dLngP = toRad(pointLng) - toRad(lng1);
+  const pointLatRad = toRad(pointLat);
+  const yP = Math.sin(dLngP) * Math.cos(pointLatRad);
+  const xP = Math.cos(lat1Rad) * Math.sin(pointLatRad) -
+             Math.sin(lat1Rad) * Math.cos(pointLatRad) * Math.cos(dLngP);
   const bearingAP = Math.atan2(yP, xP);
 
-  // Cross-track distance
+  // Angular difference
+  const angleDiff = bearingAP - bearingAB;
+
+  // Cross-track distance (perpendicular distance from point to infinite line through A-B)
   const crossTrack = Math.asin(
-    Math.sin(distAP / R) * Math.sin(bearingAP - bearingAB)
+    Math.sin(distAP / R) * Math.sin(angleDiff)
   ) * R;
 
-  // Along-track distance (how far along the route the perpendicular point is)
+  // Along-track distance (signed distance along the route)
+  // Use atan2 to preserve sign (positive = towards B, negative = opposite direction)
   const alongTrack = Math.acos(
-    Math.cos(distAP / R) / Math.cos(crossTrack / R)
+    Math.cos(distAP / R) / Math.cos(Math.abs(crossTrack) / R)
   ) * R;
+
+  // Check if point is in the direction of B or opposite direction
+  // Normalize angle difference to [-π, π]
+  let normalizedAngle = angleDiff;
+  while (normalizedAngle > Math.PI) normalizedAngle -= 2 * Math.PI;
+  while (normalizedAngle < -Math.PI) normalizedAngle += 2 * Math.PI;
+
+  // If angle is > 90° or < -90°, point is in opposite direction from route
+  const isOppositeDirection = Math.abs(normalizedAngle) > Math.PI / 2;
+
+  console.log(`[distanceToLine] Point: (${pointLat.toFixed(4)}, ${pointLng.toFixed(4)}), ` +
+              `A: (${lat1.toFixed(4)}, ${lng1.toFixed(4)}), ` +
+              `B: (${lat2.toFixed(4)}, ${lng2.toFixed(4)}), ` +
+              `distAB: ${distAB.toFixed(2)} km, distAP: ${distAP.toFixed(2)} km, distBP: ${distBP.toFixed(2)} km, ` +
+              `crossTrack: ${Math.abs(crossTrack).toFixed(2)} km, alongTrack: ${alongTrack.toFixed(2)} km, ` +
+              `angleDiff: ${(normalizedAngle * 180 / Math.PI).toFixed(1)}°, oppositeDir: ${isOppositeDirection}`);
 
   // If perpendicular point is beyond the route segment, use endpoint distance
-  if (alongTrack < 0) {
-    return distAP; // Before point A
+  if (isOppositeDirection || alongTrack < 0) {
+    console.log(`  → Before A (opposite direction), returning distAP: ${distAP.toFixed(2)} km`);
+    return distAP;
   } else if (alongTrack > distAB) {
-    return haversineDistance(lat2, lng2, pointLat, pointLng); // After point B
+    console.log(`  → After B, returning distBP: ${distBP.toFixed(2)} km`);
+    return distBP;
   }
 
+  console.log(`  → On corridor, returning crossTrack: ${Math.abs(crossTrack).toFixed(2)} km`);
   return Math.abs(crossTrack);
 }

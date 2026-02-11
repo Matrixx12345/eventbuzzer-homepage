@@ -160,16 +160,23 @@ const Impressum = () => {
               bereitgestellt.
             </li>
             <li>
-              <strong>Kartografie:</strong> "Switzerland adm location map.svg" von NordNordWest via{" "}
-              <a 
-                href="https://commons.wikimedia.org" 
-                target="_blank" 
+              <strong>Kartografie:</strong> NordNordWest,{" "}
+              <a
+                href="https://creativecommons.org/licenses/by-sa/3.0"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                Wikimedia
-              </a>{" "}
-              (CC BY-SA 3.0 DE).
+                CC BY-SA 3.0
+              </a>, via{" "}
+              <a
+                href="https://commons.wikimedia.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Wikimedia Commons
+              </a>.
             </li>
           </ul>
         </section>

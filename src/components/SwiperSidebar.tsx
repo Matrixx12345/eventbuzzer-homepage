@@ -3,6 +3,7 @@ import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { memo, useState, useEffect, useMemo } from "react";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
+import { supabase } from "@/integrations/supabase/client";
 import { getLocationWithMajorCity } from "@/utils/swissPlaces";
 
 interface SwiperSidebarEvent {
@@ -46,7 +47,22 @@ interface Category {
 }
 
 // Separate memoized map component to prevent re-renders
-const SwissMap = memo(({ latitude, longitude }: { latitude?: number; longitude?: number }) => {
+const SwissMap = memo(({ latitude, longitude, plannedEvents }: {
+  latitude?: number;
+  longitude?: number;
+  plannedEvents?: Array<{ event: { latitude?: number; longitude?: number } }>;
+}) => {
+  // Calculate SVG coordinates for a lat/lng point
+  const calculateSVGPosition = (lat: number, lng: number) => {
+    const anchorLat = 46.2;
+    const stretch = lat <= anchorLat ? 1.1 : 1.1 - ((lat - anchorLat) / (47.8 - anchorLat)) * 0.23;
+
+    const x = ((lng - 5.9) / (10.5 - 5.9)) * 1348.8688;
+    const y = ((1 - ((lat - 45.8) / (47.8 - 45.8)) * stretch)) * 865.04437 - (0.015 * 865.04437);
+
+    return { x, y };
+  };
+
   const eventPoint = useMemo(() => {
     if (!latitude || !longitude) return null;
 
@@ -103,6 +119,22 @@ const SwissMap = memo(({ latitude, longitude }: { latitude?: number; longitude?:
 
         <circle cx="395.0" cy="301" r="6" fill="#6b7280" />
         <text x="405" y="311" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Biel</text>
+
+        {/* Geplante Events (Tagesplaner) - kleine lila Punkte */}
+        {plannedEvents?.map((planned, index) => {
+          if (!planned.event.latitude || !planned.event.longitude) return null;
+          const pos = calculateSVGPosition(planned.event.latitude, planned.event.longitude);
+          return (
+            <circle
+              key={index}
+              cx={pos.x}
+              cy={pos.y}
+              r="14"
+              fill="#7e22ce"
+              opacity="0.8"
+            />
+          );
+        })}
       </svg>
       {eventPoint && (
         <div
@@ -133,39 +165,47 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [citySearch, setCitySearch] = useState<string>("");
 
+  // Track current active filter for combining filters
+  const [currentFilter, setCurrentFilter] = useState<FilterCriteria>({ type: "none" });
+
   const dayEvents = plannedEventsByDay[activeDay] || [];
 
   // Load categories from DB
   useEffect(() => {
     const loadCategories = async () => {
-      const { data, error } = await externalSupabase
-        .from("event_taxonomy")
+      console.log("[SwiperSidebar] Loading categories from taxonomy...");
+      const { data, error } = await supabase
+        .from("taxonomy")
         .select("id, slug, name")
         .eq("type", "main")
         .eq("is_active", true)
         .order("display_order");
 
-      if (!error && data) {
-        setCategories(data);
+      if (error) {
+        console.error("[SwiperSidebar] Error loading categories:", error);
+      } else {
+        console.log(`[SwiperSidebar] Loaded ${data?.length || 0} categories:`, data);
+        if (data && data.length > 0) {
+          setCategories(data);
+        } else {
+          console.warn("[SwiperSidebar] No categories returned from query!");
+        }
       }
     };
     loadCategories();
   }, []);
 
   return (
-    <div className="bg-gray-100 rounded-none shadow-lg border-l-2 border-gray-300 h-screen overflow-y-auto custom-scrollbar">
+    <div className="bg-[#f0f4f8] rounded-none shadow-lg border-l-2 border-gray-300 h-screen overflow-y-auto custom-scrollbar">
       {/* SVG Switzerland Map */}
       <div className="px-6 pt-3 pb-4">
-        <SwissMap latitude={currentEvent?.latitude} longitude={currentEvent?.longitude} />
+        <SwissMap latitude={currentEvent?.latitude} longitude={currentEvent?.longitude} plannedEvents={dayEvents} />
       </div>
-
-      {/* Divider */}
-      <div className="border-t border-gray-400 mx-6 my-2" />
 
       {/* FILTER SEKTION */}
       <div className="px-6 pb-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-bold text-gray-900">Filter</h3>
+          <h3 className="text-base font-bold text-gray-900 flex-1 text-center">Filter</h3>
           {(selectedCity || (routeA && routeB) || selectedCategory) && (
             <button
               onClick={() => {
@@ -174,6 +214,7 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
                 setRouteA("");
                 setRouteB("");
                 setSelectedCategory(null);
+                setCurrentFilter({ type: "none" });
                 onFilterApply?.({ type: "none" });
               }}
               className="text-xs text-gray-600 hover:text-red-600 font-medium underline"
@@ -192,10 +233,10 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
               setShowCategory(false);
               setShowAdvanced(false);
             }}
-            className={`px-3 py-2 text-xs font-medium rounded transition-all ${
+            className={`px-3 py-2 text-xs font-semibold rounded border border-[#374151]/30 transition-all ${
               showCity
-                ? "bg-gray-700 text-white shadow-md"
-                : "bg-gray-600 text-white shadow-sm hover:bg-gray-700 hover:shadow-md"
+                ? "bg-white text-[#374151] shadow-md"
+                : "bg-white text-[#374151] shadow-sm hover:shadow-md"
             }`}
           >
             Stadt + Umkreis
@@ -207,10 +248,10 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
               setShowCategory(false);
               setShowAdvanced(false);
             }}
-            className={`px-3 py-2 text-xs font-medium rounded transition-all ${
+            className={`px-3 py-2 text-xs font-semibold rounded border border-[#374151]/30 transition-all ${
               showRoute
-                ? "bg-gray-700 text-white shadow-md"
-                : "bg-gray-600 text-white shadow-sm hover:bg-gray-700 hover:shadow-md"
+                ? "bg-white text-[#374151] shadow-md"
+                : "bg-white text-[#374151] shadow-sm hover:shadow-md"
             }`}
           >
             Route A→B
@@ -262,11 +303,15 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
                 const matchedCity = ALL_SWISS_CITIES.find(c => c.toLowerCase() === citySearch.toLowerCase());
                 if (matchedCity) {
                   setSelectedCity(matchedCity);
-                  onFilterApply?.({
+                  const newFilter: FilterCriteria = {
                     type: "city",
                     city: matchedCity,
                     radius: radius,
-                  });
+                    categoryId: selectedCategory || undefined, // Keep category if selected
+                  };
+                  setCurrentFilter(newFilter);
+                  onFilterApply?.(newFilter);
+                  setShowCity(false); // Close accordion after applying filter
                 } else {
                   setSelectedCity("");
                 }
@@ -334,61 +379,33 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
                 {/* Route Filter Button */}
                 <button
                   onClick={() => {
-                    onFilterApply?.({
+                    const newFilter: FilterCriteria = {
                       type: "route",
                       routeA: routeA,
                       routeB: routeB,
                       corridorWidth: corridorWidth,
-                    });
+                      categoryId: selectedCategory || undefined, // Keep category if selected
+                    };
+                    setCurrentFilter(newFilter);
+                    onFilterApply?.(newFilter);
+                    setShowRoute(false); // Close accordion after applying filter
                   }}
                   className="w-full px-4 py-2 bg-blue-900 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors"
                 >
                   Filter anwenden
                 </button>
-
-                <p className="text-xs text-gray-500 italic mt-2">
-                  ✓ Route: {routeA} → {routeB} ({corridorWidth} km)
-                </p>
               </>
+            )}
+
+            {routeA && routeB && (
+              <p className="text-xs text-gray-500 italic mt-2">
+                ✓ Aktiv: {routeA} → {routeB} ({corridorWidth} km)
+              </p>
             )}
           </div>
         )}
 
-        {/* Kategorie Content */}
-        {showCategory && (
-          <div className="space-y-1 mb-3">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  const newCategoryId = selectedCategory === cat.id ? null : cat.id;
-                  setSelectedCategory(newCategoryId);
-                  onFilterApply?.(
-                    newCategoryId
-                      ? { type: "category", categoryId: newCategoryId }
-                      : { type: "none" }
-                  );
-                }}
-                className={`w-full text-left px-2 py-1.5 text-xs rounded transition-all ${
-                  selectedCategory === cat.id
-                    ? "bg-gray-700 text-white shadow-md"
-                    : "bg-gray-600 text-white shadow-sm hover:bg-gray-700 hover:shadow-md"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Erweitert Content */}
-        {showAdvanced && (
-          <div className="space-y-2 mb-3 p-2 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500">Weitere Filter kommen hier...</p>
-          </div>
-        )}
-
-        {/* Zweite Reihe Pills - erscheint UNTER dem Content */}
+        {/* Zweite Reihe Pills */}
         <div className="grid grid-cols-2 gap-2 mt-3">
           <button
             onClick={() => {
@@ -397,10 +414,10 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
               setShowRoute(false);
               setShowAdvanced(false);
             }}
-            className={`px-3 py-2 text-xs font-medium rounded transition-all ${
+            className={`px-3 py-2 text-xs font-semibold rounded border border-[#374151]/30 transition-all ${
               showCategory
-                ? "bg-gray-700 text-white shadow-md"
-                : "bg-gray-600 text-white shadow-sm hover:bg-gray-700 hover:shadow-md"
+                ? "bg-white text-[#374151] shadow-md"
+                : "bg-white text-[#374151] shadow-sm hover:shadow-md"
             }`}
           >
             Kategorie
@@ -412,33 +429,85 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
               setShowRoute(false);
               setShowCategory(false);
             }}
-            className={`px-3 py-2 text-xs font-medium rounded transition-all ${
+            className={`px-3 py-2 text-xs font-semibold rounded border border-[#374151]/30 transition-all ${
               showAdvanced
-                ? "bg-gray-700 text-white shadow-md"
-                : "bg-gray-600 text-white shadow-sm hover:bg-gray-700 hover:shadow-md"
+                ? "bg-white text-[#374151] shadow-md"
+                : "bg-white text-[#374151] shadow-sm hover:shadow-md"
             }`}
           >
             Erweitert
           </button>
         </div>
+
+        {/* Kategorie Content - erscheint UNTER den Pills */}
+        {showCategory && (
+          <div className="space-y-1 mb-3 mt-2">
+            {categories.length > 0 ? (
+              categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    const newCategoryId = selectedCategory === cat.id ? null : cat.id;
+                    setSelectedCategory(newCategoryId);
+
+                    let newFilter: FilterCriteria;
+                    if (newCategoryId) {
+                      // Add category to existing filter or create category-only filter
+                      newFilter = {
+                        ...currentFilter,
+                        categoryId: newCategoryId,
+                      };
+                      // If no geographic filter, set type to category
+                      if (currentFilter.type === "none") {
+                        newFilter.type = "category";
+                      }
+                    } else {
+                      // Remove category, keep geographic filter if exists
+                      const { categoryId, ...rest } = currentFilter;
+                      newFilter = rest.type === "none" ? { type: "none" } : rest;
+                    }
+
+                    setCurrentFilter(newFilter);
+                    onFilterApply?.(newFilter);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs font-semibold rounded border border-[#374151]/30 transition-all ${
+                    selectedCategory === cat.id
+                      ? "bg-white text-[#374151] shadow-md"
+                      : "bg-white text-[#374151] shadow-sm hover:shadow-md"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500 italic p-2">Kategorien werden geladen...</p>
+            )}
+          </div>
+        )}
+
+        {/* Erweitert Content - erscheint UNTER den Pills */}
+        {showAdvanced && (
+          <div className="space-y-2 mb-3 mt-2 p-2 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-500">Weitere Filter kommen hier...</p>
+          </div>
+        )}
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-gray-400 mx-6 my-2" />
-
       {/* Tagesplaner */}
-      <div className="px-6 pb-5">
-        <h3 className="text-base font-bold text-gray-900 mb-3">Tagesplaner</h3>
+      <div className="px-6">
+        <h3 className="text-base font-bold text-gray-900 mb-3 text-center">Tagesplaner</h3>
+      </div>
+      <div className="px-6 pb-5 border border-[#374151]/30 mx-6 rounded-lg pt-3">
         {dayEvents.length > 0 ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {dayEvents.map((planned) => (
               <div
                 key={planned.eventId}
-                className="bg-white rounded shadow-md hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
+                className="bg-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all cursor-pointer group relative overflow-hidden"
                 onClick={() => onEventClick?.(planned.eventId)}
               >
                 <div className="flex items-start">
-                  <div className="bg-white p-2.5 rounded-md shadow-md border border-gray-200 flex-shrink-0">
+                  <div className="bg-white p-[7.2px] rounded-sm border border-gray-200 flex-shrink-0">
                     <img
                       src={planned.event.image_url || "/placeholder.svg"}
                       alt={planned.event.title}
@@ -487,22 +556,21 @@ function SwiperSidebar({ currentEvent, onEventClick, onFilterApply }: SwiperSide
         )}
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-gray-400 mx-6 my-2" />
-
       {/* Favoriten - Thumbnail + Text (wie gewünscht!) */}
-      <div className="px-6 pb-5">
-        <h3 className="text-base font-bold text-gray-900 mb-3">Favoriten</h3>
+      <div className="px-6 mt-4">
+        <h3 className="text-base font-bold text-gray-900 mb-3 text-center">Favoriten</h3>
+      </div>
+      <div className="px-6 pb-5 border border-[#374151]/30 mx-6 rounded-lg pt-3">
         {favorites.length > 0 ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {favorites.map((fav) => (
               <div
                 key={fav.id}
-                className="bg-white rounded shadow-md hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
+                className="bg-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all cursor-pointer group relative overflow-hidden"
                 onClick={() => onEventClick?.(fav.id)}
               >
                 <div className="flex items-start">
-                  <div className="bg-white p-2.5 rounded-md shadow-md border border-gray-200 flex-shrink-0">
+                  <div className="bg-white p-[7.2px] rounded-sm border border-gray-200 flex-shrink-0">
                     <img
                       src={fav.image || fav.image_url || "/placeholder.svg"}
                       alt={fav.title}

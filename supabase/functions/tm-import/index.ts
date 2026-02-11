@@ -293,6 +293,24 @@ serve(async (req) => {
         continue;
       }
 
+      // PAST DATE CHECK - Never import events with past dates
+      const eventDateTime = event.dates?.start?.dateTime;
+      if (eventDateTime) {
+        const eventDate = new Date(eventDateTime);
+        if (eventDate < new Date()) {
+          console.log(`⏭️  Skipped PAST event: "${title}" (${eventDateTime})`);
+          continue;
+        }
+      }
+
+      // CHRISTMAS FILTER - Only import Weihnachts-Events in Nov/Dec
+      const currentMonth = new Date().getMonth() + 1;
+      const isChristmasEvent = titleLower.includes('weihnacht') || titleLower.includes('noël') || titleLower.includes('noel');
+      if (isChristmasEvent && currentMonth < 11) {
+        console.log(`⏭️  Skipped CHRISTMAS event (not season): "${title}"`);
+        continue;
+      }
+
       const venueBasic = event._embedded?.venues?.[0];
       const venueId = venueBasic?.id;
       const lat = venueBasic?.location?.latitude ? parseFloat(venueBasic.location.latitude) : null;

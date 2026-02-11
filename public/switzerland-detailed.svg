@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 1346.967 863.698" width="1346.967px" height="863.698px">
+
+  <!-- Base: Switzerland Outline (vom existierenden SVG) -->
+  <!-- Sehr heller Hintergrund -->
+  <rect fill="#f8f9fa" width="1346.967" height="863.698"/>
+
+  <!-- Schweiz Territory Fill - sehr hell beige -->
+  <path fill="#fdfdf8" stroke="none" d="M869.062,779.08l3.229-0.022l0.75-7.063l-4.75-0.487l-1.5,7.307
+	L869.062,779.08z M804.138,82.85l-1.104,0.113l-2.406,0.247l-2.543-1.217l-1.947-0.133l-5.348,2.41l0.139-2.083v-3.085l-2.723-3.084
+	l0.703-2.653l5.537,0.686l4.482-1.028l1.408,3.681l2.846,3.77L804.138,82.85z M1013.564,340.923l-1.346-2.621l-0.373-0.737
+	l-0.504-0.97l-0.168-0.324l-0.307-0.602l0.13-0.37l0.36-1.027l0.122-0.356l2.069-2.243l6.52-4.709l2.711-2.712l0.68-2.085
+	..."/>
+
+  <!-- SEEN - Aquarell Style (hellblau mit opacity) -->
+  <!-- Genfersee / Lac Léman -->
+  <ellipse cx="160" cy="620" rx="85" ry="35" fill="#a8d5e2" opacity="0.15"/>
+  <ellipse cx="165" cy="618" rx="80" ry="32" fill="#7ec8e3" opacity="0.12"/>
+
+  <!-- Bodensee -->
+  <ellipse cx="1180" cy="80" rx="60" ry="25" fill="#a8d5e2" opacity="0.15"/>
+  <ellipse cx="1175" cy="78" rx="55" ry="22" fill="#7ec8e3" opacity="0.12"/>
+
+  <!-- Zürichsee -->
+  <ellipse cx="870" cy="280" rx="45" ry="20" fill="#a8d5e2" opacity="0.15"/>
+  <ellipse cx="867" cy="278" rx="42" ry="18" fill="#7ec8e3" opacity="0.12"/>
+
+  <!-- Vierwaldstättersee -->
+  <ellipse cx="750" cy="360" rx="38" ry="18" fill="#a8d5e2" opacity="0.15"/>
+  <ellipse cx="748" cy="358" rx="35" ry="16" fill="#7ec8e3" opacity="0.12"/>
+
+  <!-- Lago Maggiore -->
+  <ellipse cx="820" cy="720" rx="28" ry="15" fill="#a8d5e2" opacity="0.15"/>
+  <ellipse cx="818" cy="718" rx="25" ry="13" fill="#7ec8e3" opacity="0.12"/>
+
+  <!-- BERGE - Aquarell Style (hellgrau/hellbraun mit opacity) -->
+  <!-- Alpen (Süden) - mehrere Ebenen für Aquarell-Effekt -->
+  <path d="M400,700 L480,600 L560,700 Z" fill="#8b7355" opacity="0.08"/>
+  <path d="M440,700 L500,620 L560,700 Z" fill="#9d8b7a" opacity="0.06"/>
+
+  <path d="M550,720 L620,630 L690,720 Z" fill="#8b7355" opacity="0.08"/>
+  <path d="M580,720 L620,650 L660,720 Z" fill="#9d8b7a" opacity="0.06"/>
+
+  <path d="M680,710 L740,640 L800,710 Z" fill="#8b7355" opacity="0.08"/>
+  <path d="M700,710 L740,660 L780,710 Z" fill="#9d8b7a" opacity="0.06"/>
+
+  <!-- Berner Oberland -->
+  <path d="M500,420 L560,350 L620,420 Z" fill="#8b7355" opacity="0.07"/>
+  <path d="M520,420 L560,370 L600,420 Z" fill="#9d8b7a" opacity="0.05"/>
+
+  <path d="M600,440 L650,380 L700,440 Z" fill="#8b7355" opacity="0.07"/>
+  <path d="M615,440 L650,395 L685,440 Z" fill="#9d8b7a" opacity="0.05"/>
+
+  <!-- Zentralschweiz -->
+  <path d="M680,380 L720,330 L760,380 Z" fill="#8b7355" opacity="0.06"/>
+  <path d="M690,380 L720,345 L750,380 Z" fill="#9d8b7a" opacity="0.04"/>
+
+  <!-- Graubünden (Osten) -->
+  <path d="M950,520 L1000,460 L1050,520 Z" fill="#8b7355" opacity="0.07"/>
+  <path d="M965,520 L1000,475 L1035,520 Z" fill="#9d8b7a" opacity="0.05"/>
+
+  <path d="M1040,540 L1090,480 L1140,540 Z" fill="#8b7355" opacity="0.07"/>
+  <path d="M1055,540 L1090,495 L1125,540 Z" fill="#9d8b7a" opacity="0.05"/>
+
+  <!-- SCHWEIZ OUTLINE - Schwarze Linie (stroke-width: 1) -->
+  <image href="/swiss-outline.svg" width="1346.967" height="863.698" opacity="0.4" style="mix-blend-mode: multiply;"/>
+
+  <!-- STÄDTE - 10 wichtigste als Punkte -->
+  <!-- Zürich -->
+  <circle cx="870" cy="260" r="4" fill="#1f2937"/>
+  <text x="880" y="263" font-family="Arial, sans-serif" font-size="11" fill="#374151" font-weight="500">Zürich</text>
+
+  <!-- Genf / Genève -->
+  <circle cx="100" cy="620" r="4" fill="#1f2937"/>
+  <text x="110" y="623" font-family="Arial, sans-serif" font-size="11" fill="#374151" font-weight="500">Genf</text>
+
+  <!-- Basel -->
+  <circle cx="600" cy="120" r="4" fill="#1f2937"/>
+  <text x="610" y="123" font-family="Arial, sans-serif" font-size="11" fill="#374151" font-weight="500">Basel</text>
+
+  <!-- Bern -->
+  <circle cx="640" cy="360" r="4" fill="#1f2937"/>
+  <text x="650" y="363" font-family="Arial, sans-serif" font-size="11" fill="#374151" font-weight="500">Bern</text>
+
+  <!-- Lausanne -->
+  <circle cx="220" cy="580" r="4" fill="#1f2937"/>
+  <text x="230" y="583" font-family="Arial, sans-serif" font-size="11" fill="#374151" font-weight="500">Lausanne</text>
+
+  <!-- Luzern -->
+  <circle cx="750" cy="350" r="4" fill="#1f2937"/>
+  <text x="760" y="353" font-family="Arial, sans-serif" font-size="11" fill="#374151" font-weight="500">Luzern</text>
+
+  <!-- Winterthur -->
+  <circle cx="920" cy="220" r="3.5" fill="#1f2937"/>
+  <text x="928" y="223" font-family="Arial, sans-serif" font-size="10" fill="#4b5563">Winterthur</text>
+
+  <!-- St. Gallen -->
+  <circle cx="1050" cy="200" r="3.5" fill="#1f2937"/>
+  <text x="1058" y="203" font-family="Arial, sans-serif" font-size="10" fill="#4b5563">St. Gallen</text>
+
+  <!-- Lugano -->
+  <circle cx="850" cy="750" r="3.5" fill="#1f2937"/>
+  <text x="858" y="753" font-family="Arial, sans-serif" font-size="10" fill="#4b5563">Lugano</text>
+
+  <!-- Biel/Bienne -->
+  <circle cx="580" cy="260" r="3" fill="#1f2937"/>
+  <text x="588" y="263" font-family="Arial, sans-serif" font-size="9" fill="#6b7280">Biel</text>
+</svg>

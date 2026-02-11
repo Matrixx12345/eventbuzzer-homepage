@@ -408,7 +408,7 @@ const DynamicEventSection = ({
         {/* Mehr anzeigen Button */}
         <div className="mt-10 text-center">
           <Link 
-            to={`/listings?${filterParam}`}
+            to={`/eventlist1?${filterParam}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground border border-muted-foreground/30 hover:border-foreground/50 px-6 py-2.5 rounded-full transition-all text-sm font-medium"
           >
             Mehr anzeigen
