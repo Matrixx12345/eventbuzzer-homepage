@@ -495,7 +495,7 @@ export default function EventListSwiper({
                 className="absolute top-3 right-3 lg:top-2 lg:right-2 z-30 w-10 h-10 lg:w-11 lg:h-11 bg-black/60 lg:bg-white/70 hover:bg-black/80 lg:hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg"
                 aria-label="Close"
               >
-                <X size={20} lg:size={22} className="text-white lg:text-gray-700" strokeWidth={2.5} />
+                <X size={22} className="text-white lg:text-gray-700" strokeWidth={2.5} />
               </button>
 
               {/* Zurück Button - Below Close Button (only if previousIndex exists) */}
@@ -506,7 +506,7 @@ export default function EventListSwiper({
                   aria-label="Zurück zur vorherigen Position"
                   title="Zurück zur vorherigen Position"
                 >
-                  <Undo2 size={18} lg:size={20} className="text-white" strokeWidth={2.5} />
+                  <Undo2 size={20} className="text-white" strokeWidth={2.5} />
                 </button>
               )}
 
@@ -537,7 +537,7 @@ export default function EventListSwiper({
                   {currentDistance !== null && (
                     <div className="absolute top-3 right-14 lg:top-4 lg:right-14 group z-20">
                       <span className="bg-black/60 lg:bg-white/80 backdrop-blur-sm text-white lg:text-gray-800 text-xs lg:text-sm font-semibold px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl shadow-lg flex items-center gap-1.5">
-                        <MapPin size={14} lg:size={17} className="text-red-400 lg:text-red-500" />
+                        <MapPin size={16} className="text-red-400 lg:text-red-500" />
                         {formatDistance(currentDistance)}
                       </span>
                     </div>
@@ -650,7 +650,7 @@ export default function EventListSwiper({
                       className="flex items-center gap-1.5 lg:gap-2 px-3 py-2 lg:px-4 lg:py-3 border border-gray-200 rounded-lg lg:rounded-xl text-sm lg:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Ticket size={18} lg:size={21} className="text-red-500" />
+                      <Ticket size={20} className="text-red-500" />
                       <span className="hidden sm:inline">Ticket</span>
                     </a>
                   ) : (
@@ -661,7 +661,7 @@ export default function EventListSwiper({
                       }}
                       className="flex items-center gap-1.5 lg:gap-2 px-3 py-2 lg:px-4 lg:py-3 border border-gray-200 rounded-lg lg:rounded-xl text-sm lg:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <Ticket size={18} lg:size={21} className="text-red-500" />
+                      <Ticket size={20} className="text-red-500" />
                       <span className="hidden sm:inline">Ticket</span>
                     </button>
                   )}
@@ -681,8 +681,7 @@ export default function EventListSwiper({
                     title="Favorit"
                   >
                     <Heart
-                      size={18}
-                      lg:size={22}
+                      size={20}
                       className={`transition-colors ${
                         isFavorited
                           ? 'text-red-500 fill-current'
@@ -699,7 +698,7 @@ export default function EventListSwiper({
                     className="hidden sm:flex w-9 h-9 lg:w-12 lg:h-12 border border-gray-200 rounded-lg lg:rounded-xl items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Nächstes Event"
                   >
-                    <ChevronRight size={18} lg:size={22} className="text-gray-600" strokeWidth={2} />
+                    <ChevronRight size={20} className="text-gray-600" strokeWidth={2} />
                   </button>
 
                   {/* Spacer */}
