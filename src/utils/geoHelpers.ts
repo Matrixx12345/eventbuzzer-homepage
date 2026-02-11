@@ -191,7 +191,6 @@ export function distanceToLine(
 
   // If route is basically a point, return distance to that point
   if (distAB < 0.001) {
-    console.log(`[distanceToLine] Route is a point, distance: ${distAP.toFixed(2)} km`);
     return distAP;
   }
 
@@ -239,22 +238,14 @@ export function distanceToLine(
   // If angle is > 90° or < -90°, point is in opposite direction from route
   const isOppositeDirection = Math.abs(normalizedAngle) > Math.PI / 2;
 
-  console.log(`[distanceToLine] Point: (${pointLat.toFixed(4)}, ${pointLng.toFixed(4)}), ` +
-              `A: (${lat1.toFixed(4)}, ${lng1.toFixed(4)}), ` +
-              `B: (${lat2.toFixed(4)}, ${lng2.toFixed(4)}), ` +
-              `distAB: ${distAB.toFixed(2)} km, distAP: ${distAP.toFixed(2)} km, distBP: ${distBP.toFixed(2)} km, ` +
-              `crossTrack: ${Math.abs(crossTrack).toFixed(2)} km, alongTrack: ${alongTrack.toFixed(2)} km, ` +
-              `angleDiff: ${(normalizedAngle * 180 / Math.PI).toFixed(1)}°, oppositeDir: ${isOppositeDirection}`);
+  // Removed verbose logging to prevent performance issues
 
   // If perpendicular point is beyond the route segment, use endpoint distance
   if (isOppositeDirection || alongTrack < 0) {
-    console.log(`  → Before A (opposite direction), returning distAP: ${distAP.toFixed(2)} km`);
     return distAP;
   } else if (alongTrack > distAB) {
-    console.log(`  → After B, returning distBP: ${distBP.toFixed(2)} km`);
     return distBP;
   }
 
-  console.log(`  → On corridor, returning crossTrack: ${Math.abs(crossTrack).toFixed(2)} km`);
   return Math.abs(crossTrack);
 }

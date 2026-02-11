@@ -150,10 +150,6 @@ export default function EventListSwiper({
           coordsB.lng
         );
         passesGeographicFilter = distance <= activeFilter.corridorWidth;
-        if (passesGeographicFilter) {
-          console.log(`✓ Event "${event.title}" at (${event.latitude?.toFixed(4)}, ${event.longitude?.toFixed(4)}) ` +
-                      `is within corridor: ${distance.toFixed(2)} km ≤ ${activeFilter.corridorWidth} km`);
-        }
       }
 
       // Apply category filter (can be combined with geographic filter)
