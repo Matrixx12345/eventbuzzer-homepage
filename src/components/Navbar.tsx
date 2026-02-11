@@ -24,8 +24,8 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const navLinks = [
-    { label: "Startseite", href: "/" },
-    { label: "Events", href: "/eventlist1" },
+    { label: "Events", href: "/" },
+    { label: "Highlights", href: "/highlights" },
     { label: "Favoriten", href: "/favorites" },
     { label: "Reiseplaner", href: "/reiseplaner" },
   ];
