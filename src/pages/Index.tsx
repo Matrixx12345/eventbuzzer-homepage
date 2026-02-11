@@ -56,60 +56,12 @@ const Index = () => {
         <meta name="description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Von Zürich bis Genf - entdecke unvergessliche Erlebnisse auf EventBuzzer." />
         <meta name="google-site-verification" content="Gy-ddUrDm4Bp3Hqs6ayDcsh-1U_PXP7ZPTBewWdSSBE" />
         <meta name="p:domain_verify" content="408e9123d6ecb536115fd720ac898a2d"/>
-        <meta property="og:title" content="EventBuzzer - Entdecke Events in der Schweiz" />
-        <meta property="og:description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
+        <meta property="og:title" content="EventBuzzer Highlights - Kuratierte Events in der Schweiz" />
+        <meta property="og:description" content="Entdecke unsere kuratierten Event-Highlights: MySwitzerland Favoriten, Familien-Abenteuer und Top-Erlebnisse." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={SITE_URL} />
+        <meta property="og:url" content={`${SITE_URL}/highlights`} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
-        <link rel="canonical" href={SITE_URL} />
-
-        {/* Schema.org Organization & Website Structured Data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@graph": [
-              {
-                "@type": "Organization",
-                "@id": `${SITE_URL}/#organization`,
-                "name": "EventBuzzer",
-                "url": SITE_URL,
-                "logo": {
-                  "@type": "ImageObject",
-                  "url": `${SITE_URL}/og-image.jpg`,
-                  "width": 1200,
-                  "height": 630
-                },
-                "description": "Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz",
-                "address": {
-                  "@type": "PostalAddress",
-                  "addressCountry": "CH"
-                },
-                "areaServed": {
-                  "@type": "Country",
-                  "name": "Schweiz"
-                }
-              },
-              {
-                "@type": "WebSite",
-                "@id": `${SITE_URL}/#website`,
-                "url": SITE_URL,
-                "name": "EventBuzzer",
-                "description": "Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz",
-                "publisher": {
-                  "@id": `${SITE_URL}/#organization`
-                },
-                "potentialAction": {
-                  "@type": "SearchAction",
-                  "target": {
-                    "@type": "EntryPoint",
-                    "urlTemplate": `${SITE_URL}/eventlist1?search={search_term_string}`
-                  },
-                  "query-input": "required name=search_term_string"
-                }
-              }
-            ]
-          })}
-        </script>
+        <link rel="canonical" href={`${SITE_URL}/highlights`} />
       </Helmet>
 
       <Navbar bgColor="bg-[#F5F0E8]/80" />

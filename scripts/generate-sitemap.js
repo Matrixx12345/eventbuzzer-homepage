@@ -116,8 +116,8 @@ async function generateSitemap() {
 
     // Add static pages (highest priority)
     const staticPages = [
-      { url: '/', priority: '1.0', changefreq: 'weekly' },
-      { url: '/eventlist1', priority: '0.95', changefreq: 'daily' },
+      { url: '/', priority: '1.0', changefreq: 'daily' },
+      { url: '/highlights', priority: '0.9', changefreq: 'weekly' },
       { url: '/favorites', priority: '0.7', changefreq: 'weekly' },
       { url: '/trip-planner', priority: '0.8', changefreq: 'weekly' },
     ];

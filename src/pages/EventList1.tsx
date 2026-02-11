@@ -723,23 +723,49 @@ const EventList1 = () => {
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
         <link rel="canonical" href={SITE_URL} />
 
-        {/* BreadcrumbList Schema for Google Rich Snippets */}
+        {/* Schema.org Organization & Website Structured Data */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
+            "@graph": [
               {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": SITE_URL
+                "@type": "Organization",
+                "@id": `${SITE_URL}/#organization`,
+                "name": "EventBuzzer",
+                "url": SITE_URL,
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": `${SITE_URL}/og-image.jpg`,
+                  "width": 1200,
+                  "height": 630
+                },
+                "description": "Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressCountry": "CH"
+                },
+                "areaServed": {
+                  "@type": "Country",
+                  "name": "Schweiz"
+                }
               },
               {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "Alle Events",
-                "item": `${SITE_URL}/eventlist1`
+                "@type": "WebSite",
+                "@id": `${SITE_URL}/#website`,
+                "url": SITE_URL,
+                "name": "EventBuzzer",
+                "description": "Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz",
+                "publisher": {
+                  "@id": `${SITE_URL}/#organization`
+                },
+                "potentialAction": {
+                  "@type": "SearchAction",
+                  "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": `${SITE_URL}/?search={search_term_string}`
+                  },
+                  "query-input": "required name=search_term_string"
+                }
               }
             ]
           })}
