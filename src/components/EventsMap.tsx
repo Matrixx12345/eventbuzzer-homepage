@@ -1526,10 +1526,20 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
     <div className="relative w-full h-full" style={{ isolation: 'isolate' }}>
       {/* Map Container */}
       <div className="relative w-full h-full">
-        <div ref={mapContainer} className="w-full h-full" />
+        <div ref={mapContainer} className="w-full h-full" style={{ opacity: mapReady ? 1 : 0, transition: 'opacity 0.5s ease-in' }} />
+
+        {/* Placeholder image while Mapbox loads */}
+        {!mapReady && (
+          <img
+            src="/map-placeholder.jpg"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ zIndex: 1 }}
+          />
+        )}
 
         {loading && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 shadow-lg border border-border">
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 shadow-lg border border-border" style={{ zIndex: 2 }}>
             <Loader2 className="w-4 h-4 animate-spin text-primary" />
             <span className="text-sm font-medium">Events werden geladen...</span>
           </div>

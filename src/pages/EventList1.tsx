@@ -714,14 +714,14 @@ const EventList1 = () => {
   return (
     <div className="min-h-screen bg-[#F4F7FA]">
       <Helmet>
-        <title>Alle Events in der Schweiz | EventBuzzer</title>
-        <meta name="description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Finde Events nach Kategorie, Stadt, Datum und mehr auf EventBuzzer." />
-        <meta property="og:title" content="Alle Events in der Schweiz | EventBuzzer" />
+        <title>EventBuzzer – Entdecke Events in der Schweiz</title>
+        <meta name="description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Stöbere auf der Karte, finde Events in deiner Nähe und plane deinen nächsten Trip." />
+        <meta property="og:title" content="EventBuzzer – Entdecke Events in der Schweiz" />
         <meta property="og:description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${SITE_URL}/eventlist1`} />
+        <meta property="og:url" content={SITE_URL} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
-        <link rel="canonical" href={`${SITE_URL}/eventlist1`} />
+        <link rel="canonical" href={SITE_URL} />
 
         {/* BreadcrumbList Schema for Google Rich Snippets */}
         <script type="application/ld+json">

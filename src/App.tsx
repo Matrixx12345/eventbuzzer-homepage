@@ -49,7 +49,8 @@ const App = () => (
             <GoogleAnalytics />
             <ExitIntentPopup />
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<ErrorBoundary><EventList1 /></ErrorBoundary>} />
+              <Route path="/highlights" element={<Index />} />
               <Route path="/event/:slug" element={<EventDetail />} />
               {/* SEO Category Pages */}
               <Route path="/kategorie/:slug" element={<CategoryPage />} />
