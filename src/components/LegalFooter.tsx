@@ -55,13 +55,25 @@ const LegalFooter = () => {
                 to="/"
                 className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
               >
-                Startseite
+                Events
               </Link>
               <Link
-                to="/eventlist1"
+                to="/highlights"
                 className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
               >
-                Alle Events
+                Highlights
+              </Link>
+              <Link
+                to="/favorites"
+                className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
+              >
+                Favoriten
+              </Link>
+              <Link
+                to="/reiseplaner"
+                className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
+              >
+                Reiseplaner
               </Link>
               <Link
                 to="/impressum"

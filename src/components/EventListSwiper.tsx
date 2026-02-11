@@ -306,19 +306,28 @@ export default function EventListSwiper({
     }
   }, [isOpen]);
 
-  // Keyboard navigation
+  // Keyboard navigation (mobile: vertical, desktop: horizontal)
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') handlePrevious();
-      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') handleNext();
-      else if (e.key === 'Escape') onClose();
+      const isMobile = window.innerWidth < 1024; // lg breakpoint
+      if (isMobile) {
+        // Mobile: vertical navigation (up/down)
+        if (e.key === 'ArrowUp') handlePrevious();
+        else if (e.key === 'ArrowDown') handleNext();
+        else if (e.key === 'Escape') onClose();
+      } else {
+        // Desktop: horizontal navigation (left/right)
+        if (e.key === 'ArrowLeft') handlePrevious();
+        else if (e.key === 'ArrowRight') handleNext();
+        else if (e.key === 'Escape') onClose();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleNext, handlePrevious, onClose]);
 
-  // Touch handlers
+  // Touch handlers (mobile: vertical swipe, desktop: horizontal swipe)
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
     setTouchEnd(null);
@@ -330,9 +339,20 @@ export default function EventListSwiper({
     if (!touchStart || !touchEnd) return;
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = touchEnd.y - touchStart.y;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX < 0) handleNext();
-      else handlePrevious();
+    const isMobile = window.innerWidth < 1024; // lg breakpoint
+
+    if (isMobile) {
+      // Mobile: vertical swipe (Instagram-style)
+      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
+        if (deltaY < 0) handleNext(); // Swipe up = next
+        else handlePrevious(); // Swipe down = previous
+      }
+    } else {
+      // Desktop: horizontal swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX < 0) handleNext();
+        else handlePrevious();
+      }
     }
     setTouchStart(null);
     setTouchEnd(null);
@@ -378,10 +398,10 @@ export default function EventListSwiper({
   const eventInTrip = currentEvent ? isInTrip(currentEvent.id) : false;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8">
-      {/* Blurred Background Image */}
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 lg:p-4 xl:p-8">
+      {/* Blurred Background Image - Desktop only */}
       {currentEvent?.image_url && (
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden hidden lg:block">
           <img
             src={currentEvent.image_url}
             alt=""
@@ -390,7 +410,9 @@ export default function EventListSwiper({
           <div className="absolute inset-0 backdrop-blur-xl bg-black/40" />
         </div>
       )}
-      {!currentEvent?.image_url && <div className="absolute inset-0 bg-stone-800" />}
+      {/* Mobile: Black background */}
+      <div className="absolute inset-0 bg-black lg:hidden" />
+      {!currentEvent?.image_url && <div className="absolute inset-0 bg-stone-800 hidden lg:block" />}
 
       {/* Share Menu Overlay */}
       {showShareMenu && (
@@ -432,8 +454,9 @@ export default function EventListSwiper({
 
       {/* Main Content + Sidebar */}
       <div className="flex items-start w-full h-full">
-      <div className="flex-1 flex items-start justify-start pt-[10vh] pl-[20vw]">
-      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
+      {/* Mobile: Fullscreen centered | Desktop: Left-aligned with padding */}
+      <div className="flex-1 flex items-center justify-center lg:items-start lg:justify-start lg:pt-[10vh] lg:pl-[20vw]">
+      <div className="relative w-full h-full lg:h-auto lg:max-w-[420px] xl:max-w-[460px] 2xl:max-w-[500px]">
         {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
             <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
@@ -446,18 +469,18 @@ export default function EventListSwiper({
             </button>
           </div>
         ) : currentEvent ? (
-          <div className="relative w-full mb-12">
-            {/* Card Stack Effect - visible below main card */}
+          <div className="relative w-full h-full lg:h-auto lg:mb-12">
+            {/* Card Stack Effect - Desktop only */}
             {events[currentIndex + 2] && (
-              <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
+              <div className="hidden lg:block absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
             )}
             {events[currentIndex + 1] && (
-              <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
+              <div className="hidden lg:block absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
             )}
 
-            {/* Main Card */}
+            {/* Main Card - Mobile: fullscreen, Desktop: rounded card */}
             <div
-              className="relative bg-white rounded-3xl shadow-2xl overflow-hidden"
+              className="relative bg-white h-full lg:h-auto lg:rounded-3xl shadow-2xl overflow-hidden flex flex-col"
               style={{ zIndex: 3 }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -484,9 +507,9 @@ export default function EventListSwiper({
                 </button>
               )}
 
-              {/* Photo with Frame */}
-              <div className="p-3 pb-0">
-                <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
+              {/* Photo with Frame - Mobile: fullscreen, Desktop: framed */}
+              <div className="flex-1 lg:flex-none lg:p-3 lg:pb-0">
+                <div className="relative h-full lg:h-auto lg:rounded-2xl overflow-hidden lg:aspect-[4/3]">
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
                     alt={currentEvent.title}
@@ -574,30 +597,30 @@ export default function EventListSwiper({
                 </div>
               </div>
 
-              {/* Text Content - expandable */}
-              <div className={`px-5 pt-4 pb-2 ${textExpanded ? 'min-h-[120px]' : 'h-[120px]'}`}>
-                {/* Title */}
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
+              {/* Text Content - expandable, Mobile: absolute bottom overlay */}
+              <div className={`absolute lg:relative bottom-20 lg:bottom-auto left-0 right-0 lg:left-auto lg:right-auto bg-gradient-to-t from-black/80 via-black/60 to-transparent lg:bg-transparent px-5 pt-8 lg:pt-4 pb-2 ${textExpanded ? 'min-h-[180px] lg:min-h-[120px]' : 'h-[180px] lg:h-[120px]'}`}>
+                {/* Title - Mobile: white text */}
+                <h2 className="text-xl md:text-2xl font-bold text-white lg:text-gray-900 uppercase tracking-tight line-clamp-1">
                   {decodeHtml(currentEvent.title)}
                 </h2>
 
-                {/* Date | Location */}
-                <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                {/* Date | Location - Mobile: white text */}
+                <p className="text-sm text-white/80 lg:text-gray-500 mt-1 line-clamp-1">
                   {infoLine || '\u00A0'}
                 </p>
 
-                {/* Description - expandable with "mehr..." */}
+                {/* Description - expandable with "mehr..." - Mobile: white text */}
                 {(() => {
                   const desc = decodeHtml(currentEvent.description || "Entdecke dieses spannende Event in der Schweiz.");
                   const wouldOverflow = desc.length > 160;
                   return (
                     <>
-                      <p className={`text-sm text-gray-600 mt-2 leading-relaxed ${textExpanded ? '' : 'line-clamp-2'}`}>
+                      <p className={`text-sm text-white/90 lg:text-gray-600 mt-2 leading-relaxed ${textExpanded ? '' : 'line-clamp-2'}`}>
                         {desc}
                         {!textExpanded && wouldOverflow && (
                           <span
                             onClick={() => setTextExpanded(true)}
-                            className="text-gray-400 underline cursor-pointer ml-1"
+                            className="text-white/60 lg:text-gray-400 underline cursor-pointer ml-1"
                           >
                             mehr...
                           </span>
@@ -606,7 +629,7 @@ export default function EventListSwiper({
                       {textExpanded && wouldOverflow && (
                         <span
                           onClick={() => setTextExpanded(false)}
-                          className="text-gray-400 underline cursor-pointer text-sm mt-1 inline-block"
+                          className="text-white/60 lg:text-gray-400 underline cursor-pointer text-sm mt-1 inline-block"
                         >
                           weniger
                         </span>
@@ -616,8 +639,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-              {/* Bottom Action Bar */}
-              <div className="px-5 pb-5 pt-5">
+              {/* Bottom Action Bar - Mobile: fixed at bottom with safe area */}
+              <div className="absolute lg:relative bottom-0 left-0 right-0 px-5 pb-5 lg:pb-5 pt-3 lg:pt-5 bg-white">
                 <div className="flex items-stretch gap-2.5">
                   {/* Ticket Button */}
                   {(currentEvent.ticket_url || currentEvent.url) ? (
