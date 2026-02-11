@@ -398,7 +398,21 @@ export default function EventListSwiper({
   const eventInTrip = currentEvent ? isInTrip(currentEvent.id) : false;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8">
+    <div className="fixed inset-0 z-[110]">
+      {/* Blurred Background Image - DESKTOP ONLY */}
+      <div className="hidden lg:block">
+        {currentEvent?.image_url && (
+          <div className="absolute inset-0 overflow-hidden">
+            <img
+              src={currentEvent.image_url}
+              alt=""
+              className="w-full h-full object-cover scale-110"
+            />
+            <div className="absolute inset-0 backdrop-blur-xl bg-black/40" />
+          </div>
+        )}
+        {!currentEvent?.image_url && <div className="absolute inset-0 bg-stone-800" />}
+      </div>
 
       {/* Share Menu Overlay */}
       {showShareMenu && (
@@ -438,10 +452,9 @@ export default function EventListSwiper({
         </div>
       )}
 
-      {/* Main Content + Sidebar */}
-      <div className="flex items-start w-full h-full">
-      <div className="flex-1 flex items-start justify-start pt-[10vh] pl-[20vw]">
-      <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
+      {/* Mobile: Centered | Desktop: Left-aligned with padding */}
+      <div className="flex items-center lg:items-start justify-center lg:justify-start w-full h-full p-4 lg:pt-[10vh] lg:pl-[20vw] lg:p-4">
+        <div className="relative w-full max-w-[420px] md:max-w-[460px] lg:max-w-[500px]">
         {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
             <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
