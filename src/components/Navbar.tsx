@@ -15,7 +15,11 @@ import {
 // Admin emails allowed to see pending events
 const ADMIN_EMAILS = ["eventbuzzer1@gmail.com", "j.straton111@gmail.com"];
 
-const Navbar = () => {
+interface NavbarProps {
+  bgColor?: string;
+}
+
+const Navbar = ({ bgColor = "bg-white/80" }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
@@ -43,7 +47,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="z-50 bg-white/80 backdrop-blur-md border-b border-border/50">
+    <nav className={`z-50 ${bgColor} backdrop-blur-md border-b border-border/50`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}

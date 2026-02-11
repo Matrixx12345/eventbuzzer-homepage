@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import { SITE_URL } from "@/config/constants";
+import HighlightsHero from "@/components/HighlightsHero";
 import CleanGridSection from "@/components/CleanGridSection";
 import SideBySideSection from "@/components/SideBySideSection";
 import EliteExperiencesSection from "@/components/EliteExperiencesSection";
@@ -111,9 +112,11 @@ const Index = () => {
         </script>
       </Helmet>
 
-      <Navbar />
+      <Navbar bgColor="bg-[#F5F0E8]/80" />
 
       <main>
+        <HighlightsHero />
+
         {/* Sandiger Hintergrund für alle Event-Sektionen */}
         <div className="bg-[#F5F0E8] pt-8">
           {/* Sektion 1: Verpasse nicht an diesem Wochenende - Karussell */}
