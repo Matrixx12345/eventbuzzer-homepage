@@ -91,7 +91,7 @@ const SwissMapMobile = memo(({ currentEvent, dayEvents }: {
   dayEvents: Array<{ event: { id?: string; latitude?: number; longitude?: number } }>;
 }) => {
   return (
-    <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto max-h-36" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-32" xmlns="http://www.w3.org/2000/svg">
       <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.15" />
 
       {/* Städte-Marker mit Namen */}
@@ -716,11 +716,13 @@ export default function EventListSwiper({
               <div className="h-full flex flex-col md:block">
                 {/* Photo - Mobile: 55% of container height | Tablet/Desktop: framed */}
                 <div className="h-[55%] md:h-auto md:p-3 md:pb-0">
-                  <div className="relative h-full md:h-auto md:rounded-2xl overflow-hidden md:aspect-[4/3]">
+                  <div className="relative h-full md:h-auto md:rounded-2xl overflow-hidden md:aspect-[4/3]" style={{ aspectRatio: '4/3' }}>
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
                     alt={currentEvent.title}
                     className="w-full h-full object-cover"
+                    loading="eager"
+                    style={{ aspectRatio: '4/3' }}
                   />
 
                   {/* Tag Pill - Top Left (1 tag + count) */}
@@ -951,7 +953,7 @@ export default function EventListSwiper({
               </div>
 
                   {/* Switzerland SVG Footer - Mobile only - FIXED at bottom with absolute positioning */}
-                  <div className="md:hidden absolute bottom-4 left-0 right-0 h-[6rem] pb-1 pt-3">
+                  <div className="md:hidden absolute bottom-8 left-0 right-0 h-[8rem] pb-1 pt-3">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1065,26 +1067,17 @@ export default function EventListSwiper({
                     willChange: isSwiping || pendingAction ? 'transform' : 'auto'
                   }}
                 >
-                  {/* Icons - Same as main card */}
-                  <div className="absolute top-2 right-2 z-20 w-11 h-11 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 pointer-events-none">
-                    <X size={22} className="text-gray-700" strokeWidth={2.5} />
-                  </div>
-
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20 opacity-0 pointer-events-none">
-                    <div className="w-8 h-8" />
-                    <div className="w-8 h-8" />
-                    <div className="w-8 h-8" />
-                  </div>
-
                   {/* Card Content - Same structure as current card */}
                   <div className="h-full flex flex-col">
                     {/* Photo - 55% of container height (matches main card) */}
                     <div className="h-[55%]">
-                      <div className="relative h-full">
+                      <div className="relative h-full" style={{ aspectRatio: '4/3' }}>
                         <img
                           src={nextEvent.image_url || "/placeholder.jpg"}
                           className="w-full h-full object-cover"
                           alt={nextEvent.title}
+                          loading="lazy"
+                          style={{ aspectRatio: '4/3' }}
                         />
 
                         {/* Tag Pills - Same as main card */}
@@ -1135,7 +1128,7 @@ export default function EventListSwiper({
                       </div>
 
                       {/* SVG Map: FIXED at bottom with absolute positioning (matches main card) */}
-                      <div className="absolute bottom-4 left-0 right-0 h-[6rem] pb-1 pt-3">
+                      <div className="absolute bottom-8 left-0 right-0 h-[8rem] pb-1 pt-3">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
