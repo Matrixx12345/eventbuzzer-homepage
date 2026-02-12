@@ -1097,6 +1097,8 @@ export default function EventListSwiper({
                   style={{
                     zIndex: 1,
                     transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
+                    transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    willChange: isSwiping || pendingAction ? 'transform' : 'auto'
                   }}
                 >
                   {/* Close Button - Top Right (visual only, not clickable during swipe) */}
