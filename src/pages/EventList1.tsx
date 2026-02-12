@@ -715,10 +715,11 @@ const EventList1 = () => {
   return (
     <div className="min-h-screen bg-[#F4F7FA]">
       <Helmet>
-        <title>EventBuzzer – Entdecke Events in der Schweiz</title>
-        <meta name="description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Stöbere auf der Karte, finde Events in deiner Nähe und plane deinen nächsten Trip." />
-        <meta property="og:title" content="EventBuzzer – Entdecke Events in der Schweiz" />
-        <meta property="og:description" content="Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz." />
+        <title>EventBuzzer.ch – Tausende Events & Veranstaltungen in der Schweiz</title>
+        <meta name="description" content="EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf. Jetzt Tag individuell planen!" />
+        <meta property="og:title" content="EventBuzzer.ch – Tausende Events & Veranstaltungen in der Schweiz" />
+        <meta property="og:description" content="EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf." />
+        <meta property="og:site_name" content="EventBuzzer.ch" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={SITE_URL} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
@@ -732,7 +733,7 @@ const EventList1 = () => {
               {
                 "@type": "Organization",
                 "@id": `${SITE_URL}/#organization`,
-                "name": "EventBuzzer",
+                "name": "EventBuzzer.ch",
                 "url": SITE_URL,
                 "logo": {
                   "@type": "ImageObject",
@@ -740,7 +741,7 @@ const EventList1 = () => {
                   "width": 1200,
                   "height": 630
                 },
-                "description": "Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz",
+                "description": "EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf.",
                 "address": {
                   "@type": "PostalAddress",
                   "addressCountry": "CH"
@@ -754,8 +755,8 @@ const EventList1 = () => {
                 "@type": "WebSite",
                 "@id": `${SITE_URL}/#website`,
                 "url": SITE_URL,
-                "name": "EventBuzzer",
-                "description": "Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz",
+                "name": "EventBuzzer.ch",
+                "description": "EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf.",
                 "publisher": {
                   "@id": `${SITE_URL}/#organization`
                 },

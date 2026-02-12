@@ -198,6 +198,7 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
   const [loading, setLoading] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [mapReady, setMapReady] = useState(false);
+  const mapReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [internalEvents, setInternalEvents] = useState<MapEvent[]>([]);
   const [activeFilters, setActiveFilters] = useState<string[]>(["all"]);
 
@@ -1316,9 +1317,12 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
 
       }
 
-      setMapReady(true);
-      loadEventsInView();  // Initial viewport events load
-      loadEliteEvents();   // Load Elite Events globally (visible everywhere)
+      // Delay showing map by 7 seconds to ensure full render without loading state visible
+      mapReadyTimerRef.current = setTimeout(() => {
+        setMapReady(true);
+        loadEventsInView();  // Initial viewport events load
+        loadEliteEvents();   // Load Elite Events globally (visible everywhere)
+      }, 7000);  // 7 second delay
     });
 
     // Error handling for terrain/3D features
@@ -1338,9 +1342,13 @@ const EventsMapComponent = forwardRef<mapboxgl.Map | null, EventsMapProps>(
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
+      if (mapReadyTimerRef.current) {
+        clearTimeout(mapReadyTimerRef.current);
+      }
       markersRef.current.forEach((marker) => marker.remove());
       map.current?.remove();
       map.current = null;
+      setMapReady(false);
     };
   }, [loadEventsInView, loadEliteEvents]);
 

@@ -5,7 +5,7 @@ const LegalFooter = () => {
   return (
     <footer className="w-full py-12 mt-auto border-t border-stone-200 bg-stone-50">
       <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-8 mb-8">
           {/* Kategorien Sektion */}
           <div className="md:col-span-3">
             <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">
@@ -21,6 +21,45 @@ const LegalFooter = () => {
                   {category.label}
                 </Link>
               ))}
+            </div>
+          </div>
+
+          {/* Swiss Cities Section */}
+          <div className="md:col-span-2">
+            <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wider mb-4">
+              Events in der Schweiz
+            </h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <Link to="/?city=Zürich" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Zürich
+              </Link>
+              <Link to="/?city=Bern" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Bern
+              </Link>
+              <Link to="/?city=Basel" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Basel
+              </Link>
+              <Link to="/?city=Genf" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Genf
+              </Link>
+              <Link to="/?city=Lausanne" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Lausanne
+              </Link>
+              <Link to="/?city=Luzern" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Luzern
+              </Link>
+              <Link to="/?city=St.%20Gallen" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in St. Gallen
+              </Link>
+              <Link to="/?city=Winterthur" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Winterthur
+              </Link>
+              <Link to="/?city=Interlaken" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Interlaken
+              </Link>
+              <Link to="/?city=Zermatt" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+                Events in Zermatt
+              </Link>
             </div>
           </div>
 

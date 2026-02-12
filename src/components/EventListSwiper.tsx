@@ -310,7 +310,7 @@ export default function EventListSwiper({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isMobile = window.innerWidth < 1024; // lg breakpoint
+      const isMobile = window.innerWidth < 768; // md breakpoint
       if (isMobile) {
         // Mobile: vertical navigation (up/down)
         if (e.key === 'ArrowUp') handlePrevious();
@@ -339,7 +339,7 @@ export default function EventListSwiper({
     if (!touchStart || !touchEnd) return;
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = touchEnd.y - touchStart.y;
-    const isMobile = window.innerWidth < 1024; // lg breakpoint
+    const isMobile = window.innerWidth < 768; // md breakpoint
 
     if (isMobile) {
       // Mobile: vertical swipe (Instagram-style)
@@ -398,9 +398,9 @@ export default function EventListSwiper({
   const eventInTrip = currentEvent ? isInTrip(currentEvent.id) : false;
 
   return (
-    <div className="fixed inset-0 z-[110]">
-      {/* Blurred Background Image - DESKTOP ONLY */}
-      <div className="hidden lg:block">
+    <div className="fixed inset-0 z-[110] bg-white md:bg-black/80 md:backdrop-blur-sm">
+      {/* Blurred Background Image - DESKTOP/TABLET ONLY */}
+      <div className="hidden md:block">
         {currentEvent?.image_url && (
           <div className="absolute inset-0 overflow-hidden">
             <img
@@ -452,9 +452,9 @@ export default function EventListSwiper({
         </div>
       )}
 
-      {/* Mobile: Fullscreen swiper | Desktop: Positioned card */}
-      <div className="w-full h-full lg:flex lg:items-start lg:justify-start lg:pt-[10vh] lg:pl-[20vw] lg:p-4">
-        <div className="w-full h-full lg:relative lg:w-auto lg:h-auto lg:max-w-[420px] xl:max-w-[460px] 2xl:max-w-[500px]">
+      {/* Mobile: Fullscreen swiper | Tablet/Desktop: Positioned card */}
+      <div className="w-full h-full flex items-center justify-center md:items-start md:justify-start md:pt-[10vh] md:pl-[20vw] md:p-4">
+        <div className="w-full h-full md:relative md:w-auto md:h-auto md:max-w-[420px] xl:max-w-[460px] 2xl:max-w-[500px]">
         {noMoreEvents ? (
           <div className="flex flex-col items-center justify-center py-20 text-white text-center">
             <p className="text-2xl font-bold mb-3">Keine weiteren Events</p>
@@ -467,9 +467,9 @@ export default function EventListSwiper({
             </button>
           </div>
         ) : currentEvent ? (
-          <div className="w-full h-full lg:relative lg:w-auto lg:h-auto lg:mb-12">
-            {/* Card Stack Effect - Desktop only */}
-            <div className="hidden lg:block">
+          <div className="w-full h-full md:relative md:w-auto md:h-auto md:mb-12">
+            {/* Card Stack Effect - Tablet/Desktop only */}
+            <div className="hidden md:block">
               {events[currentIndex + 2] && (
                 <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
               )}
@@ -478,9 +478,9 @@ export default function EventListSwiper({
               )}
             </div>
 
-            {/* Main Card - Mobile: fullscreen | Desktop: rounded card */}
+            {/* Main Card - Mobile: fullscreen | Tablet/Desktop: rounded card */}
             <div
-              className="w-full h-full bg-white lg:relative lg:rounded-3xl lg:shadow-2xl overflow-hidden"
+              className="w-full h-full bg-white md:relative md:rounded-3xl md:shadow-2xl overflow-hidden"
               style={{ zIndex: 3 }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -507,9 +507,11 @@ export default function EventListSwiper({
                 </button>
               )}
 
-              {/* Photo - Mobile: fullscreen | Desktop: framed */}
-              <div className="h-full lg:h-auto lg:p-3 lg:pb-0">
-                <div className="relative h-full lg:h-auto lg:rounded-2xl overflow-hidden lg:aspect-[4/3]">
+              {/* Card Content - Mobile: flex-col (60% image, 40% text) | Tablet/Desktop: block */}
+              <div className="h-full flex flex-col md:block">
+                {/* Photo - Mobile: 60% height | Tablet/Desktop: framed */}
+                <div className="h-[60%] md:h-auto md:p-3 md:pb-0">
+                  <div className="relative h-full md:h-auto md:rounded-2xl overflow-hidden md:aspect-[4/3]">
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
                     alt={currentEvent.title}
@@ -594,11 +596,13 @@ export default function EventListSwiper({
                       </div>
                     )}
                   </div>
+                  </div>
                 </div>
-              </div>
 
-              {/* Text Content - expandable */}
-              <div className={`px-5 pt-4 pb-2 ${textExpanded ? 'min-h-[120px]' : 'h-[120px]'}`}>
+                {/* Text + Buttons Section - Mobile: flex-1 (40%) | Tablet/Desktop: normal */}
+                <div className="flex-1 flex flex-col md:block overflow-y-auto">
+                  {/* Text Content - expandable */}
+                  <div className={`px-5 pt-4 pb-2 ${textExpanded ? 'min-h-[120px]' : 'h-[120px]'}`}>
                 {/* Title */}
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
                   {decodeHtml(currentEvent.title)}
@@ -639,8 +643,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-              {/* Bottom Action Bar */}
-              <div className="px-5 pb-5 pt-5">
+                  {/* Bottom Action Bar */}
+                  <div className="px-5 pb-5 pt-5">
                 <div className="flex items-stretch gap-2.5">
                   {/* Ticket Button */}
                   {(currentEvent.ticket_url || currentEvent.url) ? (
@@ -732,8 +736,8 @@ export default function EventListSwiper({
         </div>
       </div>
 
-      {/* Sidebar - Desktop only, 100% height, right edge, 25% width (1/4 screen) */}
-      <div className="hidden lg:flex w-[25vw] flex-shrink-0 h-screen fixed right-0 top-0">
+      {/* Sidebar - Tablet/Desktop only, 100% height, right edge, 25% width (1/4 screen) */}
+      <div className="hidden md:flex w-[25vw] flex-shrink-0 h-screen fixed right-0 top-0">
         <SwiperSidebar
           currentEvent={currentEvent}
           onEventClick={handleEventClick}

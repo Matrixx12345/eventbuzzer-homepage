@@ -18,5 +18,5 @@ export const SITE_URL = 'https://eventbuzzer.ch';
 /**
  * Site metadata
  */
-export const SITE_NAME = 'EventBuzzer';
-export const SITE_DESCRIPTION = 'Entdecke über 1400 Events, Konzerte, Festivals und Aktivitäten in der Schweiz';
+export const SITE_NAME = 'EventBuzzer.ch';
+export const SITE_DESCRIPTION = 'EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf. Jetzt Tag individuell planen!';

@@ -53,12 +53,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>EventBuzzer - Entdecke Events in der Schweiz</title>
-        <meta name="description" content="Finde die besten Events, Konzerte, Festivals und Aktivitäten in der Schweiz. Von Zürich bis Genf - entdecke unvergessliche Erlebnisse auf EventBuzzer." />
+        <title>EventBuzzer.ch Highlights – Kuratierte Events & Veranstaltungen</title>
+        <meta name="description" content="EventBuzzer.ch Highlights: Kuratierte Event-Auswahl in der Schweiz - MySwitzerland Favoriten, Familien-Abenteuer, Indoor-Erlebnisse von Zürich bis Genf." />
         <meta name="google-site-verification" content="Gy-ddUrDm4Bp3Hqs6ayDcsh-1U_PXP7ZPTBewWdSSBE" />
         <meta name="p:domain_verify" content="408e9123d6ecb536115fd720ac898a2d"/>
-        <meta property="og:title" content="EventBuzzer Highlights - Kuratierte Events in der Schweiz" />
+        <meta property="og:title" content="EventBuzzer.ch Highlights – Kuratierte Events & Veranstaltungen" />
         <meta property="og:description" content="Entdecke unsere kuratierten Event-Highlights: MySwitzerland Favoriten, Familien-Abenteuer und Top-Erlebnisse." />
+        <meta property="og:site_name" content="EventBuzzer.ch" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${SITE_URL}/highlights`} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
