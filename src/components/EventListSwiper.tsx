@@ -712,10 +712,10 @@ export default function EventListSwiper({
                 </button>
               )}
 
-              {/* Card Content - Mobile: flex-col (60% image, 40% text) | Tablet/Desktop: block */}
+              {/* Card Content - Mobile: flex-col (60vh image, 40vh text) | Tablet/Desktop: block */}
               <div className="h-full flex flex-col md:block">
-                {/* Photo - Mobile: 60% fixed | Tablet/Desktop: framed */}
-                <div className="h-[60%] flex-none md:h-auto md:p-3 md:pb-0">
+                {/* Photo - Mobile: 60vh fixed (viewport-based, not percentage) | Tablet/Desktop: framed */}
+                <div className="h-[60vh] flex-none md:h-auto md:p-3 md:pb-0">
                   <div className="relative h-full md:h-auto md:rounded-2xl overflow-hidden md:aspect-[4/3]">
                   <img
                     src={currentEvent.image_url || "/placeholder.jpg"}
@@ -892,8 +892,8 @@ export default function EventListSwiper({
                   </div>
                 </div>
 
-                {/* Text + Buttons Section - Mobile: 40% of container height | Tablet/Desktop: normal */}
-                <div className="h-[40%] flex-none flex flex-col relative md:h-auto md:block md:overflow-y-auto">
+                {/* Text + Buttons Section - Mobile: 40vh fixed (viewport-based) | Tablet/Desktop: normal */}
+                <div className="h-[40vh] flex-none flex flex-col relative md:h-auto md:block md:overflow-y-auto">
                   {/* Text Content - Mobile: fixed height in rem | Desktop: expandable */}
                   <div className="px-5 pt-4 pb-0 md:pb-2 h-[7rem] md:h-auto md:flex-none overflow-hidden">
                 {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
@@ -1081,8 +1081,8 @@ export default function EventListSwiper({
 
                   {/* Card Content - Same structure as current card */}
                   <div className="h-full flex flex-col">
-                    {/* Photo - 60% of container height (matches main card) */}
-                    <div className="h-[60%] flex-none">
+                    {/* Photo - 60vh (viewport-based, matches main card) */}
+                    <div className="h-[60vh] flex-none">
                       <div className="relative h-full">
                         <img
                           src={nextEvent.image_url || "/placeholder.jpg"}
@@ -1120,8 +1120,8 @@ export default function EventListSwiper({
                       </div>
                     </div>
 
-                    {/* Text + SVG - 40% of container height (matches main card) */}
-                    <div className="h-[40%] flex-none flex flex-col relative">
+                    {/* Text + SVG - 40vh (viewport-based, matches main card) */}
+                    <div className="h-[40vh] flex-none flex flex-col relative">
                       {/* Text: 7rem fixed height (matches main card) */}
                       <div className="px-5 pt-4 pb-0 h-[7rem]">
                         {/* Title */}
