@@ -208,7 +208,7 @@ const CategoryPage = () => {
   }
 
   const pageUrl = `${SITE_URL}/kategorie/${category.slug}`;
-  const pageTitle = `${category.label} in der Schweiz | EventBuzzer`;
+  const pageTitle = `${category.label} Schweiz - Events, Tickets & Tipps | EventBuzzer`;
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -267,6 +267,26 @@ const CategoryPage = () => {
               {events.length} {events.length === 1 ? "Event" : "Events"} gefunden
             </p>
           )}
+        </div>
+      </section>
+
+      {/* SEO Content Section */}
+      <section className="bg-white py-8 border-b border-stone-200">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="prose max-w-none text-gray-700 space-y-4">
+            <p>
+              Die Schweiz ist bekannt für ihre erstklassigen {category.label.toLowerCase()} – von weltberühmten Veranstaltungen
+              in Zürich, Genf und Basel bis zu charmanten Events in kleineren Städten und Regionen. Entdecke die ganze Vielfalt
+              der Schweizer Eventlandschaft und finde genau das Erlebnis, das zu dir passt. Ob spontaner Ausflug oder geplante
+              Wochenendaktivität – hier findest du alle aktuellen {category.label.toLowerCase()} mit Tickets und Bewertungen.
+            </p>
+            <p>
+              EventBuzzer zeigt dir die besten {category.label.toLowerCase()} in allen Schweizer Kantonen und Regionen. Mit
+              detaillierten Beschreibungen, Bewertungen anderer Besucher und direkten Ticket-Links planst du deinen perfekten
+              Tag. Filtere nach Stadt, Datum oder Beliebtheit und entdecke sowohl bekannte Highlights als auch versteckte Geheimtipps
+              in deiner Nähe oder schweizweit.
+            </p>
+          </div>
         </div>
       </section>
 

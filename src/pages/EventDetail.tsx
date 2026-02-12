@@ -931,10 +931,10 @@ const EventDetail = () => {
   }
 
   // Generate dynamic meta tags for SEO
-  const pageTitle = `${event.title} | EventBuzzer`;
+  const pageTitle = `${event.title} in ${event.location} - Tickets & Infos | EventBuzzer`;
   const pageDescription = event.description
     ? event.description.substring(0, 155) + (event.description.length > 155 ? '...' : '')
-    : `${event.title} in ${event.location} - Entdecke Events in der Schweiz auf EventBuzzer`;
+    : `${event.title} in ${event.location} - Entdecke Events und Erlebnisse in der Schweiz. Tickets, Infos und Bewertungen für deinen perfekten Tag bei EventBuzzer.`;
   const pageUrl = `${SITE_URL}/event/${encodeURIComponent(slug || "")}`;
 
   return (

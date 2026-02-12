@@ -220,7 +220,7 @@ const CityCategoryPage = () => {
   }
 
   const pageUrl = `${SITE_URL}/events/${city}/${category.slug}`;
-  const pageTitle = `${category.label} in ${cityName || city} | EventBuzzer`;
+  const pageTitle = `${category.label} ${cityName || city} - Events & Tickets | EventBuzzer`;
   const pageDescription = `Entdecke die besten ${category.label.toLowerCase()} in ${cityName || city}. ${category.description}`;
 
   return (
@@ -285,6 +285,26 @@ const CityCategoryPage = () => {
               {events.length} {events.length === 1 ? "Event" : "Events"} gefunden
             </p>
           )}
+        </div>
+      </section>
+
+      {/* SEO Content Section */}
+      <section className="bg-white py-8 border-b border-stone-200">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="prose max-w-none text-gray-700 space-y-4">
+            <p>
+              {cityName || city} bietet eine vielfältige Auswahl an {category.label.toLowerCase()} für jeden Geschmack.
+              Ob du nach klassischen Veranstaltungen, modernen Events oder besonderen Erlebnissen suchst – hier findest du
+              die besten {category.label.toLowerCase()} in {cityName || city} und Umgebung. Unsere Plattform zeigt dir alle
+              aktuellen Events mit Tickets, Bewertungen und allen wichtigen Informationen auf einen Blick.
+            </p>
+            <p>
+              Entdecke {category.label.toLowerCase()} in {cityName || city}, die zu deinen Interessen passen. Von bekannten
+              Locations bis zu Geheimtipps – EventBuzzer hilft dir, das perfekte Event zu finden. Filtere nach Datum,
+              Bewertung oder Entfernung und plane deinen idealen Tag. Mit detaillierten Beschreibungen, Öffnungszeiten und
+              direkten Ticket-Links verpasst du keine Highlights mehr.
+            </p>
+          </div>
         </div>
       </section>
 
