@@ -196,6 +196,8 @@ export default function EventListSwiper({
   // Touch handling for swipe
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0); // Current drag offset
+  const [isSwiping, setIsSwiping] = useState(false); // Whether actively swiping
 
   // 3-dot menu & share
   const [showMenu, setShowMenu] = useState(false);
@@ -458,25 +460,48 @@ export default function EventListSwiper({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleNext, handlePrevious, onClose]);
 
-  // Touch handlers (mobile: vertical swipe, desktop: horizontal swipe)
+  // Touch handlers (mobile: vertical swipe with Instagram-like feel, desktop: horizontal swipe)
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
     setTouchEnd(null);
+    setIsSwiping(true);
   };
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    if (!touchStart) return;
+    const currentTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    setTouchEnd(currentTouch);
+
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      // Mobile: calculate vertical offset for smooth dragging
+      const deltaY = currentTouch.y - touchStart.y;
+      // Add resistance at boundaries
+      if ((deltaY > 0 && currentIndex === 0) || (deltaY < 0 && currentIndex >= displayEvents.length - 1)) {
+        setSwipeOffset(deltaY * 0.3); // 30% resistance at edges
+      } else {
+        setSwipeOffset(deltaY);
+      }
+    }
   };
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) {
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      return;
+    }
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = touchEnd.y - touchStart.y;
-    const isMobile = window.innerWidth < 768; // md breakpoint
+    const isMobile = window.innerWidth < 768;
 
     if (isMobile) {
       // Mobile: vertical swipe (Instagram-style)
-      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
-        if (deltaY < 0) handleNext(); // Swipe up = next
-        else handlePrevious(); // Swipe down = previous
+      const threshold = 100; // Swipe distance threshold
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        if (deltaY < -threshold && currentIndex < displayEvents.length - 1) {
+          handleNext(); // Swipe up = next
+        } else if (deltaY > threshold && currentIndex > 0) {
+          handlePrevious(); // Swipe down = previous
+        }
       }
     } else {
       // Desktop: horizontal swipe
@@ -485,6 +510,10 @@ export default function EventListSwiper({
         else handlePrevious();
       }
     }
+
+    // Reset swipe state
+    setIsSwiping(false);
+    setSwipeOffset(0);
     setTouchStart(null);
     setTouchEnd(null);
   };
@@ -612,7 +641,11 @@ export default function EventListSwiper({
             {/* Main Card - Mobile: fullscreen | Tablet/Desktop: rounded card */}
             <div
               className="w-full h-full bg-white md:relative md:rounded-3xl md:shadow-2xl overflow-hidden"
-              style={{ zIndex: 3 }}
+              style={{
+                zIndex: 3,
+                transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
+                transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
