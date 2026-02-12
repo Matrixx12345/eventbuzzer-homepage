@@ -893,8 +893,8 @@ export default function EventListSwiper({
 
                 {/* Text + Buttons Section - Mobile: 40% of container height | Tablet/Desktop: normal */}
                 <div className="h-[40%] flex flex-col md:h-auto md:block md:overflow-y-auto">
-                  {/* Text Content - Mobile: 60% of text area (fixed) | Desktop: expandable */}
-                  <div className="px-5 pt-4 pb-3 md:pb-2 h-[60%] md:h-auto md:flex-none">
+                  {/* Text Content - Mobile: fixed height in rem | Desktop: expandable */}
+                  <div className="px-5 pt-4 pb-3 md:pb-2 h-[7rem] md:h-auto md:flex-none overflow-hidden">
                 {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
                 <h2
                   className={`text-lg md:text-2xl font-bold text-gray-900 uppercase tracking-tight md:cursor-default ${
@@ -950,8 +950,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-                  {/* Switzerland SVG Footer - Mobile only - 40% of text area (fixed) */}
-                  <div className="md:hidden h-[40%] pb-4 pt-2">
+                  {/* Switzerland SVG Footer - Mobile only - flex-1 to take remaining space */}
+                  <div className="md:hidden flex-1 pb-4 pt-2">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1107,8 +1107,8 @@ export default function EventListSwiper({
 
                     {/* Text + SVG - 40% of container height (matches main card) */}
                     <div className="h-[40%] flex flex-col">
-                      {/* Text: 60% of text area (fixed, matches main card) */}
-                      <div className="px-5 pt-4 pb-3 h-[60%]">
+                      {/* Text: 7rem fixed height (matches main card) */}
+                      <div className="px-5 pt-4 pb-3 h-[7rem]">
                         {/* Title */}
                         <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
                           {decodeHtml(nextEvent.title)}
@@ -1123,8 +1123,8 @@ export default function EventListSwiper({
                         </p>
                       </div>
 
-                      {/* SVG Map: 40% of text area (fixed, matches main card) */}
-                      <div className="h-[40%] pb-4 pt-2">
+                      {/* SVG Map: flex-1 to take remaining space (matches main card) */}
+                      <div className="flex-1 pb-4 pt-2">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
