@@ -1114,8 +1114,8 @@ export default function EventListSwiper({
                     <Plus size={32} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                   </div>
 
-                  {/* Card Content - no gap between photo and text */}
-                  <div className="h-full flex flex-col gap-0">
+                  {/* Card Content - matches main card exactly */}
+                  <div className="h-full flex flex-col md:block">
                     {/* Photo - 55vh */}
                     <div className="h-[55vh] flex-none">
                       <div className="relative h-full">
