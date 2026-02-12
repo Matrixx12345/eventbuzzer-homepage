@@ -496,6 +496,7 @@ const EventDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [nearbyEvents, setNearbyEvents] = useState<(DynamicEvent & { calculatedDistance?: number })[]>([]);
+  const [similarEvents, setSimilarEvents] = useState<DynamicEvent[]>([]);
   const [slugMapping, setSlugMapping] = useState<Record<string, string> | null>(null);
   const referralTrackedRef = useRef(false);
 
@@ -702,6 +703,40 @@ const EventDetail = () => {
       fetchNearbyEvents();
     }
   }, [dynamicEvent?.id, dynamicEvent?.latitude, dynamicEvent?.longitude]);
+
+  // Fetch similar events from same category (for internal linking)
+  useEffect(() => {
+    const fetchSimilarEvents = async () => {
+      if (!dynamicEvent?.id) return;
+
+      const currentCategory = getCategoryLabel(dynamicEvent);
+      if (!currentCategory) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('id, external_id, title, address_city, location, image_url, short_description, category_sub_id, tags')
+          .neq('id', dynamicEvent.id)
+          .order('buzz_score', { ascending: false, nullsFirst: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        // Filter events that match the same category
+        const filtered = (data || []).filter(evt =>
+          getCategoryLabel(evt) === currentCategory
+        ).slice(0, 8);
+
+        setSimilarEvents(filtered);
+      } catch (err) {
+        console.error("Error fetching similar events:", err);
+      }
+    };
+
+    if (dynamicEvent?.id) {
+      fetchSimilarEvents();
+    }
+  }, [dynamicEvent?.id]);
 
   // Format date nicely
   const formatDate = (dateStr?: string) => {
@@ -1285,6 +1320,43 @@ const EventDetail = () => {
               <CarouselNext className="hidden sm:flex -right-12 h-10 w-10 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 shadow-md z-10" />
             </Carousel>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Similar Events Section - Internal Linking for SEO */}
+      {similarEvents.length > 0 && dynamicEvent && (
+        <section className="bg-stone-50 py-16 border-t border-stone-200">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="font-serif text-neutral-900 text-2xl sm:text-3xl font-bold mb-2">
+                Ähnliche Events
+              </h2>
+              <p className="text-neutral-500">
+                Weitere {getCategoryLabel(dynamicEvent)} in der Schweiz
+              </p>
+            </div>
+            <Carousel>
+              <CarouselContent className="-ml-6">
+                {similarEvents.map((evt) => {
+                  const seoSlug = generateEventSlug(evt.title, evt.address_city || evt.location || '');
+                  return (
+                    <CarouselItem key={evt.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/4">
+                      <SimilarEventCard
+                        slug={seoSlug}
+                        image={evt.image_url || weekendJazz}
+                        title={evt.title}
+                        description={evt.short_description}
+                        location={evt.address_city || evt.location || ''}
+                        onSwap={swapToEvent}
+                      />
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+              <CarouselPrevious className="hidden sm:flex -left-12 h-10 w-10 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 shadow-md z-10" />
+              <CarouselNext className="hidden sm:flex -right-12 h-10 w-10 bg-white border-neutral-200 text-neutral-900 hover:bg-neutral-50 shadow-md z-10" />
+            </Carousel>
           </div>
         </section>
       )}

@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import ActionPill from "@/components/ActionPill";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { SITE_URL } from "@/config/constants";
-import { getCategoryBySlug } from "@/config/categories";
+import { getCategoryBySlug, CATEGORIES } from "@/config/categories";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { getCategoryLabel, getEventLocation, generateSlug } from "@/utils/eventUtilities";
 import { Loader2 } from "lucide-react";
@@ -357,6 +357,33 @@ const CategoryPage = () => {
           }}
         />
       )}
+
+      {/* Related Categories - Internal Linking for SEO */}
+      <section className="bg-white py-12 border-t border-stone-200">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-6 text-center">
+            Entdecke auch andere Kategorien
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {CATEGORIES.filter(cat => cat.slug !== category?.slug).slice(0, 10).map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/kategorie/${cat.slug}`}
+                className="group bg-stone-50 hover:bg-indigo-50 rounded-xl p-4 transition-all duration-300 hover:shadow-md border border-stone-200 hover:border-indigo-200"
+              >
+                <div className="text-center">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 mb-1">
+                    {cat.label}
+                  </h3>
+                  <p className="text-xs text-gray-500 line-clamp-2">
+                    {cat.description.split('.')[0]}.
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
