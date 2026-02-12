@@ -492,11 +492,30 @@ export default function EventListSwiper({
       // Mobile: swipe UP to next (like Instagram Reels)
       const screenHeight = window.innerHeight;
       const threshold = screenHeight * 0.2; // 20% of screen height
+
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
         if (deltaY < -threshold && currentIndex < displayEvents.length - 1) {
-          handleNext(); // Swipe UP = next (like Instagram Reels)
+          // Swipe UP = next: FIRST animate to 100%, THEN change index
+          setIsSwiping(false);
+          setSwipeOffset(-screenHeight); // Animate to full height
+          setTimeout(() => {
+            handleNext();
+            setSwipeOffset(0);
+          }, 250); // After transition completes
+          setTouchStart(null);
+          setTouchEnd(null);
+          return;
         } else if (deltaY > threshold && currentIndex > 0) {
-          handlePrevious(); // Swipe DOWN = previous
+          // Swipe DOWN = previous: FIRST animate to 100%, THEN change index
+          setIsSwiping(false);
+          setSwipeOffset(screenHeight);
+          setTimeout(() => {
+            handlePrevious();
+            setSwipeOffset(0);
+          }, 250);
+          setTouchStart(null);
+          setTouchEnd(null);
+          return;
         }
       }
     } else {
@@ -507,7 +526,7 @@ export default function EventListSwiper({
       }
     }
 
-    // Reset swipe state with smooth snap-back
+    // Reset swipe state with smooth snap-back (if threshold not reached)
     setIsSwiping(false);
     setSwipeOffset(0);
     setTouchStart(null);
