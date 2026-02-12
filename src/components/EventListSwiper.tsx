@@ -461,6 +461,33 @@ export default function EventListSwiper({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleNext, handlePrevious, onClose]);
 
+  // Prevent pull-to-refresh on mobile when swiping down
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const preventPullToRefresh = (e: TouchEvent) => {
+      // Only prevent if we're on mobile and have touchStart
+      if (window.innerWidth >= 768 || !touchStart) return;
+
+      const currentTouch = e.touches[0];
+      if (!currentTouch) return;
+
+      const deltaY = currentTouch.clientY - touchStart.y;
+
+      // If swiping down (deltaY > 0), prevent pull-to-refresh
+      if (deltaY > 0) {
+        e.preventDefault();
+      }
+    };
+
+    // Add listener with passive: false to allow preventDefault
+    document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', preventPullToRefresh);
+    };
+  }, [isOpen, touchStart]);
+
   // Touch handlers (mobile: vertical swipe with Instagram-like feel, desktop: horizontal swipe)
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
