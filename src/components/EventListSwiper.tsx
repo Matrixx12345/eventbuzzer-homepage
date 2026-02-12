@@ -473,16 +473,9 @@ export default function EventListSwiper({
 
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
-      // Mobile: only allow downward swipe (revealing next card below)
+      // Instagram-like: card ALWAYS follows finger exactly - no conditions, no resistance!
       const deltaY = currentTouch.y - touchStart.y;
-      // Only respond to downward swipes, or upward if at start
-      if (deltaY > 0 && currentIndex < displayEvents.length - 1) {
-        setSwipeOffset(deltaY); // Swipe down to reveal next
-      } else if (deltaY < 0 && currentIndex > 0) {
-        setSwipeOffset(deltaY * 0.3); // Allow small upward with resistance for previous
-      } else {
-        setSwipeOffset(deltaY * 0.1); // Heavy resistance at boundaries
-      }
+      setSwipeOffset(deltaY); // Card follows finger 1:1
     }
   };
   const handleTouchEnd = () => {
@@ -496,9 +489,9 @@ export default function EventListSwiper({
     const isMobile = window.innerWidth < 768;
 
     if (isMobile) {
-      // Mobile: swipe down to dismiss and reveal next card
+      // Mobile: swipe down to dismiss and reveal next card (Instagram-like threshold)
       const screenHeight = window.innerHeight;
-      const threshold = screenHeight * 0.3; // 30% of screen height
+      const threshold = screenHeight * 0.2; // 20% of screen height (like Instagram)
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
         if (deltaY > threshold && currentIndex < displayEvents.length - 1) {
           handleNext(); // Swipe down = next (dismiss current, reveal below)
