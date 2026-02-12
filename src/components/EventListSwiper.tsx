@@ -892,7 +892,7 @@ export default function EventListSwiper({
                 </div>
 
                 {/* Text + Buttons Section - Mobile: 45% of container height | Tablet/Desktop: normal */}
-                <div className="h-[45%] flex flex-col md:h-auto md:block md:overflow-y-auto">
+                <div className="h-[45%] flex flex-col relative md:h-auto md:block md:overflow-y-auto">
                   {/* Text Content - Mobile: fixed height in rem | Desktop: expandable */}
                   <div className="px-5 pt-4 pb-1 md:pb-2 h-[7rem] md:h-auto md:flex-none overflow-hidden">
                 {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
@@ -950,8 +950,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-                  {/* Switzerland SVG Footer - Mobile only - fixed height, positioned at bottom */}
-                  <div className="md:hidden h-[6rem] pb-1 pt-3">
+                  {/* Switzerland SVG Footer - Mobile only - FIXED at bottom with absolute positioning */}
+                  <div className="md:hidden absolute bottom-0 left-0 right-0 h-[6rem] pb-1 pt-3">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1106,7 +1106,7 @@ export default function EventListSwiper({
                     </div>
 
                     {/* Text + SVG - 45% of container height (matches main card) */}
-                    <div className="h-[45%] flex flex-col">
+                    <div className="h-[45%] flex flex-col relative">
                       {/* Text: 7rem fixed height (matches main card) */}
                       <div className="px-5 pt-4 pb-1 h-[7rem]">
                         {/* Title */}
@@ -1123,8 +1123,8 @@ export default function EventListSwiper({
                         </p>
                       </div>
 
-                      {/* SVG Map: fixed height, positioned at bottom (matches main card) */}
-                      <div className="h-[6rem] pb-1 pt-3">
+                      {/* SVG Map: FIXED at bottom with absolute positioning (matches main card) */}
+                      <div className="absolute bottom-0 left-0 right-0 h-[6rem] pb-1 pt-3">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
