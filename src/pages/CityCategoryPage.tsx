@@ -53,7 +53,7 @@ const CompactEventCard = ({
         <div className="relative overflow-hidden h-[220px] flex-shrink-0 rounded-t-2xl">
           <img
             src={image}
-            alt={title}
+            alt={`${title} in ${location} - Event Tickets Schweiz`}
             className="w-full h-full object-cover transition-all duration-500
                        blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08]
                        group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0"
@@ -232,6 +232,13 @@ const CityCategoryPage = () => {
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={`${SITE_URL}/og-image.jpg`} />
         <link rel="canonical" href={pageUrl} />
 
         {/* Schema.org CollectionPage structured data */}
@@ -252,6 +259,40 @@ const CityCategoryPage = () => {
               "@type": "Place",
               "name": cityName || city
             }
+          })}
+        </script>
+
+        {/* Breadcrumb Schema for rich snippets in Google Search */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "EventBuzzer",
+                "item": SITE_URL
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Events",
+                "item": `${SITE_URL}/eventlist1`
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": cityName || city,
+                "item": `${SITE_URL}/events/${city}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": category.label,
+                "item": pageUrl
+              }
+            ]
           })}
         </script>
       </Helmet>
@@ -291,19 +332,30 @@ const CityCategoryPage = () => {
       {/* SEO Content Section */}
       <section className="bg-white py-8 border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="prose max-w-none text-gray-700 space-y-4">
-            <p>
-              {cityName || city} bietet eine vielfältige Auswahl an {category.label.toLowerCase()} für jeden Geschmack.
-              Ob du nach klassischen Veranstaltungen, modernen Events oder besonderen Erlebnissen suchst – hier findest du
-              die besten {category.label.toLowerCase()} in {cityName || city} und Umgebung. Unsere Plattform zeigt dir alle
-              aktuellen Events mit Tickets, Bewertungen und allen wichtigen Informationen auf einen Blick.
-            </p>
-            <p>
-              Entdecke {category.label.toLowerCase()} in {cityName || city}, die zu deinen Interessen passen. Von bekannten
-              Locations bis zu Geheimtipps – EventBuzzer hilft dir, das perfekte Event zu finden. Filtere nach Datum,
-              Bewertung oder Entfernung und plane deinen idealen Tag. Mit detaillierten Beschreibungen, Öffnungszeiten und
-              direkten Ticket-Links verpasst du keine Highlights mehr.
-            </p>
+          <div className="prose max-w-none text-gray-700 space-y-6">
+            <div>
+              <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-3">
+                Die besten {category.label} in {cityName || city}
+              </h2>
+              <p>
+                {cityName || city} bietet eine vielfältige Auswahl an {category.label.toLowerCase()} für jeden Geschmack.
+                Ob du nach klassischen Veranstaltungen, modernen Events oder besonderen Erlebnissen suchst – hier findest du
+                die besten {category.label.toLowerCase()} in {cityName || city} und Umgebung. Unsere Plattform zeigt dir alle
+                aktuellen Events mit Tickets, Bewertungen und allen wichtigen Informationen auf einen Blick.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-3">
+                Tickets und Informationen für {category.label} in {cityName || city}
+              </h2>
+              <p>
+                Entdecke {category.label.toLowerCase()} in {cityName || city}, die zu deinen Interessen passen. Von bekannten
+                Locations bis zu Geheimtipps – EventBuzzer hilft dir, das perfekte Event zu finden. Filtere nach Datum,
+                Bewertung oder Entfernung und plane deinen idealen Tag. Mit detaillierten Beschreibungen, Öffnungszeiten und
+                direkten Ticket-Links verpasst du keine Highlights mehr.
+              </p>
+            </div>
           </div>
         </div>
       </section>

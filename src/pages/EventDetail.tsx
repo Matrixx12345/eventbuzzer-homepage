@@ -318,7 +318,7 @@ const SimilarEventCard = ({ slug, image, title, description, location, distance,
         <div className="relative aspect-video overflow-hidden">
           <img
             src={image}
-            alt={title}
+            alt={`${title} in ${location} - Event Schweiz`}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
@@ -938,6 +938,104 @@ const EventDetail = () => {
     };
   }, [event.title, event.description, event.image, event.venue, event.location, event.priceFrom, event.ticketLink, dynamicEvent, loading]);
 
+  // Inject FAQ Schema for rich snippets in Google Search
+  useEffect(() => {
+    if (loading || !event.title) return;
+
+    const faqItems = [];
+
+    // FAQ 1: When does the event take place?
+    if (dynamicEvent?.start_date) {
+      const formattedDate = formatDate(dynamicEvent.start_date);
+      if (formattedDate) {
+        faqItems.push({
+          "@type": "Question",
+          "name": `Wann findet ${event.title} statt?`,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": `${event.title} findet am ${formattedDate} statt.${dynamicEvent.end_date ? ` Das Event endet am ${formatDate(dynamicEvent.end_date)}.` : ''}`
+          }
+        });
+      }
+    }
+
+    // FAQ 2: Where does the event take place?
+    if (event.venue || event.location) {
+      const locationText = [
+        event.venue,
+        dynamicEvent?.address_street,
+        dynamicEvent?.address_zip,
+        event.location
+      ].filter(Boolean).join(', ');
+
+      faqItems.push({
+        "@type": "Question",
+        "name": `Wo findet ${event.title} statt?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `${event.title} findet in ${event.venue || event.location} statt. Adresse: ${locationText}`
+        }
+      });
+    }
+
+    // FAQ 3: How much does it cost?
+    if (event.priceFrom !== undefined) {
+      const priceText = event.priceFrom > 0
+        ? `Der Eintritt kostet ab CHF ${event.priceFrom}.`
+        : 'Der Eintritt ist kostenlos.';
+
+      faqItems.push({
+        "@type": "Question",
+        "name": `Wie viel kostet der Eintritt zu ${event.title}?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": priceText
+        }
+      });
+    }
+
+    // FAQ 4: Are tickets available?
+    if (event.ticketLink) {
+      faqItems.push({
+        "@type": "Question",
+        "name": `Wo kann ich Tickets für ${event.title} kaufen?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `Tickets für ${event.title} können direkt online gekauft werden. EventBuzzer bietet einen direkten Link zum Ticketanbieter.`
+        }
+      });
+    }
+
+    // Only inject FAQ schema if we have at least 2 FAQs
+    if (faqItems.length >= 2) {
+      const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqItems
+      };
+
+      const scriptId = 'faq-schema-ld';
+      let scriptTag = document.getElementById(scriptId) as HTMLScriptElement;
+
+      if (!scriptTag) {
+        scriptTag = document.createElement('script');
+        scriptTag.id = scriptId;
+        scriptTag.type = 'application/ld+json';
+        document.head.appendChild(scriptTag);
+      }
+
+      scriptTag.textContent = JSON.stringify(faqSchema);
+
+      // Cleanup on unmount
+      return () => {
+        const existingScript = document.getElementById(scriptId);
+        if (existingScript) {
+          existingScript.remove();
+        }
+      };
+    }
+  }, [event.title, event.venue, event.location, event.priceFrom, event.ticketLink, dynamicEvent, loading]);
+
   // Memoize nearby events with pre-calculated distance text to avoid recalculating on every render
   const nearbyEventsWithDistance = useMemo(() => {
     return nearbyEvents.map((evt) => {
@@ -1032,7 +1130,7 @@ const EventDetail = () => {
           <div className="relative h-[28vh] lg:h-[calc(48vh-48px)] overflow-hidden rounded-2xl bg-white p-2 group" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}>
             <img
               src={event.image}
-              alt={event.title}
+              alt={`${event.title} in ${event.location} - Tickets & Infos | EventBuzzer`}
               className="w-full h-full object-cover rounded-xl"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
