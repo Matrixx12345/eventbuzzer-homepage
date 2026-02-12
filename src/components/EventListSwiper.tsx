@@ -803,8 +803,8 @@ export default function EventListSwiper({
                     )}
                   </div>
 
-                  {/* Floating Icon Bar - Mobile only (Right edge, near bottom of photo) */}
-                  <div className="md:hidden absolute right-4 top-[48vh] -translate-y-1/2 flex flex-col gap-5 z-20">
+                  {/* Floating Icon Bar - Mobile only (Right edge, higher in photo, more spacing) */}
+                  <div className="md:hidden absolute right-4 top-[42vh] -translate-y-1/2 flex flex-col gap-6 z-20">
                     {/* Filter/Menu Icon */}
                     <button
                       onClick={(e) => {
@@ -1072,7 +1072,7 @@ export default function EventListSwiper({
                   </div>
 
                   {/* Floating Icon Bar - Right side (visual only during swipe) - SAME HEIGHT as main icons */}
-                  <div className="md:hidden absolute right-4 top-[48vh] -translate-y-1/2 flex flex-col gap-5 z-20 pointer-events-none">
+                  <div className="md:hidden absolute right-4 top-[42vh] -translate-y-1/2 flex flex-col gap-6 z-20 pointer-events-none">
                     <SlidersHorizontal size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                     <Share2 size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                     <Heart size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
