@@ -728,7 +728,8 @@ export default function EventListSwiper({
               </div>
             </div>
           </div>
-        </div>
+            </div>
+          </div>
         ) : (
           <div className="flex items-center justify-center py-20">
             <p className="text-white text-lg">Keine Events verfügbar</p>
