@@ -1093,7 +1093,7 @@ export default function EventListSwiper({
 
               return (
                 <div
-                  className="md:hidden absolute bottom-full left-0 right-0 h-screen bg-white"
+                  className="md:hidden absolute bottom-full left-0 right-0 h-full bg-white"
                   style={{
                     zIndex: 1,
                     transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
