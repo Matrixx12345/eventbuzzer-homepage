@@ -63,6 +63,59 @@ function generateSlug(text) {
   return slug;
 }
 
+// Category matching logic (inline from src/utils/eventUtilities.ts)
+function getCategoryLabel(event) {
+  // PRIORITY 1: "must-see" tag gets "Must-See" label
+  if (event.tags && (event.tags.includes('must-see') || event.tags.includes('elite'))) {
+    return 'Must-See';
+  }
+
+  const subCat = (event.category_sub_id || '').toString().toLowerCase();
+  const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : '';
+  const title = (event.title || '').toLowerCase();
+  const combined = `${subCat} ${tags} ${title}`;
+
+  // Match categories based on keywords
+  if (combined.includes('museum') || combined.includes('kunst') || combined.includes('galer') || combined.includes('ausstellung')) return 'Museen';
+  if (combined.includes('wanderung') || combined.includes('trail') || combined.includes('hike')) return 'Wanderungen';
+  if (combined.includes('wellness') || combined.includes('spa') || combined.includes('therm') || combined.includes('bad')) return 'Wellness';
+  if (combined.includes('natur') || combined.includes('park') || combined.includes('garten') || combined.includes('wald')) return 'Natur';
+  if (combined.includes('schloss') || combined.includes('burg') || combined.includes('castle')) return 'Schlösser';
+  if (combined.includes('familie') || combined.includes('kinder') || combined.includes('family')) return 'Familie';
+  if (combined.includes('konzert') || combined.includes('music') || combined.includes('live')) return 'Konzerte';
+  if (combined.includes('theater') || combined.includes('oper') || combined.includes('bühne')) return 'Theater';
+  if (combined.includes('sport')) return 'Sport';
+  if (combined.includes('festival') || combined.includes('fest')) return 'Festivals';
+  if (combined.includes('food') || combined.includes('kulinar') || combined.includes('gastro') || combined.includes('wein') || combined.includes('käse')) return 'Kulinarik';
+  if ((combined.includes('see') || combined.includes('lake') || combined.includes('schiff')) && !combined.includes('must-see')) return 'Seen';
+  if (combined.includes('altstadt') || combined.includes('city') || combined.includes('stadt')) return 'Stadterlebnis';
+  if (combined.includes('sehenswürdig') || combined.includes('attraction') || combined.includes('ausflug') || combined.includes('erlebnis')) return 'Ausflüge';
+
+  // Fallback for myswitzerland events
+  if (event.source === 'myswitzerland') return 'Ausflüge';
+
+  return undefined;
+}
+
+// Map category labels to slugs
+const CATEGORY_LABEL_TO_SLUG = {
+  'Museen': 'museum',
+  'Konzerte': 'konzert',
+  'Festivals': 'festival',
+  'Wanderungen': 'wanderung',
+  'Wellness': 'wellness',
+  'Natur': 'natur',
+  'Theater': 'theater',
+  'Schlösser': 'schloss',
+  'Familie': 'familie',
+  'Kulinarik': 'kulinarik',
+  'Sport': 'sport',
+  'Ausflüge': 'ausflug',
+  'Stadterlebnis': 'stadt',
+  'Seen': 'see',
+  'Must-See': 'must-see'
+};
+
 // Fetch all events with location data
 async function fetchAllEvents() {
   console.log('📡 Fetching all events from Supabase...');
@@ -186,6 +239,30 @@ async function main() {
   // 1. Fetch all events
   const events = await fetchAllEvents();
 
+  // 1b. Build set of verified city×category combinations (only combos with events)
+  console.log('\n🔍 Analyzing actual city×category combinations with events...');
+  const cityCategoryCombos = new Set();
+
+  events.forEach(event => {
+    const categoryLabel = getCategoryLabel(event);
+    if (!categoryLabel) return; // Skip events without category
+
+    const categorySlug = CATEGORY_LABEL_TO_SLUG[categoryLabel];
+    if (!categorySlug) return; // Skip if label doesn't map to slug
+
+    const city = event.address_city || event.location;
+    if (!city) return; // Skip events without location
+
+    const citySlug = generateSlug(city);
+    if (!citySlug) return; // Skip if city slug is empty
+
+    // Add verified combination
+    cityCategoryCombos.add(`${citySlug}/${categorySlug}`);
+  });
+
+  console.log(`   ✅ Found ${cityCategoryCombos.size} actual city×category combinations with events`);
+  console.log(`   📊 This eliminates ${Math.max(0, 3795 - cityCategoryCombos.size)} empty URLs from sitemap`);
+
   // 2. Generate event sitemaps (chunked)
   console.log('\n📄 Generating event sitemaps (500 URLs per file)...');
   const chunks = [];
@@ -248,23 +325,21 @@ async function main() {
   sitemapFiles.push('sitemap-categories.xml');
   console.log(`   ✅ sitemap-categories.xml - ${categoryURLs.length + staticURLs.length} URLs`);
 
-  // 4. Generate city×category sitemap
-  console.log('\n📄 Generating city×category sitemap...');
-  const cities = extractCities(events);
-  console.log(`   Found ${cities.length} unique cities`);
+  // 4. Generate city×category sitemap (ONLY for verified combos with events)
+  console.log('\n📄 Generating city×category sitemap (verified combos only)...');
 
   const cityCategoryURLs = [];
-  cities.forEach(city => {
-    CATEGORIES.forEach(category => {
-      cityCategoryURLs.push(
-        generateURLEntry(
-          `${SITE_URL}/events/${city}/${category}`,
-          'weekly',
-          '0.7'
-        )
-      );
-    });
+  Array.from(cityCategoryCombos).forEach(combo => {
+    cityCategoryURLs.push(
+      generateURLEntry(
+        `${SITE_URL}/events/${combo}`,  // combo is already "city/category"
+        'weekly',
+        '0.7'
+      )
+    );
   });
+
+  console.log(`   ✅ Generated ${cityCategoryURLs.length} verified city×category URLs (eliminated ${Math.max(0, 3795 - cityCategoryURLs.length)} empty URLs)`);
 
   // Split city×category into chunks if needed (might be 3000+ URLs)
   const cityCategoryChunks = [];
