@@ -803,8 +803,8 @@ export default function EventListSwiper({
                     )}
                   </div>
 
-                  {/* Floating Icon Bar - Mobile only (Right edge, centered in photo) */}
-                  <div className="md:hidden absolute right-4 top-[40%] -translate-y-1/2 flex flex-col gap-5 z-20">
+                  {/* Floating Icon Bar - Mobile only (Right edge, centered vertically) */}
+                  <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20">
                     {/* Filter/Menu Icon */}
                     <button
                       onClick={(e) => {
@@ -951,8 +951,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-                  {/* Switzerland SVG Footer - Mobile only - FIXED at bottom with absolute positioning */}
-                  <div className="md:hidden absolute bottom-0 left-0 right-0 h-[8rem] pb-2 pt-0">
+                  {/* Switzerland SVG Footer - Mobile only - directly after text (no gap!) */}
+                  <div className="md:hidden h-[8rem] pb-2 pt-0">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1072,7 +1072,7 @@ export default function EventListSwiper({
                   </div>
 
                   {/* Floating Icon Bar - Right side (visual only during swipe) */}
-                  <div className="md:hidden absolute right-4 top-[40%] -translate-y-1/2 flex flex-col gap-5 z-20 pointer-events-none">
+                  <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20 pointer-events-none">
                     <SlidersHorizontal size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                     <Share2 size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                     <Heart size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
@@ -1138,8 +1138,8 @@ export default function EventListSwiper({
                         </p>
                       </div>
 
-                      {/* SVG Map: FIXED at bottom with absolute positioning (matches main card) */}
-                      <div className="absolute bottom-0 left-0 right-0 h-[8rem] pb-2 pt-0">
+                      {/* SVG Map: directly after text (matches main card) */}
+                      <div className="h-[8rem] pb-2 pt-0">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
