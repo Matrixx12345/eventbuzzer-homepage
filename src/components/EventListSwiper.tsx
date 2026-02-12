@@ -473,13 +473,13 @@ export default function EventListSwiper({
 
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
-      // Mobile: calculate vertical offset for smooth dragging
+      // Mobile: calculate vertical offset for smooth dragging (full screen height)
       const deltaY = currentTouch.y - touchStart.y;
       // Add resistance at boundaries
       if ((deltaY > 0 && currentIndex === 0) || (deltaY < 0 && currentIndex >= displayEvents.length - 1)) {
-        setSwipeOffset(deltaY * 0.3); // 30% resistance at edges
+        setSwipeOffset(deltaY * 0.2); // 20% resistance at edges
       } else {
-        setSwipeOffset(deltaY);
+        setSwipeOffset(deltaY); // Full follow - no damping
       }
     }
   };
@@ -494,8 +494,9 @@ export default function EventListSwiper({
     const isMobile = window.innerWidth < 768;
 
     if (isMobile) {
-      // Mobile: vertical swipe (Instagram-style)
-      const threshold = 100; // Swipe distance threshold
+      // Mobile: vertical swipe (Instagram-style - need to swipe ~40% of screen)
+      const screenHeight = window.innerHeight;
+      const threshold = screenHeight * 0.35; // 35% of screen height
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
         if (deltaY < -threshold && currentIndex < displayEvents.length - 1) {
           handleNext(); // Swipe up = next
@@ -511,7 +512,7 @@ export default function EventListSwiper({
       }
     }
 
-    // Reset swipe state
+    // Reset swipe state with smooth snap-back
     setIsSwiping(false);
     setSwipeOffset(0);
     setTouchStart(null);
@@ -627,8 +628,8 @@ export default function EventListSwiper({
             </button>
           </div>
         ) : currentEvent ? (
-          <div className="w-full h-full md:relative md:w-auto md:h-auto md:mb-12">
-            {/* Card Stack Effect - Tablet/Desktop only */}
+          <div className="relative w-full h-full md:w-auto md:h-auto md:mb-12">
+            {/* Card Stack Effect - Desktop */}
             <div className="hidden md:block">
               {events[currentIndex + 2] && (
                 <div className="absolute left-6 right-6 -bottom-8 h-10 bg-white/50 rounded-3xl" style={{ zIndex: 1 }} />
@@ -638,13 +639,40 @@ export default function EventListSwiper({
               )}
             </div>
 
+            {/* Next/Previous Card Preview - Mobile only (Instagram-style) */}
+            <div className="md:hidden absolute inset-0" style={{ zIndex: 1 }}>
+              {swipeOffset < 0 && displayEvents[currentIndex + 1] && (
+                <div className="absolute inset-0 bg-white">
+                  <div className="relative w-full h-[60%] bg-gray-200">
+                    <img
+                      src={displayEvents[currentIndex + 1].image_url || "/placeholder.jpg"}
+                      className="w-full h-full object-cover"
+                      alt="Next"
+                    />
+                  </div>
+                </div>
+              )}
+              {swipeOffset > 0 && displayEvents[currentIndex - 1] && (
+                <div className="absolute inset-0 bg-white">
+                  <div className="relative w-full h-[60%] bg-gray-200">
+                    <img
+                      src={displayEvents[currentIndex - 1].image_url || "/placeholder.jpg"}
+                      className="w-full h-full object-cover"
+                      alt="Previous"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Main Card - Mobile: fullscreen | Tablet/Desktop: rounded card */}
             <div
-              className="w-full h-full bg-white md:relative md:rounded-3xl md:shadow-2xl overflow-hidden"
+              className="relative w-full h-full bg-white md:rounded-3xl md:shadow-2xl overflow-hidden"
               style={{
-                zIndex: 3,
+                zIndex: 2,
                 transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
-                transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                willChange: 'transform'
               }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
