@@ -950,8 +950,8 @@ export default function EventListSwiper({
                 })()}
               </div>
 
-                  {/* Switzerland SVG Footer - Mobile only - flex-1 to take remaining space */}
-                  <div className="md:hidden flex-1 pb-4 pt-2">
+                  {/* Switzerland SVG Footer - Mobile only - fixed height */}
+                  <div className="md:hidden h-[6rem] pb-4 pt-2">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1123,8 +1123,8 @@ export default function EventListSwiper({
                         </p>
                       </div>
 
-                      {/* SVG Map: flex-1 to take remaining space (matches main card) */}
-                      <div className="flex-1 pb-4 pt-2">
+                      {/* SVG Map: fixed height (matches main card) */}
+                      <div className="h-[6rem] pb-4 pt-2">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
