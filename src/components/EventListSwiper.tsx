@@ -4,8 +4,8 @@
  * Instead of loading its own events, it receives events from the parent EventList.
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail, Undo2 } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { X, MapPin, Heart, ChevronRight, Ticket, MoreHorizontal, ExternalLink, Share2, Copy, Mail, Undo2, SlidersHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { haversineDistance, SWISS_CITY_COORDS, distanceToLine } from "@/utils/geoHelpers";
 import { getLocationWithMajorCity } from "@/utils/swissPlaces";
@@ -85,6 +85,101 @@ const formatDistance = (distKm: number) => {
   return `${Math.round(distKm)} km`;
 };
 
+// Memoized Switzerland Map component for mobile - prevents unnecessary re-renders
+const SwissMapMobile = memo(({ currentEvent, dayEvents }: {
+  currentEvent: { latitude?: number; longitude?: number } | null;
+  dayEvents: Array<{ event: { id?: string; latitude?: number; longitude?: number } }>;
+}) => {
+  return (
+    <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto max-h-36" style={{ transform: 'scaleX(1.2)' }} xmlns="http://www.w3.org/2000/svg">
+      <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.15" />
+
+      {/* Städte-Marker mit Namen */}
+      <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
+      <text x="775" y="223" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zürich</text>
+
+      <circle cx="71.3" cy="672.8" r="7.5" fill="#6b7280" />
+      <text x="82" y="682" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Genf</text>
+
+      <circle cx="495.2" cy="147" r="7.5" fill="#6b7280" />
+      <text x="506" y="157" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Basel</text>
+
+      <circle cx="214.7" cy="545" r="7.5" fill="#6b7280" />
+      <text x="225" y="555" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Lausanne</text>
+
+      <circle cx="453.8" cy="362" r="7.5" fill="#6b7280" />
+      <text x="464" y="372" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Bern</text>
+
+      <circle cx="576" cy="490" r="6" fill="#6b7280" />
+      <text x="586" y="500" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Interlaken</text>
+
+      <circle cx="828.0" cy="168" r="7" fill="#6b7280" />
+      <text x="838" y="178" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Winterthur</text>
+
+      <circle cx="706.5" cy="351" r="7.5" fill="#6b7280" />
+      <text x="717" y="361" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Luzern</text>
+
+      <circle cx="989" cy="167" r="7" fill="#6b7280" />
+      <text x="999" y="177" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">St. Gallen</text>
+
+      <circle cx="865" cy="768.2" r="7" fill="#6b7280" />
+      <text x="875" y="778" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Lugano</text>
+
+      <circle cx="1154" cy="546" r="6" fill="#6b7280" />
+      <text x="1164" y="556" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">St. Moritz</text>
+
+      <circle cx="542" cy="750" r="6" fill="#6b7280" />
+      <text x="552" y="760" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zermatt</text>
+
+      <circle cx="395.0" cy="301" r="6" fill="#6b7280" />
+      <text x="405" y="311" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Biel</text>
+
+      {/* Planned trip events - purple dots */}
+      {dayEvents.map((planned, index) => {
+        if (!planned.event.latitude || !planned.event.longitude) return null;
+
+        const anchorLat = 46.2;
+        const stretch = planned.event.latitude <= anchorLat
+          ? 1.1
+          : 1.1 - ((planned.event.latitude - anchorLat) / (47.8 - anchorLat)) * 0.23;
+
+        const x = ((planned.event.longitude - 5.9) / (10.5 - 5.9)) * 1348.8688;
+        const y = ((1 - ((planned.event.latitude - 45.8) / (47.8 - 45.8)) * stretch)) * 865.04437 - (0.015 * 865.04437);
+
+        return (
+          <circle
+            key={`trip-${planned.event.id || index}`}
+            cx={x}
+            cy={y}
+            r="11"
+            fill="#7e22ce"
+            opacity="0.8"
+          />
+        );
+      })}
+
+      {/* Event location marker (red pulsing dot) */}
+      {currentEvent?.latitude && currentEvent?.longitude && (() => {
+        const anchorLat = 46.2;
+        const stretch = currentEvent.latitude <= anchorLat
+          ? 1.1
+          : 1.1 - ((currentEvent.latitude - anchorLat) / (47.8 - anchorLat)) * 0.23;
+
+        const x = ((currentEvent.longitude - 5.9) / (10.5 - 5.9)) * 1348.8688;
+        const y = ((1 - ((currentEvent.latitude - 45.8) / (47.8 - 45.8)) * stretch)) * 865.04437 - (0.015 * 865.04437);
+
+        return (
+          <g key="current-event">
+            <circle cx={x} cy={y} r="28" fill="#ef4444" opacity="0.2" />
+            <circle cx={x} cy={y} r="32" fill="#ef4444" opacity="0.5" />
+            <circle cx={x} cy={y} r="22" fill="#dc2626" className="animate-pulse" />
+          </g>
+        );
+      })()}
+    </svg>
+  );
+});
+
 export default function EventListSwiper({
   isOpen,
   onClose,
@@ -96,7 +191,7 @@ export default function EventListSwiper({
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { addEventToDay, removeEventFromTrip, activeDay, isInTrip } = useTripPlanner();
+  const { addEventToDay, removeEventFromTrip, activeDay, isInTrip, plannedEventsByDay } = useTripPlanner();
 
   // Touch handling for swipe
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -106,6 +201,7 @@ export default function EventListSwiper({
   const [showMenu, setShowMenu] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [textExpanded, setTextExpanded] = useState(false);
+  const [mobileTextExpanded, setMobileTextExpanded] = useState(false); // Mobile: expand title + description on click
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterCriteria>({ type: "none" });
@@ -166,6 +262,11 @@ export default function EventListSwiper({
   // Use filtered events (no fallback when filter is active)
   const displayEvents = activeFilter.type !== "none" ? filteredEvents : events;
 
+  // Memoize day events to prevent unnecessary re-renders
+  const dayEvents = useMemo(() => {
+    return plannedEventsByDay[activeDay] || [];
+  }, [plannedEventsByDay, activeDay]);
+
   // Sync startIndex when it changes (new event clicked)
   useEffect(() => {
     setCurrentIndex(startIndex);
@@ -204,6 +305,7 @@ export default function EventListSwiper({
   const handleNext = useCallback(() => {
     setCurrentIndex((prev) => Math.min(prev + 1, displayEvents.length));
     setTextExpanded(false);
+    setMobileTextExpanded(false);
     setShowMenu(false);
     setShowShareMenu(false);
   }, [displayEvents.length]);
@@ -212,6 +314,7 @@ export default function EventListSwiper({
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
       setTextExpanded(false);
+      setMobileTextExpanded(false);
       setShowMenu(false);
       setShowShareMenu(false);
     }
@@ -271,6 +374,7 @@ export default function EventListSwiper({
       setPreviousIndex(currentIndex);
       setCurrentIndex(index);
       setTextExpanded(false);
+      setMobileTextExpanded(false);
       setShowMenu(false);
       setShowShareMenu(false);
     }
@@ -281,11 +385,18 @@ export default function EventListSwiper({
       setCurrentIndex(previousIndex);
       setPreviousIndex(null);
       setTextExpanded(false);
+      setMobileTextExpanded(false);
       setShowMenu(false);
       setShowShareMenu(false);
       toast.info("Zurück zur vorherigen Position", { duration: 2000, position: "top-center" });
     }
   }, [previousIndex]);
+
+  const handleTitleClick = useCallback(() => {
+    if (window.innerWidth < 768) {
+      setMobileTextExpanded(prev => !prev);
+    }
+  }, []);
 
   const handleFilterApply = useCallback((criteria: FilterCriteria) => {
     setActiveFilter(criteria);
@@ -303,6 +414,7 @@ export default function EventListSwiper({
       setShowMenu(false);
       setShowShareMenu(false);
       setTextExpanded(false);
+      setMobileTextExpanded(false);
     }
   }, [isOpen]);
 
@@ -546,8 +658,8 @@ export default function EventListSwiper({
                     </div>
                   )}
 
-                  {/* 3-Dot Menu - Bottom Left of Photo */}
-                  <div className="absolute bottom-4 left-4">
+                  {/* 3-Dot Menu - Bottom Left of Photo - Desktop/Tablet only */}
+                  <div className="hidden md:block absolute bottom-4 left-4">
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -596,55 +708,164 @@ export default function EventListSwiper({
                       </div>
                     )}
                   </div>
+
+                  {/* Floating Icon Bar - Mobile only (Right edge, centered vertically) */}
+                  <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20">
+                    {/* Filter/Menu Icon */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowMenu(!showMenu);
+                      }}
+                      className="transition-all active:scale-95"
+                      aria-label="Menü"
+                    >
+                      <SlidersHorizontal size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                    </button>
+
+                    {/* Share Icon */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowShareMenu(true);
+                      }}
+                      className="transition-all active:scale-95"
+                      aria-label="Teilen"
+                    >
+                      <Share2 size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                    </button>
+
+                    {/* Heart Icon - Favorite */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleToggleFavorite();
+                      }}
+                      className="transition-all active:scale-95"
+                      aria-label="Favorit"
+                    >
+                      <Heart
+                        size={26}
+                        className={`drop-shadow-lg ${isFavorited ? 'text-red-500 fill-current' : 'text-white'}`}
+                        strokeWidth={2.5}
+                      />
+                    </button>
+
+                    {/* Plus Icon - Add to Trip (Prominent) - White when not in trip, Red when in trip */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddToTrip();
+                      }}
+                      className="transition-all active:scale-95"
+                      aria-label="In den Tag einplanen"
+                    >
+                      <Plus size={32} className={`drop-shadow-lg ${eventInTrip ? 'text-red-500' : 'text-white'}`} strokeWidth={2.5} />
+                    </button>
+                  </div>
+
+                  {/* Mobile Menu Popup (for Filter/Menu icon) */}
+                  {showMenu && (
+                    <div className="md:hidden absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-3 z-30">
+                      {/* SEO Link to detail page */}
+                      <a
+                        href={`/event/${seoSlug}`}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-xl text-sm font-medium text-gray-800 transition-colors"
+                      >
+                        <ExternalLink size={18} className="text-gray-500" />
+                        In Detailseite öffnen
+                      </a>
+                      {/* Nearby filter */}
+                      {onNearbyFilter && (
+                        <button
+                          onClick={() => {
+                            setShowMenu(false);
+                            onClose();
+                            onNearbyFilter(currentEvent.id);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-xl text-sm font-medium text-gray-800 transition-colors"
+                        >
+                          <MapPin size={18} className="text-gray-500" />
+                          Events in der Nähe
+                        </button>
+                      )}
+                    </div>
+                  )}
                   </div>
                 </div>
 
                 {/* Text + Buttons Section - Mobile: flex-1 (40%) | Tablet/Desktop: normal */}
                 <div className="flex-1 flex flex-col md:block overflow-y-auto">
-                  {/* Text Content - expandable */}
-                  <div className={`px-5 pt-4 pb-2 ${textExpanded ? 'min-h-[120px]' : 'h-[120px]'}`}>
-                {/* Title */}
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
+                  {/* Text Content - Mobile: fixed-height, clickable to expand | Desktop: expandable */}
+                  <div className="px-5 pt-4 pb-3 md:pb-2 flex-1 md:flex-none md:h-auto">
+                {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
+                <h2
+                  className={`text-lg md:text-2xl font-bold text-gray-900 uppercase tracking-tight md:cursor-default ${
+                    mobileTextExpanded ? '' : 'line-clamp-1 cursor-pointer md:line-clamp-1'
+                  }`}
+                  onClick={handleTitleClick}
+                >
                   {decodeHtml(currentEvent.title)}
                 </h2>
 
                 {/* Date | Location */}
-                <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                <p className="text-xs md:text-sm text-gray-500 mt-1 line-clamp-1">
                   {infoLine || '\u00A0'}
                 </p>
 
-                {/* Description - expandable with "mehr..." */}
+                {/* Description - Mobile: always 2-line height (fixed), shows full when expanded | Desktop: expandable with "mehr..." */}
                 {(() => {
                   const desc = decodeHtml(currentEvent.description || "Entdecke dieses spannende Event in der Schweiz.");
                   const wouldOverflow = desc.length > 160;
                   return (
                     <>
-                      <p className={`text-sm text-gray-600 mt-2 leading-relaxed ${textExpanded ? '' : 'line-clamp-2'}`}>
-                        {desc}
-                        {!textExpanded && wouldOverflow && (
+                      {/* Mobile: Fixed 2-line height container to prevent SVG from moving */}
+                      <div className="md:hidden">
+                        <p className={`text-xs text-gray-600 mt-2 leading-relaxed ${mobileTextExpanded ? '' : 'line-clamp-2'}`}
+                           style={mobileTextExpanded ? {} : { minHeight: '2.5rem' }}>
+                          {desc}
+                        </p>
+                      </div>
+                      {/* Desktop: Expandable with "mehr..." inline */}
+                      <div className="hidden md:block">
+                        <p className={`text-sm text-gray-600 mt-2 leading-relaxed ${textExpanded ? '' : 'line-clamp-2'}`}>
+                          {desc}
+                          {!textExpanded && wouldOverflow && (
+                            <span
+                              onClick={() => setTextExpanded(true)}
+                              className="text-gray-400 underline cursor-pointer ml-1"
+                            >
+                              mehr...
+                            </span>
+                          )}
+                        </p>
+                        {textExpanded && wouldOverflow && (
                           <span
-                            onClick={() => setTextExpanded(true)}
-                            className="text-gray-400 underline cursor-pointer ml-1"
+                            onClick={() => setTextExpanded(false)}
+                            className="text-gray-400 underline cursor-pointer text-sm mt-1 inline-block"
                           >
-                            mehr...
+                            weniger
                           </span>
                         )}
-                      </p>
-                      {textExpanded && wouldOverflow && (
-                        <span
-                          onClick={() => setTextExpanded(false)}
-                          className="text-gray-400 underline cursor-pointer text-sm mt-1 inline-block"
-                        >
-                          weniger
-                        </span>
-                      )}
+                      </div>
                     </>
                   );
                 })()}
               </div>
 
-                  {/* Bottom Action Bar */}
-                  <div className="px-5 pb-5 pt-5">
+                  {/* Switzerland SVG Footer - Mobile only */}
+                  <div className="md:hidden pb-4 pt-2">
+                    <div className="relative w-full px-5">
+                      <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
+                    </div>
+                  </div>
+
+                  {/* Bottom Action Bar - Desktop/Tablet only */}
+                  <div className="hidden md:block px-5 pb-5 pt-5">
                 <div className="flex items-stretch gap-2.5">
                   {/* Ticket Button */}
                   {(currentEvent.ticket_url || currentEvent.url) ? (
