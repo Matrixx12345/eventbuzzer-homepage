@@ -1045,6 +1045,111 @@ export default function EventListSwiper({
           </div>
             </div>
 
+            {/* Previous Card - Mobile only - FULL CARD positioned above */}
+            {currentIndex > 0 && displayEvents[currentIndex - 1] && (() => {
+              const prevEvent = displayEvents[currentIndex - 1];
+              const prevLocationStr = prevEvent?.latitude && prevEvent?.longitude
+                ? getLocationWithMajorCity(prevEvent.latitude, prevEvent.longitude, prevEvent.address_city)
+                : prevEvent?.address_city || '';
+              const prevIsTicketmaster = prevEvent?.external_id?.startsWith('tm_');
+              const prevDateStr = prevIsTicketmaster ? formatEventDate(prevEvent?.start_date) : '';
+              const prevInfoLine = [prevDateStr, prevLocationStr].filter(Boolean).join(' | ');
+              const prevDesc = decodeHtml(prevEvent.description || "Entdecke dieses spannende Event in der Schweiz.");
+
+              return (
+                <div
+                  className="md:hidden absolute bottom-full left-0 right-0 h-screen bg-white"
+                  style={{
+                    zIndex: 1,
+                    transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
+                  }}
+                >
+                  {/* Close Button - Top Right (visual only, not clickable during swipe) */}
+                  <div className="absolute top-2 right-2 z-20 w-11 h-11 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center pointer-events-none">
+                    <X size={22} className="text-gray-700" strokeWidth={2.5} />
+                  </div>
+
+                  {/* Floating Icon Bar - Right side (visual only during swipe) */}
+                  <div className="md:hidden absolute right-4 top-[42vh] -translate-y-1/2 flex flex-col gap-6 z-20 pointer-events-none">
+                    <SlidersHorizontal size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                    <Share2 size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                    <Heart size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                    <Plus size={32} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="h-full flex flex-col">
+                    {/* Photo - 55vh */}
+                    <div className="h-[55vh] flex-none">
+                      <div className="relative h-full">
+                        <img
+                          src={prevEvent.image_url || "/placeholder.jpg"}
+                          className="w-full h-full object-cover"
+                          alt={prevEvent.title}
+                          loading="lazy"
+                        />
+
+                        {/* Tag Pills */}
+                        {prevEvent.tags?.[0] && (
+                          <div className="absolute top-4 left-4 flex items-center gap-2">
+                            <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm">
+                              {prevEvent.tags[0].charAt(0).toUpperCase() + prevEvent.tags[0].slice(1)}
+                            </span>
+                            {(prevEvent.tags.length - 1) > 0 && (
+                              <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-3 py-2 rounded-xl shadow-sm">
+                                +{prevEvent.tags.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Distance Pill */}
+                        {userLocation && prevEvent.latitude && prevEvent.longitude && (() => {
+                          const prevDistance = haversineDistance(userLocation.lat, userLocation.lng, prevEvent.latitude, prevEvent.longitude);
+                          return (
+                            <div className="absolute top-4 right-9">
+                              <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
+                                <MapPin size={17} className="text-red-500" />
+                                {formatDistance(prevDistance)}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Text + SVG - 45vh */}
+                    <div className="h-[45vh] flex-none flex flex-col relative">
+                      {/* Text: 7rem fixed height */}
+                      <div className="px-5 pt-4 pb-0 h-[7rem]">
+                        {/* Title */}
+                        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
+                          {decodeHtml(prevEvent.title)}
+                        </h2>
+
+                        {/* Date | Location */}
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                          {prevInfoLine || '\u00A0'}
+                        </p>
+
+                        {/* Description */}
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                          {prevDesc}
+                        </p>
+                      </div>
+
+                      {/* SVG - 8rem */}
+                      <div className="md:hidden h-[8rem] pb-2 pt-0">
+                        <div className="relative w-full h-full px-5">
+                          <SwissMapMobile currentEvent={prevEvent} dayEvents={dayEvents} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Next Card - Mobile only - FULL CARD positioned below */}
             {displayEvents[currentIndex + 1] && (() => {
               const nextEvent = displayEvents[currentIndex + 1];
