@@ -951,7 +951,7 @@ export default function EventListSwiper({
               </div>
 
                   {/* Switzerland SVG Footer - Mobile only - FIXED at bottom with absolute positioning */}
-                  <div className="md:hidden absolute bottom-0 left-0 right-0 h-[6rem] pb-1 pt-3">
+                  <div className="md:hidden absolute bottom-4 left-0 right-0 h-[6rem] pb-1 pt-3">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1065,6 +1065,17 @@ export default function EventListSwiper({
                     willChange: isSwiping || pendingAction ? 'transform' : 'auto'
                   }}
                 >
+                  {/* Icons - Same as main card */}
+                  <div className="absolute top-2 right-2 z-20 w-11 h-11 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 pointer-events-none">
+                    <X size={22} className="text-gray-700" strokeWidth={2.5} />
+                  </div>
+
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20 opacity-0 pointer-events-none">
+                    <div className="w-8 h-8" />
+                    <div className="w-8 h-8" />
+                    <div className="w-8 h-8" />
+                  </div>
+
                   {/* Card Content - Same structure as current card */}
                   <div className="h-full flex flex-col">
                     {/* Photo - 55% of container height (matches main card) */}
@@ -1124,7 +1135,7 @@ export default function EventListSwiper({
                       </div>
 
                       {/* SVG Map: FIXED at bottom with absolute positioning (matches main card) */}
-                      <div className="absolute bottom-0 left-0 right-0 h-[6rem] pb-1 pt-3">
+                      <div className="absolute bottom-4 left-0 right-0 h-[6rem] pb-1 pt-3">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
