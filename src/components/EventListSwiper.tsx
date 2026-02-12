@@ -91,7 +91,7 @@ const SwissMapMobile = memo(({ currentEvent, dayEvents }: {
   dayEvents: Array<{ event: { id?: string; latitude?: number; longitude?: number } }>;
 }) => {
   return (
-    <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto max-h-36" style={{ transform: 'scaleX(1.2)' }} xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto max-h-36" xmlns="http://www.w3.org/2000/svg">
       <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.15" />
 
       {/* Städte-Marker mit Namen */}
