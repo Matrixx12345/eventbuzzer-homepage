@@ -1155,8 +1155,8 @@ export default function EventListSwiper({
                       </div>
                     </div>
 
-                    {/* Text + SVG - 45vh */}
-                    <div className="h-[45vh] flex-none flex flex-col relative">
+                    {/* Text + SVG - 45vh, anchored at bottom during swipe */}
+                    <div className="h-[45vh] flex-none flex flex-col justify-end relative md:h-auto md:block md:overflow-y-auto">
                       {/* Text: 7rem fixed height */}
                       <div className="px-5 pt-4 pb-0 h-[7rem]">
                         {/* Title */}
