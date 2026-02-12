@@ -1123,7 +1123,7 @@ export default function EventListSwiper({
                           src={prevEvent.image_url || "/placeholder.jpg"}
                           className="w-full h-full object-cover"
                           alt={prevEvent.title}
-                          loading="lazy"
+                          loading="eager"
                         />
 
                         {/* Tag Pills */}
