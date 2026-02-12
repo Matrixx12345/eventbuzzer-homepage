@@ -684,7 +684,7 @@ export default function EventListSwiper({
                 zIndex: 2,
                 transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
                 transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                willChange: 'transform'
+                willChange: isSwiping || pendingAction ? 'transform' : 'auto'
               }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -1062,7 +1062,7 @@ export default function EventListSwiper({
                     zIndex: 1,
                     transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
                     transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                    willChange: 'transform'
+                    willChange: isSwiping || pendingAction ? 'transform' : 'auto'
                   }}
                 >
                   {/* Card Content - Same structure as current card */}
