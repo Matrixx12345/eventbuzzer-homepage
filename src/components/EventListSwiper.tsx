@@ -482,13 +482,29 @@ export default function EventListSwiper({
   // Handle transition end - change index EXACTLY when animation finishes
   const handleTransitionEnd = useCallback(() => {
     if (pendingAction === 'next') {
+      // Change index WITHOUT transition (to avoid jump), then reset offset
       handleNext();
-      setSwipeOffset(0);
       setPendingAction(null);
+
+      // Reset offset in next frame without transition (instant, no visible movement)
+      requestAnimationFrame(() => {
+        setIsSwiping(true); // Disable transition
+        setSwipeOffset(0);
+        requestAnimationFrame(() => {
+          setIsSwiping(false); // Re-enable transition
+        });
+      });
     } else if (pendingAction === 'prev') {
       handlePrevious();
-      setSwipeOffset(0);
       setPendingAction(null);
+
+      requestAnimationFrame(() => {
+        setIsSwiping(true);
+        setSwipeOffset(0);
+        requestAnimationFrame(() => {
+          setIsSwiping(false);
+        });
+      });
     }
   }, [pendingAction, handleNext, handlePrevious]);
 
