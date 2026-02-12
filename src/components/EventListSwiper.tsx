@@ -489,14 +489,14 @@ export default function EventListSwiper({
     const isMobile = window.innerWidth < 768;
 
     if (isMobile) {
-      // Mobile: swipe down to dismiss and reveal next card (Instagram-like threshold)
+      // Mobile: swipe UP to next (like Instagram Reels)
       const screenHeight = window.innerHeight;
-      const threshold = screenHeight * 0.2; // 20% of screen height (like Instagram)
+      const threshold = screenHeight * 0.2; // 20% of screen height
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        if (deltaY > threshold && currentIndex < displayEvents.length - 1) {
-          handleNext(); // Swipe down = next (dismiss current, reveal below)
-        } else if (deltaY < -threshold && currentIndex > 0) {
-          handlePrevious(); // Swipe up = previous
+        if (deltaY < -threshold && currentIndex < displayEvents.length - 1) {
+          handleNext(); // Swipe UP = next (like Instagram Reels)
+        } else if (deltaY > threshold && currentIndex > 0) {
+          handlePrevious(); // Swipe DOWN = previous
         }
       }
     } else {
@@ -633,19 +633,6 @@ export default function EventListSwiper({
                 <div className="absolute left-3 right-3 -bottom-4 h-10 bg-white/80 rounded-3xl" style={{ zIndex: 2 }} />
               )}
             </div>
-
-            {/* Next Card - Mobile only - positioned directly below current card */}
-            {displayEvents[currentIndex + 1] && (
-              <div className="md:hidden absolute top-full left-0 right-0 h-screen bg-white" style={{ zIndex: 1 }}>
-                <div className="relative w-full h-[60%] bg-gray-200">
-                  <img
-                    src={displayEvents[currentIndex + 1].image_url || "/placeholder.jpg"}
-                    className="w-full h-full object-cover"
-                    alt="Next"
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Main Card - Mobile: fullscreen | Tablet/Desktop: rounded card */}
             <div
@@ -1012,6 +999,27 @@ export default function EventListSwiper({
             </div>
           </div>
             </div>
+
+            {/* Next Card - Mobile only - positioned below, moves together with current */}
+            {displayEvents[currentIndex + 1] && (
+              <div
+                className="md:hidden absolute top-full left-0 right-0 h-screen bg-white"
+                style={{
+                  zIndex: 1,
+                  transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
+                  transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  willChange: 'transform'
+                }}
+              >
+                <div className="relative w-full h-[60%] bg-gray-200">
+                  <img
+                    src={displayEvents[currentIndex + 1].image_url || "/placeholder.jpg"}
+                    className="w-full h-full object-cover"
+                    alt="Next"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center py-20">
