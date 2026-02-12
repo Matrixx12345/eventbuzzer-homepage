@@ -198,6 +198,7 @@ export default function EventListSwiper({
   const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0); // Current drag offset
   const [isSwiping, setIsSwiping] = useState(false); // Whether actively swiping
+  const [pendingAction, setPendingAction] = useState<'next' | 'prev' | null>(null); // Action to execute after transition
 
   // 3-dot menu & share
   const [showMenu, setShowMenu] = useState(false);
@@ -478,6 +479,19 @@ export default function EventListSwiper({
       setSwipeOffset(deltaY); // Card follows finger 1:1
     }
   };
+  // Handle transition end - change index EXACTLY when animation finishes
+  const handleTransitionEnd = useCallback(() => {
+    if (pendingAction === 'next') {
+      handleNext();
+      setSwipeOffset(0);
+      setPendingAction(null);
+    } else if (pendingAction === 'prev') {
+      handlePrevious();
+      setSwipeOffset(0);
+      setPendingAction(null);
+    }
+  }, [pendingAction, handleNext, handlePrevious]);
+
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) {
       setIsSwiping(false);
@@ -495,24 +509,18 @@ export default function EventListSwiper({
 
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
         if (deltaY < -threshold && currentIndex < displayEvents.length - 1) {
-          // Swipe UP = next: FIRST animate to 100%, THEN change index
+          // Swipe UP = next: animate to 100%, change index on transitionEnd
           setIsSwiping(false);
-          setSwipeOffset(-screenHeight); // Animate to full height
-          setTimeout(() => {
-            handleNext();
-            setSwipeOffset(0);
-          }, 250); // After transition completes
+          setSwipeOffset(-screenHeight);
+          setPendingAction('next');
           setTouchStart(null);
           setTouchEnd(null);
           return;
         } else if (deltaY > threshold && currentIndex > 0) {
-          // Swipe DOWN = previous: FIRST animate to 100%, THEN change index
+          // Swipe DOWN = previous: animate to 100%, change index on transitionEnd
           setIsSwiping(false);
           setSwipeOffset(screenHeight);
-          setTimeout(() => {
-            handlePrevious();
-            setSwipeOffset(0);
-          }, 250);
+          setPendingAction('prev');
           setTouchStart(null);
           setTouchEnd(null);
           return;
@@ -665,6 +673,7 @@ export default function EventListSwiper({
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onTransitionEnd={handleTransitionEnd}
             >
               {/* Close Button - Top Right */}
               <button
@@ -1019,26 +1028,68 @@ export default function EventListSwiper({
           </div>
             </div>
 
-            {/* Next Card - Mobile only - positioned below, moves together with current */}
-            {displayEvents[currentIndex + 1] && (
-              <div
-                className="md:hidden absolute top-full left-0 right-0 h-screen bg-white"
-                style={{
-                  zIndex: 1,
-                  transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
-                  transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  willChange: 'transform'
-                }}
-              >
-                <div className="relative w-full h-[60%] bg-gray-200">
-                  <img
-                    src={displayEvents[currentIndex + 1].image_url || "/placeholder.jpg"}
-                    className="w-full h-full object-cover"
-                    alt="Next"
-                  />
+            {/* Next Card - Mobile only - FULL CARD positioned below */}
+            {displayEvents[currentIndex + 1] && (() => {
+              const nextEvent = displayEvents[currentIndex + 1];
+              const nextLocationStr = nextEvent?.latitude && nextEvent?.longitude
+                ? getLocationWithMajorCity(nextEvent.latitude, nextEvent.longitude, nextEvent.address_city)
+                : nextEvent?.address_city || '';
+              const nextIsTicketmaster = nextEvent?.external_id?.startsWith('tm_');
+              const nextDateStr = nextIsTicketmaster ? formatEventDate(nextEvent?.start_date) : '';
+              const nextInfoLine = [nextDateStr, nextLocationStr].filter(Boolean).join(' | ');
+              const nextDesc = decodeHtml(nextEvent.description || "Entdecke dieses spannende Event in der Schweiz.");
+
+              return (
+                <div
+                  className="md:hidden absolute top-full left-0 right-0 h-screen bg-white"
+                  style={{
+                    zIndex: 1,
+                    transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
+                    transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    willChange: 'transform'
+                  }}
+                >
+                  {/* Card Content - Same structure as current card */}
+                  <div className="h-full flex flex-col">
+                    {/* Photo - 60% */}
+                    <div className="h-[60%]">
+                      <div className="relative h-full">
+                        <img
+                          src={nextEvent.image_url || "/placeholder.jpg"}
+                          className="w-full h-full object-cover"
+                          alt={nextEvent.title}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Text + SVG - 40% */}
+                    <div className="flex-1 flex flex-col">
+                      <div className="px-5 pt-4 pb-3 flex-1">
+                        {/* Title */}
+                        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
+                          {decodeHtml(nextEvent.title)}
+                        </h2>
+                        {/* Date | Location */}
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                          {nextInfoLine || '\u00A0'}
+                        </p>
+                        {/* Description */}
+                        <p className="text-xs text-gray-600 mt-2 leading-relaxed line-clamp-2" style={{ minHeight: '2.5rem' }}>
+                          {nextDesc}
+                        </p>
+                      </div>
+
+                      {/* SVG Map */}
+                      <div className="pb-4 pt-2">
+                        <div className="relative w-full px-5">
+                          <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         ) : (
           <div className="flex items-center justify-center py-20">
