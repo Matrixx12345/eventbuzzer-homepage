@@ -597,7 +597,7 @@ export default function EventListSwiper({
   const eventInTrip = currentEvent ? isInTrip(currentEvent.id) : false;
 
   return (
-    <div className="fixed inset-0 z-[110] bg-white md:bg-black/80 md:backdrop-blur-sm">
+    <div className="fixed inset-0 z-[110] bg-white md:bg-black/80 md:backdrop-blur-sm" style={{ overscrollBehavior: 'none' }}>
       {/* Blurred Background Image - DESKTOP/TABLET ONLY */}
       <div className="hidden md:block">
         {currentEvent?.image_url && (
@@ -666,7 +666,7 @@ export default function EventListSwiper({
             </button>
           </div>
         ) : currentEvent ? (
-          <div className="relative w-full h-full md:w-auto md:h-auto md:mb-12">
+          <div className="relative w-full h-full md:w-auto md:h-auto md:mb-12" style={{ overscrollBehavior: 'none' }}>
             {/* Card Stack Effect - Desktop */}
             <div className="hidden md:block">
               {events[currentIndex + 2] && (
@@ -684,7 +684,9 @@ export default function EventListSwiper({
                 zIndex: 2,
                 transform: window.innerWidth < 768 ? `translateY(${swipeOffset}px)` : 'none',
                 transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                willChange: isSwiping || pendingAction ? 'transform' : 'auto'
+                willChange: isSwiping || pendingAction ? 'transform' : 'auto',
+                overscrollBehavior: 'none',
+                touchAction: 'pan-y'
               }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
