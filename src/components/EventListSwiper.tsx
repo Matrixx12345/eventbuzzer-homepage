@@ -473,13 +473,15 @@ export default function EventListSwiper({
 
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
-      // Mobile: calculate vertical offset for smooth dragging (full screen height)
+      // Mobile: only allow downward swipe (revealing next card below)
       const deltaY = currentTouch.y - touchStart.y;
-      // Add resistance at boundaries
-      if ((deltaY > 0 && currentIndex === 0) || (deltaY < 0 && currentIndex >= displayEvents.length - 1)) {
-        setSwipeOffset(deltaY * 0.2); // 20% resistance at edges
+      // Only respond to downward swipes, or upward if at start
+      if (deltaY > 0 && currentIndex < displayEvents.length - 1) {
+        setSwipeOffset(deltaY); // Swipe down to reveal next
+      } else if (deltaY < 0 && currentIndex > 0) {
+        setSwipeOffset(deltaY * 0.3); // Allow small upward with resistance for previous
       } else {
-        setSwipeOffset(deltaY); // Full follow - no damping
+        setSwipeOffset(deltaY * 0.1); // Heavy resistance at boundaries
       }
     }
   };
@@ -494,14 +496,14 @@ export default function EventListSwiper({
     const isMobile = window.innerWidth < 768;
 
     if (isMobile) {
-      // Mobile: vertical swipe (Instagram-style - need to swipe ~40% of screen)
+      // Mobile: swipe down to dismiss and reveal next card
       const screenHeight = window.innerHeight;
-      const threshold = screenHeight * 0.35; // 35% of screen height
+      const threshold = screenHeight * 0.3; // 30% of screen height
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        if (deltaY < -threshold && currentIndex < displayEvents.length - 1) {
-          handleNext(); // Swipe up = next
-        } else if (deltaY > threshold && currentIndex > 0) {
-          handlePrevious(); // Swipe down = previous
+        if (deltaY > threshold && currentIndex < displayEvents.length - 1) {
+          handleNext(); // Swipe down = next (dismiss current, reveal below)
+        } else if (deltaY < -threshold && currentIndex > 0) {
+          handlePrevious(); // Swipe up = previous
         }
       }
     } else {
@@ -639,31 +641,18 @@ export default function EventListSwiper({
               )}
             </div>
 
-            {/* Next/Previous Card Preview - Mobile only (Instagram-style) */}
-            <div className="md:hidden absolute inset-0" style={{ zIndex: 1 }}>
-              {swipeOffset < 0 && displayEvents[currentIndex + 1] && (
-                <div className="absolute inset-0 bg-white">
-                  <div className="relative w-full h-[60%] bg-gray-200">
-                    <img
-                      src={displayEvents[currentIndex + 1].image_url || "/placeholder.jpg"}
-                      className="w-full h-full object-cover"
-                      alt="Next"
-                    />
-                  </div>
+            {/* Next Card - Mobile only - positioned directly below current card */}
+            {displayEvents[currentIndex + 1] && (
+              <div className="md:hidden absolute top-full left-0 right-0 h-screen bg-white" style={{ zIndex: 1 }}>
+                <div className="relative w-full h-[60%] bg-gray-200">
+                  <img
+                    src={displayEvents[currentIndex + 1].image_url || "/placeholder.jpg"}
+                    className="w-full h-full object-cover"
+                    alt="Next"
+                  />
                 </div>
-              )}
-              {swipeOffset > 0 && displayEvents[currentIndex - 1] && (
-                <div className="absolute inset-0 bg-white">
-                  <div className="relative w-full h-[60%] bg-gray-200">
-                    <img
-                      src={displayEvents[currentIndex - 1].image_url || "/placeholder.jpg"}
-                      className="w-full h-full object-cover"
-                      alt="Previous"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Main Card - Mobile: fullscreen | Tablet/Desktop: rounded card */}
             <div
