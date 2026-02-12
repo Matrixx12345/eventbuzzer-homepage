@@ -143,6 +143,108 @@ This fix establishes a pattern for mobile layouts in EventBuzzer:
 
 ---
 
+## Bidirectional Swipe Bug Fix (Additional 2+ hours)
+
+### The Problem
+
+After implementing the photo jump fix, we added bidirectional swiping (swipe down to go to previous event). However, this introduced a new issue:
+
+**Symptom:** When swiping DOWN to see the previous event, a **40px white gap** appeared during the swipe between the previous card's SVG/text and the current card's photo below it. After the swipe completed, everything would "fall down" to close the gap.
+
+**User Impact:**
+- Jarring visual gap during swipe to previous event
+- Content appeared to "jump" or "fall" after swipe completed
+- Inconsistent layout between swipe state and final state
+
+### Root Cause
+
+The Previous card (swipe down) was using `h-screen` for its outer container, while the Main card (current/final state) was using `h-full`:
+
+```tsx
+// BEFORE (broken - 40px gap during swipe)
+// Previous card:
+<div className="md:hidden absolute bottom-full left-0 right-0 h-screen bg-white">
+
+// Main card:
+<div className="relative w-full h-full bg-white md:rounded-3xl md:shadow-2xl overflow-hidden">
+```
+
+**Why this caused the gap:**
+- `h-screen` = 100vh (always viewport height, absolute)
+- `h-full` = 100% of parent (relative to parent container)
+- During swipe transitions, these calculated to slightly different heights (~40px difference)
+- The mismatch created a visible white gap during the swipe
+
+### The Solution ✅
+
+**Changed Previous card from `h-screen` to `h-full`:**
+
+```tsx
+// AFTER (fixed - no gap)
+// Previous card:
+<div className="md:hidden absolute bottom-full left-0 right-0 h-full bg-white">
+
+// Main card:
+<div className="relative w-full h-full bg-white md:rounded-3xl md:shadow-2xl overflow-hidden">
+```
+
+**Why this works:**
+- Both Previous and Main cards now use `h-full` consistently
+- Same height calculation during swipe and final state
+- No gap during transition
+- Smooth, seamless swipe experience
+
+### Implementation Details
+
+**File Modified:**
+- `src/components/EventListSwiper.tsx`
+
+**Change:**
+- Line ~1096: Previous card outer container: `h-screen` → `h-full`
+
+**Related Changes (also part of bidirectional swipe):**
+1. Added Previous card positioned at `bottom-full` (above current card)
+2. Native touchmove listener with `{ passive: false }` to prevent pull-to-refresh
+3. Previous card image: `loading="eager"` to prevent layout shift
+4. Card Content div: `h-full flex flex-col md:block` (matches Main card exactly)
+5. Text+SVG container: `h-[45vh] flex-none flex flex-col relative md:h-auto md:block md:overflow-y-auto` (matches Main card)
+
+### Testing
+
+**Success Criteria:**
+- ✅ No 40px white gap during swipe to previous event
+- ✅ Smooth transition between swipe and final state
+- ✅ Content doesn't "fall down" after swipe completes
+- ✅ Previous card layout matches Main card exactly
+
+**How to Test:**
+1. Open EventListSwiper on mobile
+2. Swipe DOWN (to go to previous event)
+3. Watch for white gaps during the swipe
+4. Verify: No gap between previous card SVG and current card photo
+5. Check: Smooth transition, no "falling down" effect
+
+### Key Learnings
+
+1. **Use `h-full` for nested containers, not `h-screen`:** When containers are nested within parents that already define the viewport height, use `h-full` to inherit from parent rather than `h-screen` to reference viewport directly
+2. **Container height consistency is critical:** Swipe cards that transition into each other must use identical height calculations (e.g., all use `h-full` or all use `h-screen`, not mixed)
+3. **Relative vs Absolute units:** `h-full` (relative) is more stable than `h-screen` (absolute) when transitioning between states
+4. **Copy exact classes from working components:** When adding new swipe directions, copy ALL classes from the working direction to ensure consistency
+
+### Related Code Pattern
+
+**✅ DO:** Use `h-full` for swipe cards that transition into main card
+```tsx
+<div className="md:hidden absolute bottom-full left-0 right-0 h-full bg-white">
+```
+
+**❌ DON'T:** Mix `h-screen` and `h-full` in cards that transition into each other
+```tsx
+<div className="md:hidden absolute bottom-full left-0 right-0 h-screen bg-white">  // ❌ Creates gap
+```
+
+---
+
 ## Future Improvements
 
 - Consider using `dvh` (dynamic viewport height) units when browser support improves
