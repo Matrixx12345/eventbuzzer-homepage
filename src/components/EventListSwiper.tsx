@@ -928,7 +928,7 @@ export default function EventListSwiper({
                 </div>
 
                 {/* Text + Buttons Section - Mobile: 45vh fixed (viewport-based) | Tablet/Desktop: normal */}
-                <div className="h-[45vh] flex-none flex flex-col relative md:h-auto md:block md:overflow-y-auto">
+                <div className="h-[45vh] flex-none flex flex-col justify-between relative md:h-auto md:block md:overflow-y-auto">
                   {/* Text Content - Mobile: fixed height in rem | Desktop: expandable */}
                   <div className="px-5 pt-4 pb-0 md:pb-2 h-[7rem] md:h-auto md:flex-none overflow-hidden">
                 {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
@@ -1156,7 +1156,7 @@ export default function EventListSwiper({
                     </div>
 
                     {/* Text + SVG - 45vh */}
-                    <div className="h-[45vh] flex-none flex flex-col relative">
+                    <div className="h-[45vh] flex-none flex flex-col justify-between relative">
                       {/* Text: 7rem fixed height */}
                       <div className="px-5 pt-4 pb-0 h-[7rem]">
                         {/* Title */}
@@ -1263,7 +1263,7 @@ export default function EventListSwiper({
                     </div>
 
                     {/* Text + SVG - 45vh (viewport-based, matches main card) */}
-                    <div className="h-[45vh] flex-none flex flex-col relative">
+                    <div className="h-[45vh] flex-none flex flex-col justify-between relative">
                       {/* Text: 7rem fixed height (matches main card) */}
                       <div className="px-5 pt-4 pb-0 h-[7rem]">
                         {/* Title */}
