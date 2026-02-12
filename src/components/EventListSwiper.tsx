@@ -818,7 +818,7 @@ export default function EventListSwiper({
                 </div>
 
                 {/* Text + Buttons Section - Mobile: flex-1 (40%) | Tablet/Desktop: normal */}
-                <div className="flex-1 flex flex-col md:block overflow-y-auto">
+                <div className="flex-1 flex flex-col md:block md:overflow-y-auto">
                   {/* Text Content - Mobile: fixed-height, clickable to expand | Desktop: expandable */}
                   <div className="px-5 pt-4 pb-3 md:pb-2 flex-1 md:flex-none md:h-auto">
                 {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
