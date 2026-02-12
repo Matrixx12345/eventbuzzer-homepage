@@ -476,6 +476,12 @@ export default function EventListSwiper({
     if (isMobile) {
       // Instagram-like: card ALWAYS follows finger exactly - no conditions, no resistance!
       const deltaY = currentTouch.y - touchStart.y;
+
+      // Prevent pull-to-refresh when swiping down (to show previous card)
+      if (deltaY > 0) {
+        e.preventDefault();
+      }
+
       setSwipeOffset(deltaY); // Card follows finger 1:1
     }
   };
