@@ -803,8 +803,8 @@ export default function EventListSwiper({
                     )}
                   </div>
 
-                  {/* Floating Icon Bar - Mobile only (Right edge, centered vertically) */}
-                  <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20">
+                  {/* Floating Icon Bar - Mobile only (Right edge, centered in photo) */}
+                  <div className="md:hidden absolute right-4 top-[40%] -translate-y-1/2 flex flex-col gap-5 z-20">
                     {/* Filter/Menu Icon */}
                     <button
                       onClick={(e) => {
@@ -895,7 +895,7 @@ export default function EventListSwiper({
                 {/* Text + Buttons Section - Mobile: 45% of container height | Tablet/Desktop: normal */}
                 <div className="h-[45%] flex flex-col relative md:h-auto md:block md:overflow-y-auto">
                   {/* Text Content - Mobile: fixed height in rem | Desktop: expandable */}
-                  <div className="px-5 pt-4 pb-0 md:pb-2 h-[6.5rem] md:h-auto md:flex-none overflow-hidden">
+                  <div className="px-5 pt-4 pb-0 md:pb-2 h-[7rem] md:h-auto md:flex-none overflow-hidden">
                 {/* Title - Mobile: single line, click to expand | Desktop: single line with inline "mehr..." */}
                 <h2
                   className={`text-lg md:text-2xl font-bold text-gray-900 uppercase tracking-tight md:cursor-default ${
@@ -952,7 +952,7 @@ export default function EventListSwiper({
               </div>
 
                   {/* Switzerland SVG Footer - Mobile only - FIXED at bottom with absolute positioning */}
-                  <div className="md:hidden absolute bottom-8 left-0 right-0 h-[8rem] pb-2 pt-2">
+                  <div className="md:hidden absolute bottom-0 left-0 right-0 h-[8rem] pb-2 pt-0">
                     <div className="relative w-full h-full px-5">
                       <SwissMapMobile currentEvent={currentEvent} dayEvents={dayEvents} />
                     </div>
@@ -1072,7 +1072,7 @@ export default function EventListSwiper({
                   </div>
 
                   {/* Floating Icon Bar - Right side (visual only during swipe) */}
-                  <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20 pointer-events-none">
+                  <div className="md:hidden absolute right-4 top-[40%] -translate-y-1/2 flex flex-col gap-5 z-20 pointer-events-none">
                     <SlidersHorizontal size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                     <Share2 size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                     <Heart size={26} className="text-white drop-shadow-lg" strokeWidth={2.5} />
@@ -1122,8 +1122,8 @@ export default function EventListSwiper({
 
                     {/* Text + SVG - 45% of container height (matches main card) */}
                     <div className="h-[45%] flex flex-col relative">
-                      {/* Text: 6.5rem fixed height (matches main card) */}
-                      <div className="px-5 pt-4 pb-0 h-[6.5rem]">
+                      {/* Text: 7rem fixed height (matches main card) */}
+                      <div className="px-5 pt-4 pb-0 h-[7rem]">
                         {/* Title */}
                         <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight line-clamp-1">
                           {decodeHtml(nextEvent.title)}
@@ -1139,7 +1139,7 @@ export default function EventListSwiper({
                       </div>
 
                       {/* SVG Map: FIXED at bottom with absolute positioning (matches main card) */}
-                      <div className="absolute bottom-8 left-0 right-0 h-[8rem] pb-2 pt-2">
+                      <div className="absolute bottom-0 left-0 right-0 h-[8rem] pb-2 pt-0">
                         <div className="relative w-full h-full px-5">
                           <SwissMapMobile currentEvent={nextEvent} dayEvents={dayEvents} />
                         </div>
