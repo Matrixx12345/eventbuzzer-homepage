@@ -1075,6 +1075,33 @@ export default function EventListSwiper({
                           className="w-full h-full object-cover"
                           alt={nextEvent.title}
                         />
+
+                        {/* Tag Pills - Same as main card */}
+                        {nextEvent.tags?.[0] && (
+                          <div className="absolute top-4 left-4 flex items-center gap-2">
+                            <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm">
+                              {nextEvent.tags[0].charAt(0).toUpperCase() + nextEvent.tags[0].slice(1)}
+                            </span>
+                            {(nextEvent.tags.length - 1) > 0 && (
+                              <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-3 py-2 rounded-xl shadow-sm">
+                                +{nextEvent.tags.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Distance Pill - Same as main card */}
+                        {userLocation && nextEvent.latitude && nextEvent.longitude && (() => {
+                          const nextDistance = haversineDistance(userLocation.lat, userLocation.lng, nextEvent.latitude, nextEvent.longitude);
+                          return (
+                            <div className="absolute top-4 right-9">
+                              <span className="bg-white/80 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
+                                <MapPin size={17} className="text-red-500" />
+                                {formatDistance(nextDistance)}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
