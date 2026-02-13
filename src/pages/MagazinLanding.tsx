@@ -60,7 +60,7 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
     return isEn ? `/en/magazine/${slug}` : `/magazin/${slug}`;
   };
   const getTitle = (article: Article) => isEn ? article.titleEn : article.title;
-  const getImage = (article: Article) => articleImages[article.slug] || "/og-image.jpg";
+  const getImage = (article: Article) => articleImages[article.slug];
 
   return (
     <div className="min-h-screen bg-white">
@@ -123,8 +123,10 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
             {/* Featured – large card (2 cols, 2 rows) */}
             <Link to={getHref(featured)} className="md:col-span-2 md:row-span-2 group block">
               <div className="relative h-[320px] md:h-full md:min-h-[480px] rounded-2xl overflow-hidden bg-stone-200">
-                <img src={getImage(featured)} alt={getTitle(featured)} loading="eager"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+                {getImage(featured) && (
+                  <img src={getImage(featured)} alt={getTitle(featured)} loading="eager"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/5" />
                 <div className="absolute bottom-0 left-0 p-6 md:p-10">
                   <h2 className="text-white font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-4">
@@ -141,8 +143,10 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
             {others.slice(0, 2).map(article => (
               <Link key={article.slug} to={getHref(article)} className="group block">
                 <div className="relative h-[200px] md:h-full md:min-h-[230px] rounded-2xl overflow-hidden bg-stone-200">
-                  <img src={getImage(article)} alt={getTitle(article)} loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+                  {getImage(article) && (
+                    <img src={getImage(article)} alt={getTitle(article)} loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/5" />
                   <div className="absolute bottom-0 left-0 p-5 md:p-6">
                     <h2 className="text-white font-bold text-lg md:text-xl uppercase leading-tight mb-3">
@@ -160,8 +164,10 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
             {others.length > 2 && (
               <Link to={getHref(others[2])} className="md:col-span-3 group block">
                 <div className="relative h-[200px] md:h-[220px] rounded-2xl overflow-hidden bg-stone-200">
-                  <img src={getImage(others[2])} alt={getTitle(others[2])} loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+                  {getImage(others[2]) && (
+                    <img src={getImage(others[2])} alt={getTitle(others[2])} loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/5" />
                   <div className="absolute bottom-0 left-0 p-5 md:p-8">
                     <h2 className="text-white font-bold text-lg md:text-2xl uppercase leading-tight mb-3">
