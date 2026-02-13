@@ -340,7 +340,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-start justify-end max-h-[3px] lg:max-h-[4px] -mt-14">
+                    <div className="flex items-start justify-end max-h-[1px] lg:max-h-[2px] -mt-14">
                       <SwissMap event={event} />
                     </div>
                   </div>
