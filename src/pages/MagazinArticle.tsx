@@ -307,7 +307,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Intro text */}
       {introText && (
-        <section className="max-w-5xl mx-auto px-8 md:px-12 lg:px-20 py-8">
+        <section className="max-w-5xl mx-auto px-8 md:px-12 lg:px-20 py-0">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
             {introText}
           </p>
@@ -327,17 +327,22 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                 {i > 0 && <hr className="border-t border-stone-200 my-12 md:my-16" />}
 
                 <article className="mb-12 md:mb-16">
-                  {/* Number + Title + Location */}
-                  <div className="mb-8">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold uppercase leading-tight text-black mb-4">
-                      {String(i + 1).padStart(2, '0')}. {section.title}
-                    </h2>
-                    {event?.address_city && (
-                      <div className="flex items-center gap-2 text-stone-500 text-base md:text-lg">
-                        <MapPin size={20} />
-                        <span>{decodeHtml(event.address_city)}, {isEn ? "Switzerland" : "Schweiz"}</span>
-                      </div>
-                    )}
+                  {/* Title + Location + SVG in grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div>
+                      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold uppercase leading-tight text-black mb-4">
+                        {String(i + 1).padStart(2, '0')}. {section.title}
+                      </h2>
+                      {event?.address_city && (
+                        <div className="flex items-center gap-2 text-stone-500 text-base md:text-lg">
+                          <MapPin size={20} />
+                          <span>{decodeHtml(event.address_city)}, {isEn ? "Switzerland" : "Schweiz"}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-start justify-end max-h-[80px] lg:max-h-[100px]">
+                      <SwissMap event={event} />
+                    </div>
                   </div>
 
                   {/* Image */}
@@ -368,21 +373,16 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                     </div>
                   )}
 
-                  {/* Map above, Button below - Now BEFORE quote */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 my-8">
-                    <div className="order-2 lg:order-1 flex flex-col justify-center">
-                      {event && (
-                        <button
-                          onClick={() => openEventModal(String(event.id))}
-                          className="inline-block bg-black text-white px-10 py-4 text-base font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors w-fit"
-                        >
-                          {moreLabel}
-                        </button>
-                      )}
-                    </div>
-                    <div className="order-1 lg:order-2 max-h-[100px] lg:max-h-[120px]">
-                      <SwissMap event={event} />
-                    </div>
+                  {/* Button */}
+                  <div className="mb-8">
+                    {event && (
+                      <button
+                        onClick={() => openEventModal(String(event.id))}
+                        className="inline-block bg-black text-white px-10 py-4 text-base font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors w-fit"
+                      >
+                        {moreLabel}
+                      </button>
+                    )}
                   </div>
 
                   {/* Pull Quote - Simple style without background */}
