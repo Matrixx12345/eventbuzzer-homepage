@@ -223,13 +223,13 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       </div>
 
       {/* Article Header */}
-      <header className="bg-white pt-8 pb-6">
+      <header className="bg-white pt-8 pb-8">
         <div className="max-w-4xl mx-auto px-6 sm:px-8">
           {/* Language Toggle */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-8">
             <Link
               to={magazinHref}
-              className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors"
             >
               <ArrowLeft size={14} />
               {isEn ? "All articles" : "Alle Artikel"}
@@ -245,45 +245,88 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
           </div>
 
           {/* Category + Meta */}
-          <div className="flex items-center gap-3 text-xs text-stone-400 mb-4">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-stone-400 mb-5">
             {category && (
               <Link
                 to={`/kategorie/${category.slug}`}
-                className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-medium uppercase tracking-wider hover:bg-indigo-100 transition-colors"
+                className="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded font-semibold uppercase tracking-wider text-[11px] hover:bg-indigo-100 transition-colors"
               >
                 {category.label}
               </Link>
             )}
-            <time>{new Date(article.publishedDate).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "long", year: "numeric" })}</time>
-            <span className="flex items-center gap-1">
+            <time className="font-medium">{new Date(article.publishedDate).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "long", year: "numeric" })}</time>
+            <span className="flex items-center gap-1 font-medium">
               <Clock size={12} />
               {article.readingTime} {minLabel}
             </span>
           </div>
 
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 leading-tight mb-6">
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 leading-tight font-bold mb-5">
             {title}
           </h1>
-          <p className="text-lg text-stone-500 leading-relaxed max-w-3xl">
+          <p className="text-lg md:text-xl text-stone-500 leading-relaxed max-w-3xl font-light">
             {description}
           </p>
         </div>
       </header>
 
-      {/* Hero Image */}
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 mb-12">
-        <div className="rounded-2xl overflow-hidden aspect-video">
-          <img
-            src={article.heroImage}
-            alt={title}
-            className="w-full h-full object-cover"
-          />
+      {/* Image Collage from event images */}
+      {events.length > 0 && (
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 mb-10">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-1.5 rounded-2xl overflow-hidden">
+            {events.filter(e => e.image_url).slice(0, 10).map((event, i) => (
+              <div
+                key={event.id}
+                className={`relative overflow-hidden ${
+                  i === 0 ? "col-span-2 row-span-2" : ""
+                } ${i > 4 ? "hidden md:block" : ""}`}
+              >
+                <img
+                  src={event.image_url!}
+                  alt={event.title}
+                  loading={i < 5 ? "eager" : "lazy"}
+                  className="w-full h-full object-cover aspect-square hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Decorative divider when no events loaded yet */}
+      {events.length === 0 && !loading && (
+        <div className="max-w-4xl mx-auto px-6 sm:px-8 mb-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+        </div>
+      )}
+
+      {/* Hero Image - only show if article has a real hero image and no collage */}
+      {article.heroImage && !article.heroImage.includes("og-image") && events.length === 0 && (
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 mb-12">
+          <div className="rounded-2xl overflow-hidden aspect-video">
+            <img
+              src={article.heroImage}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Article Content */}
       <article className="max-w-4xl mx-auto px-6 sm:px-8 mb-16">
-        <div className="prose prose-lg prose-stone max-w-none prose-headings:font-serif prose-headings:text-stone-900 prose-a:text-indigo-600 prose-img:rounded-xl">
+        <div className="
+          prose prose-lg prose-stone max-w-none
+          prose-headings:font-serif prose-headings:text-stone-900
+          prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-4 prose-h2:pb-3 prose-h2:border-b prose-h2:border-stone-200
+          prose-h3:text-xl prose-h3:md:text-2xl prose-h3:font-bold prose-h3:mt-8 prose-h3:mb-3
+          prose-p:text-stone-600 prose-p:leading-relaxed
+          prose-strong:text-stone-800 prose-strong:font-bold
+          prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline
+          prose-li:text-stone-600 prose-li:leading-relaxed
+          prose-ul:my-6
+          prose-img:rounded-xl
+        ">
           <ReactMarkdown>{markdownContent}</ReactMarkdown>
         </div>
       </article>
@@ -314,22 +357,6 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
         </section>
       )}
 
-      {/* No events placeholder */}
-      {!loading && events.length === 0 && article.eventIds.length === 0 && (
-        <section className="bg-[#F5F0E8] py-16 border-t border-stone-200">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
-            <h2 className="font-serif text-stone-900 text-2xl sm:text-3xl font-bold mb-2">
-              {eventsTitle}
-            </h2>
-            <p className="text-stone-500 mb-4">
-              {isEn ? "Events are being curated for this article." : "Events werden für diesen Artikel kuratiert."}
-            </p>
-            <Link to="/" className="text-indigo-600 hover:underline">
-              {isEn ? "Browse all events" : "Alle Events durchsuchen"}
-            </Link>
-          </div>
-        </section>
-      )}
 
       {/* Related Articles */}
       {relatedArticles.length > 0 && (

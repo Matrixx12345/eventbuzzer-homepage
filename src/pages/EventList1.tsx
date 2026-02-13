@@ -719,7 +719,7 @@ const EventList1 = () => {
         <meta name="description" content="EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf. Jetzt Tag individuell planen!" />
         <meta property="og:title" content="EventBuzzer.ch – Tausende Events & Veranstaltungen in der Schweiz" />
         <meta property="og:description" content="EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf." />
-        <meta property="og:site_name" content="EventBuzzer.ch" />
+        <meta property="og:site_name" content="EventBuzzer" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={SITE_URL} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
@@ -733,7 +733,8 @@ const EventList1 = () => {
               {
                 "@type": "Organization",
                 "@id": `${SITE_URL}/#organization`,
-                "name": "EventBuzzer.ch",
+                "name": "EventBuzzer",
+                "alternateName": "EventBuzzer.ch",
                 "url": SITE_URL,
                 "logo": {
                   "@type": "ImageObject",
@@ -755,7 +756,8 @@ const EventList1 = () => {
                 "@type": "WebSite",
                 "@id": `${SITE_URL}/#website`,
                 "url": SITE_URL,
-                "name": "EventBuzzer.ch",
+                "name": "EventBuzzer",
+                "alternateName": "EventBuzzer.ch",
                 "description": "EventBuzzer.ch: Dein Guide für tausende Veranstaltungen & Events in der Schweiz. Über 1400 Highlights in Zürich, Basel, Bern bis Genf.",
                 "publisher": {
                   "@id": `${SITE_URL}/#organization`

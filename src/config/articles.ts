@@ -14,7 +14,7 @@ export interface Article {
   descriptionEn: string;
   heroImage: string;
   category: string; // matches category slug from categories.ts
-  eventIds: string[]; // 10 event UUIDs from Supabase
+  eventIds: string[]; // event IDs from Supabase
   publishedDate: string;
   readingTime: number;
   featured?: boolean;
@@ -30,7 +30,18 @@ export const ARTICLES: Article[] = [
     descriptionEn: "Discover the most beautiful mountain excursions in Switzerland. From hiking trails to summit tours and mountain railways – the best Alpine experiences.",
     heroImage: "/og-image.jpg",
     category: "wanderung",
-    eventIds: [], // User fills with 10 event IDs
+    eventIds: [
+      "111911", // Jungfraujoch - Top of Europe
+      "111947", // Zermatt - Autofreies Alpen-Dorf
+      "59420",  // Gletschergarten Dossen, Zermatt
+      "59425",  // Gletscherschlucht, Grindelwald
+      "59426",  // Matterhorn Gotthard Bahn
+      "59422",  // Gletschergarten von Cavaglia
+      "59423",  // Brunnenberg-Bahn (Oberblegisee)
+      "77736",  // Walliser Alpentherme & Spa Leukerbad
+      "59558",  // Expedition Gletscherwelt Aletsch
+      "59421",  // Treib-Seelisberg-Bahn
+    ],
     publishedDate: "2026-02-13",
     readingTime: 6,
     featured: true,
@@ -44,7 +55,18 @@ export const ARTICLES: Article[] = [
     descriptionEn: "Plan your perfect day in Zurich. Museums, restaurants, events and sights – everything you need for an unforgettable day.",
     heroImage: "/og-image.jpg",
     category: "stadt",
-    eventIds: [],
+    eventIds: [
+      "94660",  // Kunsthaus Zürich
+      "59243",  // Heureka von Jean Tinguely
+      "94666",  // Uhrenmuseum Beyer
+      "59536",  // Zürcher Museums-Bahn
+      "64760",  // Caliente! Latin Music Festival
+      "111998", // Flohmarkt Bullingerhof
+      "64863",  // Das Lumpenpack
+      "64834",  // Ivo Martin
+      "64373",  // $ono$ Cliq
+      "59763",  // Wengernalpbahn
+    ],
     publishedDate: "2026-02-13",
     readingTime: 7,
   },
@@ -57,7 +79,18 @@ export const ARTICLES: Article[] = [
     descriptionEn: "The 10 best museums in Switzerland: From art galleries in Zurich to history museums in Bern and technology museums in Lucerne. Discover now!",
     heroImage: "/og-image.jpg",
     category: "museum",
-    eventIds: [],
+    eventIds: [
+      "94660",  // Kunsthaus Zürich
+      "94654",  // Fondation Beyeler, Riehen
+      "94667",  // Zentrum Paul Klee, Bern
+      "103572", // Kunstmuseum Luzern
+      "111907", // Swiss Science Center Technorama
+      "103383", // Patek Philippe Museum, Genf
+      "94669",  // Bernisches Historisches Museum
+      "59243",  // Heureka von Jean Tinguely
+      "59605",  // Tinguely-Brunnen, Basel
+      "103838", // Museum für Kunst und Geschichte
+    ],
     publishedDate: "2026-02-13",
     readingTime: 8,
   },
@@ -70,7 +103,18 @@ export const ARTICLES: Article[] = [
     descriptionEn: "Discover Switzerland's most unique attractions. From hidden gems to world-famous sights – Swiss highlights you must see.",
     heroImage: "/og-image.jpg",
     category: "ausflug",
-    eventIds: [],
+    eventIds: [
+      "59424",  // Aussichtsplattform Rheinfall
+      "111922", // Aletsch Gletscher UNESCO
+      "94684",  // Château de Chillon
+      "138116", // Kapellbrücke und Wasserturm
+      "111910", // Altstadt Bern UNESCO
+      "59466",  // Staubbachfall, Lauterbrunnen
+      "59663",  // Rheinfall
+      "111938", // Aareschlucht
+      "59525",  // Dalaschlucht
+      "137833", // Themenwege UNESCO Lauterbrunnen
+    ],
     publishedDate: "2026-02-13",
     readingTime: 5,
   },
