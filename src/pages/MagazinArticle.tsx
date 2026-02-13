@@ -14,6 +14,8 @@ interface MagazinArticleProps {
   lang?: "de" | "en";
 }
 
+const SVG_FILTER_STYLE = { filter: "sepia(0.4) saturate(1.5) hue-rotate(20deg)" };
+
 // Decode HTML entities
 const decodeHtml = (text: string) => {
   return text
@@ -152,7 +154,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     return (
       <div className="relative w-full bg-transparent">
         <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
-          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.35" style={{ filter: "sepia(0.4) saturate(1.5) hue-rotate(20deg)" }} />
+          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.35" style={SVG_FILTER_STYLE} />
 
           {/* City markers with labels */}
           <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
@@ -324,7 +326,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
             return (
               <div key={i}>
                 {/* Horizontal divider line */}
-                {i > 0 && <hr className="border-t-2 border-[#c9a961] my-12 md:my-16" />}
+                {i > 0 && <hr className="border-t border-[#c9a961] my-12 md:my-16" />}
 
                 <article className="mb-12 md:mb-16">
                   {/* Title + Location + SVG in grid */}
