@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useTripPlanner } from "@/contexts/TripPlannerContext";
@@ -21,6 +21,7 @@ interface NavbarProps {
 
 const Navbar = ({ bgColor = "bg-white/80" }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
   const { user, signOut } = useAuth();
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
   const { favorites } = useFavorites();
@@ -51,39 +52,43 @@ const Navbar = ({ bgColor = "bg-white/80" }: NavbarProps) => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-serif italic text-navbar-foreground">
+          <Link to="/" className="text-2xl font-bold text-navbar-foreground">
             EventBuzzer
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-12">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.href}
-                className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative"
-              >
-                {link.label}
-                {link.label === "Favoriten" && (
-                  <span className={`absolute -top-2 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
-                    favorites.length === 0
-                      ? 'text-gray-500 border border-gray-400/30 font-normal'
-                      : 'bg-red-500 text-white shadow-md font-bold'
-                  }`}>
-                    {favorites.length}
-                  </span>
-                )}
-                {link.label === "Reiseplaner" && (
-                  <span className={`absolute -top-2 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
-                    totalEventCount === 0
-                      ? 'text-gray-500 border border-gray-400/30 font-normal'
-                      : 'bg-red-500 text-white shadow-md font-bold'
-                  }`}>
-                    {totalEventCount}
-                  </span>
-                )}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = (link.href === "/" && location.pathname === "/") ||
+                              (link.href !== "/" && location.pathname.startsWith(link.href));
+              return (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className={`text-sm text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative ${isActive ? 'font-bold' : 'font-medium'}`}
+                >
+                  {link.label}
+                  {link.label === "Favoriten" && (
+                    <span className={`absolute -top-2 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
+                      favorites.length === 0
+                        ? 'text-gray-500 border border-gray-400/30 font-normal'
+                        : 'bg-red-500 text-white shadow-md font-bold'
+                    }`}>
+                      {favorites.length}
+                    </span>
+                  )}
+                  {link.label === "Reiseplaner" && (
+                    <span className={`absolute -top-2 -right-5 text-xs rounded-full w-5 h-5 flex items-center justify-center ${
+                      totalEventCount === 0
+                        ? 'text-gray-500 border border-gray-400/30 font-normal'
+                        : 'bg-red-500 text-white shadow-md font-bold'
+                    }`}>
+                      {totalEventCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
 
             {/* Admin Dropdown - Only visible for authorized admins */}
             {isAdmin && (

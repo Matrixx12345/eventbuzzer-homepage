@@ -1,152 +1,96 @@
 import { useParams, Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
-import { Clock, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { Breadcrumb } from "@/components/Breadcrumb";
 import { SITE_URL } from "@/config/constants";
-import { ARTICLES, getArticleBySlug, getArticleByEnSlug } from "@/config/articles";
-import { getCategoryBySlug } from "@/config/categories";
+import { ARTICLES, Article } from "@/config/articles";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
-import { Loader2 } from "lucide-react";
 import { useEventModal } from "@/hooks/useEventModal";
-import { EventDetailModal } from "@/components/EventDetailModal";
+import EventDetailModal from "@/components/EventDetailModal";
+import { MapPin } from "lucide-react";
 
 interface MagazinArticleProps {
   lang?: "de" | "en";
 }
 
-interface ParsedSection {
-  type: 'intro' | 'numbered' | 'heading';
-  number?: number;
-  title?: string;
-  body: string;
-}
-
-// Parse markdown into sections (auto-number all h2 sections for consistent editorial layout)
-const parseSections = (md: string): ParsedSection[] => {
-  if (!md) return [];
-  const chunks = md.split(/\n(?=## )/);
-  let sectionNumber = 1;
-
-  return chunks.map((chunk, i) => {
-    if (i === 0 && !chunk.startsWith('## ')) {
-      return { type: 'intro', body: chunk.trim() };
-    }
-    const numMatch = chunk.match(/^## (\d+)\.\s*(.+?)\n([\s\S]*)/);
-    if (numMatch) {
-      const num = parseInt(numMatch[1]);
-      sectionNumber = num + 1;
-      return { type: 'numbered', number: num, title: numMatch[2].trim(), body: numMatch[3].trim() };
-    }
-    const headMatch = chunk.match(/^## (.+?)\n([\s\S]*)/);
-    if (headMatch) {
-      // Auto-number non-numbered h2 sections for consistent editorial layout
-      const num = sectionNumber++;
-      return { type: 'numbered', number: num, title: headMatch[1].trim(), body: headMatch[2].trim() };
-    }
-    return { type: 'intro', body: chunk.trim() };
-  }).filter(s => s.body.length > 0);
-};
-
-// Extract a quote from section body (first sentence)
-const extractQuote = (body: string): string => {
-  const sentences = body.split(/[.!?]+/).filter(s => s.trim().length > 40);
-  if (sentences.length > 0) {
-    return sentences[0].trim().replace(/\*\*/g, '').toUpperCase();
-  }
-  return '';
+// Decode HTML entities
+const decodeHtml = (text: string) => {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ');
 };
 
 const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
   useScrollToTop();
   const { slug } = useParams<{ slug: string }>();
-  const locationHook = useLocation();
+  const location = useLocation();
+  const isEn = lang === "en" || location.pathname.startsWith("/en/");
 
-  const isEn = lang === "en" || locationHook.pathname.startsWith("/en/");
-
-  const article = isEn
-    ? getArticleByEnSlug(slug || "")
-    : getArticleBySlug(slug || "");
-
-  const [markdownContent, setMarkdownContent] = useState<string>("");
+  const [markdownContent, setMarkdownContent] = useState("");
   const [events, setEvents] = useState<any[]>([]);
   const [exhibitionEvents, setExhibitionEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalEvent, setModalEvent] = useState<any>(null);
 
-  // Event modal
-  const { selectedEventId, isOpen: modalOpen, openEvent: openEventModal, closeEvent: closeEventModal } = useEventModal();
+  const { selectedEventId, openEventModal, closeEventModal } = useEventModal();
 
-  // Load modal event
-  useEffect(() => {
-    if (!selectedEventId || !modalOpen) {
-      setModalEvent(null);
-      return;
-    }
-    const found = [...events, ...exhibitionEvents].find((e: any) => String(e.id) === String(selectedEventId));
-    if (found) {
-      setModalEvent(found);
-    } else {
-      const loadEvent = async () => {
-        const { data } = await externalSupabase.from("events").select("*").eq("id", selectedEventId).single();
-        if (data) setModalEvent(data);
-      };
-      loadEvent();
-    }
-  }, [selectedEventId, modalOpen, events, exhibitionEvents]);
+  // Find article
+  const article = useMemo(() => {
+    return ARTICLES.find(a =>
+      isEn ? a.slugEn === slug : a.slug === slug
+    );
+  }, [slug, isEn]);
 
-  // Fetch markdown content
+  const title = article ? (isEn ? article.titleEn : article.title) : "";
+  const description = article ? (isEn ? article.descriptionEn : article.description) : "";
+
+  // Load markdown content
   useEffect(() => {
     if (!article) return;
     const mdSlug = isEn ? article.slugEn : article.slug;
     const mdPath = isEn ? `/articles/en/${mdSlug}.md` : `/articles/${mdSlug}.md`;
-    window.fetch(mdPath)
-      .then((res) => {
-        if (!res.ok) throw new Error("Markdown not found");
-        return res.text();
-      })
-      .then(setMarkdownContent)
+
+    fetch(mdPath)
+      .then(res => res.ok ? res.text() : "")
+      .then(text => setMarkdownContent(text))
       .catch(() => setMarkdownContent(""));
   }, [article, isEn]);
 
-  // Fetch main events
+  // Load events
   useEffect(() => {
-    if (!article || article.eventIds.length === 0) {
-      setLoading(false);
-      return;
-    }
-    const fetchEvents = async () => {
+    if (!article) return;
+    const loadEvents = async () => {
       setLoading(true);
-      const { data, error } = await externalSupabase
-        .from("events")
-        .select("*")
-        .in("id", article.eventIds);
-      if (!error && data) setEvents(data);
-      setLoading(false);
+      try {
+        const { data, error } = await externalSupabase
+          .from("events")
+          .select("*")
+          .in("id", article.eventIds);
+
+        if (!error && data) {
+          setEvents(data);
+        }
+
+        if (article.exhibitionIds && article.exhibitionIds.length > 0) {
+          const { data: exData } = await externalSupabase
+            .from("events")
+            .select("*")
+            .in("id", article.exhibitionIds);
+          if (exData) setExhibitionEvents(exData);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchEvents();
+    loadEvents();
   }, [article]);
 
-  // Fetch exhibition events (for Editor's Pick)
-  useEffect(() => {
-    if (!article || !article.exhibitionIds || article.exhibitionIds.length === 0) {
-      setExhibitionEvents([]);
-      return;
-    }
-    const fetchExhibitions = async () => {
-      const { data, error } = await externalSupabase
-        .from("events")
-        .select("*")
-        .in("id", article.exhibitionIds);
-      if (!error && data) setExhibitionEvents(data);
-    };
-    fetchExhibitions();
-  }, [article]);
-
-  // Order events to match eventIds order
+  // Order events
   const orderedEvents = useMemo(() => {
     if (!article) return [];
     return article.eventIds
@@ -154,10 +98,88 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       .filter(Boolean) as any[];
   }, [article, events]);
 
-  // Parse markdown sections (all h2 sections are now auto-numbered for editorial layout)
-  const sections = useMemo(() => parseSections(markdownContent), [markdownContent]);
-  const numberedSections = sections.filter(s => s.type === 'numbered');
-  const introSection = sections.find(s => s.type === 'intro');
+  // Parse markdown into simple sections
+  const sections = useMemo(() => {
+    if (!markdownContent) return [];
+    const lines = markdownContent.split('\n');
+    const result: Array<{ title: string; body: string }> = [];
+    let currentTitle = '';
+    let currentBody: string[] = [];
+
+    for (const line of lines) {
+      if (line.startsWith('## ')) {
+        if (currentTitle) {
+          result.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+        }
+        currentTitle = line.replace(/^##\s*\d+\.\s*/, '').replace(/^##\s*/, '').trim();
+        currentBody = [];
+      } else if (currentTitle) {
+        currentBody.push(line);
+      }
+    }
+
+    if (currentTitle) {
+      result.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+    }
+
+    return result;
+  }, [markdownContent]);
+
+  const introText = useMemo(() => {
+    if (!markdownContent) return '';
+    const firstParagraph = markdownContent.split('\n\n')[0];
+    return firstParagraph.startsWith('##') ? '' : firstParagraph.trim();
+  }, [markdownContent]);
+
+  // Extract quote from body
+  const extractQuote = (body: string): string => {
+    const sentences = body.split(/[.!?]+/).filter(s => s.trim().length > 40);
+    return sentences[0] ? sentences[0].trim() + '.' : '';
+  };
+
+  // Switzerland Map Component
+  const SwissMap = ({ event }: { event: any }) => {
+    if (!event?.latitude || !event?.longitude) return null;
+
+    const anchorLat = 46.2;
+    const stretch = event.latitude <= anchorLat
+      ? 1.1
+      : 1.1 - ((event.latitude - anchorLat) / (47.8 - anchorLat)) * 0.23;
+
+    const x = ((event.longitude - 5.9) / (10.5 - 5.9)) * 1348.8688;
+    const y = ((1 - ((event.latitude - 45.8) / (47.8 - 45.8)) * stretch)) * 865.04437 - (0.015 * 865.04437);
+
+    return (
+      <div className="relative w-full h-48 bg-stone-50 rounded-lg overflow-hidden">
+        <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.15" />
+
+          {/* City markers */}
+          <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
+          <text x="775" y="223" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zürich</text>
+
+          <circle cx="71.3" cy="672.8" r="7.5" fill="#6b7280" />
+          <text x="82" y="682" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Genf</text>
+
+          <circle cx="495.2" cy="147" r="7.5" fill="#6b7280" />
+          <text x="506" y="157" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Basel</text>
+
+          <circle cx="453.8" cy="362" r="7.5" fill="#6b7280" />
+          <text x="464" y="372" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Bern</text>
+
+          <circle cx="706.5" cy="351" r="7.5" fill="#6b7280" />
+          <text x="717" y="361" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Luzern</text>
+
+          {/* Event location marker (red pulsing dot) */}
+          <g>
+            <circle cx={x} cy={y} r="28" fill="#ef4444" opacity="0.2" />
+            <circle cx={x} cy={y} r="32" fill="#ef4444" opacity="0.5" />
+            <circle cx={x} cy={y} r="22" fill="#dc2626" className="animate-pulse" />
+          </g>
+        </svg>
+      </div>
+    );
+  };
 
   // 404
   if (!article) {
@@ -168,11 +190,11 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
+        <div className="max-w-4xl mx-auto px-6 py-20 text-center">
           <h1 className="text-3xl font-bold mb-4">
             {isEn ? "Article not found" : "Artikel nicht gefunden"}
           </h1>
-          <Link to={isEn ? "/en/magazine" : "/magazin"} className="text-indigo-600 hover:underline">
+          <Link to={isEn ? "/en/magazine" : "/magazin"} className="text-amber-600 hover:underline">
             {isEn ? "Back to Magazine" : "Zurück zum Magazin"}
           </Link>
         </div>
@@ -180,53 +202,33 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     );
   }
 
-  const title = isEn ? article.titleEn : article.title;
-  const description = isEn ? article.descriptionEn : article.description;
-  const currentSlug = isEn ? article.slugEn : article.slug;
-  const pageUrl = isEn
-    ? `${SITE_URL}/en/magazine/${currentSlug}`
-    : `${SITE_URL}/magazin/${currentSlug}`;
-  const pageTitle = `${title} | EventBuzzer`;
-  const category = getCategoryBySlug(article.category);
-
-  const magazinLabel = isEn ? "Magazine" : "Magazin";
-  const magazinHref = isEn ? "/en/magazine" : "/magazin";
-  const minLabel = isEn ? "min read" : "Min. Lesezeit";
-  const moreLabel = isEn ? "Discover more" : "Mehr erfahren";
-  const editorsPickTitle = isEn ? "Matching Exhibitions & Events" : "Passende Ausstellungen & Events";
-  const ticketLabel = isEn ? "Book ticket" : "Ticket buchen";
-
-  const relatedArticles = ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3);
+  const pageUrl = isEn ? `${SITE_URL}/en/magazine/${article.slugEn}` : `${SITE_URL}/magazin/${article.slug}`;
+  const otherLangUrl = isEn ? `${SITE_URL}/magazin/${article.slug}` : `${SITE_URL}/en/magazine/${article.slugEn}`;
+  const moreLabel = isEn ? "Learn more" : "Mehr erfahren";
+  const editorsPickTitle = isEn ? "Exhibitions and Events" : "Ausstellungen und Events";
 
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>{pageTitle}</title>
+        <title>{title} | EventBuzzer</title>
         <meta name="description" content={description} />
-        <meta property="og:title" content={pageTitle} />
+        <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="EventBuzzer" />
         <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content={article.heroImage.startsWith("http") ? article.heroImage : `${SITE_URL}${article.heroImage}`} />
-        <meta property="article:published_time" content={article.publishedDate} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={description} />
+        {orderedEvents[0]?.image_url && <meta property="og:image" content={orderedEvents[0].image_url} />}
         <link rel="canonical" href={pageUrl} />
-        <link rel="alternate" hreflang="de" href={`${SITE_URL}/magazin/${article.slug}`} />
-        <link rel="alternate" hreflang="en" href={`${SITE_URL}/en/magazine/${article.slugEn}`} />
+        <link rel="alternate" hrefLang={isEn ? "de" : "en"} href={otherLangUrl} />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             "headline": title,
             "description": description,
-            "image": article.heroImage.startsWith("http") ? article.heroImage : `${SITE_URL}${article.heroImage}`,
+            "url": pageUrl,
             "datePublished": article.publishedDate,
-            "author": { "@type": "Organization", "name": "EventBuzzer", "url": SITE_URL },
-            "publisher": { "@type": "Organization", "name": "EventBuzzer", "url": SITE_URL, "logo": { "@type": "ImageObject", "url": `${SITE_URL}/og-image.jpg` } },
-            "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
+            "author": { "@type": "Organization", "name": "EventBuzzer" },
+            "publisher": { "@type": "Organization", "name": "EventBuzzer", "url": SITE_URL },
             "inLanguage": isEn ? "en" : "de",
           })}
         </script>
@@ -234,8 +236,8 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       <Navbar />
 
-      {/* Hero – Full-width dark image with title overlay */}
-      <section className="relative h-[50vh] md:h-[70vh] overflow-hidden bg-stone-200">
+      {/* Hero – Full-width image with title overlay */}
+      <section className="relative h-[40vh] md:h-[50vh] overflow-hidden bg-stone-200">
         {orderedEvents[0]?.image_url && (
           <img
             src={orderedEvents[0].image_url}
@@ -245,40 +247,32 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-        <div className="absolute bottom-0 left-0 right-0 px-6 md:px-10 lg:px-16 pb-8 md:pb-12 lg:pb-16">
+        <div className="absolute bottom-0 left-0 right-0 px-6 md:px-10 lg:px-16 pb-8 md:pb-12">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-white font-black text-3xl md:text-5xl lg:text-6xl xl:text-7xl uppercase leading-none tracking-tight">
+            <h1 className="text-white font-black text-3xl md:text-4xl lg:text-5xl uppercase leading-tight tracking-tight">
               {title}
             </h1>
           </div>
         </div>
       </section>
 
-      {/* Meta bar – Breadcrumb + Language */}
-      <div className="bg-white border-b border-stone-200">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to={magazinHref} className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors">
-                <ArrowLeft size={14} />
-                {isEn ? "All articles" : "Alle Artikel"}
+      {/* Breadcrumb + Language Toggle */}
+      <div className="bg-white border-b border-stone-200 py-4">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-stone-500">
+              <Link to="/" className="hover:text-stone-700">Home</Link>
+              <span>/</span>
+              <Link to={isEn ? "/en/magazine" : "/magazin"} className="hover:text-stone-700">
+                {isEn ? "Magazine" : "Magazin"}
               </Link>
-              <span className="text-stone-300">·</span>
-              <div className="flex items-center gap-3 text-xs text-stone-400">
-                {category && (
-                  <span className="bg-stone-100 text-stone-600 px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider">
-                    {category.label}
-                  </span>
-                )}
-                <time>{new Date(article.publishedDate).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "long", year: "numeric" })}</time>
-                <span className="flex items-center gap-1">
-                  <Clock size={12} />
-                  {article.readingTime} {minLabel}
-                </span>
-              </div>
+              <span>/</span>
+              <span className="text-stone-900 font-medium">{title}</span>
             </div>
-            <Link to={isEn ? `/magazin/${article.slug}` : `/en/magazine/${article.slugEn}`}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-stone-300 text-sm text-stone-600 hover:bg-stone-50 transition-colors">
+            <Link
+              to={otherLangUrl}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-stone-200 text-xs hover:bg-stone-50 transition-colors"
+            >
               <span className={!isEn ? "font-bold" : ""}>DE</span>
               <span className="text-stone-300">|</span>
               <span className={isEn ? "font-bold" : ""}>EN</span>
@@ -288,185 +282,138 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       </div>
 
       {/* Intro text */}
-      {introSection && (
-        <section className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20">
+      {introText && (
+        <section className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-16">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
-            {introSection.body}
+            {introText}
           </p>
         </section>
       )}
 
-      {/* Editorial Layout – all articles use this consistent style */}
-      {numberedSections.map((section, i) => {
-        const event = orderedEvents[section.number! - 1];
-        const isImageLeft = i % 2 === 0;
-        const showQuote = i % 3 === 1;
+      {/* Article List – Vertical Layout */}
+      <section className="bg-white py-8">
+        <div className="max-w-6xl mx-auto px-6 md:px-10">
+          {sections.map((section, i) => {
+            const event = orderedEvents[i];
+            const showQuote = i % 3 === 1;
 
-        return (
-          <div key={section.number}>
-            {/* Spacing between sections */}
-            {i > 0 && <div className="h-16 md:h-24" />}
-
-            {/* Editorial Section – alternating image/text layout */}
-            <section className={`${i % 2 === 0 ? 'bg-white' : 'bg-stone-50'} py-8 md:py-0`}>
-              <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-                  {/* Image Block */}
-                  <div className={`h-[320px] md:h-[540px] lg:h-[600px] overflow-hidden bg-stone-200 ${isImageLeft ? '' : 'md:order-2'}`}>
-                    {event?.image_url && (
-                      <img
-                        src={event.image_url}
-                        alt={section.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover bg-stone-200"
-                      />
-                    )}
-                  </div>
-
-                  {/* Text Block */}
-                  <div className={`px-6 py-10 md:px-12 md:py-16 lg:px-20 lg:py-20 flex flex-col justify-center ${isImageLeft ? '' : 'md:order-1'}`}>
-                    <span className="text-amber-700 font-bold text-base md:text-lg mb-3">
-                      {String(section.number).padStart(2, '0')}.
-                    </span>
-                    <h2 className="font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-6 tracking-tight text-black">
-                      {section.title}
-                    </h2>
-                    <div className="prose prose-stone max-w-none mb-8 text-stone-600 leading-relaxed prose-p:mb-4 prose-strong:text-black prose-strong:font-bold">
-                      <ReactMarkdown>{section.body}</ReactMarkdown>
+            return (
+              <article key={i} className="mb-16 md:mb-20">
+                {/* Number + Title + Location */}
+                <div className="mb-6">
+                  <p className="text-xs uppercase tracking-widest text-stone-400 mb-2 font-semibold">
+                    {article.category}
+                  </p>
+                  <h2 className="text-2xl md:text-3xl font-bold uppercase leading-tight text-black mb-3">
+                    {String(i + 1).padStart(2, '0')}. {section.title}
+                  </h2>
+                  {event?.address_city && (
+                    <div className="flex items-center gap-2 text-stone-500 text-sm">
+                      <MapPin size={16} />
+                      <span>{decodeHtml(event.address_city)}, {isEn ? "Switzerland" : "Schweiz"}</span>
                     </div>
+                  )}
+                </div>
+
+                {/* Image */}
+                {event?.image_url && (
+                  <div className="relative h-[280px] md:h-[400px] overflow-hidden bg-stone-200 mb-6">
+                    <img
+                      src={event.image_url}
+                      alt={section.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Description */}
+                <div className="prose prose-stone max-w-none mb-6 text-stone-700 leading-relaxed">
+                  <p>{section.body}</p>
+                </div>
+
+                {/* Bold Highlights */}
+                {section.body.includes('**') && (
+                  <div className="mb-6 pl-4 border-l-4 border-amber-600">
+                    <p className="text-base font-bold text-stone-900 italic">
+                      {section.body.match(/\*\*(.+?)\*\*/)?.[1] || ''}
+                    </p>
+                  </div>
+                )}
+
+                {/* Pull Quote */}
+                {showQuote && extractQuote(section.body) && (
+                  <blockquote className="relative my-8 py-6 px-8 bg-stone-50">
+                    <span className="absolute top-2 left-2 text-5xl text-stone-300 font-serif leading-none">&ldquo;</span>
+                    <p className="text-lg md:text-xl font-black uppercase leading-tight text-stone-600 tracking-tight pl-6 pr-6">
+                      {extractQuote(section.body)}
+                    </p>
+                    <span className="absolute bottom-2 right-2 text-5xl text-stone-300 font-serif leading-none">&rdquo;</span>
+                  </blockquote>
+                )}
+
+                {/* Button + Map */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div className="flex flex-col justify-center">
                     {event && (
                       <button
                         onClick={() => openEventModal(String(event.id))}
-                        className="self-start bg-black text-white px-7 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors mb-8"
+                        className="inline-block bg-black text-white px-8 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
                       >
                         {moreLabel}
                       </button>
                     )}
-
-                    {/* Pull Quote – inside the section */}
-                    {showQuote && (
-                      <blockquote className="relative mt-8 pt-8 border-t border-stone-200">
-                        <span className="absolute -top-2 left-0 text-5xl md:text-6xl text-stone-300 font-serif leading-none">&ldquo;</span>
-                        <p className="text-lg md:text-xl font-black uppercase leading-tight text-stone-600 tracking-tight pl-8 pr-6">
-                          {extractQuote(section.body)}
-                        </p>
-                        <span className="absolute -bottom-4 right-0 text-5xl md:text-6xl text-stone-300 font-serif leading-none">&rdquo;</span>
-                      </blockquote>
-                    )}
                   </div>
+                  <SwissMap event={event} />
                 </div>
-              </div>
-            </section>
-          </div>
-        );
-      })}
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
-
-      {/* Editor's Pick – Exhibitions carousel (conditional) */}
+      {/* Editor's Pick Section */}
       {exhibitionEvents.length > 0 && (
-        <section className="bg-white py-16 border-t border-stone-200">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="font-black text-xl md:text-2xl uppercase text-center tracking-wider mb-3">
-              Editor's Pick:
+        <section className="bg-stone-50 py-16 border-t border-stone-200">
+          <div className="max-w-6xl mx-auto px-6 md:px-10">
+            <h2 className="font-black text-xl md:text-2xl uppercase tracking-wider mb-3">
+              {isEn ? "Related Events" : "Passende Events & Ausstellungen"}
             </h2>
-            <p className="text-center text-stone-500 mb-10 uppercase text-sm tracking-wider">
+            <p className="text-stone-500 mb-10 text-sm uppercase tracking-wider">
               {editorsPickTitle}
             </p>
 
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
-              </div>
-            ) : (
-              <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar">
-                {exhibitionEvents.map((e: any) => (
-                  <div key={e.id} className="min-w-[260px] md:min-w-[300px] snap-start flex-shrink-0">
-                    <div
-                      onClick={() => openEventModal(String(e.id))}
-                      className="cursor-pointer group"
-                    >
-                      <div className="relative h-[320px] md:h-[360px] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow bg-stone-200">
-                        {e.image_url && (
-                          <img
-                            src={e.image_url}
-                            alt={e.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 bg-stone-200"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      </div>
-                      <h3 className="font-semibold text-sm mb-1 line-clamp-2">{e.title}</h3>
-                      {e.start_date && (
-                        <p className="text-xs text-stone-500 mb-3">
-                          {new Date(e.start_date).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "short", year: "numeric" })}
-                        </p>
-                      )}
-                      <button className="text-xs font-semibold uppercase tracking-wider border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-colors">
-                        {ticketLabel}
-                      </button>
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {exhibitionEvents.map((e: any) => (
+                <div key={e.id} onClick={() => openEventModal(String(e.id))} className="cursor-pointer group">
+                  <div className="relative h-[260px] overflow-hidden bg-stone-200 mb-3">
+                    {e.image_url && (
+                      <img
+                        src={e.image_url}
+                        alt={e.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Related Articles */}
-      {relatedArticles.length > 0 && (
-        <section className="bg-stone-50 py-16 border-t border-stone-200">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-            <h2 className="font-black text-2xl md:text-3xl uppercase text-center mb-10 tracking-tight">
-              {isEn ? "More Articles" : "Weitere Artikel"}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {relatedArticles.map((related) => {
-                const relatedTitle = isEn ? related.titleEn : related.title;
-                const relatedSlug = isEn ? related.slugEn : related.slug;
-                const relatedHref = isEn ? `/en/magazine/${relatedSlug}` : `/magazin/${relatedSlug}`;
-                const relatedCat = getCategoryBySlug(related.category);
-
-                return (
-                  <Link key={related.slug} to={relatedHref} className="group block">
-                    <article className="bg-white rounded-xl overflow-hidden border border-stone-200 hover:shadow-lg transition-all duration-300">
-                      <div className="h-3 bg-gradient-to-r from-amber-600 to-amber-800" />
-                      <div className="p-5">
-                        {relatedCat && (
-                          <span className="bg-stone-100 text-stone-600 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded mb-2 inline-block">
-                            {relatedCat.label}
-                          </span>
-                        )}
-                        <h3 className="font-bold text-lg uppercase text-stone-900 line-clamp-2 group-hover:text-amber-700 transition-colors mb-2 leading-tight tracking-tight">
-                          {relatedTitle}
-                        </h3>
-                        <div className="text-sm text-amber-700 font-semibold uppercase tracking-wider">
-                          {isEn ? "Read article" : "Artikel lesen"} →
-                        </div>
-                      </div>
-                    </article>
-                  </Link>
-                );
-              })}
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{decodeHtml(e.title)}</h3>
+                  {e.address_city && (
+                    <p className="text-xs text-stone-500 flex items-center gap-1">
+                      <MapPin size={12} />
+                      {decodeHtml(e.address_city)}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* Event Detail Modal */}
-      {modalEvent && (
-        <EventDetailModal
-          event={modalEvent}
-          isOpen={modalOpen}
-          onClose={() => {
-            closeEventModal();
-            setModalEvent(null);
-          }}
-          variant="solid"
-        />
-      )}
-
-      <div className="h-8" />
+      <EventDetailModal
+        isOpen={!!selectedEventId}
+        onClose={closeEventModal}
+        eventId={selectedEventId}
+      />
     </div>
   );
 };
