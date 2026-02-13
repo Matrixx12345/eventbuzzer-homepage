@@ -59,7 +59,7 @@ const Index = () => {
         <meta name="p:domain_verify" content="408e9123d6ecb536115fd720ac898a2d"/>
         <meta property="og:title" content="EventBuzzer.ch Highlights – Kuratierte Events & Veranstaltungen" />
         <meta property="og:description" content="Entdecke unsere kuratierten Event-Highlights: MySwitzerland Favoriten, Familien-Abenteuer und Top-Erlebnisse." />
-        <meta property="og:site_name" content="EventBuzzer.ch" />
+        <meta property="og:site_name" content="EventBuzzer" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${SITE_URL}/highlights`} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />

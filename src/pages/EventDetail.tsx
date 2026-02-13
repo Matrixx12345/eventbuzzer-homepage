@@ -1080,6 +1080,7 @@ const EventDetail = () => {
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="EventBuzzer" />
         <meta property="og:url" content={pageUrl} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />

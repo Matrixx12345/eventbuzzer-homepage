@@ -231,6 +231,7 @@ const CityCategoryPage = () => {
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="EventBuzzer" />
         <meta property="og:url" content={pageUrl} />
         <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
         <meta property="og:image:width" content="1200" />
