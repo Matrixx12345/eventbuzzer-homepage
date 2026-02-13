@@ -115,71 +115,52 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
         </div>
       </section>
 
-      {/* Bento Grid */}
-      <section className="bg-white py-6 md:py-10">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-
-            {/* Featured – large card (2 cols, 2 rows) */}
-            <Link to={getHref(featured)} className="md:col-span-2 md:row-span-2 group block">
-              <div className="relative h-[320px] md:h-full md:min-h-[480px] rounded-2xl overflow-hidden bg-stone-200">
-                {getImage(featured) && (
-                  <img src={getImage(featured)} alt={getTitle(featured)} loading="eager"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/5" />
-                <div className="absolute bottom-0 left-0 p-6 md:p-10">
-                  <h2 className="text-white font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-4">
-                    {getTitle(featured)}
-                  </h2>
-                  <span className="inline-block bg-white text-black px-5 py-2.5 rounded-full text-sm font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors">
-                    {ctaLabel}
-                  </span>
-                </div>
+      {/* Featured Article – Hero Focus */}
+      <section className="bg-white py-10 md:py-16">
+        <div className="max-w-6xl mx-auto px-6 md:px-8">
+          <Link to={getHref(featured)} className="group block">
+            <div className="relative h-[400px] md:h-[500px] lg:h-[600px] rounded-3xl overflow-hidden bg-stone-200 shadow-lg">
+              {getImage(featured) && (
+                <img src={getImage(featured)} alt={getTitle(featured)} loading="eager"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/5" />
+              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 lg:p-16">
+                <h2 className="text-white font-black text-3xl md:text-4xl lg:text-5xl xl:text-6xl uppercase leading-none tracking-tight mb-6">
+                  {getTitle(featured)}
+                </h2>
+                <span className="inline-block bg-white text-black px-6 py-3 rounded-full text-sm font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors">
+                  {ctaLabel}
+                </span>
               </div>
-            </Link>
+            </div>
+          </Link>
+        </div>
+      </section>
 
-            {/* Right side – 2 stacked cards */}
-            {others.slice(0, 2).map(article => (
+      {/* Article Grid – 3 Columns */}
+      <section className="bg-white py-6 md:py-10">
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 lg:gap-12">
+            {others.map(article => (
               <Link key={article.slug} to={getHref(article)} className="group block">
-                <div className="relative h-[200px] md:h-full md:min-h-[230px] rounded-2xl overflow-hidden bg-stone-200">
+                <div className="relative h-[320px] md:h-[380px] rounded-2xl overflow-hidden bg-stone-200 shadow-md">
                   {getImage(article) && (
                     <img src={getImage(article)} alt={getTitle(article)} loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/5" />
-                  <div className="absolute bottom-0 left-0 p-5 md:p-6">
-                    <h2 className="text-white font-bold text-lg md:text-xl uppercase leading-tight mb-3">
+                  <div className="absolute bottom-0 left-0 p-6 md:p-7">
+                    <h2 className="text-white font-bold text-xl md:text-2xl uppercase leading-tight mb-4">
                       {getTitle(article)}
                     </h2>
-                    <span className="inline-block bg-white text-black px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors">
+                    <span className="inline-block bg-white text-black px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors">
                       {ctaLabel}
                     </span>
                   </div>
                 </div>
               </Link>
             ))}
-
-            {/* Bottom – full width banner card */}
-            {others.length > 2 && (
-              <Link to={getHref(others[2])} className="md:col-span-3 group block">
-                <div className="relative h-[200px] md:h-[220px] rounded-2xl overflow-hidden bg-stone-200">
-                  {getImage(others[2]) && (
-                    <img src={getImage(others[2])} alt={getTitle(others[2])} loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/5" />
-                  <div className="absolute bottom-0 left-0 p-5 md:p-8">
-                    <h2 className="text-white font-bold text-lg md:text-2xl uppercase leading-tight mb-3">
-                      {getTitle(others[2])}
-                    </h2>
-                    <span className="inline-block bg-white text-black px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors">
-                      {ctaLabel}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            )}
           </div>
         </div>
       </section>
