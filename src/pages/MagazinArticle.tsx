@@ -307,7 +307,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Intro text */}
       {introText && (
-        <section className="max-w-5xl mx-auto px-8 md:px-12 lg:px-20 py-12 md:py-16">
+        <section className="max-w-5xl mx-auto px-8 md:px-12 lg:px-20 py-8">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
             {introText}
           </p>
@@ -380,7 +380,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                         </button>
                       )}
                     </div>
-                    <div className="order-1 lg:order-2 max-h-[250px] lg:max-h-[300px]">
+                    <div className="order-1 lg:order-2 max-h-[100px] lg:max-h-[120px]">
                       <SwissMap event={event} />
                     </div>
                   </div>
