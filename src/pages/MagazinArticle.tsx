@@ -150,8 +150,8 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     const y = ((1 - ((event.latitude - 45.8) / (47.8 - 45.8)) * stretch)) * 865.04437 - (0.015 * 865.04437);
 
     return (
-      <div className="relative w-full h-full min-h-[200px] bg-transparent">
-        <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <div className="relative w-full bg-transparent">
+        <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
           <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.08" />
 
           {/* City markers with labels */}
@@ -307,7 +307,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Intro text */}
       {introText && (
-        <section className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-16">
+        <section className="max-w-5xl mx-auto px-8 md:px-12 lg:px-20 py-12 md:py-16">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
             {introText}
           </p>
@@ -316,7 +316,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Article List – Vertical Layout */}
       <section className="bg-white py-8">
-        <div className="max-w-6xl mx-auto px-6 md:px-10">
+        <div className="max-w-6xl mx-auto px-8 md:px-12 lg:px-20">
           {sections.map((section, i) => {
             const event = orderedEvents[i];
             const showQuote = i % 3 === 1;
@@ -368,6 +368,23 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                     </div>
                   )}
 
+                  {/* Map above, Button below - Now BEFORE quote */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 my-8">
+                    <div className="order-2 lg:order-1 flex flex-col justify-center">
+                      {event && (
+                        <button
+                          onClick={() => openEventModal(String(event.id))}
+                          className="inline-block bg-black text-white px-10 py-4 text-base font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors w-fit"
+                        >
+                          {moreLabel}
+                        </button>
+                      )}
+                    </div>
+                    <div className="order-1 lg:order-2 max-h-[250px] lg:max-h-[300px]">
+                      <SwissMap event={event} />
+                    </div>
+                  </div>
+
                   {/* Pull Quote - Simple style without background */}
                   {showQuote && extractQuote(section.body) && (
                     <blockquote className="my-10 text-center">
@@ -376,23 +393,6 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                       </p>
                     </blockquote>
                   )}
-
-                  {/* Map above, Button below */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                    <div className="order-2 lg:order-1 flex flex-col justify-center">
-                      {event && (
-                        <button
-                          onClick={() => openEventModal(String(event.id))}
-                          className="inline-block bg-black text-white px-10 py-4 text-base font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
-                        >
-                          {moreLabel}
-                        </button>
-                      )}
-                    </div>
-                    <div className="order-1 lg:order-2">
-                      <SwissMap event={event} />
-                    </div>
-                  </div>
                 </article>
               </div>
             );
@@ -403,7 +403,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       {/* Editor's Pick Section */}
       {exhibitionEvents.length > 0 && (
         <section className="bg-stone-50 py-16 border-t border-stone-200">
-          <div className="max-w-6xl mx-auto px-6 md:px-10">
+          <div className="max-w-6xl mx-auto px-8 md:px-12 lg:px-20">
             <h2 className="font-black text-xl md:text-2xl uppercase tracking-wider mb-3">
               {isEn ? "Related Events" : "Passende Events & Ausstellungen"}
             </h2>
