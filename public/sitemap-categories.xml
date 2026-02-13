@@ -4,120 +4,180 @@
     <loc>https://eventbuzzer.ch</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/eventlist1</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/listings</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/favorites</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/impressum</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/magazin</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/magazin/ausflug-in-die-berge</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/magazin/tag-in-zuerich</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/magazin/10-beste-museen-schweiz</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/magazin/sehenswuerdigkeiten-schweiz</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/en/magazine</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/en/magazine/mountain-excursion-switzerland</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/en/magazine/day-in-zurich</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/en/magazine/10-best-museums-switzerland</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
+  </url>
+  <url>
+    <loc>https://eventbuzzer.ch/en/magazine/unique-attractions-switzerland</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-02-13T11:11:25.504Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/museum</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/konzert</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/festival</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/wanderung</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/wellness</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/natur</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/theater</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/schloss</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/familie</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/kulinarik</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/sport</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/ausflug</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/stadt</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/see</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
   <url>
     <loc>https://eventbuzzer.ch/kategorie/must-see</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <lastmod>2026-02-12T21:47:34.849Z</lastmod>
+    <lastmod>2026-02-13T11:11:25.503Z</lastmod>
   </url>
 </urlset>

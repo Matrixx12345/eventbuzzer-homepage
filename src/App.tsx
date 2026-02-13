@@ -2,12 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
 import { TripPlannerProvider } from "./contexts/TripPlannerContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
 import Favorites from "./pages/Favorites";
 import EventList1 from "./pages/EventList1";
@@ -33,6 +32,8 @@ import ExitIntentPopup from "./components/ExitIntentPopup";
 import PartnerUpload from "./pages/PartnerUpload";
 import MobileBottomNav from "./components/MobileBottomNav";
 import Honeypot from "./pages/Honeypot";
+import MagazinLanding from "./pages/MagazinLanding";
+import MagazinArticle from "./pages/MagazinArticle";
 
 const queryClient = new QueryClient();
 
@@ -50,7 +51,12 @@ const App = () => (
             <ExitIntentPopup />
             <Routes>
               <Route path="/" element={<ErrorBoundary><EventList1 /></ErrorBoundary>} />
-              <Route path="/highlights" element={<Index />} />
+              {/* Magazin (replaces old Highlights) */}
+              <Route path="/magazin" element={<MagazinLanding />} />
+              <Route path="/magazin/:slug" element={<MagazinArticle />} />
+              <Route path="/en/magazine" element={<MagazinLanding lang="en" />} />
+              <Route path="/en/magazine/:slug" element={<MagazinArticle lang="en" />} />
+              <Route path="/highlights" element={<Navigate to="/magazin" replace />} />
               <Route path="/event/:slug" element={<EventDetail />} />
               {/* SEO Category Pages */}
               <Route path="/kategorie/:slug" element={<CategoryPage />} />

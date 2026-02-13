@@ -318,6 +318,17 @@ async function main() {
     generateURLEntry(`${SITE_URL}/listings`, 'daily', '0.8'),
     generateURLEntry(`${SITE_URL}/favorites`, 'weekly', '0.6'),
     generateURLEntry(`${SITE_URL}/impressum`, 'monthly', '0.3'),
+    // Magazine pages (DE + EN)
+    generateURLEntry(`${SITE_URL}/magazin`, 'weekly', '0.9'),
+    generateURLEntry(`${SITE_URL}/magazin/ausflug-in-die-berge`, 'monthly', '0.8'),
+    generateURLEntry(`${SITE_URL}/magazin/tag-in-zuerich`, 'monthly', '0.8'),
+    generateURLEntry(`${SITE_URL}/magazin/10-beste-museen-schweiz`, 'monthly', '0.8'),
+    generateURLEntry(`${SITE_URL}/magazin/sehenswuerdigkeiten-schweiz`, 'monthly', '0.8'),
+    generateURLEntry(`${SITE_URL}/en/magazine`, 'weekly', '0.8'),
+    generateURLEntry(`${SITE_URL}/en/magazine/mountain-excursion-switzerland`, 'monthly', '0.7'),
+    generateURLEntry(`${SITE_URL}/en/magazine/day-in-zurich`, 'monthly', '0.7'),
+    generateURLEntry(`${SITE_URL}/en/magazine/10-best-museums-switzerland`, 'monthly', '0.7'),
+    generateURLEntry(`${SITE_URL}/en/magazine/unique-attractions-switzerland`, 'monthly', '0.7'),
   ];
 
   const categorySitemap = generateSitemapXML([...staticURLs, ...categoryURLs]);

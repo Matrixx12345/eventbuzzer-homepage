@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Sparkles, Heart, Calendar } from "lucide-react";
+import { Home, BookOpen, Heart, Calendar } from "lucide-react";
 
 const MobileBottomNav = () => {
   const location = useLocation();
@@ -12,7 +12,7 @@ const MobileBottomNav = () => {
 
   const navItems = [
     { path: "/", label: "Events", icon: Home },
-    { path: "/highlights", label: "Highlights", icon: Sparkles },
+    { path: "/magazin", label: "Magazin", icon: BookOpen },
     { path: "/favorites", label: "Favoriten", icon: Heart },
     { path: "/reiseplaner", label: "Planer", icon: Calendar },
   ];
