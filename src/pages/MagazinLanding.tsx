@@ -98,22 +98,28 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
       {/* Dark Hero */}
       <section className="bg-black py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex items-center justify-between mb-4 md:mb-6">
-            <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none">
-              {heroTitle}
-            </h1>
-            <Link to={isEn ? "/magazin" : "/en/magazine"}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-sm text-white/60 hover:bg-white/10 transition-colors flex-shrink-0 ml-6">
-              <span className={!isEn ? "font-bold text-white" : ""}>DE</span>
-              <span className="text-white/30">|</span>
-              <span className={isEn ? "font-bold text-white" : ""}>EN</span>
-            </Link>
-          </div>
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tight leading-none mb-4 md:mb-6">
+            {heroTitle}
+          </h1>
           <p className="text-base md:text-lg text-white/50 max-w-2xl">
             {heroSubtitle}
           </p>
         </div>
       </section>
+
+      {/* Language Switch */}
+      <div className="bg-white py-4 border-b border-stone-200">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="flex justify-end">
+            <Link to={isEn ? "/magazin" : "/en/magazine"}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 text-sm text-stone-600 hover:bg-stone-50 transition-colors">
+              <span className={!isEn ? "font-bold text-black" : ""}>DE</span>
+              <span className="text-stone-300">|</span>
+              <span className={isEn ? "font-bold text-black" : ""}>EN</span>
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* Article Grid – 1 large, 3 small, 1 large, 3 small pattern */}
       <section className="bg-white py-10 md:py-16">
@@ -138,32 +144,16 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200"
                       />
                     )}
-                    {!isLarge && (
-                      <>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/5" />
-                        <div className="absolute bottom-0 left-0 p-6 md:p-7">
-                          <h2 className="text-white font-bold text-xl md:text-2xl uppercase leading-tight mb-4">
-                            {getTitle(article)}
-                          </h2>
-                          <span className="inline-block bg-white text-black px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors">
-                            {ctaLabel}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {isLarge && (
-                    <div className="flex justify-end mt-6 px-2">
-                      <div className="max-w-2xl text-right">
-                        <h2 className="text-black font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-4">
-                          {getTitle(article)}
-                        </h2>
-                        <span className="inline-block bg-black text-white px-6 py-3 rounded-full text-sm font-semibold uppercase tracking-wider group-hover:bg-stone-800 transition-colors">
-                          {ctaLabel}
-                        </span>
-                      </div>
+                    <div className={`absolute inset-0 bg-gradient-to-t ${isLarge ? 'from-black/85 via-black/35 to-black/5' : 'from-black/80 via-black/30 to-black/5'}`} />
+                    <div className={`absolute bottom-0 left-0 ${isLarge ? 'p-8 md:p-12 lg:p-16' : 'p-6 md:p-7'}`}>
+                      <h2 className={`text-white uppercase leading-tight mb-4 ${isLarge ? 'font-black text-3xl md:text-4xl lg:text-5xl tracking-tight' : 'font-bold text-xl md:text-2xl'}`}>
+                        {getTitle(article)}
+                      </h2>
+                      <span className={`inline-block ${isLarge ? 'bg-white text-black' : 'bg-white text-black'} px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors`}>
+                        {ctaLabel}
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </Link>
               );
             })}
