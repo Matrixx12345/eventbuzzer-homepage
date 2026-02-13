@@ -150,11 +150,11 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     const y = ((1 - ((event.latitude - 45.8) / (47.8 - 45.8)) * stretch)) * 865.04437 - (0.015 * 865.04437);
 
     return (
-      <div className="relative w-full h-48 bg-stone-50 rounded-lg overflow-hidden">
+      <div className="relative w-full h-full min-h-[200px] bg-transparent">
         <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.15" />
+          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.08" />
 
-          {/* City markers */}
+          {/* City markers with labels */}
           <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
           <text x="775" y="223" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zürich</text>
 
@@ -164,11 +164,35 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
           <circle cx="495.2" cy="147" r="7.5" fill="#6b7280" />
           <text x="506" y="157" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Basel</text>
 
+          <circle cx="214.7" cy="545" r="7.5" fill="#6b7280" />
+          <text x="225" y="555" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Lausanne</text>
+
           <circle cx="453.8" cy="362" r="7.5" fill="#6b7280" />
           <text x="464" y="372" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Bern</text>
 
+          <circle cx="576" cy="490" r="6" fill="#6b7280" />
+          <text x="586" y="500" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Interlaken</text>
+
+          <circle cx="828.0" cy="168" r="7" fill="#6b7280" />
+          <text x="838" y="178" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Winterthur</text>
+
           <circle cx="706.5" cy="351" r="7.5" fill="#6b7280" />
           <text x="717" y="361" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Luzern</text>
+
+          <circle cx="989" cy="167" r="7" fill="#6b7280" />
+          <text x="999" y="177" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">St. Gallen</text>
+
+          <circle cx="865" cy="768.2" r="7" fill="#6b7280" />
+          <text x="875" y="778" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Lugano</text>
+
+          <circle cx="1154" cy="546" r="6" fill="#6b7280" />
+          <text x="1164" y="556" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">St. Moritz</text>
+
+          <circle cx="542" cy="750" r="6" fill="#6b7280" />
+          <text x="552" y="760" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zermatt</text>
+
+          <circle cx="395.0" cy="301" r="6" fill="#6b7280" />
+          <text x="405" y="311" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Biel</text>
 
           {/* Event location marker (red pulsing dot) */}
           <g>
@@ -298,75 +322,79 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
             const showQuote = i % 3 === 1;
 
             return (
-              <article key={i} className="mb-16 md:mb-20">
-                {/* Number + Title + Location */}
-                <div className="mb-6">
-                  <p className="text-xs uppercase tracking-widest text-stone-400 mb-2 font-semibold">
-                    {article.category}
-                  </p>
-                  <h2 className="text-2xl md:text-3xl font-bold uppercase leading-tight text-black mb-3">
-                    {String(i + 1).padStart(2, '0')}. {section.title}
-                  </h2>
-                  {event?.address_city && (
-                    <div className="flex items-center gap-2 text-stone-500 text-sm">
-                      <MapPin size={16} />
-                      <span>{decodeHtml(event.address_city)}, {isEn ? "Switzerland" : "Schweiz"}</span>
-                    </div>
-                  )}
-                </div>
+              <div key={i}>
+                {/* Horizontal divider line */}
+                {i > 0 && <hr className="border-t border-stone-200 my-12 md:my-16" />}
 
-                {/* Image */}
-                {event?.image_url && (
-                  <div className="relative h-[280px] md:h-[400px] overflow-hidden bg-stone-200 mb-6">
-                    <img
-                      src={event.image_url}
-                      alt={section.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-
-                {/* Description */}
-                <div className="prose prose-stone max-w-none mb-6 text-stone-700 leading-relaxed">
-                  <p>{section.body}</p>
-                </div>
-
-                {/* Bold Highlights */}
-                {section.body.includes('**') && (
-                  <div className="mb-6 pl-4 border-l-4 border-amber-600">
-                    <p className="text-base font-bold text-stone-900 italic">
-                      {section.body.match(/\*\*(.+?)\*\*/)?.[1] || ''}
-                    </p>
-                  </div>
-                )}
-
-                {/* Pull Quote */}
-                {showQuote && extractQuote(section.body) && (
-                  <blockquote className="relative my-8 py-6 px-8 bg-stone-50">
-                    <span className="absolute top-2 left-2 text-5xl text-stone-300 font-serif leading-none">&ldquo;</span>
-                    <p className="text-lg md:text-xl font-black uppercase leading-tight text-stone-600 tracking-tight pl-6 pr-6">
-                      {extractQuote(section.body)}
-                    </p>
-                    <span className="absolute bottom-2 right-2 text-5xl text-stone-300 font-serif leading-none">&rdquo;</span>
-                  </blockquote>
-                )}
-
-                {/* Button + Map */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                  <div className="flex flex-col justify-center">
-                    {event && (
-                      <button
-                        onClick={() => openEventModal(String(event.id))}
-                        className="inline-block bg-black text-white px-8 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
-                      >
-                        {moreLabel}
-                      </button>
+                <article className="mb-12 md:mb-16">
+                  {/* Number + Title + Location */}
+                  <div className="mb-8">
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold uppercase leading-tight text-black mb-4">
+                      {String(i + 1).padStart(2, '0')}. {section.title}
+                    </h2>
+                    {event?.address_city && (
+                      <div className="flex items-center gap-2 text-stone-500 text-base md:text-lg">
+                        <MapPin size={20} />
+                        <span>{decodeHtml(event.address_city)}, {isEn ? "Switzerland" : "Schweiz"}</span>
+                      </div>
                     )}
                   </div>
-                  <SwissMap event={event} />
-                </div>
-              </article>
+
+                  {/* Image */}
+                  {event?.image_url && (
+                    <div className="relative h-[320px] md:h-[450px] lg:h-[500px] overflow-hidden bg-stone-200 mb-8">
+                      <img
+                        src={event.image_url}
+                        alt={section.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <div className="mb-8">
+                    <p className="text-base md:text-lg lg:text-xl text-stone-700 leading-relaxed">
+                      {section.body}
+                    </p>
+                  </div>
+
+                  {/* Bold Highlights */}
+                  {section.body.includes('**') && (
+                    <div className="mb-8 pl-6 border-l-4 border-amber-600">
+                      <p className="text-lg md:text-xl font-bold text-stone-900 italic leading-relaxed">
+                        {section.body.match(/\*\*(.+?)\*\*/)?.[1] || ''}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Pull Quote - Simple style without background */}
+                  {showQuote && extractQuote(section.body) && (
+                    <blockquote className="my-10 text-center">
+                      <p className="text-xl md:text-2xl lg:text-3xl italic text-stone-600 leading-relaxed">
+                        "{extractQuote(section.body)}"
+                      </p>
+                    </blockquote>
+                  )}
+
+                  {/* Map above, Button below */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                    <div className="order-2 lg:order-1 flex flex-col justify-center">
+                      {event && (
+                        <button
+                          onClick={() => openEventModal(String(event.id))}
+                          className="inline-block bg-black text-white px-10 py-4 text-base font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
+                        >
+                          {moreLabel}
+                        </button>
+                      )}
+                    </div>
+                    <div className="order-1 lg:order-2">
+                      <SwissMap event={event} />
+                    </div>
+                  </div>
+                </article>
+              </div>
             );
           })}
         </div>
