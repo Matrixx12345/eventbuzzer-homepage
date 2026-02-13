@@ -236,12 +236,14 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Hero – Full-width dark image with title overlay */}
       <section className="relative h-[50vh] md:h-[70vh] overflow-hidden bg-stone-200">
-        <img
-          src={orderedEvents[0]?.image_url || article.heroImage || "/og-image.jpg"}
-          alt={title}
-          loading="eager"
-          className="w-full h-full object-cover bg-stone-200"
-        />
+        {orderedEvents[0]?.image_url && (
+          <img
+            src={orderedEvents[0].image_url}
+            alt={title}
+            loading="eager"
+            className="w-full h-full object-cover bg-stone-200"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
         <div className="absolute bottom-0 left-0 right-0 px-6 md:px-10 lg:px-16 pb-8 md:pb-12 lg:pb-16">
           <div className="max-w-7xl mx-auto">
@@ -311,12 +313,14 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                   {/* Image Block */}
                   <div className={`h-[320px] md:h-[540px] lg:h-[600px] overflow-hidden bg-stone-200 ${isImageLeft ? '' : 'md:order-2'}`}>
-                    <img
-                      src={event?.image_url || "/og-image.jpg"}
-                      alt={section.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover bg-stone-200"
-                    />
+                    {event?.image_url && (
+                      <img
+                        src={event.image_url}
+                        alt={section.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover bg-stone-200"
+                      />
+                    )}
                   </div>
 
                   {/* Text Block */}
@@ -386,11 +390,13 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                       className="cursor-pointer group"
                     >
                       <div className="relative h-[320px] md:h-[360px] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow bg-stone-200">
-                        <img
-                          src={e.image_url || "/og-image.jpg"}
-                          alt={e.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 bg-stone-200"
-                        />
+                        {e.image_url && (
+                          <img
+                            src={e.image_url}
+                            alt={e.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 bg-stone-200"
+                          />
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       </div>
                       <h3 className="font-semibold text-sm mb-1 line-clamp-2">{e.title}</h3>
