@@ -235,16 +235,16 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       <Navbar />
 
       {/* Hero – Full-width dark image with title overlay */}
-      <section className="relative h-[50vh] md:h-[70vh] overflow-hidden">
+      <section className="relative h-[50vh] md:h-[70vh] overflow-hidden bg-stone-200">
         <img
           src={orderedEvents[0]?.image_url || article.heroImage || "/og-image.jpg"}
           alt={title}
           loading="eager"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover bg-stone-200"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-20">
-          <div className="max-w-6xl mx-auto">
+        <div className="absolute bottom-0 left-0 right-0 px-6 md:px-10 lg:px-16 pb-8 md:pb-12 lg:pb-16">
+          <div className="max-w-7xl mx-auto">
             <h1 className="text-white font-black text-3xl md:text-5xl lg:text-6xl xl:text-7xl uppercase leading-none tracking-tight">
               {title}
             </h1>
@@ -287,7 +287,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Intro text */}
       {introSection && (
-        <section className="max-w-4xl mx-auto px-6 py-12 md:py-16">
+        <section className="max-w-5xl mx-auto px-6 md:px-10 py-16 md:py-20">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
             {introSection.body}
           </p>
@@ -302,35 +302,38 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
         return (
           <div key={section.number}>
+            {/* Spacing between sections */}
+            {i > 0 && <div className="h-16 md:h-24" />}
+
             {/* Editorial Section – alternating image/text layout */}
-            <section className={`${i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}`}>
+            <section className={`${i % 2 === 0 ? 'bg-white' : 'bg-stone-50'} py-8 md:py-0`}>
               <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                   {/* Image Block */}
-                  <div className={`h-[280px] md:h-[500px] overflow-hidden ${isImageLeft ? '' : 'md:order-2'}`}>
+                  <div className={`h-[320px] md:h-[540px] lg:h-[600px] overflow-hidden bg-stone-200 ${isImageLeft ? '' : 'md:order-2'}`}>
                     <img
                       src={event?.image_url || "/og-image.jpg"}
                       alt={section.title}
                       loading="lazy"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover bg-stone-200"
                     />
                   </div>
 
                   {/* Text Block */}
-                  <div className={`p-8 md:p-12 lg:p-16 flex flex-col justify-center ${isImageLeft ? '' : 'md:order-1'}`}>
-                    <span className="text-amber-700 font-bold text-lg md:text-xl mb-2">
+                  <div className={`px-6 py-10 md:px-12 md:py-16 lg:px-20 lg:py-20 flex flex-col justify-center ${isImageLeft ? '' : 'md:order-1'}`}>
+                    <span className="text-amber-700 font-bold text-base md:text-lg mb-3">
                       {String(section.number).padStart(2, '0')}.
                     </span>
-                    <h2 className="font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-5 tracking-tight text-black">
+                    <h2 className="font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-6 tracking-tight text-black">
                       {section.title}
                     </h2>
-                    <div className="prose prose-stone max-w-none mb-6 text-stone-600 leading-relaxed prose-p:mb-3 prose-strong:text-black prose-strong:font-bold">
+                    <div className="prose prose-stone max-w-none mb-8 text-stone-600 leading-relaxed prose-p:mb-4 prose-strong:text-black prose-strong:font-bold">
                       <ReactMarkdown>{section.body}</ReactMarkdown>
                     </div>
                     {event && (
                       <button
                         onClick={() => openEventModal(String(event.id))}
-                        className="self-start bg-black text-white px-6 py-3 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
+                        className="self-start bg-black text-white px-7 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
                       >
                         {moreLabel}
                       </button>
@@ -342,14 +345,14 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
             {/* Pull Quote – between some sections */}
             {showQuote && (
-              <section className="bg-stone-100 py-12 md:py-16">
-                <div className="max-w-4xl mx-auto px-8 md:px-16">
-                  <blockquote className="relative">
-                    <span className="absolute -top-4 -left-2 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&ldquo;</span>
-                    <p className="text-xl md:text-2xl lg:text-3xl font-black uppercase leading-tight text-stone-700 tracking-tight pl-8">
+              <section className="bg-stone-100 py-16 md:py-20 my-16 md:my-24">
+                <div className="max-w-4xl mx-auto px-6 md:px-12">
+                  <blockquote className="relative py-8">
+                    <span className="absolute -top-2 -left-2 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&ldquo;</span>
+                    <p className="text-xl md:text-2xl lg:text-3xl font-black uppercase leading-tight text-stone-700 tracking-tight px-8 md:px-12">
                       {extractQuote(section.body)}
                     </p>
-                    <span className="absolute -bottom-8 right-0 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&rdquo;</span>
+                    <span className="absolute -bottom-6 right-2 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&rdquo;</span>
                   </blockquote>
                 </div>
               </section>
@@ -372,7 +375,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
             {loading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
               </div>
             ) : (
               <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar">
@@ -382,11 +385,11 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                       onClick={() => openEventModal(String(e.id))}
                       className="cursor-pointer group"
                     >
-                      <div className="relative h-[320px] md:h-[360px] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
+                      <div className="relative h-[320px] md:h-[360px] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow bg-stone-200">
                         <img
                           src={e.image_url || "/og-image.jpg"}
                           alt={e.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 bg-stone-200"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       </div>
