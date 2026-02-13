@@ -121,42 +121,109 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
         </div>
       </div>
 
-      {/* Article Grid – 1 large, 3 small, 1 large, 3 small pattern */}
-      <section className="bg-white py-10 md:py-16">
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 lg:gap-12">
-            {[featured, ...others].map((article, i) => {
-              const isLarge = i % 4 === 0;
-              const isFeatured = i === 0;
+      {/* Featured Article – Editorial Style */}
+      <section className="bg-white py-12 md:py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
+          <Link to={getHref(featured)} className="group block">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Image */}
+              <div className="relative h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden bg-stone-200">
+                {getImage(featured) && (
+                  <img
+                    src={getImage(featured)}
+                    alt={getTitle(featured)}
+                    loading="eager"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200"
+                  />
+                )}
+              </div>
+              {/* Content */}
+              <div className="flex flex-col justify-center">
+                <p className="text-xs uppercase tracking-widest text-stone-400 mb-4 font-semibold">
+                  {featured.category}
+                </p>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold uppercase leading-tight mb-6 text-black">
+                  {getTitle(featured)}
+                </h2>
+                <p className="text-base md:text-lg text-stone-600 leading-relaxed mb-8">
+                  {isEn ? featured.descriptionEn : featured.description}
+                </p>
+                <div>
+                  <span className="inline-block bg-amber-600 text-white px-8 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-amber-700 transition-colors">
+                    {isEn ? "Read feature story" : "Feature Story lesen"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
 
-              return (
-                <Link
-                  key={article.slug}
-                  to={getHref(article)}
-                  className={`group block ${isLarge ? 'lg:col-span-3' : ''}`}
-                >
-                  <div className={`relative ${isLarge ? 'h-[400px] md:h-[500px]' : 'h-[320px] md:h-[380px]'} rounded-3xl overflow-hidden bg-stone-200 shadow-lg`}>
+      {/* Two Article Grid – Horizontal Cards */}
+      <section className="bg-stone-50 py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            {others.slice(0, 2).map(article => (
+              <Link key={article.slug} to={getHref(article)} className="group block">
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 items-start">
+                  {/* Image */}
+                  <div className="sm:col-span-2 relative h-[200px] sm:h-[180px] overflow-hidden bg-stone-200">
                     {getImage(article) && (
                       <img
                         src={getImage(article)}
                         alt={getTitle(article)}
-                        loading={isFeatured ? "eager" : "lazy"}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200"
                       />
                     )}
-                    <div className={`absolute inset-0 bg-gradient-to-t ${isLarge ? 'from-black/85 via-black/35 to-black/5' : 'from-black/80 via-black/30 to-black/5'}`} />
-                    <div className={`absolute bottom-0 left-0 ${isLarge ? 'p-8 md:p-12 lg:p-16' : 'p-6 md:p-7'}`}>
-                      <h2 className={`text-white uppercase leading-tight mb-4 ${isLarge ? 'font-black text-3xl md:text-4xl lg:text-5xl tracking-tight' : 'font-bold text-xl md:text-2xl'}`}>
-                        {getTitle(article)}
-                      </h2>
-                      <span className={`inline-block ${isLarge ? 'bg-white text-black' : 'bg-white text-black'} px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider group-hover:bg-stone-100 transition-colors`}>
-                        {ctaLabel}
-                      </span>
-                    </div>
                   </div>
-                </Link>
-              );
-            })}
+                  {/* Content */}
+                  <div className="sm:col-span-3">
+                    <h3 className="text-xl md:text-2xl font-bold uppercase leading-tight mb-3 text-black">
+                      {getTitle(article)}
+                    </h3>
+                    <p className="text-sm md:text-base text-stone-600 leading-relaxed mb-4 line-clamp-3">
+                      {isEn ? article.descriptionEn : article.description}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Article Grid – 3 Columns */}
+      <section className="bg-white py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
+            {others.slice(2).map(article => (
+              <Link key={article.slug} to={getHref(article)} className="group block">
+                {/* Image */}
+                <div className="relative h-[240px] md:h-[280px] overflow-hidden bg-stone-200 mb-6">
+                  {getImage(article) && (
+                    <img
+                      src={getImage(article)}
+                      alt={getTitle(article)}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-stone-200"
+                    />
+                  )}
+                </div>
+                {/* Content */}
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-stone-400 mb-2 font-semibold">
+                    {article.category}
+                  </p>
+                  <h3 className="text-xl md:text-2xl font-bold uppercase leading-tight mb-3 text-black">
+                    {getTitle(article)}
+                  </h3>
+                  <p className="text-sm text-stone-600 leading-relaxed line-clamp-3">
+                    {isEn ? article.descriptionEn : article.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
