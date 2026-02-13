@@ -307,7 +307,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Intro text */}
       {introText && (
-        <section className="max-w-5xl mx-auto px-8 md:px-12 lg:px-20 py-0">
+        <section className="max-w-6xl mx-auto px-8 md:px-12 lg:px-20 py-8">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
             {introText}
           </p>
@@ -330,7 +330,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                   {/* Title + Location + SVG in grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <div>
-                      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold uppercase leading-tight text-black mb-4">
+                      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold uppercase leading-tight text-black mb-4">
                         {String(i + 1).padStart(2, '0')}. {section.title}
                       </h2>
                       {event?.address_city && (
@@ -340,7 +340,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-start justify-end max-h-[80px] lg:max-h-[100px]">
+                    <div className="flex items-start justify-end max-h-[40px] lg:max-h-[50px]">
                       <SwissMap event={event} />
                     </div>
                   </div>
