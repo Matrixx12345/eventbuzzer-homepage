@@ -152,7 +152,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     return (
       <div className="relative w-full bg-transparent">
         <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
-          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.08" />
+          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.18" />
 
           {/* City markers with labels */}
           <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
@@ -340,7 +340,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-start justify-end max-w-[136px] lg:max-w-[170px] ml-auto z-10 relative">
+                    <div className="flex items-start justify-end max-w-[204px] lg:max-w-[255px] ml-auto z-10 relative">
                       <SwissMap event={event} />
                     </div>
                   </div>
