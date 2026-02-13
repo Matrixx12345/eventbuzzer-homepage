@@ -289,7 +289,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Intro text */}
       {introSection && (
-        <section className="max-w-5xl mx-auto px-6 md:px-10 py-16 md:py-20">
+        <section className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-20">
           <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
             {introSection.body}
           </p>
@@ -300,7 +300,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       {numberedSections.map((section, i) => {
         const event = orderedEvents[section.number! - 1];
         const isImageLeft = i % 2 === 0;
-        const showQuote = i % 3 === 1 && i < numberedSections.length - 1;
+        const showQuote = i % 3 === 1;
 
         return (
           <div key={section.number}>
@@ -337,30 +337,26 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                     {event && (
                       <button
                         onClick={() => openEventModal(String(event.id))}
-                        className="self-start bg-black text-white px-7 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
+                        className="self-start bg-black text-white px-7 py-3.5 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors mb-8"
                       >
                         {moreLabel}
                       </button>
+                    )}
+
+                    {/* Pull Quote – inside the section */}
+                    {showQuote && (
+                      <blockquote className="relative mt-8 pt-8 border-t border-stone-200">
+                        <span className="absolute -top-2 left-0 text-5xl md:text-6xl text-stone-300 font-serif leading-none">&ldquo;</span>
+                        <p className="text-lg md:text-xl font-black uppercase leading-tight text-stone-600 tracking-tight pl-8 pr-6">
+                          {extractQuote(section.body)}
+                        </p>
+                        <span className="absolute -bottom-4 right-0 text-5xl md:text-6xl text-stone-300 font-serif leading-none">&rdquo;</span>
+                      </blockquote>
                     )}
                   </div>
                 </div>
               </div>
             </section>
-
-            {/* Pull Quote – between some sections */}
-            {showQuote && (
-              <section className="bg-stone-100 py-16 md:py-20 my-16 md:my-24">
-                <div className="max-w-4xl mx-auto px-6 md:px-12">
-                  <blockquote className="relative py-8">
-                    <span className="absolute -top-2 -left-2 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&ldquo;</span>
-                    <p className="text-xl md:text-2xl lg:text-3xl font-black uppercase leading-tight text-stone-700 tracking-tight px-8 md:px-12">
-                      {extractQuote(section.body)}
-                    </p>
-                    <span className="absolute -bottom-6 right-2 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&rdquo;</span>
-                  </blockquote>
-                </div>
-              </section>
-            )}
           </div>
         );
       })}
