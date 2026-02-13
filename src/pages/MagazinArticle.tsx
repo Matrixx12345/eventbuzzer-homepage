@@ -152,7 +152,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     return (
       <div className="relative w-full bg-transparent">
         <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
-          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.35" style="filter: sepia(0.4) saturate(1.5) hue-rotate(20deg);" />
+          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.35" style={{ filter: "sepia(0.4) saturate(1.5) hue-rotate(20deg)" }} />
 
           {/* City markers with labels */}
           <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
