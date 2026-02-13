@@ -1,156 +1,63 @@
 import { useParams, Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
-import { Clock, ArrowLeft, ArrowRight } from "lucide-react";
+import { Clock, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { SITE_URL } from "@/config/constants";
 import { ARTICLES, getArticleBySlug, getArticleByEnSlug } from "@/config/articles";
 import { getCategoryBySlug } from "@/config/categories";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
-import { getNearestPlace } from "@/utils/swissPlaces";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Loader2 } from "lucide-react";
 import { useEventModal } from "@/hooks/useEventModal";
 import { EventDetailModal } from "@/components/EventDetailModal";
-import ActionPill from "@/components/ActionPill";
 
 interface MagazinArticleProps {
   lang?: "de" | "en";
 }
 
-// Location helper (same logic as homepage CleanGridSection)
-const getCardLocation = (event: any): string => {
-  const countryNames = ["schweiz", "switzerland", "suisse", "svizzera", "germany", "deutschland", "france", "frankreich", "austria", "österreich", "italy", "italien", "liechtenstein"];
-  const isCountry = (str?: string) => {
-    if (!str) return true;
-    return countryNames.includes(str.toLowerCase().trim());
-  };
-  const city = event.address_city?.trim();
-  if (city && city.length > 0 && !isCountry(city)) return city;
-  if (event.venue_name && event.venue_name.trim() !== event.title.trim() && !isCountry(event.venue_name)) return event.venue_name.trim();
-  if (event.location && !isCountry(event.location)) return event.location.trim();
-  if (event.latitude && event.longitude) return getNearestPlace(event.latitude, event.longitude);
-  return "Schweiz";
+interface ParsedSection {
+  type: 'intro' | 'numbered' | 'heading';
+  number?: number;
+  title?: string;
+  body: string;
+}
+
+// Parse markdown into sections (auto-number all h2 sections for consistent editorial layout)
+const parseSections = (md: string): ParsedSection[] => {
+  if (!md) return [];
+  const chunks = md.split(/\n(?=## )/);
+  let sectionNumber = 1;
+
+  return chunks.map((chunk, i) => {
+    if (i === 0 && !chunk.startsWith('## ')) {
+      return { type: 'intro', body: chunk.trim() };
+    }
+    const numMatch = chunk.match(/^## (\d+)\.\s*(.+?)\n([\s\S]*)/);
+    if (numMatch) {
+      const num = parseInt(numMatch[1]);
+      sectionNumber = num + 1;
+      return { type: 'numbered', number: num, title: numMatch[2].trim(), body: numMatch[3].trim() };
+    }
+    const headMatch = chunk.match(/^## (.+?)\n([\s\S]*)/);
+    if (headMatch) {
+      // Auto-number non-numbered h2 sections for consistent editorial layout
+      const num = sectionNumber++;
+      return { type: 'numbered', number: num, title: headMatch[1].trim(), body: headMatch[2].trim() };
+    }
+    return { type: 'intro', body: chunk.trim() };
+  }).filter(s => s.body.length > 0);
 };
 
-// Category helper (same logic as homepage CleanGridSection)
-const getCategoryLabel = (event: any): string | undefined => {
-  const subCat = (event.category_sub_id || event.sub_category || '').toString().toLowerCase();
-  const tags = Array.isArray(event.tags) ? event.tags.join(' ').toLowerCase() : '';
-  const title = (event.title || '').toLowerCase();
-  const combined = `${subCat} ${tags} ${title}`;
-  if (combined.includes('museum') || combined.includes('kunst') || combined.includes('galer') || combined.includes('ausstellung')) return 'Museum';
-  if (combined.includes('wanderung') || combined.includes('trail') || combined.includes('hike')) return 'Wanderung';
-  if (combined.includes('wellness') || combined.includes('spa') || combined.includes('therm') || combined.includes('bad')) return 'Wellness';
-  if (combined.includes('natur') || combined.includes('park') || combined.includes('garten') || combined.includes('wald')) return 'Natur';
-  if (combined.includes('sehenswürdig') || combined.includes('attraction')) return 'Ausflug';
-  if (combined.includes('schloss') || combined.includes('burg') || combined.includes('castle')) return 'Schloss';
-  if (combined.includes('kirche') || combined.includes('kloster') || combined.includes('dom') || combined.includes('münster')) return 'Kultur';
-  if (combined.includes('zoo') || combined.includes('tier') || combined.includes('aquar')) return 'Tierpark';
-  if (combined.includes('familie') || combined.includes('kinder') || combined.includes('family')) return 'Familie';
-  if (combined.includes('wissenschaft') || combined.includes('technik') || combined.includes('science') || combined.includes('planetar')) return 'Science';
-  if (combined.includes('konzert') || combined.includes('music') || combined.includes('live')) return 'Konzert';
-  if (combined.includes('theater') || combined.includes('oper') || combined.includes('bühne')) return 'Theater';
-  if (combined.includes('sport')) return 'Sport';
-  if (combined.includes('festival') || combined.includes('fest')) return 'Festival';
-  if (combined.includes('food') || combined.includes('kulinar') || combined.includes('gastro') || combined.includes('wein') || combined.includes('käse')) return 'Kulinarik';
-  if (combined.includes('nightlife') || combined.includes('party') || combined.includes('club')) return 'Nightlife';
-  if (combined.includes('aussicht') || combined.includes('view') || combined.includes('panorama') || combined.includes('berg')) return 'Aussicht';
-  if ((combined.includes('see') || combined.includes('lake') || combined.includes('schiff')) && !combined.includes('must-see')) return 'See';
-  if (combined.includes('bahn') || combined.includes('zug') || combined.includes('train')) return 'Bahn';
-  if (combined.includes('altstadt') || combined.includes('city') || combined.includes('stadt')) return 'Stadt';
-  if (combined.includes('erlebnis')) return 'Erlebnis';
-  if (event.source === 'myswitzerland') return 'Ausflug';
-  return undefined;
-};
-
-// Style 1: CleanGridCard – dark overlay, full-bleed image (same as homepage)
-const DarkEventCard = ({ event, onClick }: { event: any; onClick: () => void }) => {
-  const loc = getCardLocation(event);
-  const cat = getCategoryLabel(event);
-  return (
-    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }} className="block h-full cursor-pointer">
-      <article className="relative h-full rounded-2xl overflow-visible group">
-        <div className="absolute inset-0 rounded-2xl overflow-hidden">
-          <img src={event.image_url || "/og-image.jpg"} alt={event.title} loading="lazy"
-            className="w-full h-full object-cover transition-all duration-500 blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08] group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
-        </div>
-        {cat && (
-          <div className="absolute top-4 left-4 z-10">
-            <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">{cat}</span>
-          </div>
-        )}
-        <div className="relative h-full flex flex-col justify-end p-5">
-          <h3 className="font-serif text-white text-xl lg:text-2xl font-semibold leading-tight mb-1 line-clamp-2">{event.title}</h3>
-          <div className="group/map relative inline-flex items-center gap-1 text-white/80 text-sm cursor-help mb-3">
-            <span className="border-b border-dotted border-white/40 hover:text-white transition-colors">{loc}</span>
-            {event.latitude && event.longitude && (
-              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-40 h-28 overflow-hidden flex items-center justify-center">
-                  <div className="relative w-full h-full">
-                    <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
-                    <div className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm shadow-black/50"
-                      style={{ left: `${(event.longitude - 5.9) / (10.5 - 5.9) * 100}%`, top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%` }} />
-                  </div>
-                </div>
-                <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
-              </div>
-            )}
-          </div>
-          <ActionPill eventId={String(event.id)} slug={String(event.id)} image={event.image_url || "/og-image.jpg"}
-            title={event.title} location={loc} buzzScore={event.buzz_score} ticketUrl={event.ticket_link} variant="dark" event={event} />
-        </div>
-      </article>
-    </div>
-  );
-};
-
-// Style 2: CompactCard – white card, image left + text right (same as homepage SideBySideSection)
-const LightEventCard = ({ event, onClick }: { event: any; onClick: () => void }) => {
-  const loc = getCardLocation(event);
-  const cat = getCategoryLabel(event);
-  const desc = event.description || event.short_description || "";
-  return (
-    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }} className="block cursor-pointer">
-      <div className="bg-white rounded-2xl overflow-visible group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-stone-300 shadow-md border border-stone-200 flex flex-col md:grid md:grid-cols-[55%_45%] h-auto md:h-[280px]">
-        <div className="relative overflow-hidden rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none h-[180px] md:h-full">
-          <img src={event.image_url || "/og-image.jpg"} alt={event.title} loading="lazy"
-            className="w-full h-full object-cover transition-all duration-500 blur-[0.3px] saturate-[1.12] contrast-[1.03] brightness-[1.03] sepia-[0.08] group-hover:scale-105 group-hover:saturate-[1.18] group-hover:sepia-0 group-hover:blur-0" />
-          <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.08)] pointer-events-none" />
-          {cat && (
-            <div className="absolute top-4 left-4 z-10">
-              <span className="bg-white/70 backdrop-blur-sm text-stone-700 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">{cat}</span>
-            </div>
-          )}
-        </div>
-        <div className="p-3 px-4 md:p-4 md:px-6 flex flex-col justify-end h-full">
-          <div className="group/map relative inline-flex items-center mb-1">
-            <span className="text-[10px] md:text-[11px] font-medium tracking-widest text-stone-400 uppercase">{loc}</span>
-            {event.latitude && event.longitude && (
-              <div className="absolute bottom-full left-0 mb-3 hidden group-hover/map:block z-50 animate-in fade-in zoom-in duration-200">
-                <div className="bg-white p-2 rounded-xl shadow-2xl border border-gray-200 w-36 h-24 overflow-hidden flex items-center justify-center">
-                  <div className="relative w-full h-full">
-                    <img src="/swiss-outline.svg" className="w-full h-full object-contain opacity-20" alt="CH Map" />
-                    <div className="absolute w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white shadow-sm"
-                      style={{ left: `${(event.longitude - 5.9) / (10.5 - 5.9) * 100}%`, top: `${(1 - (event.latitude - 45.8) / (47.8 - 45.8)) * 100}%` }} />
-                  </div>
-                </div>
-                <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 -mt-1.5 ml-4 shadow-sm" />
-              </div>
-            )}
-          </div>
-          <h3 className="font-serif text-lg md:text-xl font-semibold text-[#1a1a1a] mb-1 md:mb-2 line-clamp-1 group-hover:line-clamp-2 leading-tight transition-all duration-200">{event.title}</h3>
-          <p className="text-stone-500 text-xs md:text-sm leading-relaxed line-clamp-2 md:line-clamp-3 mb-3 md:mb-8">{desc}</p>
-          <ActionPill eventId={String(event.id)} slug={String(event.id)} image={event.image_url || "/og-image.jpg"}
-            title={event.title} location={loc} buzzScore={event.buzz_score} ticketUrl={event.ticket_link} variant="light" event={event} />
-        </div>
-      </div>
-    </div>
-  );
+// Extract a quote from section body (first sentence)
+const extractQuote = (body: string): string => {
+  const sentences = body.split(/[.!?]+/).filter(s => s.trim().length > 40);
+  if (sentences.length > 0) {
+    return sentences[0].trim().replace(/\*\*/g, '').toUpperCase();
+  }
+  return '';
 };
 
 const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
@@ -166,6 +73,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
   const [markdownContent, setMarkdownContent] = useState<string>("");
   const [events, setEvents] = useState<any[]>([]);
+  const [exhibitionEvents, setExhibitionEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalEvent, setModalEvent] = useState<any>(null);
 
@@ -178,7 +86,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       setModalEvent(null);
       return;
     }
-    const found = events.find((e: any) => String(e.id) === String(selectedEventId));
+    const found = [...events, ...exhibitionEvents].find((e: any) => String(e.id) === String(selectedEventId));
     if (found) {
       setModalEvent(found);
     } else {
@@ -188,7 +96,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       };
       loadEvent();
     }
-  }, [selectedEventId, modalOpen, events]);
+  }, [selectedEventId, modalOpen, events, exhibitionEvents]);
 
   // Fetch markdown content
   useEffect(() => {
@@ -204,7 +112,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       .catch(() => setMarkdownContent(""));
   }, [article, isEn]);
 
-  // Fetch events – select ALL fields for modal and ActionPill
+  // Fetch main events
   useEffect(() => {
     if (!article || article.eventIds.length === 0) {
       setLoading(false);
@@ -222,9 +130,34 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     fetchEvents();
   }, [article]);
 
-  // Determine card style: alternate based on article index
-  const articleIndex = article ? ARTICLES.findIndex(a => a.slug === article.slug) : 0;
-  const useDarkCards = articleIndex % 2 === 0;
+  // Fetch exhibition events (for Editor's Pick)
+  useEffect(() => {
+    if (!article || !article.exhibitionIds || article.exhibitionIds.length === 0) {
+      setExhibitionEvents([]);
+      return;
+    }
+    const fetchExhibitions = async () => {
+      const { data, error } = await externalSupabase
+        .from("events")
+        .select("*")
+        .in("id", article.exhibitionIds);
+      if (!error && data) setExhibitionEvents(data);
+    };
+    fetchExhibitions();
+  }, [article]);
+
+  // Order events to match eventIds order
+  const orderedEvents = useMemo(() => {
+    if (!article) return [];
+    return article.eventIds
+      .map(id => events.find(e => String(e.id) === id))
+      .filter(Boolean) as any[];
+  }, [article, events]);
+
+  // Parse markdown sections (all h2 sections are now auto-numbered for editorial layout)
+  const sections = useMemo(() => parseSections(markdownContent), [markdownContent]);
+  const numberedSections = sections.filter(s => s.type === 'numbered');
+  const introSection = sections.find(s => s.type === 'intro');
 
   // 404
   if (!article) {
@@ -258,16 +191,12 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
   const magazinLabel = isEn ? "Magazine" : "Magazin";
   const magazinHref = isEn ? "/en/magazine" : "/magazin";
-  const eventsTitle = isEn ? "Matching Events" : "Passende Events";
-  const eventsSubtitle = isEn
-    ? "Hand-picked events related to this article"
-    : "Handverlesene Events passend zu diesem Artikel";
-  const moreArticlesTitle = isEn ? "More Articles" : "Weitere Artikel";
-  const readLabel = isEn ? "Read article" : "Artikel lesen";
   const minLabel = isEn ? "min read" : "Min. Lesezeit";
+  const moreLabel = isEn ? "Discover more" : "Mehr erfahren";
+  const editorsPickTitle = isEn ? "Matching Exhibitions & Events" : "Passende Ausstellungen & Events";
+  const ticketLabel = isEn ? "Book ticket" : "Ticket buchen";
 
   const relatedArticles = ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3);
-  const eventsWithImages = events.filter((e: any) => e.image_url);
 
   return (
     <div className="min-h-screen bg-white">
@@ -305,101 +234,173 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       <Navbar />
 
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-stone-200">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
-          <Breadcrumb
-            items={[{ label: magazinLabel, href: magazinHref }]}
-            currentPage={title}
-          />
+      {/* Hero – Full-width dark image with title overlay */}
+      <section className="relative h-[50vh] md:h-[70vh] overflow-hidden">
+        <img
+          src={orderedEvents[0]?.image_url || article.heroImage || "/og-image.jpg"}
+          alt={title}
+          loading="eager"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-20">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-white font-black text-3xl md:text-5xl lg:text-6xl xl:text-7xl uppercase leading-none tracking-tight">
+              {title}
+            </h1>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Article Header */}
-      <header className="bg-white pt-8 pb-8">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <Link to={magazinHref} className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors">
-              <ArrowLeft size={14} />
-              {isEn ? "All articles" : "Alle Artikel"}
-            </Link>
+      {/* Meta bar – Breadcrumb + Language */}
+      <div className="bg-white border-b border-stone-200">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to={magazinHref} className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors">
+                <ArrowLeft size={14} />
+                {isEn ? "All articles" : "Alle Artikel"}
+              </Link>
+              <span className="text-stone-300">·</span>
+              <div className="flex items-center gap-3 text-xs text-stone-400">
+                {category && (
+                  <span className="bg-stone-100 text-stone-600 px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider">
+                    {category.label}
+                  </span>
+                )}
+                <time>{new Date(article.publishedDate).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "long", year: "numeric" })}</time>
+                <span className="flex items-center gap-1">
+                  <Clock size={12} />
+                  {article.readingTime} {minLabel}
+                </span>
+              </div>
+            </div>
             <Link to={isEn ? `/magazin/${article.slug}` : `/en/magazine/${article.slugEn}`}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-stone-300 text-sm text-stone-600 hover:bg-stone-100 transition-colors">
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-stone-300 text-sm text-stone-600 hover:bg-stone-50 transition-colors">
               <span className={!isEn ? "font-bold" : ""}>DE</span>
               <span className="text-stone-300">|</span>
               <span className={isEn ? "font-bold" : ""}>EN</span>
             </Link>
           </div>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-stone-400 mb-5">
-            {category && (
-              <Link to={`/kategorie/${category.slug}`}
-                className="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded font-semibold uppercase tracking-wider text-[11px] hover:bg-indigo-100 transition-colors">
-                {category.label}
-              </Link>
-            )}
-            <time className="font-medium">{new Date(article.publishedDate).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "long", year: "numeric" })}</time>
-            <span className="flex items-center gap-1 font-medium">
-              <Clock size={12} />
-              {article.readingTime} {minLabel}
-            </span>
-          </div>
-
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-stone-900 leading-tight font-bold mb-5">
-            {title}
-          </h1>
-          <p className="text-lg md:text-xl text-stone-500 leading-relaxed max-w-3xl font-light">
-            {description}
+      {/* Intro text */}
+      {introSection && (
+        <section className="max-w-4xl mx-auto px-6 py-12 md:py-16">
+          <p className="text-stone-600 text-lg md:text-xl leading-relaxed">
+            {introSection.body}
           </p>
-        </div>
-      </header>
+        </section>
+      )}
 
-      {/* Article Content */}
-      <article className="max-w-4xl mx-auto px-6 sm:px-8 mb-16">
-        <div className="
-          prose prose-lg prose-stone max-w-none
-          prose-headings:font-serif prose-headings:text-black
-          prose-h2:text-xl prose-h2:md:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-3 prose-h2:pb-3 prose-h2:border-b prose-h2:border-stone-200
-          prose-h3:text-lg prose-h3:md:text-xl prose-h3:font-bold prose-h3:mt-6 prose-h3:mb-2
-          prose-p:text-stone-600 prose-p:leading-relaxed
-          prose-strong:text-stone-800 prose-strong:font-bold
-          prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline
-          prose-li:text-stone-600 prose-li:leading-relaxed prose-ul:my-4
-          prose-img:rounded-xl
-        ">
-          <ReactMarkdown>{markdownContent}</ReactMarkdown>
-        </div>
-      </article>
+      {/* Editorial Layout – all articles use this consistent style */}
+      {numberedSections.map((section, i) => {
+        const event = orderedEvents[section.number! - 1];
+        const isImageLeft = i % 2 === 0;
+        const showQuote = i % 3 === 1 && i < numberedSections.length - 1;
 
-      {/* Matching Events – alternating card styles */}
-      {(eventsWithImages.length > 0 || loading) && (
-        <section className="bg-[#F5F0E8] py-16 border-t border-stone-200">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-            <div className="text-center mb-10">
-              <h2 className="font-serif text-stone-900 text-2xl sm:text-3xl font-bold mb-2">
-                {eventsTitle}
-              </h2>
-              <p className="text-stone-500">{eventsSubtitle}</p>
-            </div>
+        return (
+          <div key={section.number}>
+            {/* Editorial Section – alternating image/text layout */}
+            <section className={`${i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}`}>
+              <div className="max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+                  {/* Image Block */}
+                  <div className={`h-[280px] md:h-[500px] overflow-hidden ${isImageLeft ? '' : 'md:order-2'}`}>
+                    <img
+                      src={event?.image_url || "/og-image.jpg"}
+                      alt={section.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Text Block */}
+                  <div className={`p-8 md:p-12 lg:p-16 flex flex-col justify-center ${isImageLeft ? '' : 'md:order-1'}`}>
+                    <span className="text-amber-700 font-bold text-lg md:text-xl mb-2">
+                      {String(section.number).padStart(2, '0')}.
+                    </span>
+                    <h2 className="font-black text-2xl md:text-3xl lg:text-4xl uppercase leading-tight mb-5 tracking-tight text-black">
+                      {section.title}
+                    </h2>
+                    <div className="prose prose-stone max-w-none mb-6 text-stone-600 leading-relaxed prose-p:mb-3 prose-strong:text-black prose-strong:font-bold">
+                      <ReactMarkdown>{section.body}</ReactMarkdown>
+                    </div>
+                    {event && (
+                      <button
+                        onClick={() => openEventModal(String(event.id))}
+                        className="self-start bg-black text-white px-6 py-3 text-sm font-semibold uppercase tracking-wider hover:bg-stone-800 transition-colors"
+                      >
+                        {moreLabel}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Pull Quote – between some sections */}
+            {showQuote && (
+              <section className="bg-stone-100 py-12 md:py-16">
+                <div className="max-w-4xl mx-auto px-8 md:px-16">
+                  <blockquote className="relative">
+                    <span className="absolute -top-4 -left-2 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&ldquo;</span>
+                    <p className="text-xl md:text-2xl lg:text-3xl font-black uppercase leading-tight text-stone-700 tracking-tight pl-8">
+                      {extractQuote(section.body)}
+                    </p>
+                    <span className="absolute -bottom-8 right-0 text-6xl md:text-7xl text-stone-300 font-serif leading-none">&rdquo;</span>
+                  </blockquote>
+                </div>
+              </section>
+            )}
+          </div>
+        );
+      })}
+
+
+      {/* Editor's Pick – Exhibitions carousel (conditional) */}
+      {exhibitionEvents.length > 0 && (
+        <section className="bg-white py-16 border-t border-stone-200">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="font-black text-xl md:text-2xl uppercase text-center tracking-wider mb-3">
+              Editor's Pick:
+            </h2>
+            <p className="text-center text-stone-500 mb-10 uppercase text-sm tracking-wider">
+              {editorsPickTitle}
+            </p>
 
             {loading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
               </div>
-            ) : useDarkCards ? (
-              /* Style 1: 3 dark overlay cards */
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {eventsWithImages.slice(0, 3).map((event: any) => (
-                  <div key={event.id} className="h-[320px]">
-                    <DarkEventCard event={event} onClick={() => openEventModal(String(event.id))} />
-                  </div>
-                ))}
-              </div>
             ) : (
-              /* Style 2: 2 side-by-side cards */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {eventsWithImages.slice(0, 2).map((event: any) => (
-                  <LightEventCard key={event.id} event={event} onClick={() => openEventModal(String(event.id))} />
+              <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar">
+                {exhibitionEvents.map((e: any) => (
+                  <div key={e.id} className="min-w-[260px] md:min-w-[300px] snap-start flex-shrink-0">
+                    <div
+                      onClick={() => openEventModal(String(e.id))}
+                      className="cursor-pointer group"
+                    >
+                      <div className="relative h-[320px] md:h-[360px] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
+                        <img
+                          src={e.image_url || "/og-image.jpg"}
+                          alt={e.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      </div>
+                      <h3 className="font-semibold text-sm mb-1 line-clamp-2">{e.title}</h3>
+                      {e.start_date && (
+                        <p className="text-xs text-stone-500 mb-3">
+                          {new Date(e.start_date).toLocaleDateString(isEn ? "en-US" : "de-CH", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
+                      )}
+                      <button className="text-xs font-semibold uppercase tracking-wider border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-colors">
+                        {ticketLabel}
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -409,10 +410,10 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
       {/* Related Articles */}
       {relatedArticles.length > 0 && (
-        <section className="bg-white py-16 border-t border-stone-200">
+        <section className="bg-stone-50 py-16 border-t border-stone-200">
           <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-            <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-8 text-center font-bold">
-              {moreArticlesTitle}
+            <h2 className="font-black text-2xl md:text-3xl uppercase text-center mb-10 tracking-tight">
+              {isEn ? "More Articles" : "Weitere Artikel"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {relatedArticles.map((related) => {
@@ -423,20 +424,19 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
                 return (
                   <Link key={related.slug} to={relatedHref} className="group block">
-                    <article className="bg-stone-50 rounded-xl overflow-hidden border border-stone-200 hover:shadow-md transition-all duration-300">
-                      <div className="h-3 bg-gradient-to-r from-indigo-500 to-purple-600" />
+                    <article className="bg-white rounded-xl overflow-hidden border border-stone-200 hover:shadow-lg transition-all duration-300">
+                      <div className="h-3 bg-gradient-to-r from-amber-600 to-amber-800" />
                       <div className="p-5">
                         {relatedCat && (
-                          <span className="bg-indigo-50 text-indigo-600 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded mb-2 inline-block">
+                          <span className="bg-stone-100 text-stone-600 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded mb-2 inline-block">
                             {relatedCat.label}
                           </span>
                         )}
-                        <h3 className="font-serif text-lg font-semibold text-stone-900 line-clamp-2 group-hover:text-indigo-700 transition-colors mb-2">
+                        <h3 className="font-bold text-lg uppercase text-stone-900 line-clamp-2 group-hover:text-amber-700 transition-colors mb-2 leading-tight tracking-tight">
                           {relatedTitle}
                         </h3>
-                        <div className="flex items-center gap-1 text-sm text-indigo-600">
-                          {readLabel}
-                          <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        <div className="text-sm text-amber-700 font-semibold uppercase tracking-wider">
+                          {isEn ? "Read article" : "Artikel lesen"} →
                         </div>
                       </div>
                     </article>

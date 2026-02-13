@@ -15,6 +15,7 @@ export interface Article {
   heroImage: string;
   category: string; // matches category slug from categories.ts
   eventIds: string[]; // event IDs from Supabase
+  exhibitionIds?: string[]; // optional exhibition event IDs for Editor's Pick section
   publishedDate: string;
   readingTime: number;
   featured?: boolean;
