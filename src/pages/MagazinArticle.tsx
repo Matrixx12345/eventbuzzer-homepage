@@ -152,47 +152,47 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
     return (
       <div className="relative w-full bg-transparent">
         <svg viewBox="0 0 1348.8688 865.04437" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
-          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.18" />
+          <image href="/swiss-outline.svg" width="1348.8688" height="865.04437" opacity="0.35" style="filter: sepia(0.4) saturate(1.5) hue-rotate(20deg);" />
 
           {/* City markers with labels */}
-          <circle cx="765" cy="213" r="7.5" fill="#c9a961" />
-          <text x="775" y="223" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Zürich</text>
+          <circle cx="765" cy="213" r="7.5" fill="#6b7280" />
+          <text x="775" y="223" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zürich</text>
 
-          <circle cx="71.3" cy="672.8" r="7.5" fill="#c9a961" />
-          <text x="82" y="682" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Genf</text>
+          <circle cx="71.3" cy="672.8" r="7.5" fill="#6b7280" />
+          <text x="82" y="682" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Genf</text>
 
-          <circle cx="495.2" cy="147" r="7.5" fill="#c9a961" />
-          <text x="506" y="157" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Basel</text>
+          <circle cx="495.2" cy="147" r="7.5" fill="#6b7280" />
+          <text x="506" y="157" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Basel</text>
 
-          <circle cx="214.7" cy="545" r="7.5" fill="#c9a961" />
-          <text x="225" y="555" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Lausanne</text>
+          <circle cx="214.7" cy="545" r="7.5" fill="#6b7280" />
+          <text x="225" y="555" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Lausanne</text>
 
-          <circle cx="453.8" cy="362" r="7.5" fill="#c9a961" />
-          <text x="464" y="372" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Bern</text>
+          <circle cx="453.8" cy="362" r="7.5" fill="#6b7280" />
+          <text x="464" y="372" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Bern</text>
 
-          <circle cx="576" cy="490" r="6" fill="#c9a961" />
-          <text x="586" y="500" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Interlaken</text>
+          <circle cx="576" cy="490" r="6" fill="#6b7280" />
+          <text x="586" y="500" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Interlaken</text>
 
-          <circle cx="828.0" cy="168" r="7" fill="#c9a961" />
-          <text x="838" y="178" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Winterthur</text>
+          <circle cx="828.0" cy="168" r="7" fill="#6b7280" />
+          <text x="838" y="178" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Winterthur</text>
 
-          <circle cx="706.5" cy="351" r="7.5" fill="#c9a961" />
-          <text x="717" y="361" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Luzern</text>
+          <circle cx="706.5" cy="351" r="7.5" fill="#6b7280" />
+          <text x="717" y="361" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Luzern</text>
 
-          <circle cx="989" cy="167" r="7" fill="#c9a961" />
-          <text x="999" y="177" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">St. Gallen</text>
+          <circle cx="989" cy="167" r="7" fill="#6b7280" />
+          <text x="999" y="177" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">St. Gallen</text>
 
-          <circle cx="865" cy="768.2" r="7" fill="#c9a961" />
-          <text x="875" y="778" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Lugano</text>
+          <circle cx="865" cy="768.2" r="7" fill="#6b7280" />
+          <text x="875" y="778" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Lugano</text>
 
-          <circle cx="1154" cy="546" r="6" fill="#c9a961" />
-          <text x="1164" y="556" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">St. Moritz</text>
+          <circle cx="1154" cy="546" r="6" fill="#6b7280" />
+          <text x="1164" y="556" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">St. Moritz</text>
 
-          <circle cx="542" cy="750" r="6" fill="#c9a961" />
-          <text x="552" y="760" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Zermatt</text>
+          <circle cx="542" cy="750" r="6" fill="#6b7280" />
+          <text x="552" y="760" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Zermatt</text>
 
-          <circle cx="395.0" cy="301" r="6" fill="#c9a961" />
-          <text x="405" y="311" fontFamily="Arial, sans-serif" fontSize="39" fill="#c9a961">Biel</text>
+          <circle cx="395.0" cy="301" r="6" fill="#6b7280" />
+          <text x="405" y="311" fontFamily="Arial, sans-serif" fontSize="39" fill="#6b7280">Biel</text>
 
           {/* Event location marker (red pulsing dot) */}
           <g>
@@ -324,7 +324,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
             return (
               <div key={i}>
                 {/* Horizontal divider line */}
-                {i > 0 && <hr className="border-t border-[#c9a961]/30 my-12 md:my-16" />}
+                {i > 0 && <hr className="border-t-2 border-[#c9a961] my-12 md:my-16" />}
 
                 <article className="mb-12 md:mb-16">
                   {/* Title + Location + SVG in grid */}
@@ -334,8 +334,8 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
                         {String(i + 1).padStart(2, '0')}. {section.title}
                       </h2>
                       {event?.address_city && (
-                        <div className="flex items-center gap-2 text-[#c9a961] text-base md:text-lg">
-                          <MapPin size={20} />
+                        <div className="flex items-center gap-2 text-stone-500 text-base md:text-lg">
+                          <MapPin size={20} className="text-[#c9a961]" />
                           <span>{decodeHtml(event.address_city)}, {isEn ? "Switzerland" : "Schweiz"}</span>
                         </div>
                       )}
@@ -347,7 +347,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
 
                   {/* Image */}
                   {event?.image_url && (
-                    <div className="relative h-[320px] md:h-[450px] lg:h-[500px] overflow-hidden bg-stone-200 mb-8">
+                    <div className="relative h-[240px] md:h-[338px] lg:h-[375px] overflow-hidden bg-stone-200 mb-8">
                       <img
                         src={event.image_url}
                         alt={section.title}
