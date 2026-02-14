@@ -119,6 +119,29 @@ export const ARTICLES: Article[] = [
     publishedDate: "2026-02-13",
     readingTime: 5,
   },
+  {
+    slug: "ein-tag-in-basel",
+    slugEn: "day-in-basel",
+    title: "Ein Tag in Basel – Kultur, Kulinarik und Rheinufer",
+    titleEn: "A Day in Basel – Culture, Cuisine and Rhine Riverbank",
+    description: "Entdecke Basel an einem Tag: Von der Fondation Beyeler über das Basler Münster bis zum Sundowner am Rhein. Die perfekte Route für Kunst, Geschichte und Genuss.",
+    descriptionEn: "Discover Basel in one day: From Fondation Beyeler via Basel Minster to sundowners by the Rhine. The perfect route for art, history and enjoyment.",
+    heroImage: "https://www.myswitzerland.com/-/media/st/gadmin/images/cities/winter/cities/andreaszimmermann_mg_6211_249493.jpg",
+    category: "stadt",
+    eventIds: [
+      "200583", // Fondation Beyeler
+      "200585", // Restaurant Beyeler im Park
+      "200584", // Villa Wenkenhof
+      "200586", // Basler Rathaus
+      "200587", // Sutter Begg Bäckerei
+      "200588", // Basler Münster
+      "200589", // Pfalz Basel
+      "200590", // Münsterfähre Basel
+      "200591", // Les Trois Rois
+    ],
+    publishedDate: "2026-02-13",
+    readingTime: 8,
+  },
 ];
 
 export const getArticleBySlug = (slug: string): Article | undefined => {

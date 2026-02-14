@@ -127,7 +127,7 @@ const LegalFooter = () => {
         {/* Copyright */}
         <div className="pt-8 border-t border-stone-200 text-center">
           <p className="text-xs text-stone-500">
-            © {new Date().getFullYear()} EventBuzzer. Entdecke Events in der Schweiz.
+            © EventBuzzer. Entdecke Events in der Schweiz.
           </p>
         </div>
       </div>

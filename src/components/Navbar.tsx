@@ -65,7 +65,7 @@ const Navbar = ({ bgColor = "bg-white/80" }: NavbarProps) => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className={`text-sm text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative ${isActive ? 'font-bold' : 'font-medium'}`}
+                  className={`text-sm text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative ${isActive ? 'font-bold' : 'font-semibold'}`}
                 >
                   {link.label}
                   {link.label === "Favoriten" && (
@@ -164,7 +164,7 @@ const Navbar = ({ bgColor = "bg-white/80" }: NavbarProps) => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-sm font-medium text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative"
+                  className="text-sm font-semibold text-navbar-foreground/80 hover:text-navbar-foreground transition-colors relative"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}

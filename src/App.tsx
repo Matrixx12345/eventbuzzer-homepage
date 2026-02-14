@@ -34,6 +34,10 @@ import MobileBottomNav from "./components/MobileBottomNav";
 import Honeypot from "./pages/Honeypot";
 import MagazinLanding from "./pages/MagazinLanding";
 import MagazinArticle from "./pages/MagazinArticle";
+import TourArticle from "./pages/TourArticle";
+import ShowAllBasel from "./pages/ShowAllBasel";
+import FetchAndInsertBasel from "./pages/FetchAndInsertBasel";
+import ShowEventSchema from "./pages/ShowEventSchema";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +57,10 @@ const App = () => (
               <Route path="/" element={<ErrorBoundary><EventList1 /></ErrorBoundary>} />
               {/* Magazin (replaces old Highlights) */}
               <Route path="/magazin" element={<MagazinLanding />} />
+              {/* Tour Articles (Day tours) */}
+              <Route path="/magazin/ein-tag-in-basel" element={<TourArticle slug="ein-tag-in-basel" />} />
+              <Route path="/en/magazine/day-in-basel" element={<TourArticle slug="day-in-basel" lang="en" />} />
+              {/* Regular Magazine Articles */}
               <Route path="/magazin/:slug" element={<MagazinArticle />} />
               <Route path="/en/magazine" element={<MagazinLanding lang="en" />} />
               <Route path="/en/magazine/:slug" element={<MagazinArticle lang="en" />} />
@@ -76,6 +84,11 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/partner" element={<PartnerUpload />} />
+
+              {/* Temporary: Basel tools */}
+              <Route path="/show-schema" element={<ShowEventSchema />} />
+              <Route path="/fetch-basel" element={<FetchAndInsertBasel />} />
+              <Route path="/show-all-basel" element={<ShowAllBasel />} />
 
               {/* HONEYPOT ROUTES 🍯 - Fallen für böse Bots */}
               {/* Diese Routen sind in robots.txt verboten */}
