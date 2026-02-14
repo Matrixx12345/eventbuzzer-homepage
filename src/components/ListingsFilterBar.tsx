@@ -42,15 +42,16 @@ const getCategoryIcon = (slug: string | null) => {
 };
 
 const moods = [
-  { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
   { id: "mistwetter", slug: "mistwetter", name: "Mistwetter", icon: CloudRain },
   { id: "must-see", slug: "must-see", name: "Must-See", icon: Star },
   { id: "top-stars", slug: "top-stars", name: "Top Stars", icon: Star },
   { id: "foto-spots", slug: "foto-spots", name: "Foto-Spots", icon: Camera },
   { id: "romantik", slug: "romantik", name: "Romantik", icon: Heart },
   { id: "familie-freundlich", slug: "familie-freundlich", name: "Familie", icon: Smile },
-  { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
   { id: "wellness", slug: "wellness", name: "Wellness", icon: Waves },
+  // HIDDEN – re-enable when content is ready (see README-MOODS.md)
+  // { id: "geburtstag", slug: "geburtstag", name: "Geburtstag", icon: Cake },
+  // { id: "nightlife", slug: "nightlife", name: "Nightlife", icon: PartyPopper },
 ];
 
 const timePills = [
