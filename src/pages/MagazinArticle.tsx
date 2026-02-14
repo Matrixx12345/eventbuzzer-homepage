@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useMemo } from "react";
 import Navbar from "@/components/Navbar";
@@ -9,6 +9,7 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { useEventModal } from "@/hooks/useEventModal";
 import EventDetailModal from "@/components/EventDetailModal";
 import { MapPin } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MagazinArticleProps {
   lang?: "de" | "en";
@@ -32,6 +33,7 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
   useScrollToTop();
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const { user } = useAuth();
   const isEn = lang === "en" || location.pathname.startsWith("/en/");
 
   const [markdownContent, setMarkdownContent] = useState("");
@@ -206,6 +208,11 @@ const MagazinArticle = ({ lang = "de" }: MagazinArticleProps) => {
       </div>
     );
   };
+
+  // Hidden article – redirect non-logged-in users
+  if (article?.hidden && !user) {
+    return <Navigate to={isEn ? "/en/magazine" : "/magazin"} replace />;
+  }
 
   // 404
   if (!article) {

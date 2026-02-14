@@ -6,6 +6,7 @@ import { SITE_URL } from "@/config/constants";
 import { ARTICLES, Article } from "@/config/articles";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MagazinLandingProps {
   lang?: "de" | "en";
@@ -14,13 +15,17 @@ interface MagazinLandingProps {
 const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
   useScrollToTop();
   const location = useLocation();
+  const { user } = useAuth();
   const [articleImages, setArticleImages] = useState<Record<string, string>>({});
 
   const isEn = lang === "en" || location.pathname.startsWith("/en/");
 
+  // Filter out hidden articles for non-logged-in users
+  const visibleArticles = ARTICLES.filter(a => !a.hidden || user);
+
   // Fetch first event image per article for card backgrounds
   useEffect(() => {
-    const allIds = ARTICLES.flatMap(a => a.eventIds);
+    const allIds = visibleArticles.flatMap(a => a.eventIds);
     if (allIds.length === 0) return;
     const load = async () => {
       const { data } = await externalSupabase
@@ -28,7 +33,7 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
       if (!data) return;
       const map = new Map(data.filter(e => e.image_url).map(e => [String(e.id), e.image_url as string]));
       const result: Record<string, string> = {};
-      for (const article of ARTICLES) {
+      for (const article of visibleArticles) {
         for (const id of article.eventIds) {
           const url = map.get(id);
           if (url) { result[article.slug] = url; break; }
@@ -37,7 +42,7 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
       setArticleImages(result);
     };
     load();
-  }, []);
+  }, [user]);
 
   const pageTitle = isEn
     ? "The EventBuzzer Magazine – Best Events, Museums and Excursions in Switzerland"
@@ -52,8 +57,8 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
     : "Inspiration, Guides und die besten Events der Schweiz";
   const ctaLabel = isEn ? "Discover now" : "Jetzt entdecken";
 
-  const featured = ARTICLES.find(a => a.featured) || ARTICLES[0];
-  const others = ARTICLES.filter(a => a !== featured);
+  const featured = visibleArticles.find(a => a.featured) || visibleArticles[0];
+  const others = visibleArticles.filter(a => a !== featured);
 
   const getHref = (article: Article) => {
     const slug = isEn ? article.slugEn : article.slug;
@@ -88,7 +93,7 @@ const MagazinLanding = ({ lang = "de" }: MagazinLandingProps) => {
             "url": pageUrl,
             "inLanguage": isEn ? "en" : "de",
             "isPartOf": { "@type": "WebSite", "name": "EventBuzzer", "url": SITE_URL },
-            "numberOfItems": ARTICLES.length,
+            "numberOfItems": visibleArticles.length,
           })}
         </script>
       </Helmet>

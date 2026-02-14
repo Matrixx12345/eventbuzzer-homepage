@@ -19,6 +19,7 @@ export interface Article {
   publishedDate: string;
   readingTime: number;
   featured?: boolean;
+  hidden?: boolean; // only visible to logged-in users
 }
 
 export const ARTICLES: Article[] = [
@@ -69,6 +70,7 @@ export const ARTICLES: Article[] = [
     ],
     publishedDate: "2026-02-13",
     readingTime: 7,
+    hidden: true,
   },
   {
     slug: "10-beste-museen-schweiz",

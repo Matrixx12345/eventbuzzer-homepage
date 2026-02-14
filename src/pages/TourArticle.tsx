@@ -335,31 +335,8 @@ export default function TourArticle({ lang = "de", slug: propSlug }: { lang?: st
       <Navbar />
 
       <main className="min-h-screen bg-[#f8f6f1]">
-        {/* Hero Section */}
-        <div className="relative w-full h-[500px] overflow-hidden">
-          <img
-            src={article.heroImage}
-            alt={article.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16">
-            <p className="text-amber-300 text-sm font-medium tracking-widest uppercase mb-3">
-              {lang === "en" ? "Day Tour Basel" : "Tagestour Basel"}
-            </p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-4 max-w-3xl">
-              {article.title}
-            </h1>
-            <div className="flex items-center gap-4 text-white/80 text-sm">
-              <span>{article.readingTime} {lang === "en" ? "min read" : "Min. Lesezeit"}</span>
-              <span>|</span>
-              <span>{stopsWithEvents.filter(s => !s.isIntro).length} Stops</span>
-            </div>
-          </div>
-        </div>
-
         {/* Breadcrumb */}
-        <div className="container mx-auto px-4 pt-6 pb-2">
+        <div className="px-6 sm:px-8 lg:px-12 pt-6 pb-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <a href={lang === "en" ? "/en/magazine" : "/magazin"} className="hover:text-foreground transition-colors">
               {lang === "en" ? "Magazine" : "Magazin"}
@@ -369,9 +346,16 @@ export default function TourArticle({ lang = "de", slug: propSlug }: { lang?: st
           </div>
         </div>
 
+        {/* Header */}
+        <div className="px-6 sm:px-8 lg:px-12 pt-4 pb-6">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-gray-900">
+            {article.title}
+          </h1>
+        </div>
+
         {/* Intro */}
         {intro && (
-          <div className="container mx-auto px-4 py-8 max-w-3xl">
+          <div className="px-6 sm:px-8 lg:px-12 pt-4 pb-8">
             <p className="text-lg text-muted-foreground leading-relaxed">{intro}</p>
           </div>
         )}
