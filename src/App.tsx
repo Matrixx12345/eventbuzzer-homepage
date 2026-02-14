@@ -35,9 +35,6 @@ import Honeypot from "./pages/Honeypot";
 import MagazinLanding from "./pages/MagazinLanding";
 import MagazinArticle from "./pages/MagazinArticle";
 import TourArticle from "./pages/TourArticle";
-import ShowAllBasel from "./pages/ShowAllBasel";
-import FetchAndInsertBasel from "./pages/FetchAndInsertBasel";
-import ShowEventSchema from "./pages/ShowEventSchema";
 
 const queryClient = new QueryClient();
 
@@ -84,11 +81,6 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/partner" element={<PartnerUpload />} />
-
-              {/* Temporary: Basel tools */}
-              <Route path="/show-schema" element={<ShowEventSchema />} />
-              <Route path="/fetch-basel" element={<FetchAndInsertBasel />} />
-              <Route path="/show-all-basel" element={<ShowAllBasel />} />
 
               {/* HONEYPOT ROUTES 🍯 - Fallen für böse Bots */}
               {/* Diese Routen sind in robots.txt verboten */}
