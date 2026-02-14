@@ -29,7 +29,7 @@ const Navbar = ({ bgColor = "bg-white/80" }: NavbarProps) => {
   const navigate = useNavigate();
 
   const navLinks = [
-    { label: "Events", href: "/" },
+    { label: "Erlebnisse", href: "/" },
     { label: "Magazin", href: "/magazin" },
     { label: "Favoriten", href: "/favorites" },
     { label: "Reiseplaner", href: "/reiseplaner" },

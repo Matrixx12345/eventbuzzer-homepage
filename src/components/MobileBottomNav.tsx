@@ -11,7 +11,7 @@ const MobileBottomNav = () => {
   };
 
   const navItems = [
-    { path: "/", label: "Events", icon: Home },
+    { path: "/", label: "Erlebnisse", icon: Home },
     { path: "/magazin", label: "Magazin", icon: BookOpen },
     { path: "/favorites", label: "Favoriten", icon: Heart },
     { path: "/reiseplaner", label: "Planer", icon: Calendar },

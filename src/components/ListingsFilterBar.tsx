@@ -687,7 +687,7 @@ const ListingsFilterBar = ({
                 </div>
               )}
 
-              {/* 3x3 Grid */}
+              {/* 3+3+3 Grid */}
               <div className="grid grid-cols-3 gap-2">
                 {moods.map((mood) => {
                   const isSelected = selectedMood.slug === mood.slug;

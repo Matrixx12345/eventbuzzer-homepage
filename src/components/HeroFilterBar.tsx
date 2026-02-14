@@ -265,29 +265,30 @@ const HeroFilterBar = () => {
                   <ChevronDown size={14} className={cn("transition-transform", moodOpen && "rotate-180")} />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-56 p-2 bg-white border shadow-xl rounded-xl z-50 max-h-80 overflow-y-auto" align="start">
-                {moods.map((mood) => (
-                  <button
-                    key={mood.slug || "all"}
-                    onClick={() => {
-                      setSelectedMood(mood);
-                      // When a mood is selected (not "Alle"), reset category to "Alle"
-                      if (mood.slug !== null) {
-                        setSelectedCategory(categories[0]);
-                      }
-                      setMoodOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                      selectedMood.slug === mood.slug
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted text-foreground/80"
-                    )}
-                  >
-                    <mood.icon size={18} />
-                    <span>{mood.name}</span>
-                  </button>
-                ))}
+              <PopoverContent className="w-56 p-2 bg-white border shadow-xl rounded-xl z-50" align="start">
+                <div className="grid grid-cols-3 gap-1">
+                  {moods.map((mood) => (
+                    <button
+                      key={mood.slug || "all"}
+                      onClick={() => {
+                        setSelectedMood(mood);
+                        if (mood.slug !== null) {
+                          setSelectedCategory(categories[0]);
+                        }
+                        setMoodOpen(false);
+                      }}
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-1 p-2.5 rounded-lg text-sm transition-all hover:bg-muted",
+                        selectedMood.slug === mood.slug
+                          ? "bg-primary/10 ring-2 ring-slate-300 shadow-sm font-medium"
+                          : "text-foreground/80"
+                      )}
+                    >
+                      <mood.icon size={18} />
+                      <span className="text-[11px] text-center leading-tight">{mood.name}</span>
+                    </button>
+                  ))}
+                </div>
               </PopoverContent>
             </Popover>
           </div>
