@@ -57,6 +57,8 @@ const App = () => (
               {/* Tour Articles (Day tours) */}
               <Route path="/magazin/ein-tag-in-basel" element={<TourArticle slug="ein-tag-in-basel" />} />
               <Route path="/en/magazine/day-in-basel" element={<TourArticle slug="day-in-basel" lang="en" />} />
+              <Route path="/magazin/ein-tag-in-zuerich" element={<TourArticle slug="ein-tag-in-zuerich" />} />
+              <Route path="/en/magazine/day-in-zurich" element={<TourArticle slug="day-in-zurich" lang="en" />} />
               {/* Regular Magazine Articles */}
               <Route path="/magazin/:slug" element={<MagazinArticle />} />
               <Route path="/en/magazine" element={<MagazinLanding lang="en" />} />

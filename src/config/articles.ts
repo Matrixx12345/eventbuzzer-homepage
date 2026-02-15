@@ -48,28 +48,33 @@ export const ARTICLES: Article[] = [
     readingTime: 6,
   },
   {
-    slug: "tag-in-zuerich",
+    slug: "ein-tag-in-zuerich",
     slugEn: "day-in-zurich",
-    title: "Ein Tag in Zürich – Die besten Tipps und Events",
-    titleEn: "A Day in Zurich – Best Tips and Events",
-    description: "Plane deinen perfekten Tag in Zürich. Museen, Restaurants, Events und Sehenswürdigkeiten – alles was du für einen unvergesslichen Tag brauchst.",
-    descriptionEn: "Plan your perfect day in Zurich. Museums, restaurants, events and sights – everything you need for an unforgettable day.",
+    title: "Der Züri-Edit: Architektur, See-Brise und Luxus-Vibe unter 100 CHF",
+    titleEn: "The Züri Edit: Architecture, Lake Breeze and Luxury Vibes for Under 100 CHF",
+    description: "Ein kuratierter Guide durch die Limmatstadt – von versteckten Giacomettis bis zum Sonnenuntergang am See. 14 Stationen, alles unter 100 CHF.",
+    descriptionEn: "A curated guide through Zurich – from hidden Giacomettis to sunset by the lake. 14 stops, all under 100 CHF.",
     heroImage: "/og-image.jpg",
     category: "stadt",
     eventIds: [
-      "94660",  // Kunsthaus Zürich
-      "59243",  // Heureka von Jean Tinguely
-      "94666",  // Uhrenmuseum Beyer
-      "59536",  // Zürcher Museums-Bahn
-      "64760",  // Caliente! Latin Music Festival
-      "111998", // Flohmarkt Bullingerhof
-      "64863",  // Das Lumpenpack
-      "64834",  // Ivo Martin
-      "64373",  // $ono$ Cliq
-      "59763",  // Wengernalpbahn
+      // TODO: Create events in DB, then add IDs here
+      // 1. Giacometti-Halle
+      // 2. Niederdorf
+      // 3. Grossmünster
+      // 4. Lindenhof
+      // 5. Kunsthaus Zürich
+      // 6. Pizza Nation & Opernhaus
+      // 7. Züri rollt & See-Promenade
+      // 8. Rentenwiese
+      // 9. Pavillon Le Corbusier
+      // 10. Chinagarten
+      // 11. Limmatschifffahrt
+      // 12. Gelateria di Berna
+      // 13. Sternen Grill
+      // 14. Utoquai Sunset
     ],
     publishedDate: "2026-02-13",
-    readingTime: 7,
+    readingTime: 10,
     hidden: true,
   },
   {
