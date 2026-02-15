@@ -57,21 +57,20 @@ export const ARTICLES: Article[] = [
     heroImage: "/og-image.jpg",
     category: "stadt",
     eventIds: [
-      // TODO: Create events in DB, then add IDs here
-      // 1. Giacometti-Halle
-      // 2. Niederdorf
-      // 3. Grossmünster
-      // 4. Lindenhof
-      // 5. Kunsthaus Zürich
-      // 6. Pizza Nation & Opernhaus
-      // 7. Züri rollt & See-Promenade
-      // 8. Rentenwiese
-      // 9. Pavillon Le Corbusier
-      // 10. Chinagarten
-      // 11. Limmatschifffahrt
-      // 12. Gelateria di Berna
-      // 13. Sternen Grill
-      // 14. Utoquai Sunset
+      "201582", // Giacometti-Halle (Blüemlihalle)
+      "201583", // Das Niederdorf (Altstadt)
+      "201584", // Grossmünster & Kreuzgang
+      "201585", // Lindenhof
+      "201586", // Kunsthaus Zürich (Chipperfield)
+      "201587", // Pizza Nation & Opernhaus
+      "201588", // Züri rollt & See-Promenade
+      "201589", // Rentenwiese
+      "201590", // Pavillon Le Corbusier
+      "201591", // Chinagarten Zürich
+      "201592", // Limmatschifffahrt
+      "201593", // Gelateria di Berna
+      "201594", // Sternen Grill
+      "201595", // Sunset am Utoquai
     ],
     publishedDate: "2026-02-13",
     readingTime: 10,
