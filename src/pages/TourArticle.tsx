@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { externalSupabase } from "@/integrations/supabase/externalClient";
 import { ARTICLES, getArticleBySlug, getArticleByEnSlug } from "@/config/articles";
 import Navbar from "@/components/Navbar";
-import { ChevronRight, Clock, MapPin, QrCode, FileText } from "lucide-react";
+import { ChevronRight, Clock, MapPin, QrCode, FileText, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 interface Event {
@@ -128,6 +128,7 @@ function parseTourStops(markdown: string): { intro: string; stops: TourStop[]; p
 export default function TourArticle({ lang = "de", slug: propSlug }: { lang?: string; slug?: string }) {
   const { slug: paramSlug } = useParams<{ slug: string }>();
   const slug = propSlug || paramSlug;
+  const navigate = useNavigate();
   const [content, setContent] = useState<string>("");
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -324,10 +325,10 @@ export default function TourArticle({ lang = "de", slug: propSlug }: { lang?: st
   return (
     <>
       <Helmet>
-        <title>{article.title} | EventBuzzer</title>
-        <meta name="description" content={article.description} />
-        <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={article.description} />
+        <title>{lang === "en" ? article.titleEn : article.title} | EventBuzzer</title>
+        <meta name="description" content={lang === "en" ? article.descriptionEn : article.description} />
+        <meta property="og:title" content={lang === "en" ? article.titleEn : article.title} />
+        <meta property="og:description" content={lang === "en" ? article.descriptionEn : article.description} />
         <meta property="og:image" content={article.heroImage} />
         <link rel="canonical" href={`/${lang === "en" ? "en/magazine" : "magazin"}/${slug}`} />
       </Helmet>
@@ -348,9 +349,24 @@ export default function TourArticle({ lang = "de", slug: propSlug }: { lang?: st
 
         {/* Header */}
         <div className="px-6 sm:px-8 lg:px-12 pt-4 pb-6">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-gray-900">
-            {article.title}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-gray-900">
+              {lang === "en" ? article.titleEn : article.title}
+            </h1>
+            <button
+              onClick={() => {
+                if (lang === "de") {
+                  navigate(`/en/magazine/${article.slugEn}`);
+                } else {
+                  navigate(`/magazin/${article.slug}`);
+                }
+              }}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition-colors shadow-sm"
+            >
+              <Globe size={14} />
+              {lang === "de" ? "EN" : "DE"}
+            </button>
+          </div>
         </div>
 
         {/* Intro */}

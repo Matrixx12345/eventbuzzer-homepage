@@ -1,4 +1,4 @@
-Der Züri-Edit: Architektur, See-Brise und Luxus-Vibe unter 100 CHF. Ein kuratierter Guide durch die Limmatstadt – von versteckten Giacomettis bis zum Sonnenuntergang am See.
+Der Züri-Edit: Architektur, See-Brise und Luxus-Vibe unter 100 CHF. Ein kuratierter Guide durch die Limmatstadt – von versteckten Giacomettis bis zum Sonnenuntergang am See. Bei schönem Wetter: Handtuch und Badesachen einpacken – der Zürichsee ruft!
 
 ## Die Giacometti-Halle
 

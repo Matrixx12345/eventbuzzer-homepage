@@ -74,7 +74,6 @@ export const ARTICLES: Article[] = [
     ],
     publishedDate: "2026-02-13",
     readingTime: 10,
-    hidden: true,
   },
   {
     slug: "10-beste-museen-schweiz",
